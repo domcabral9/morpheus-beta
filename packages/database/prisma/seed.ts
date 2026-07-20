@@ -231,6 +231,10 @@ async function main() {
   // Opções de múltipla escolha são valores de mercado razoáveis — ainda não
   // são as opções reais do formulário (o usuário vai enviar depois) — ajuste
   // pelo CRUD administrativo (/questionnaire/admin/*), não editando este seed.
+  // Scores de opção na escala 0-5 (0 = sem risco, 5 = risco máximo) — mesma
+  // escala usada pelo motor de risco (Etapa 5) para o score final 1-5,
+  // alinhado ao processo já em produção da empresa (n8n: Homologado 4.0-5.0,
+  // Aguardando Ajustes 3.0-3.9, Rejeitado <3.0).
   const seedQuestions: SeedQuestion[] = [
     {
       category: "Informações Gerais",
@@ -239,18 +243,18 @@ async function main() {
       type: "SINGLE_CHOICE",
       riskDimension: "PROBABILITY",
       options: [
-        { label: "ERP", value: "erp", score: 2 },
-        { label: "CRM", value: "crm", score: 2 },
-        { label: "Ferramenta de produtividade", value: "productivity", score: 1 },
-        { label: "Comunicação/colaboração", value: "communication", score: 2 },
-        { label: "Segurança", value: "security", score: 3 },
-        { label: "Desenvolvimento/DevOps", value: "devops", score: 3 },
-        { label: "Design/criação", value: "design", score: 1 },
-        { label: "Financeiro/contábil", value: "finance", score: 3 },
-        { label: "Recursos Humanos", value: "hr", score: 3 },
-        { label: "Business Intelligence/Analytics", value: "bi", score: 2 },
-        { label: "Infraestrutura/monitoramento", value: "infra", score: 3 },
-        { label: "Outro", value: "other", score: 5 },
+        { label: "ERP", value: "erp", score: 1 },
+        { label: "CRM", value: "crm", score: 1 },
+        { label: "Ferramenta de produtividade", value: "productivity", score: 0.5 },
+        { label: "Comunicação/colaboração", value: "communication", score: 1 },
+        { label: "Segurança", value: "security", score: 1.5 },
+        { label: "Desenvolvimento/DevOps", value: "devops", score: 1.5 },
+        { label: "Design/criação", value: "design", score: 0.5 },
+        { label: "Financeiro/contábil", value: "finance", score: 1.5 },
+        { label: "Recursos Humanos", value: "hr", score: 1.5 },
+        { label: "Business Intelligence/Analytics", value: "bi", score: 1 },
+        { label: "Infraestrutura/monitoramento", value: "infra", score: 1.5 },
+        { label: "Outro", value: "other", score: 2.5 },
       ],
     },
     {
@@ -268,12 +272,12 @@ async function main() {
       type: "SINGLE_CHOICE",
       riskDimension: "PROBABILITY",
       options: [
-        { label: "Gratuito", value: "free", score: 2 },
-        { label: "Freemium", value: "freemium", score: 3 },
-        { label: "Assinatura (SaaS)", value: "subscription", score: 2 },
-        { label: "Licença perpétua", value: "perpetual", score: 2 },
-        { label: "Open Source", value: "open_source", score: 3 },
-        { label: "Trial/avaliação", value: "trial", score: 6 },
+        { label: "Gratuito", value: "free", score: 1 },
+        { label: "Freemium", value: "freemium", score: 1.5 },
+        { label: "Assinatura (SaaS)", value: "subscription", score: 1 },
+        { label: "Licença perpétua", value: "perpetual", score: 1 },
+        { label: "Open Source", value: "open_source", score: 1.5 },
+        { label: "Trial/avaliação", value: "trial", score: 3 },
       ],
     },
     {
@@ -283,12 +287,12 @@ async function main() {
       type: "SINGLE_CHOICE",
       riskDimension: "PROBABILITY",
       options: [
-        { label: "Gratuito", value: "free", score: 1 },
-        { label: "Mensal", value: "monthly", score: 1 },
-        { label: "Anual", value: "yearly", score: 1 },
-        { label: "Único (compra única)", value: "one_time", score: 1 },
-        { label: "Por usuário/licença", value: "per_user", score: 1 },
-        { label: "Por uso (pay-as-you-go)", value: "pay_as_you_go", score: 2 },
+        { label: "Gratuito", value: "free", score: 0.5 },
+        { label: "Mensal", value: "monthly", score: 0.5 },
+        { label: "Anual", value: "yearly", score: 0.5 },
+        { label: "Único (compra única)", value: "one_time", score: 0.5 },
+        { label: "Por usuário/licença", value: "per_user", score: 0.5 },
+        { label: "Por uso (pay-as-you-go)", value: "pay_as_you_go", score: 1 },
       ],
     },
     {
@@ -299,11 +303,11 @@ async function main() {
       type: "SINGLE_CHOICE",
       riskDimension: "PROBABILITY",
       options: [
-        { label: "Compra direta pela TI", value: "it_purchase", score: 1 },
-        { label: "Compra por outra área (fora da TI)", value: "shadow_purchase", score: 8 },
-        { label: "Doação/parceria", value: "donation", score: 5 },
-        { label: "Desenvolvimento interno", value: "in_house", score: 2 },
-        { label: "Já existente/legado", value: "legacy", score: 6 },
+        { label: "Compra direta pela TI", value: "it_purchase", score: 0.5 },
+        { label: "Compra por outra área (fora da TI)", value: "shadow_purchase", score: 4 },
+        { label: "Doação/parceria", value: "donation", score: 2.5 },
+        { label: "Desenvolvimento interno", value: "in_house", score: 1 },
+        { label: "Já existente/legado", value: "legacy", score: 3 },
       ],
     },
     {
@@ -321,11 +325,11 @@ async function main() {
       type: "SINGLE_CHOICE",
       riskDimension: "PROBABILITY",
       options: [
-        { label: "Nuvem pública (SaaS do fornecedor)", value: "vendor_saas", score: 5 },
-        { label: "Nuvem própria da empresa (AWS/Azure/GCP/Magalu Cloud)", value: "company_cloud", score: 3 },
-        { label: "Datacenter próprio (on-premises)", value: "on_prem", score: 2 },
-        { label: "Notebook/desktop local", value: "local_device", score: 4 },
-        { label: "Não sei informar", value: "unknown", score: 8 },
+        { label: "Nuvem pública (SaaS do fornecedor)", value: "vendor_saas", score: 2.5 },
+        { label: "Nuvem própria da empresa (AWS/Azure/GCP/Magalu Cloud)", value: "company_cloud", score: 1.5 },
+        { label: "Datacenter próprio (on-premises)", value: "on_prem", score: 1 },
+        { label: "Notebook/desktop local", value: "local_device", score: 2 },
+        { label: "Não sei informar", value: "unknown", score: 4 },
       ],
     },
     {
@@ -335,11 +339,11 @@ async function main() {
       type: "SINGLE_CHOICE",
       riskDimension: "PROBABILITY",
       options: [
-        { label: "Web (navegador)", value: "web", score: 2 },
-        { label: "Aplicativo desktop instalado", value: "desktop_app", score: 3 },
-        { label: "Aplicativo mobile", value: "mobile_app", score: 3 },
-        { label: "API/integração apenas", value: "api_only", score: 4 },
-        { label: "Múltiplos", value: "multiple", score: 4 },
+        { label: "Web (navegador)", value: "web", score: 1 },
+        { label: "Aplicativo desktop instalado", value: "desktop_app", score: 1.5 },
+        { label: "Aplicativo mobile", value: "mobile_app", score: 1.5 },
+        { label: "API/integração apenas", value: "api_only", score: 2 },
+        { label: "Múltiplos", value: "multiple", score: 2 },
       ],
     },
     {
@@ -348,7 +352,7 @@ async function main() {
       weight: 9,
       type: "SINGLE_CHOICE",
       riskDimension: "IMPACT",
-      options: YES_NO(0, 8),
+      options: YES_NO(0, 4),
     },
     {
       category: "Segurança",
@@ -366,7 +370,7 @@ async function main() {
       weight: 6,
       type: "SINGLE_CHOICE",
       riskDimension: "PROBABILITY",
-      options: YES_NO(1, 5),
+      options: YES_NO(0.5, 2.5),
     },
     {
       category: "Segurança",
@@ -384,10 +388,10 @@ async function main() {
       type: "SINGLE_CHOICE",
       riskDimension: "PROBABILITY",
       options: [
-        { label: "Somente rede interna/VPN", value: "internal_vpn", score: 1 },
-        { label: "Acesso público pela internet", value: "public_internet", score: 6 },
-        { label: "Acesso restrito por IP", value: "ip_restricted", score: 3 },
-        { label: "Híbrido", value: "hybrid", score: 4 },
+        { label: "Somente rede interna/VPN", value: "internal_vpn", score: 0.5 },
+        { label: "Acesso público pela internet", value: "public_internet", score: 3 },
+        { label: "Acesso restrito por IP", value: "ip_restricted", score: 1.5 },
+        { label: "Híbrido", value: "hybrid", score: 2 },
       ],
     },
     {
@@ -396,7 +400,7 @@ async function main() {
       weight: 7,
       type: "SINGLE_CHOICE",
       riskDimension: "IMPACT",
-      options: YES_NO(1, 7),
+      options: YES_NO(0.5, 3.5),
     },
     {
       category: "Segurança",
@@ -404,7 +408,7 @@ async function main() {
       weight: 7,
       type: "SINGLE_CHOICE",
       riskDimension: "IMPACT",
-      options: YES_NO(1, 7),
+      options: YES_NO(0.5, 3.5),
     },
     {
       category: "Integrações",
@@ -412,7 +416,7 @@ async function main() {
       weight: 4,
       type: "SINGLE_CHOICE",
       riskDimension: "PROBABILITY",
-      options: YES_NO(5, 1),
+      options: YES_NO(2.5, 0.5),
     },
     {
       category: "Integrações",
@@ -429,7 +433,7 @@ async function main() {
       weight: 10,
       type: "SINGLE_CHOICE",
       riskDimension: "IMPACT",
-      options: YES_NO(8, 0),
+      options: YES_NO(4, 0),
     },
     {
       category: "LGPD",
@@ -439,12 +443,12 @@ async function main() {
       riskDimension: "IMPACT",
       isRequired: false,
       options: [
-        { label: "Dados cadastrais básicos (nome, e-mail)", value: "basic", score: 3 },
-        { label: "Dados de contato", value: "contact", score: 2 },
-        { label: "Dados financeiros", value: "financial", score: 7 },
-        { label: "Dados de saúde (sensível)", value: "health", score: 10 },
-        { label: "Dados biométricos (sensível)", value: "biometric", score: 10 },
-        { label: "Dados de menores de idade", value: "minors", score: 10 },
+        { label: "Dados cadastrais básicos (nome, e-mail)", value: "basic", score: 1.5 },
+        { label: "Dados de contato", value: "contact", score: 1 },
+        { label: "Dados financeiros", value: "financial", score: 3.5 },
+        { label: "Dados de saúde (sensível)", value: "health", score: 5 },
+        { label: "Dados biométricos (sensível)", value: "biometric", score: 5 },
+        { label: "Dados de menores de idade", value: "minors", score: 5 },
         { label: "Não se aplica", value: "not_applicable", score: 0 },
       ],
     },
@@ -454,7 +458,7 @@ async function main() {
       weight: 5,
       type: "SINGLE_CHOICE",
       riskDimension: "IMPACT",
-      options: YES_NO(4, 0),
+      options: YES_NO(2, 0),
     },
     {
       category: "Informações Gerais",
@@ -586,6 +590,13 @@ async function main() {
   });
 
   // --- Matriz de risco padrão ----------------------------------------------------
+  // Escala 1-5, alinhada ao motor já em produção da empresa (n8n): quanto
+  // MAIOR o score, mais SEGURO (mesma convenção do output de exemplo do n8n
+  // — "risk_score: 4.1, risk_classification: Homologado"). probabilityScore/
+  // impactScore/totalScore em RiskResult seguem essa mesma convenção — são
+  // scores de "segurança", não de "risco" cru (esse fica só na QuestionOption,
+  // internamente, onde é mais intuitivo o admin configurar "quão arriscada é
+  // esta resposta").
   let riskMatrix = await prisma.riskMatrixConfig.findFirst({
     where: { tenantId: tenant.id, name: "Matriz Padrão" },
   });
@@ -596,33 +607,43 @@ async function main() {
         name: "Matriz Padrão",
         version: 1,
         isActive: true,
-        minApprovalScore: 70,
+        minApprovalScore: 3.0,
       },
+    });
+  } else {
+    riskMatrix = await prisma.riskMatrixConfig.update({
+      where: { id: riskMatrix.id },
+      data: { minApprovalScore: 3.0 },
     });
   }
 
+  // Rótulos em termos de probabilidade/impacto DE RISCO — por isso a ordem é
+  // invertida em relação ao score de segurança: "Alta" (probabilidade/impacto
+  // de risco) cai na faixa BAIXA do score de segurança, e vice-versa.
   const probabilityDefs = [
-    { label: "Baixa", order: 1, minScore: 0, maxScore: 33.33 },
-    { label: "Média", order: 2, minScore: 33.34, maxScore: 66.66 },
-    { label: "Alta", order: 3, minScore: 66.67, maxScore: 100 },
+    { label: "Alta", order: 1, minScore: 0, maxScore: 1.66 },
+    { label: "Média", order: 2, minScore: 1.67, maxScore: 3.33 },
+    { label: "Baixa", order: 3, minScore: 3.34, maxScore: 5 },
   ];
   const impactDefs = [
-    { label: "Baixo", order: 1, minScore: 0, maxScore: 33.33 },
-    { label: "Médio", order: 2, minScore: 33.34, maxScore: 66.66 },
-    { label: "Alto", order: 3, minScore: 66.67, maxScore: 100 },
+    { label: "Alto", order: 1, minScore: 0, maxScore: 1.66 },
+    { label: "Médio", order: 2, minScore: 1.67, maxScore: 3.33 },
+    { label: "Baixo", order: 3, minScore: 3.34, maxScore: 5 },
   ];
+  // Faixas do score TOTAL (0-5) — é isso que o RiskEngine (Etapa 5) usa de
+  // fato para decidir a classificação, não a grade abaixo (que é só para o
+  // heatmap futuro, Etapa 9).
   const classificationDefs = [
-    { label: "Baixo", order: 1, color: "#16a34a" },
-    { label: "Médio", order: 2, color: "#ca8a04" },
-    { label: "Alto", order: 3, color: "#ea580c" },
-    { label: "Crítico", order: 4, color: "#dc2626" },
+    { label: "Rejeitado", order: 1, color: "#dc2626", minScore: 0, maxScore: 2.99 },
+    { label: "Aguardando Ajustes", order: 2, color: "#ca8a04", minScore: 3.0, maxScore: 3.99 },
+    { label: "Homologado", order: 3, color: "#16a34a", minScore: 4.0, maxScore: 5.0 },
   ];
 
   const probabilityLevelByLabel = new Map<string, { id: string }>();
   for (const def of probabilityDefs) {
     const level = await prisma.probabilityLevel.upsert({
       where: { id: `${riskMatrix.id}-prob-${def.order}` },
-      update: {},
+      update: { minScore: def.minScore, maxScore: def.maxScore },
       create: { id: `${riskMatrix.id}-prob-${def.order}`, riskMatrixConfigId: riskMatrix.id, ...def },
     });
     probabilityLevelByLabel.set(def.label, level);
@@ -631,7 +652,7 @@ async function main() {
   for (const def of impactDefs) {
     const level = await prisma.impactLevel.upsert({
       where: { id: `${riskMatrix.id}-impact-${def.order}` },
-      update: {},
+      update: { minScore: def.minScore, maxScore: def.maxScore },
       create: { id: `${riskMatrix.id}-impact-${def.order}`, riskMatrixConfigId: riskMatrix.id, ...def },
     });
     impactLevelByLabel.set(def.label, level);
@@ -640,23 +661,27 @@ async function main() {
   for (const def of classificationDefs) {
     const classification = await prisma.riskClassification.upsert({
       where: { id: `${riskMatrix.id}-class-${def.order}` },
-      update: {},
+      update: { minScore: def.minScore, maxScore: def.maxScore, color: def.color },
       create: {
         id: `${riskMatrix.id}-class-${def.order}`,
         riskMatrixConfigId: riskMatrix.id,
         label: def.label,
         order: def.order,
         color: def.color,
+        minScore: def.minScore,
+        maxScore: def.maxScore,
       },
     });
     classificationByLabel.set(def.label, classification);
   }
 
-  // Grade 3x3 (probabilidade x impacto) -> classificação.
+  // Grade 3x3 (probabilidade x impacto) -> classificação. Só alimenta o
+  // heatmap (Etapa 9) — a decisão de aprovação vem do totalScore contra os
+  // thresholds de RiskClassification acima, não desta grade.
   const matrixGrid: Record<string, Record<string, string>> = {
-    Baixa: { Baixo: "Baixo", Médio: "Baixo", Alto: "Médio" },
-    Média: { Baixo: "Baixo", Médio: "Médio", Alto: "Alto" },
-    Alta: { Baixo: "Médio", Médio: "Alto", Alto: "Crítico" },
+    Baixa: { Baixo: "Homologado", Médio: "Homologado", Alto: "Aguardando Ajustes" },
+    Média: { Baixo: "Homologado", Médio: "Aguardando Ajustes", Alto: "Rejeitado" },
+    Alta: { Baixo: "Aguardando Ajustes", Médio: "Rejeitado", Alto: "Rejeitado" },
   };
   for (const [probLabel, impactMap] of Object.entries(matrixGrid)) {
     for (const [impactLabel, classificationLabel] of Object.entries(impactMap)) {

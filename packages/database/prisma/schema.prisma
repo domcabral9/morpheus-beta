@@ -372,7 +372,8 @@ model RiskMatrixConfig {
   name             String
   version          Int      @default(1)
   isActive         Boolean  @default(true)
-  /// Score mínimo (0-100) para aprovação automática/recomendada.
+  /// Score mínimo (mesma escala de RiskClassification — ex.: 1 a 5) para
+  /// aprovação automática/recomendada.
   minApprovalScore Decimal  @db.Decimal(5, 2)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -434,6 +435,13 @@ model RiskClassification {
   order              Int
   color              String
   recommendationText String?
+  /// Faixa do `totalScore` (score geral, mesma escala do resto da matriz —
+  /// ex.: 1 a 5) que resulta nesta classificação. É o que a Etapa 5 usa de
+  /// fato para decidir Homologado/Aguardando Ajustes/Rejeitado — mais simples
+  /// e auditável do que derivar a decisão da célula da matriz 2D, que fica
+  /// reservada para visualização (heatmap, Etapa 9).
+  minScore Decimal @db.Decimal(5, 2)
+  maxScore Decimal @db.Decimal(5, 2)
 
   matrixCells RiskMatrixCell[]
   riskResults RiskResult[]
