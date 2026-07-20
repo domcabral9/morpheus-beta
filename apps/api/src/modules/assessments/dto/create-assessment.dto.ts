@@ -1,7 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsIn, IsOptional, IsString, IsUrl, MinLength } from "class-validator";
+import { IsIn, IsOptional, IsString, IsUrl, Matches, MinLength } from "class-validator";
 
 const CRITICALITY_VALUES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
+const SHA256_HEX_PATTERN = /^[a-fA-F0-9]{64}$/;
 
 export class CreateAssessmentDto {
   @ApiProperty()
@@ -40,6 +41,21 @@ export class CreateAssessmentDto {
   @IsString()
   @MinLength(1)
   justification!: string;
+
+  @ApiPropertyOptional({ description: "Referência a um ticket externo (Jira/ServiceNow/etc.)." })
+  @IsOptional()
+  @IsString()
+  linkedTicket?: string;
+
+  @ApiPropertyOptional({
+    description: "SHA-256 do instalador/binário avaliado, em hexadecimal (64 caracteres).",
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(SHA256_HEX_PATTERN, {
+    message: "installerFileHash deve ser um SHA-256 hexadecimal válido",
+  })
+  installerFileHash?: string;
 }
 
 export { CRITICALITY_VALUES };

@@ -16,6 +16,12 @@ const envSchema = z
     CORS_ORIGIN: z.string().default("http://localhost:3000"),
     DATABASE_URL: z.string().min(1, "DATABASE_URL é obrigatório"),
 
+    // Base URL pública da API — usada para montar o link de verificação
+    // codificado no QR Code do parecer técnico (Etapa 7). Sem protocolo/porta
+    // fixos hardcoded porque isso muda entre dev/staging/produção.
+    PUBLIC_API_URL: z.string().default("http://localhost:3001"),
+    STORAGE_DIR: z.string().default("./storage"),
+
     JWT_ACCESS_SECRET: z.string().min(16, "JWT_ACCESS_SECRET deve ter ao menos 16 caracteres"),
     JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
     JWT_REFRESH_SECRET: z.string().min(16, "JWT_REFRESH_SECRET deve ter ao menos 16 caracteres"),

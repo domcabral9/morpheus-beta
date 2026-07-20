@@ -1,6 +1,8 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsIn, IsOptional, IsString, IsUrl, MinLength } from "class-validator";
+import { IsIn, IsOptional, IsString, IsUrl, Matches, MinLength } from "class-validator";
 import { CRITICALITY_VALUES } from "./create-assessment.dto";
+
+const SHA256_HEX_PATTERN = /^[a-fA-F0-9]{64}$/;
 
 export class UpdateAssessmentDto {
   @ApiPropertyOptional()
@@ -45,4 +47,17 @@ export class UpdateAssessmentDto {
   @IsString()
   @MinLength(1)
   justification?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  linkedTicket?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Matches(SHA256_HEX_PATTERN, {
+    message: "installerFileHash deve ser um SHA-256 hexadecimal válido",
+  })
+  installerFileHash?: string;
 }
