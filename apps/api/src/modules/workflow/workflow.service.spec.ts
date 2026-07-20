@@ -12,6 +12,8 @@ import { TechnicalOpinionService } from "../technical-opinions/technical-opinion
 import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { InventoryService } from "../inventory/inventory.service";
+import { ITSM_ADAPTER } from "../integrations/itsm/itsm.interface";
+import { COLLABORATION_ADAPTER } from "../integrations/collaboration/collaboration.interface";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
@@ -94,6 +96,8 @@ describe("WorkflowService", () => {
   let auditLogService: { record: jest.Mock };
   let notificationsService: { notify: jest.Mock; notifyRole: jest.Mock };
   let inventoryService: { createFromApprovedAssessment: jest.Mock };
+  let itsmAdapter: { createTicket: jest.Mock };
+  let collaborationAdapter: { postMessage: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -118,6 +122,8 @@ describe("WorkflowService", () => {
       notifyRole: jest.fn().mockResolvedValue(undefined),
     };
     inventoryService = { createFromApprovedAssessment: jest.fn().mockResolvedValue(undefined) };
+    itsmAdapter = { createTicket: jest.fn().mockResolvedValue({ ticketId: "ticket-1" }) };
+    collaborationAdapter = { postMessage: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -128,6 +134,8 @@ describe("WorkflowService", () => {
         { provide: AuditLogService, useValue: auditLogService },
         { provide: NotificationsService, useValue: notificationsService },
         { provide: InventoryService, useValue: inventoryService },
+        { provide: ITSM_ADAPTER, useValue: itsmAdapter },
+        { provide: COLLABORATION_ADAPTER, useValue: collaborationAdapter },
       ],
     }).compile();
 
@@ -301,6 +309,9 @@ describe("WorkflowService", () => {
         "REJECTED",
         "approver-1",
       );
+      expect(itsmAdapter.createTicket).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: "tenant-1", externalReference: "assessment-1" }),
+      );
     });
 
     it("REQUEST_ADJUSTMENT devolve a avaliação sem fechar a instância", async () => {
@@ -363,6 +374,48 @@ describe("WorkflowService", () => {
         "assessment-1",
         "APPROVED",
         "approver-1",
+      );
+      expect(collaborationAdapter.postMessage).not.toHaveBeenCalled();
+    });
+
+    it("APPROVE final de avaliação CRITICAL posta alerta no canal de colaboração", async () => {
+      repo.findStepExecutionById
+        .mockResolvedValueOnce(
+          makeExecution({
+            workflowStep: {
+              id: "step-5",
+              order: 5,
+              isOptional: false,
+              responsibleRoleId: "role-admin",
+              responsibleRole: { name: "Aprovação Final" },
+            },
+            assessmentWorkflowInstance: {
+              workflowDefinitionId: "def-1",
+              assessment: {
+                id: "assessment-1",
+                tenantId: "tenant-1",
+                requesterId: "requester-1",
+                responsibleId: "responsible-1",
+                softwareName: "Sistema Crítico",
+                vendor: "Fornecedor X",
+                version: "1.0.0",
+                url: null,
+                areaId: "area-1",
+                criticality: "CRITICAL",
+                status: "IN_REVIEW",
+              },
+            },
+          }),
+        )
+        .mockResolvedValueOnce(makeExecution({ status: "APPROVED" }));
+      repo.findUserRoleIds.mockResolvedValue(["role-admin"]);
+      repo.findDefinitionById.mockResolvedValue({ id: "def-1", steps });
+      repo.countLgpdTriggers.mockResolvedValue(0);
+
+      await service.decideStep(makeUser(), "exec-1", { decision: "APPROVE" });
+
+      expect(collaborationAdapter.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ channel: "security-alerts" }),
       );
     });
 
