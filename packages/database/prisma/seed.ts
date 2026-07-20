@@ -29,6 +29,7 @@ const PERMISSIONS = [
   { key: "users:manage", description: "Gerenciar usuários do tenant" },
   { key: "roles:manage", description: "Gerenciar papéis e permissões" },
   { key: "questions:manage", description: "Gerenciar perguntas do questionário" },
+  { key: "controls:manage", description: "Vincular perguntas aos controles da biblioteca de conformidade" },
   { key: "risk-matrix:manage", description: "Gerenciar a matriz de risco" },
   { key: "workflows:manage", description: "Gerenciar fluxos de aprovação" },
   { key: "system:configure", description: "Configurar parâmetros globais do sistema" },
@@ -541,76 +542,348 @@ async function main() {
   }
 
   // --- Biblioteca de controles --------------------------------------------------
-  for (const framework of CONTROL_FRAMEWORKS) {
-    await prisma.controlFramework.upsert({
-      where: { code: framework.code },
-      update: { name: framework.name },
-      create: framework,
-    });
-  }
-  const iso27001 = await prisma.controlFramework.findUniqueOrThrow({
-    where: { code: "ISO_27001" },
-  });
-  const nistCsf = await prisma.controlFramework.findUniqueOrThrow({ where: { code: "NIST_CSF" } });
-  const lgpd = await prisma.controlFramework.findUniqueOrThrow({ where: { code: "LGPD" } });
-
-  const controlA9 = await prisma.control.upsert({
-    where: { frameworkId_code: { frameworkId: iso27001.id, code: "A.9" } },
-    update: {},
-    create: {
-      frameworkId: iso27001.id,
+  // Catálogo curado, não exaustivo: os frameworks completos (ISO 27002 tem 93
+  // controles, NIST CSF ~106 subcategorias, CIS v8 153 safeguards, OWASP ASVS
+  // 200+ requisitos) seriam inviáveis de manter à mão num seed. Onde o próprio
+  // framework tem uma lista oficial curta e completa no nível superior (os 18
+  // Controls do CIS v8, os 14 capítulos do OWASP ASVS, os 10 itens do OWASP Top
+  // 10), a lista abaixo é essa lista completa. Nos demais (ISO 27001/27002,
+  // NIST CSF, LGPD, GDPR), é uma seleção dos itens mais relevantes para
+  // avaliação de risco de software — o admin expande pelo CRUD futuro do
+  // catálogo caso precise de mais granularidade.
+  const CONTROLS: Array<{
+    frameworkCode: ControlFrameworkCode;
+    code: string;
+    title: string;
+    description: string;
+  }> = [
+    // ISO/IEC 27001:2022 — cláusulas do Anexo A mais relevantes ao questionário
+    {
+      frameworkCode: "ISO_27001",
       code: "A.9",
       title: "Controle de acesso",
       description: "Requisitos de controle de acesso e autenticação, incluindo MFA.",
     },
-  });
-  const controlPr = await prisma.control.upsert({
-    where: { frameworkId_code: { frameworkId: nistCsf.id, code: "PR.AA" } },
-    update: {},
-    create: {
-      frameworkId: nistCsf.id,
+    {
+      frameworkCode: "ISO_27001",
+      code: "5.15",
+      title: "Controle de acesso",
+      description: "Regras para controlar o acesso físico e lógico a informações e outros ativos.",
+    },
+    {
+      frameworkCode: "ISO_27001",
+      code: "5.17",
+      title: "Informação de autenticação",
+      description: "Alocação e gestão de informações de autenticação, incluindo MFA e SSO.",
+    },
+    {
+      frameworkCode: "ISO_27001",
+      code: "5.19",
+      title: "Segurança da informação nas relações com fornecedores",
+      description: "Processos para gerenciar riscos de segurança associados a produtos e serviços de fornecedores.",
+    },
+    {
+      frameworkCode: "ISO_27001",
+      code: "5.23",
+      title: "Segurança da informação para uso de serviços em nuvem",
+      description: "Processos de aquisição, uso, gestão e saída de serviços em nuvem.",
+    },
+    {
+      frameworkCode: "ISO_27001",
+      code: "5.34",
+      title: "Privacidade e proteção de dados pessoais (PII)",
+      description: "Identificação e atendimento a requisitos de privacidade e proteção de PII.",
+    },
+    {
+      frameworkCode: "ISO_27001",
+      code: "8.2",
+      title: "Direitos de acesso privilegiado",
+      description: "Restrição e gestão da alocação de direitos de acesso privilegiado.",
+    },
+    {
+      frameworkCode: "ISO_27001",
+      code: "8.5",
+      title: "Autenticação segura",
+      description: "Tecnologias e procedimentos de autenticação segura, incluindo MFA.",
+    },
+    {
+      frameworkCode: "ISO_27001",
+      code: "8.13",
+      title: "Backup de informações",
+      description: "Cópias de backup de informações, software e sistemas, testadas regularmente.",
+    },
+    {
+      frameworkCode: "ISO_27001",
+      code: "8.15",
+      title: "Registro de eventos (logging)",
+      description: "Produção, armazenamento, proteção e análise de logs de eventos.",
+    },
+    {
+      frameworkCode: "ISO_27001",
+      code: "8.16",
+      title: "Atividades de monitoramento",
+      description: "Monitoramento de redes, sistemas e aplicações para detectar comportamento anômalo.",
+    },
+    {
+      frameworkCode: "ISO_27001",
+      code: "8.24",
+      title: "Uso de criptografia",
+      description: "Regras para uso eficaz de criptografia, incluindo gestão de chaves.",
+    },
+    // ISO/IEC 27002 — os 4 temas de alto nível (guia de implementação, mesma
+    // numeração do Anexo A 2022; granularidade de cláusula fica no ISO_27001)
+    {
+      frameworkCode: "ISO_27002",
+      code: "5",
+      title: "Controles organizacionais",
+      description: "Políticas, papéis, responsabilidades e governança de segurança da informação.",
+    },
+    {
+      frameworkCode: "ISO_27002",
+      code: "6",
+      title: "Controles de pessoas",
+      description: "Triagem, termos de contratação, conscientização e treinamento.",
+    },
+    {
+      frameworkCode: "ISO_27002",
+      code: "7",
+      title: "Controles físicos",
+      description: "Perímetros de segurança física e proteção contra ameaças ambientais.",
+    },
+    {
+      frameworkCode: "ISO_27002",
+      code: "8",
+      title: "Controles tecnológicos",
+      description: "Controle de acesso, criptografia, operações seguras, rede e desenvolvimento seguro.",
+    },
+    // NIST Cybersecurity Framework 2.0 — as 6 funções (lista oficial completa)
+    {
+      frameworkCode: "NIST_CSF",
+      code: "GV",
+      title: "Govern (Governar)",
+      description: "Estabelece e monitora a estratégia e a política de gestão de risco de cibersegurança.",
+    },
+    {
+      frameworkCode: "NIST_CSF",
+      code: "ID",
+      title: "Identify (Identificar)",
+      description: "Compreensão atual dos riscos de cibersegurança para sistemas, pessoas, ativos e dados.",
+    },
+    {
+      frameworkCode: "NIST_CSF",
+      code: "PR",
+      title: "Protect (Proteger)",
+      description: "Salvaguardas para gerenciar os riscos de cibersegurança da organização.",
+    },
+    {
+      frameworkCode: "NIST_CSF",
       code: "PR.AA",
       title: "Identity Management, Authentication and Access Control",
       description: "Gestão de identidade, autenticação e controle de acesso.",
     },
-  });
-  const controlLgpdArt46 = await prisma.control.upsert({
-    where: { frameworkId_code: { frameworkId: lgpd.id, code: "Art. 46" } },
-    update: {},
-    create: {
-      frameworkId: lgpd.id,
+    {
+      frameworkCode: "NIST_CSF",
+      code: "DE",
+      title: "Detect (Detectar)",
+      description: "Descoberta e análise de possíveis ataques e comprometimentos de cibersegurança.",
+    },
+    {
+      frameworkCode: "NIST_CSF",
+      code: "RS",
+      title: "Respond (Responder)",
+      description: "Ações realizadas em resposta a um incidente de cibersegurança detectado.",
+    },
+    {
+      frameworkCode: "NIST_CSF",
+      code: "RC",
+      title: "Recover (Recuperar)",
+      description: "Restauração de ativos e operações afetados por um incidente de cibersegurança.",
+    },
+    // CIS Controls v8 — lista completa dos 18 controles de nível superior
+    { frameworkCode: "CIS_V8", code: "1", title: "Inventory and Control of Enterprise Assets", description: "Gestão ativa de todos os ativos de hardware conectados à infraestrutura." },
+    { frameworkCode: "CIS_V8", code: "2", title: "Inventory and Control of Software Assets", description: "Gestão ativa de todo o software na rede, autorizado e não autorizado." },
+    { frameworkCode: "CIS_V8", code: "3", title: "Data Protection", description: "Processos e controles técnicos para identificar, classificar, reter, descartar e proteger dados." },
+    { frameworkCode: "CIS_V8", code: "4", title: "Secure Configuration of Enterprise Assets and Software", description: "Estabelecimento e manutenção da configuração segura de ativos e software." },
+    { frameworkCode: "CIS_V8", code: "5", title: "Account Management", description: "Uso de processos e ferramentas para atribuir e gerenciar autorização de credenciais de contas." },
+    { frameworkCode: "CIS_V8", code: "6", title: "Access Control Management", description: "Uso de processos e ferramentas para criar, atribuir, gerenciar e revogar credenciais e privilégios de acesso." },
+    { frameworkCode: "CIS_V8", code: "7", title: "Continuous Vulnerability Management", description: "Desenvolvimento de um plano para avaliar e rastrear continuamente vulnerabilidades." },
+    { frameworkCode: "CIS_V8", code: "8", title: "Audit Log Management", description: "Coleta, alerta, revisão e retenção de logs de auditoria de eventos." },
+    { frameworkCode: "CIS_V8", code: "9", title: "Email and Web Browser Protections", description: "Melhoria das proteções e detecções de ameaças por e-mail e navegador web." },
+    { frameworkCode: "CIS_V8", code: "10", title: "Malware Defenses", description: "Prevenção ou controle da instalação, disseminação e execução de aplicações e códigos maliciosos." },
+    { frameworkCode: "CIS_V8", code: "11", title: "Data Recovery", description: "Práticas de recuperação de dados suficientes para restaurar ativos à condição anterior ao incidente." },
+    { frameworkCode: "CIS_V8", code: "12", title: "Network Infrastructure Management", description: "Estabelecimento, implementação e gestão ativa de dispositivos de rede." },
+    { frameworkCode: "CIS_V8", code: "13", title: "Network Monitoring and Defense", description: "Processos e ferramentas para estabelecer e manter monitoramento e defesa de rede abrangentes." },
+    { frameworkCode: "CIS_V8", code: "14", title: "Security Awareness and Skills Training", description: "Estabelecimento e manutenção de um programa de conscientização de segurança." },
+    { frameworkCode: "CIS_V8", code: "15", title: "Service Provider Management", description: "Desenvolvimento de um processo para avaliar prestadores de serviço que detêm dados sensíveis." },
+    { frameworkCode: "CIS_V8", code: "16", title: "Application Software Security", description: "Gestão do ciclo de vida de segurança de software desenvolvido, hospedado ou adquirido." },
+    { frameworkCode: "CIS_V8", code: "17", title: "Incident Response Management", description: "Estabelecimento de um programa para desenvolver e manter a capacidade de resposta a incidentes." },
+    { frameworkCode: "CIS_V8", code: "18", title: "Penetration Testing", description: "Teste da eficácia e resiliência dos ativos empresariais por meio da identificação e exploração de fraquezas." },
+    // LGPD — artigos mais relevantes para avaliação de fornecedores/software
+    {
+      frameworkCode: "LGPD",
       code: "Art. 46",
       title: "Segurança e sigilo de dados",
       description: "Medidas técnicas e administrativas de proteção de dados pessoais.",
     },
-  });
+    {
+      frameworkCode: "LGPD",
+      code: "Art. 6",
+      title: "Princípios do tratamento de dados",
+      description: "Finalidade, adequação, necessidade, minimização e demais princípios do tratamento.",
+    },
+    {
+      frameworkCode: "LGPD",
+      code: "Art. 7",
+      title: "Requisitos para o tratamento de dados pessoais",
+      description: "Bases legais que autorizam o tratamento de dados pessoais.",
+    },
+    {
+      frameworkCode: "LGPD",
+      code: "Art. 33",
+      title: "Transferência internacional de dados",
+      description: "Requisitos para transferência de dados pessoais para outros países ou organismos internacionais.",
+    },
+    {
+      frameworkCode: "LGPD",
+      code: "Art. 48",
+      title: "Comunicação de incidente de segurança",
+      description: "Obrigação de comunicar à ANPD e ao titular incidente que possa acarretar risco ou dano relevante.",
+    },
+    {
+      frameworkCode: "LGPD",
+      code: "Art. 50",
+      title: "Boas práticas e governança",
+      description: "Adoção de regras de boas práticas e governança sobre condições de organização e procedimentos.",
+    },
+    // GDPR — artigos equivalentes para operações com titulares na UE/EEE
+    {
+      frameworkCode: "GDPR",
+      code: "Art. 5",
+      title: "Principles relating to processing of personal data",
+      description: "Licitude, lealdade, transparência, limitação de finalidade e minimização de dados.",
+    },
+    {
+      frameworkCode: "GDPR",
+      code: "Art. 25",
+      title: "Data protection by design and by default",
+      description: "Privacidade desde a concepção e por padrão na implementação de sistemas.",
+    },
+    {
+      frameworkCode: "GDPR",
+      code: "Art. 28",
+      title: "Processor",
+      description: "Obrigações contratuais e técnicas de operadores que tratam dados em nome do controlador.",
+    },
+    {
+      frameworkCode: "GDPR",
+      code: "Art. 32",
+      title: "Security of processing",
+      description: "Medidas técnicas e organizacionais apropriadas ao risco, incluindo criptografia.",
+    },
+    {
+      frameworkCode: "GDPR",
+      code: "Art. 33",
+      title: "Notification of a personal data breach to the supervisory authority",
+      description: "Notificação de violação de dados pessoais à autoridade supervisora em até 72 horas.",
+    },
+    {
+      frameworkCode: "GDPR",
+      code: "Art. 35",
+      title: "Data protection impact assessment",
+      description: "Avaliação de impacto à proteção de dados quando o tratamento apresenta alto risco.",
+    },
+    // OWASP ASVS 4.0 — lista completa dos 14 capítulos de nível superior
+    { frameworkCode: "OWASP_ASVS", code: "V1", title: "Architecture, Design and Threat Modeling", description: "Requisitos de arquitetura, design seguro e modelagem de ameaças." },
+    { frameworkCode: "OWASP_ASVS", code: "V2", title: "Authentication", description: "Requisitos de verificação de identidade e credenciais, incluindo MFA." },
+    { frameworkCode: "OWASP_ASVS", code: "V3", title: "Session Management", description: "Requisitos de geração, proteção e encerramento de sessões." },
+    { frameworkCode: "OWASP_ASVS", code: "V4", title: "Access Control", description: "Requisitos de autorização e controle de acesso a funções e dados." },
+    { frameworkCode: "OWASP_ASVS", code: "V5", title: "Validation, Sanitization and Encoding", description: "Requisitos de validação e tratamento seguro de entradas e saídas." },
+    { frameworkCode: "OWASP_ASVS", code: "V6", title: "Stored Cryptography", description: "Requisitos de criptografia de dados armazenados e gestão de chaves." },
+    { frameworkCode: "OWASP_ASVS", code: "V7", title: "Error Handling and Logging", description: "Requisitos de tratamento de erros e geração de logs de segurança." },
+    { frameworkCode: "OWASP_ASVS", code: "V8", title: "Data Protection", description: "Requisitos de proteção de dados sensíveis em trânsito e em repouso." },
+    { frameworkCode: "OWASP_ASVS", code: "V9", title: "Communications", description: "Requisitos de segurança de comunicação de rede (TLS)." },
+    { frameworkCode: "OWASP_ASVS", code: "V10", title: "Malicious Code", description: "Requisitos de prevenção contra código malicioso e backdoors." },
+    { frameworkCode: "OWASP_ASVS", code: "V11", title: "Business Logic", description: "Requisitos de proteção contra abuso de regras de negócio." },
+    { frameworkCode: "OWASP_ASVS", code: "V12", title: "Files and Resources", description: "Requisitos de manipulação segura de arquivos e recursos." },
+    { frameworkCode: "OWASP_ASVS", code: "V13", title: "API and Web Service", description: "Requisitos de segurança para APIs REST, SOAP e GraphQL." },
+    { frameworkCode: "OWASP_ASVS", code: "V14", title: "Configuration", description: "Requisitos de configuração segura de build, dependências e infraestrutura." },
+    // OWASP Top 10 (2021) — lista completa
+    { frameworkCode: "OWASP_TOP10", code: "A01", title: "Broken Access Control", description: "Falhas no controle de acesso que permitem ações fora do permitido ao usuário." },
+    { frameworkCode: "OWASP_TOP10", code: "A02", title: "Cryptographic Failures", description: "Falhas relacionadas a criptografia que levam à exposição de dados sensíveis." },
+    { frameworkCode: "OWASP_TOP10", code: "A03", title: "Injection", description: "Falhas de injeção, como SQL, NoSQL, OS e LDAP injection." },
+    { frameworkCode: "OWASP_TOP10", code: "A04", title: "Insecure Design", description: "Riscos relacionados a falhas de design e arquitetura, não apenas de implementação." },
+    { frameworkCode: "OWASP_TOP10", code: "A05", title: "Security Misconfiguration", description: "Configurações inseguras de segurança em qualquer camada da aplicação." },
+    { frameworkCode: "OWASP_TOP10", code: "A06", title: "Vulnerable and Outdated Components", description: "Uso de componentes com vulnerabilidades conhecidas ou desatualizados." },
+    { frameworkCode: "OWASP_TOP10", code: "A07", title: "Identification and Authentication Failures", description: "Falhas na confirmação da identidade do usuário, autenticação e gestão de sessão." },
+    { frameworkCode: "OWASP_TOP10", code: "A08", title: "Software and Data Integrity Failures", description: "Falhas de código e infraestrutura que não protegem contra violações de integridade." },
+    { frameworkCode: "OWASP_TOP10", code: "A09", title: "Security Logging and Monitoring Failures", description: "Ausência ou insuficiência de logging e monitoramento que dificulta detectar violações." },
+    { frameworkCode: "OWASP_TOP10", code: "A10", title: "Server-Side Request Forgery (SSRF)", description: "Falhas que permitem à aplicação buscar um recurso remoto sem validar a URL fornecida." },
+  ];
 
-  const mfaQuestion = await prisma.question.findFirstOrThrow({
-    where: {
-      tenantId: tenant.id,
-      text: { contains: "Múltiplo Fator de Autenticação", mode: "insensitive" },
-    },
-  });
-  const lgpdQuestion = await prisma.question.findFirstOrThrow({
-    where: {
-      tenantId: tenant.id,
-      text: { contains: "ARMAZENA ou PROCESSA DADOS PESSOAIS", mode: "insensitive" },
-    },
-  });
-  for (const controlId of [controlA9.id, controlPr.id]) {
-    await prisma.questionControl.upsert({
-      where: { questionId_controlId: { questionId: mfaQuestion.id, controlId } },
-      update: {},
-      create: { questionId: mfaQuestion.id, controlId },
+  const frameworkByCode = new Map<ControlFrameworkCode, { id: string }>();
+  for (const framework of CONTROL_FRAMEWORKS) {
+    const created = await prisma.controlFramework.upsert({
+      where: { code: framework.code },
+      update: { name: framework.name },
+      create: framework,
     });
+    frameworkByCode.set(framework.code, created);
   }
-  await prisma.questionControl.upsert({
-    where: {
-      questionId_controlId: { questionId: lgpdQuestion.id, controlId: controlLgpdArt46.id },
+
+  const controlByKey = new Map<string, { id: string }>();
+  for (const c of CONTROLS) {
+    const framework = frameworkByCode.get(c.frameworkCode)!;
+    const control = await prisma.control.upsert({
+      where: { frameworkId_code: { frameworkId: framework.id, code: c.code } },
+      update: { title: c.title, description: c.description },
+      create: { frameworkId: framework.id, code: c.code, title: c.title, description: c.description },
+    });
+    controlByKey.set(`${c.frameworkCode}::${c.code}`, control);
+  }
+
+  // Vínculo de perguntas do questionário aos controles que elas avaliam —
+  // substring único o bastante para não colidir com as perguntas de texto
+  // livre "Caso exista X, como está implementado?" que citam o mesmo termo.
+  const QUESTION_CONTROL_LINKS: Array<{ questionTextContains: string; controls: string[] }> = [
+    {
+      questionTextContains: "Múltiplo Fator de Autenticação (MFA)?",
+      controls: ["ISO_27001::A.9", "ISO_27001::8.5", "NIST_CSF::PR.AA", "CIS_V8::6", "OWASP_ASVS::V2"],
     },
-    update: {},
-    create: { questionId: lgpdQuestion.id, controlId: controlLgpdArt46.id },
-  });
+    {
+      questionTextContains: "Single Sign-On (SSO)?",
+      controls: ["ISO_27001::5.17", "CIS_V8::6"],
+    },
+    {
+      questionTextContains: "CONTROLE DE PERFIS",
+      controls: ["ISO_27001::8.2", "CIS_V8::6", "OWASP_ASVS::V4", "OWASP_TOP10::A01"],
+    },
+    {
+      questionTextContains: "LOGS DE ACESSO ou auditoria",
+      controls: ["ISO_27001::8.15", "ISO_27001::8.16", "CIS_V8::8", "OWASP_ASVS::V7", "OWASP_TOP10::A09"],
+    },
+    {
+      questionTextContains: "ARMAZENA ou PROCESSA DADOS PESSOAIS",
+      controls: ["LGPD::Art. 46", "LGPD::Art. 6", "GDPR::Art. 32", "GDPR::Art. 5"],
+    },
+    {
+      questionTextContains: "Onde o software será HOSPEDADO",
+      controls: ["ISO_27001::5.23"],
+    },
+  ];
+
+  for (const link of QUESTION_CONTROL_LINKS) {
+    const question = await prisma.question.findFirstOrThrow({
+      where: { tenantId: tenant.id, text: { contains: link.questionTextContains, mode: "insensitive" } },
+    });
+    for (const key of link.controls) {
+      const control = controlByKey.get(key)!;
+      await prisma.questionControl.upsert({
+        where: { questionId_controlId: { questionId: question.id, controlId: control.id } },
+        update: {},
+        create: { questionId: question.id, controlId: control.id },
+      });
+    }
+  }
 
   // --- Matriz de risco padrão ----------------------------------------------------
   // Escala 1-5, alinhada ao motor já em produção da empresa (n8n): quanto
@@ -811,6 +1084,7 @@ async function main() {
     categories: QUESTION_CATEGORIES.length,
     questions: seedQuestions.length,
     controlFrameworks: CONTROL_FRAMEWORKS.length,
+    controls: CONTROLS.length,
     riskMatrix: riskMatrix.name,
     workflow: workflow.name,
   });

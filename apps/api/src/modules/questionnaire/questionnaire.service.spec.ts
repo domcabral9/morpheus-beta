@@ -2,6 +2,7 @@ import { Test } from "@nestjs/testing";
 import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { QuestionnaireService } from "./questionnaire.service";
 import { QuestionnaireRepository } from "./questionnaire.repository";
+import { ControlsService } from "../controls/controls.service";
 
 describe("QuestionnaireService", () => {
   let service: QuestionnaireService;
@@ -12,7 +13,10 @@ describe("QuestionnaireService", () => {
     createQuestion: jest.Mock;
     countAnswersUsingOption: jest.Mock;
     deleteOption: jest.Mock;
+    linkControl: jest.Mock;
+    unlinkControl: jest.Mock;
   };
+  let controlsService: { findById: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -22,10 +26,17 @@ describe("QuestionnaireService", () => {
       createQuestion: jest.fn(),
       countAnswersUsingOption: jest.fn(),
       deleteOption: jest.fn(),
+      linkControl: jest.fn(),
+      unlinkControl: jest.fn(),
     };
+    controlsService = { findById: jest.fn() };
 
     const moduleRef = await Test.createTestingModule({
-      providers: [QuestionnaireService, { provide: QuestionnaireRepository, useValue: repo }],
+      providers: [
+        QuestionnaireService,
+        { provide: QuestionnaireRepository, useValue: repo },
+        { provide: ControlsService, useValue: controlsService },
+      ],
     }).compile();
 
     service = moduleRef.get(QuestionnaireService);
@@ -100,6 +111,52 @@ describe("QuestionnaireService", () => {
       await expect(service.removeOption("tenant-1", "opt-inexistente")).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe("linkControl", () => {
+    it("rejeita pergunta de outro tenant", async () => {
+      repo.findQuestionById.mockResolvedValue({ id: "q-1", tenantId: "outro-tenant" });
+      await expect(
+        service.linkControl("tenant-1", "q-1", { controlId: "control-1" }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(controlsService.findById).not.toHaveBeenCalled();
+    });
+
+    it("404 quando o controle não existe no catálogo", async () => {
+      repo.findQuestionById.mockResolvedValue({ id: "q-1", tenantId: "tenant-1" });
+      controlsService.findById.mockResolvedValue(null);
+      await expect(
+        service.linkControl("tenant-1", "q-1", { controlId: "control-inexistente" }),
+      ).rejects.toThrow(NotFoundException);
+      expect(repo.linkControl).not.toHaveBeenCalled();
+    });
+
+    it("vincula quando pergunta e controle existem", async () => {
+      repo.findQuestionById.mockResolvedValue({ id: "q-1", tenantId: "tenant-1" });
+      controlsService.findById.mockResolvedValue({ id: "control-1" });
+      repo.linkControl.mockResolvedValue({ id: "q-1", controls: [{ controlId: "control-1" }] });
+
+      const result = await service.linkControl("tenant-1", "q-1", { controlId: "control-1" });
+
+      expect(repo.linkControl).toHaveBeenCalledWith("q-1", "control-1");
+      expect(result).toEqual({ id: "q-1", controls: [{ controlId: "control-1" }] });
+    });
+  });
+
+  describe("unlinkControl", () => {
+    it("rejeita pergunta de outro tenant", async () => {
+      repo.findQuestionById.mockResolvedValue({ id: "q-1", tenantId: "outro-tenant" });
+      await expect(service.unlinkControl("tenant-1", "q-1", "control-1")).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(repo.unlinkControl).not.toHaveBeenCalled();
+    });
+
+    it("desvincula quando a pergunta é do tenant", async () => {
+      repo.findQuestionById.mockResolvedValue({ id: "q-1", tenantId: "tenant-1" });
+      await service.unlinkControl("tenant-1", "q-1", "control-1");
+      expect(repo.unlinkControl).toHaveBeenCalledWith("q-1", "control-1");
     });
   });
 });

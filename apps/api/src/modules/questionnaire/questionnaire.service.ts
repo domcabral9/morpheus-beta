@@ -9,19 +9,25 @@ import {
   QuestionnaireRepository,
   CategoryWithQuestions,
   QuestionWithOptions,
+  QuestionAdminDetail,
 } from "./questionnaire.repository";
+import { ControlsService } from "../controls/controls.service";
 import { CreateCategoryDto } from "./dto/create-category.dto";
 import { UpdateCategoryDto } from "./dto/update-category.dto";
 import { CreateQuestionDto } from "./dto/create-question.dto";
 import { UpdateQuestionDto } from "./dto/update-question.dto";
 import { QuestionOptionDto } from "./dto/question-option.dto";
 import { UpdateQuestionOptionDto } from "./dto/update-question-option.dto";
+import { LinkControlDto } from "./dto/link-control.dto";
 
 const CHOICE_TYPES = new Set(["SINGLE_CHOICE", "MULTI_CHOICE"]);
 
 @Injectable()
 export class QuestionnaireService {
-  constructor(private readonly questionnaireRepository: QuestionnaireRepository) {}
+  constructor(
+    private readonly questionnaireRepository: QuestionnaireRepository,
+    private readonly controlsService: ControlsService,
+  ) {}
 
   // --- Leitura para responder --------------------------------------------------
   getCategories(tenantId: string): Promise<CategoryWithQuestions[]> {
@@ -52,7 +58,7 @@ export class QuestionnaireService {
   }
 
   // --- Administração: perguntas --------------------------------------------------
-  listQuestions(tenantId: string): Promise<QuestionWithOptions[]> {
+  listQuestions(tenantId: string): Promise<QuestionAdminDetail[]> {
     return this.questionnaireRepository.findAllQuestions(tenantId);
   }
 
@@ -123,6 +129,23 @@ export class QuestionnaireService {
     await this.questionnaireRepository.deleteOption(optionId);
   }
 
+  // --- Administração: vínculo com a biblioteca de controles -----------------------
+  async linkControl(
+    tenantId: string,
+    questionId: string,
+    dto: LinkControlDto,
+  ): Promise<QuestionAdminDetail> {
+    await this.assertQuestionInTenant(tenantId, questionId);
+    const control = await this.controlsService.findById(dto.controlId);
+    if (!control) throw new NotFoundException("Controle não encontrado.");
+    return this.questionnaireRepository.linkControl(questionId, dto.controlId);
+  }
+
+  async unlinkControl(tenantId: string, questionId: string, controlId: string): Promise<void> {
+    await this.assertQuestionInTenant(tenantId, questionId);
+    await this.questionnaireRepository.unlinkControl(questionId, controlId);
+  }
+
   // --- Helpers de tenant scoping / integridade ------------------------------------
   private async assertCategoryInTenant(
     tenantId: string,
@@ -137,7 +160,7 @@ export class QuestionnaireService {
   private async assertQuestionInTenant(
     tenantId: string,
     questionId: string,
-  ): Promise<QuestionWithOptions> {
+  ): Promise<QuestionAdminDetail> {
     const question = await this.questionnaireRepository.findQuestionById(questionId);
     if (!question) throw new NotFoundException("Pergunta não encontrada.");
     if (question.tenantId !== tenantId) throw new ForbiddenException("Pergunta de outro tenant.");

@@ -7,6 +7,7 @@ export const PERMISSIONS = {
   USERS_MANAGE: "users:manage",
   ROLES_MANAGE: "roles:manage",
   QUESTIONS_MANAGE: "questions:manage",
+  CONTROLS_MANAGE: "controls:manage",
   RISK_MATRIX_MANAGE: "risk-matrix:manage",
   WORKFLOWS_MANAGE: "workflows:manage",
   SYSTEM_CONFIGURE: "system:configure",
