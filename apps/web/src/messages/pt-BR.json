@@ -1,8 +1,13 @@
 {
+  "Metadata": {
+    "title": "Morpheus",
+    "description": "Plataforma de homologação e avaliação de risco de software"
+  },
   "HomePage": {
     "title": "Morpheus",
     "subtitle": "Plataforma de homologação e avaliação de risco de software",
-    "description": "Etapa 1 concluída: fundação técnica do monorepo rodando de ponta a ponta.",
+    "description": "Centralize o processo de avaliação de risco de novos sistemas, do questionário ao parecer técnico em PDF.",
+    "enterButton": "Entrar",
     "themeToggleLabel": "Alternar tema",
     "localeSwitcherLabel": "Idioma"
   },
@@ -31,7 +36,9 @@
   },
   "Dashboard": {
     "welcome": "Olá, {name}",
-    "signOut": "Sair"
+    "signOut": "Sair",
+    "themeToggleLabel": "Alternar tema",
+    "localeSwitcherLabel": "Idioma"
   },
   "Status": {
     "DRAFT": "Rascunho",
@@ -81,6 +88,7 @@
     "version": "Versão",
     "area": "Área",
     "responsible": "Responsável",
+    "criticality": "Criticidade",
     "justification": "Justificativa",
     "questionnaire": "Questionário",
     "saveAnswers": "Salvar respostas",

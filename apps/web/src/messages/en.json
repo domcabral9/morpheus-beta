@@ -1,8 +1,13 @@
 {
+  "Metadata": {
+    "title": "Morpheus",
+    "description": "Software risk assessment and homologation platform"
+  },
   "HomePage": {
     "title": "Morpheus",
     "subtitle": "Software risk assessment and homologation platform",
-    "description": "Step 1 complete: technical foundation of the monorepo running end to end.",
+    "description": "Centralize the risk assessment process for new systems, from the questionnaire to the PDF technical opinion.",
+    "enterButton": "Sign in",
     "themeToggleLabel": "Toggle theme",
     "localeSwitcherLabel": "Language"
   },
@@ -31,7 +36,9 @@
   },
   "Dashboard": {
     "welcome": "Hello, {name}",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "themeToggleLabel": "Toggle theme",
+    "localeSwitcherLabel": "Language"
   },
   "Status": {
     "DRAFT": "Draft",
@@ -81,6 +88,7 @@
     "version": "Version",
     "area": "Area",
     "responsible": "Responsible",
+    "criticality": "Criticality",
     "justification": "Justification",
     "questionnaire": "Questionnaire",
     "saveAnswers": "Save answers",
