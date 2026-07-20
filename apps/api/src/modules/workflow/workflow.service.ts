@@ -10,6 +10,8 @@ import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
 import { AuditLogService } from "../audit/audit-log.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { InventoryService } from "../inventory/inventory.service";
 import { TechnicalOpinionService } from "../technical-opinions/technical-opinion.service";
 import {
   WorkflowRepository,
@@ -53,6 +55,8 @@ export class WorkflowService {
     private readonly separationOfDutiesService: SeparationOfDutiesService,
     private readonly technicalOpinionService: TechnicalOpinionService,
     private readonly auditLogService: AuditLogService,
+    private readonly notificationsService: NotificationsService,
+    private readonly inventoryService: InventoryService,
   ) {}
 
   /**
@@ -105,6 +109,15 @@ export class WorkflowService {
       workflowStepId: firstStep.id,
       status: "IN_PROGRESS",
       slaDueAt: this.computeSlaDueAt(firstStep.slaHours),
+    });
+
+    const assessment = await this.workflowRepository.findAssessmentContext(assessmentId);
+    await this.notificationsService.notifyRole(tenantId, firstStep.responsibleRoleId, {
+      type: "NEW_REQUEST",
+      title: `Nova avaliação para análise: ${assessment?.softwareName ?? assessmentId}`,
+      body: `A avaliação "${assessment?.softwareName ?? assessmentId}" está aguardando sua análise na etapa "${firstStep.name}".`,
+      relatedEntityType: "Assessment",
+      relatedEntityId: assessmentId,
     });
   }
 
@@ -159,11 +172,29 @@ export class WorkflowService {
         "REJECTED",
         user.id,
       );
+      await this.notificationsService.notify({
+        tenantId: user.tenantId,
+        userId: assessment.requesterId,
+        type: "REJECTION",
+        title: `Avaliação reprovada: ${assessment.softwareName}`,
+        body: `Sua avaliação "${assessment.softwareName}" foi reprovada na etapa "${execution.workflowStep.name}".`,
+        relatedEntityType: "Assessment",
+        relatedEntityId: assessment.id,
+      });
     } else if (dto.decision === "REQUEST_ADJUSTMENT") {
       // A instância fica IN_PROGRESS: quando o solicitante reenviar
       // (Assessments.submit() -> startWorkflow), reinicia da primeira etapa
       // elegível, preservando esta execução no histórico.
       await this.workflowRepository.updateAssessmentStatus(assessment.id, "PENDING_ADJUSTMENT");
+      await this.notificationsService.notify({
+        tenantId: user.tenantId,
+        userId: assessment.requesterId,
+        type: "ADJUSTMENT_REQUEST",
+        title: `Ajuste solicitado: ${assessment.softwareName}`,
+        body: `A etapa "${execution.workflowStep.name}" pediu ajustes na avaliação "${assessment.softwareName}". Revise e reenvie.`,
+        relatedEntityType: "Assessment",
+        relatedEntityId: assessment.id,
+      });
     } else {
       await this.advanceToNextStep(execution, user.id);
     }
@@ -317,6 +348,13 @@ export class WorkflowService {
         status: "IN_PROGRESS",
         slaDueAt: this.computeSlaDueAt(next.slaHours),
       });
+      await this.notificationsService.notifyRole(assessment.tenantId, next.responsibleRoleId, {
+        type: "NEW_REQUEST",
+        title: `Nova avaliação para análise: ${assessment.softwareName}`,
+        body: `A avaliação "${assessment.softwareName}" está aguardando sua análise na etapa "${next.name}".`,
+        relatedEntityType: "Assessment",
+        relatedEntityId: assessment.id,
+      });
     } else {
       // Não há mais etapas elegíveis: a última decisão fecha o fluxo.
       await this.workflowRepository.updateInstance(execution.assessmentWorkflowInstanceId, {
@@ -329,6 +367,25 @@ export class WorkflowService {
         "APPROVED",
         issuedById,
       );
+      await this.inventoryService.createFromApprovedAssessment(assessment.tenantId, {
+        id: assessment.id,
+        softwareName: assessment.softwareName,
+        vendor: assessment.vendor,
+        version: assessment.version,
+        url: assessment.url,
+        areaId: assessment.areaId,
+        criticality: assessment.criticality,
+        responsibleId: assessment.responsibleId,
+      });
+      await this.notificationsService.notify({
+        tenantId: assessment.tenantId,
+        userId: assessment.requesterId,
+        type: "APPROVAL",
+        title: `Avaliação homologada: ${assessment.softwareName}`,
+        body: `Sua avaliação "${assessment.softwareName}" foi homologada. O parecer técnico já está disponível.`,
+        relatedEntityType: "Assessment",
+        relatedEntityId: assessment.id,
+      });
     }
   }
 
