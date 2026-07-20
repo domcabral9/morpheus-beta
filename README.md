@@ -4,14 +4,15 @@ Plataforma de homologação e avaliação de risco de software, usada pela equip
 Informação para reduzir Shadow IT: centraliza o processo de avaliação de risco de novos sistemas
 contratados pela empresa, do questionário ao parecer técnico em PDF.
 
-> **Status:** Etapa 15 - Arquitetura de adapters + Provider Pattern para IA. Três adapters novos
-> (SIEM, ITSM, colaboração), mesmo padrão do StorageAdapter/EmailAdapter: interface + token + uma
-> implementação via webhook HTTP genérico que loga e segue sem quebrar nada se a URL não estiver
-> configurada. `AuditLogService` encaminha todo evento ao SIEM; `WorkflowService` abre chamado no
-> ITSM ao reprovar uma avaliação e alerta um canal de colaboração ao homologar algo HIGH/CRITICAL.
-> `AiProvider` também entrou, mas deliberadamente só como estrutura (`NullAiProvider`, sem
-> consumidor de negócio ainda) - é o único item desta etapa cujo escopo era "apenas interfaces".
-> Próximo: testes, documentação final e produção (Etapa 16).
+> **Status:** Roteiro original completo (Etapas 1-16). O sistema roda de ponta a ponta - do
+> questionário de risco ao parecer técnico em PDF, com RBAC, workflow de aprovação configurável,
+> auditoria, observabilidade e hardening de segurança - e agora tem um teste e2e cobrindo o
+> caminho crítico inteiro e uma estratégia de deploy em produção documentada e versionada em
+> Terraform (nunca aplicada contra uma conta AWS real - ver aviso em
+> [`infra/terraform/README.md`](./infra/terraform/README.md)). Diagramas de arquitetura (modelo de
+> dados + topologia de deploy) em [`docs/architecture.md`](./docs/architecture.md). Daqui em diante,
+> qualquer trabalho novo é iteração sobre uma base já fechada, não mais uma etapa numerada do
+> roteiro original.
 
 ## Stack
 
@@ -119,6 +120,16 @@ docker compose up --build
 | `pnpm db:generate`        | Gera o Prisma Client                                       |
 | `pnpm db:migrate`         | Cria/aplica uma migration em desenvolvimento               |
 | `pnpm db:seed`            | Roda o seed do banco                                       |
+
+### Testes e2e (Etapa 16)
+
+Diferente de `pnpm test` (unitário, tudo mockado), o teste e2e roda contra um Postgres real com o
+seed aplicado - precisa do ambiente de desenvolvimento local já de pé (passos 1-2 acima, com
+`pnpm db:seed` executado ao menos uma vez).
+
+```bash
+pnpm --filter @morpheus/api test:e2e
+```
 
 ## Decisões arquiteturais desta etapa
 
@@ -647,6 +658,55 @@ chamado no ITSM e alerta de colaboração cobertos por testes unitários com ass
 argumentos (`workflow.service.spec.ts`), já que simular o fluxo completo de aprovação multi-etapa
 via HTTP exigiria um segundo usuário aprovador só para o smoke test.
 
+### Etapa 16 - Testes, documentação final e produção
+
+Última etapa do roteiro original: fecha três frentes que vinham sendo adiadas de propósito
+(testes e2e, diagramas, estratégia de deploy) até o sistema estar funcionalmente completo o
+bastante para valer a pena documentá-lo de verdade.
+
+- **Primeiro teste e2e real do projeto**: `apps/api/test/app.e2e-spec.ts`, contra o Postgres de
+  dev de verdade (não mockado - diferente de todo `*.spec.ts` até aqui). `supertest` já estava
+  instalado como devDependency desde o início, sem uso - esta etapa fecha essa lacuna. Cobre o
+  caminho crítico inteiro: login → criar avaliação → responder todas as perguntas do questionário
+  (construídas dinamicamente a partir do que `GET /questionnaire/categories` devolve, não
+  hardcoded) → enviar → decidir cada etapa do workflow até fechar → avaliação homologada → parecer
+  técnico emitido com hash e número. Roda em `pnpm test:e2e` (config própria,
+  `test/jest-e2e.json`, separada dos testes unitários), limpa a avaliação criada em `afterAll`
+  (best-effort - uma falha na limpeza não derruba o resultado dos testes que já rodaram) para ficar
+  repetível.
+- **Diagramas de arquitetura** (`docs/architecture.md`): o schema de dados (36 modelos) virou 5
+  diagramas ER em Mermaid agrupados por domínio (Tenancy/RBAC, Questionário/Controles, Motor de
+  Risco, Avaliação/Workflow, Pós-aprovação/Auditoria) em vez de um diagrama só - 36 entidades numa
+  imagem única vira ilegível. Mais um diagrama de topologia de deploy, leitura visual do que o
+  Terraform desta etapa provisiona.
+- **Terraform para AWS ECS/Fargate** (`infra/terraform/`): VPC dedicada, ECR, RDS gerenciado
+  (substitui o Postgres em container), Secrets Manager (segredos gerados aleatoriamente pelo
+  próprio Terraform, nunca em texto plano), ECS Fargate para `api`/`web` atrás de um ALB, e a task
+  de `migrate` como task avulsa (não serviço) disparada no deploy - mesmo papel do serviço
+  `migrate` do `docker-compose.yml`, só que orquestrada por `aws ecs run-task` em vez do Compose.
+  **Nunca aplicado contra uma conta AWS real** (sem `terraform` instalado neste ambiente para
+  `validate`/`plan`/`apply`) - o aviso completo, junto com as limitações conhecidas (sem HTTPS
+  configurado, storage em EFS em vez de S3, sem pipeline de CI/CD), está documentado no início de
+  `infra/terraform/README.md`. Decisão registrada explicitamente com o usuário antes de escrever
+  qualquer arquivo: Terraform (não CDK), código completo (não só documentação da arquitetura).
+- **EFS em vez de reescrever `StorageAdapter` para S3**: Fargate não tem disco persistente
+  compartilhado entre tasks, mas trocar a implementação do `StorageAdapter` é trabalho de código de
+  aplicação, não de infraestrutura - fora do escopo desta etapa. EFS resolve o problema de
+  persistência/compartilhamento sem tocar em uma linha de código: mesma interface, mesmo
+  `STORAGE_DIR`, só que montado como volume de rede. Fica documentado como o próximo passo natural
+  quando alguém for de fato operar isto em produção.
+- **Roteamento do ALB por host, não por path**: a API nunca teve prefixo de rota (`/auth`,
+  `/assessments`, `/questionnaire`... todos top-level desde a Etapa 1), então rotear por path no
+  ALB exigiria listar e manter toda rota nova de cada módulo futuro no Terraform. Roteamento por
+  host (`api.<domínio>` vs. `app.<domínio>`) desacopla completamente a infraestrutura de deploy da
+  lista de rotas da aplicação.
+
+Validado: `pnpm test:e2e` passa de ponta a ponta contra o Postgres real (a avaliação de teste
+criada é removida ao final, confirmado via `psql` que não sobra nenhum resíduo); suíte completa
+(`pnpm turbo run lint test typecheck build --force`) permanece verde com os arquivos novos. O
+Terraform em si não foi validado com o CLI (indisponível neste ambiente) - risco documentado
+explicitamente, não escondido.
+
 ## Roteiro (próximas etapas)
 
 1. ~~Fundação técnica~~ ✅
@@ -666,8 +726,9 @@ via HTTP exigiria um segundo usuário aprovador só para o smoke test.
 13. ~~i18n, temas e responsividade (polimento)~~ ✅
 14. ~~Observabilidade e hardening de segurança~~ ✅
 15. ~~Arquitetura de adapters para integrações futuras + Provider Pattern para IA~~ ✅
-16. Testes, documentação final e produção - inclui estratégia de deploy em AWS ECS/Fargate:
-    imagens (já compatíveis, multi-stage/non-root) publicadas no ECR, Postgres migrando de container
-    para RDS gerenciado, segredos saindo do `.env` para Secrets Manager/SSM Parameter Store, o
-    serviço `migrate` rodando como ECS Task avulsa (não um serviço) disparada no deploy, e `api`/`web`
-    atrás de um ALB. Infraestrutura como código (Terraform ou CDK) a definir quando chegarmos lá.
+16. ~~Testes, documentação final e produção~~ ✅ - estratégia de deploy em AWS ECS/Fargate:
+    imagens publicadas no ECR, Postgres migrando de container para RDS gerenciado, segredos saindo
+    do `.env` para Secrets Manager, o serviço `migrate` rodando como ECS Task avulsa (não um
+    serviço) disparada no deploy, e `api`/`web` atrás de um ALB - tudo em Terraform
+    (`infra/terraform/`, nunca aplicado contra uma conta AWS real). Teste e2e do caminho crítico em
+    `apps/api/test/`. Diagramas de arquitetura em `docs/architecture.md`.
