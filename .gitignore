@@ -34,6 +34,14 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
+# terraform (Etapa 16 — infra/terraform)
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.auto.tfvars
+
 # misc
 *.tsbuildinfo
 .eslintcache

@@ -1,0 +1,17 @@
+# Copie para terraform.tfvars e ajuste. Não versione terraform.tfvars real
+# (já está no .gitignore raiz do monorepo, mas confira antes de aplicar).
+
+aws_region   = "us-east-1"
+environment  = "production"
+project_name = "morpheus"
+
+api_domain_name = "api.suaempresa.com"
+web_domain_name = "app.suaempresa.com"
+cors_origin      = "https://app.suaempresa.com"
+public_api_url   = "https://api.suaempresa.com"
+
+api_image_tag = "latest"
+web_image_tag = "latest"
+
+db_instance_class = "db.t4g.micro"
+db_multi_az       = false
