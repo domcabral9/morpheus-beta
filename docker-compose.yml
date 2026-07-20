@@ -65,8 +65,19 @@ services:
       # Docker. Só usuário/senha/banco são compartilháveis entre os dois
       # contextos.
       DATABASE_URL: postgresql://${POSTGRES_USER:-morpheus}:${POSTGRES_PASSWORD:-morpheus}@postgres:5432/${POSTGRES_DB:-morpheus}?schema=public
+      # Link de verificação codificado no QR Code do parecer (Etapa 7) —
+      # precisa ser o domínio público real em produção, não "localhost".
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3001}
+      STORAGE_DIR: /app/storage
     ports:
       - "${API_PORT:-3001}:3001"
+    volumes:
+      # Pareceres em PDF persistem entre reinicializações/deploys do container
+      # (disco efêmero por padrão) — mesmo raciocínio do volume do Postgres.
+      # Ponto de troca natural para um adapter S3 quando migrar pra nuvem
+      # (Etapa 16): a variável STORAGE_DIR some, e só a implementação do
+      # adapter muda.
+      - morpheus_storage_data:/app/storage
     depends_on:
       postgres:
         condition: service_healthy
@@ -108,3 +119,4 @@ services:
 
 volumes:
   morpheus_postgres_data:
+  morpheus_storage_data:
