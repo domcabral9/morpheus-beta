@@ -4,6 +4,7 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService, JwtSignOptions } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import { PrismaService } from "../../prisma/prisma.service";
+import { AuditLogService } from "../audit/audit-log.service";
 import { UsersService } from "../users/users.service";
 import type { UserWithPermissions } from "../users/users.repository";
 import type { AccessTokenPayload, RefreshTokenPayload } from "./interfaces/jwt-payload.interface";
@@ -35,6 +36,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
     private readonly prisma: PrismaService,
+    private readonly auditLogService: AuditLogService,
   ) {
     this.accessSecret = this.configService.getOrThrow<string>("JWT_ACCESS_SECRET");
     this.accessExpiresIn = this.configService.getOrThrow<string>("JWT_ACCESS_EXPIRES_IN");
@@ -77,7 +79,19 @@ export class AuthService {
 
   async login(user: UserWithPermissions, meta: RequestMeta): Promise<TokenPair> {
     await this.usersService.touchLastLogin(user.id);
-    return this.issueTokenPair(user, randomUUID(), meta);
+    const tokens = await this.issueTokenPair(user, randomUUID(), meta);
+
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "LOGIN",
+      entityType: "User",
+      entityId: user.id,
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+
+    return tokens;
   }
 
   async refresh(rawToken: string, meta: RequestMeta): Promise<TokenPair> {
@@ -116,10 +130,25 @@ export class AuthService {
 
   async logout(rawToken: string): Promise<void> {
     const tokenHash = hashToken(rawToken);
+    const token = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      select: { userId: true, user: { select: { tenantId: true } } },
+    });
+
     await this.prisma.refreshToken.updateMany({
       where: { tokenHash, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+
+    if (token) {
+      await this.auditLogService.record({
+        tenantId: token.user.tenantId,
+        userId: token.userId,
+        action: "LOGOUT",
+        entityType: "User",
+        entityId: token.userId,
+      });
+    }
   }
 
   private verifyRefreshToken(rawToken: string): RefreshTokenPayload {

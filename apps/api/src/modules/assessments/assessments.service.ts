@@ -13,10 +13,12 @@ import { QuestionnaireService } from "../questionnaire/questionnaire.service";
 import { RiskEvaluationService } from "../risk-engine/risk-evaluation.service";
 import type { RiskDimensionInput, ScorableAnswer } from "../risk-engine/risk-engine.service";
 import { WorkflowService } from "../workflow/workflow.service";
+import { AuditLogService } from "../audit/audit-log.service";
 import {
   AssessmentsRepository,
   AssessmentDetail,
   AnswerWithOptions,
+  VersionWithDetails,
 } from "./assessments.repository";
 import { CreateAssessmentDto } from "./dto/create-assessment.dto";
 import { UpdateAssessmentDto } from "./dto/update-assessment.dto";
@@ -39,6 +41,7 @@ export class AssessmentsService {
     private readonly questionnaireService: QuestionnaireService,
     private readonly riskEvaluationService: RiskEvaluationService,
     private readonly workflowService: WorkflowService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async create(user: AuthenticatedUser, dto: CreateAssessmentDto): Promise<AssessmentDetail> {
@@ -183,7 +186,24 @@ export class AssessmentsService {
     // a instância de aprovação na primeira etapa elegível.
     await this.workflowService.startWorkflow(user.tenantId, id);
 
-    return this.assessmentsRepository.update(id, { status: "IN_REVIEW" });
+    const updated = await this.assessmentsRepository.update(id, { status: "IN_REVIEW" });
+
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "SUBMIT",
+      entityType: "Assessment",
+      entityId: id,
+      metadata: { versionLabel },
+    });
+
+    return updated;
+  }
+
+  async getVersionHistory(user: AuthenticatedUser, id: string): Promise<VersionWithDetails[]> {
+    const assessment = await this.getOwnedOrThrow(id);
+    this.assertCanView(user, assessment);
+    return this.assessmentsRepository.findVersionsWithDetails(id);
   }
 
   // --- Helpers ------------------------------------------------------------------

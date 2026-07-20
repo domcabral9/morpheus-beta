@@ -21,6 +21,16 @@ export type AnswerWithOptions = Prisma.AssessmentAnswerGetPayload<{
   include: typeof answerWithOptionsInclude;
 }>;
 
+const versionWithDetailsInclude = {
+  createdBy: { select: { id: true, name: true, email: true } },
+  riskResult: { include: { riskClassification: true } },
+  technicalOpinion: true,
+} satisfies Prisma.AssessmentVersionInclude;
+
+export type VersionWithDetails = Prisma.AssessmentVersionGetPayload<{
+  include: typeof versionWithDetailsInclude;
+}>;
+
 @Injectable()
 export class AssessmentsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -117,5 +127,14 @@ export class AssessmentsRepository {
 
   createVersion(data: Prisma.AssessmentVersionUncheckedCreateInput) {
     return this.prisma.assessmentVersion.create({ data });
+  }
+
+  /** Linha do tempo completa: score/classificação e parecer (se emitido) de cada versão. */
+  findVersionsWithDetails(assessmentId: string): Promise<VersionWithDetails[]> {
+    return this.prisma.assessmentVersion.findMany({
+      where: { assessmentId },
+      include: versionWithDetailsInclude,
+      orderBy: { createdAt: "asc" },
+    });
   }
 }
