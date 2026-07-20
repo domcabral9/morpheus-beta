@@ -4,10 +4,11 @@ Plataforma de homologação e avaliação de risco de software, usada pela equip
 Informação para reduzir Shadow IT: centraliza o processo de avaliação de risco de novos sistemas
 contratados pela empresa, do questionário ao parecer técnico em PDF.
 
-> **Status:** Etapa 5 - Motor de risco parametrizável. CRUD completo de avaliações e questionário
-> (Etapa 4) com o questionário real de 26 perguntas em uso, mais o cálculo de score/classificação de
-> risco acionado automaticamente no envio de uma avaliação, com CRUD administrativo da matriz de
-> risco (`risk-matrix:manage`). Próximo: workflow de aprovação configurável (Etapa 6).
+> **Status:** Etapa 6 - Workflow de aprovação configurável. Ao enviar uma avaliação, além do motor
+> de risco (Etapa 5), o sistema agora inicia automaticamente um fluxo de aprovação em etapas
+> (Gestor da Área -> Segurança da Informação -> DPO condicional -> Jurídico opcional -> Aprovação
+> Final), com Separação de Funções, papel responsável por etapa, SLA e CRUD administrativo
+> (`workflows:manage`). Próximo: geração de parecer técnico em PDF (Etapa 7).
 
 ## Stack
 
@@ -271,6 +272,45 @@ Módulo `risk-engine` (cálculo puro, sem acesso a banco, mais fácil de testar)
   ao menos uma faixa de probabilidade, uma de impacto e uma classificação configuradas), para o
   motor de risco nunca calcular contra uma matriz incompleta.
 
+### Etapa 6 - Workflow de aprovação configurável
+
+Módulo `workflow`: motor de estados que avança uma `AssessmentWorkflowInstance` etapa a etapa contra
+a `WorkflowDefinition` ativa/padrão do tenant, mais CRUD administrativo (`workflows:manage`) para
+cadastrar definições e etapas sem alterar código.
+
+- **Etapa condicional por LGPD não depende de casar texto de pergunta**: a etapa do DPO
+  (`WorkflowStep.requiresLgpd`) só entra no fluxo se a avaliação tiver alguma resposta cuja opção
+  selecionada esteja marcada como `QuestionOption.triggersLgpdReview` - mesma ideia de gatilho
+  parametrizável já usada em `Recommendation.triggerOptionId`, então o admin decide quais respostas
+  configuram "envolve LGPD" pelo CRUD do questionário, sem precisar mexer no motor de workflow.
+  Validado nos dois sentidos: a mesma avaliação percorre `Gestor -> Segurança -> Jurídico -> Aprovação
+  Final` quando não envolve LGPD, e `Gestor -> Segurança -> DPO -> Jurídico -> Aprovação Final` quando
+  envolve.
+- **Papel responsável, não usuário específico, decide cada etapa**: `WorkflowStepExecution` fica
+  "em aberto" (sem `assignedUserId`) até que qualquer usuário que possua a `Role` responsável decida
+  - modelo de fila por papel (como uma caixa de entrada de equipe), não atribuição individual
+  antecipada, com o endpoint `GET /workflow/inbox` listando as etapas pendentes nos papéis do usuário
+  logado.
+- **Separação de Funções reaproveitada da Etapa 3**: `SeparationOfDutiesService`, construído mas sem
+  consumidor até aqui, agora bloqueia quem solicitou a avaliação de decidir qualquer etapa dela -
+  primeiro uso real da primitiva.
+- **`isOptional` vira uma decisão explícita (`SKIP`), não um pulo automático**: diferente da etapa
+  condicional por LGPD (que soma/exclui do fluxo antes de qualquer decisão), uma etapa opcional
+  (ex.: Jurídico) sempre entra no fluxo e exige que o responsável decida - só que `SKIP` é uma
+  decisão válida além de aprovar/reprovar/pedir ajuste, e só nessas etapas.
+- **Reenvio após ajuste reaproveita a mesma `AssessmentWorkflowInstance`**: por ser 1:1 com
+  `Assessment`, `REQUEST_ADJUSTMENT` devolve o status para `PENDING_ADJUSTMENT` sem fechar a
+  instância; quando o solicitante reenvia, o fluxo reinicia da primeira etapa elegível, preservando
+  as execuções anteriores como histórico em vez de apagá-las.
+- **Decisão de aprovar/reprovar/pular usa o mesmo enum já modelado na Etapa 2**
+  (`WorkflowStepStatus`), sem estado novo no schema - só a orquestração (qual etapa vem a seguir,
+  quando fechar a instância) é lógica nova desta etapa.
+
+Validado de ponta a ponta contra o Postgres real via HTTP: envio sem LGPD pulando a etapa do DPO,
+envio com LGPD passando pelo DPO, bloqueio por permissão (`assessments:approve`) de quem não é
+aprovador, caixa de entrada (`/workflow/inbox`) e reprovação (`REJECT`) encerrando a avaliação como
+`REJECTED`.
+
 ## Roteiro (próximas etapas)
 
 1. ~~Fundação técnica~~ ✅
@@ -278,7 +318,7 @@ Módulo `risk-engine` (cálculo puro, sem acesso a banco, mais fácil de testar)
 3. ~~Autenticação e RBAC~~ ✅
 4. ~~CRUD de avaliações e questionários~~ ✅
 5. ~~Motor de risco parametrizável~~ ✅
-6. Workflow de aprovação configurável
+6. ~~Workflow de aprovação configurável~~ ✅
 7. Geração de parecer técnico em PDF (hash, QR Code, número do parecer)
 8. Versionamento e auditoria completa
 9. Dashboards (usuário, administrador, executivo) + gamificação: placar de maturidade/adesão por
