@@ -7,6 +7,7 @@ import { AuthService } from "./auth.service";
 import { UsersService } from "../users/users.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import { AuditLogService } from "../audit/audit-log.service";
+import { CryptoService } from "../../common/services/crypto/crypto.service";
 import type { UserWithPermissions } from "../users/users.repository";
 
 const CONFIG_VALUES: Record<string, string> = {
@@ -14,6 +15,7 @@ const CONFIG_VALUES: Record<string, string> = {
   JWT_ACCESS_EXPIRES_IN: "15m",
   JWT_REFRESH_SECRET: "test-refresh-secret-0123456789",
   JWT_REFRESH_EXPIRES_IN: "7d",
+  ENCRYPTION_KEY: "2CJIB+zn5Gu5HfqYYlyTMFeEnzaTwfg+Ta5TLf8WoMk=",
 };
 
 const baseUser: UserWithPermissions = {
@@ -67,6 +69,7 @@ describe("AuthService", () => {
         { provide: UsersService, useValue: usersService },
         { provide: PrismaService, useValue: prisma },
         { provide: AuditLogService, useValue: auditLogService },
+        CryptoService,
       ],
     }).compile();
 
@@ -121,6 +124,13 @@ describe("AuthService", () => {
       expect(auditLogService.record).toHaveBeenCalledWith(
         expect.objectContaining({ action: "LOGIN", entityType: "User", userId: "user-1" }),
       );
+    });
+
+    it("criptografa o ipAddress antes de persistir o refresh token", async () => {
+      await authService.login(baseUser, { ipAddress: "203.0.113.10" });
+      const createArgs = prisma.refreshToken.create.mock.calls[0][0];
+      expect(createArgs.data.ipAddress).not.toBe("203.0.113.10");
+      expect(createArgs.data.ipAddress).toEqual(expect.any(String));
     });
   });
 

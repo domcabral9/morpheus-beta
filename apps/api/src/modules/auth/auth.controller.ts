@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import {
   Controller,
   Post,
@@ -10,11 +11,13 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Throttle } from "@nestjs/throttler";
 import { ApiBody, ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 import { Public } from "../../common/decorators/public.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
+import { CsrfGuard, CSRF_COOKIE_NAME } from "../../common/guards/csrf.guard";
 import { AuthService } from "./auth.service";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
 import { SamlAuthGuard } from "./guards/saml-auth.guard";
@@ -34,6 +37,8 @@ export class AuthController {
   ) {}
 
   @Public()
+  // Alvo clássico de força bruta — bem mais estrito que o limite global.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @UseGuards(LocalAuthGuard)
   @Post("login")
   @HttpCode(HttpStatus.OK)
@@ -45,10 +50,16 @@ export class AuthController {
   ): Promise<AccessTokenResponseDto> {
     const tokens = await this.authService.login(req.user, this.requestMeta(req));
     this.setRefreshCookie(res, tokens.refreshToken);
+    this.setCsrfCookie(res);
     return { accessToken: tokens.accessToken, expiresIn: tokens.expiresIn };
   }
 
   @Public()
+  // Chamado automaticamente a cada carregamento de página (refresh
+  // silencioso) — mais folgado que login, mas ainda bem abaixo do limite
+  // global para não virar um vetor de força bruta contra o cookie.
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @UseGuards(CsrfGuard)
   @Post("refresh")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -64,10 +75,12 @@ export class AuthController {
     }
     const tokens = await this.authService.refresh(raw, this.requestMeta(req));
     this.setRefreshCookie(res, tokens.refreshToken);
+    this.setCsrfCookie(res);
     return { accessToken: tokens.accessToken, expiresIn: tokens.expiresIn };
   }
 
   @Public()
+  @UseGuards(CsrfGuard)
   @Post("logout")
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Revoga o refresh token atual." })
@@ -77,6 +90,7 @@ export class AuthController {
       await this.authService.logout(raw);
     }
     res.clearCookie(REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_PATH });
+    res.clearCookie(CSRF_COOKIE_NAME, { path: "/" });
   }
 
   @Get("me")
@@ -103,6 +117,7 @@ export class AuthController {
   ): Promise<void> {
     const tokens = await this.authService.login(req.user, this.requestMeta(req));
     this.setRefreshCookie(res, tokens.refreshToken);
+    this.setCsrfCookie(res);
 
     // O IdP faz um POST direto do browser para cá (não é uma chamada XHR do
     // frontend) — não há como devolver o access token no corpo da resposta
@@ -131,6 +146,26 @@ export class AuthController {
       secure: this.configService.get<string>("NODE_ENV") === "production",
       sameSite: "strict",
       path: REFRESH_COOKIE_PATH,
+      maxAge: this.parseExpiresInMs(
+        this.configService.getOrThrow<string>("JWT_REFRESH_EXPIRES_IN"),
+      ),
+    });
+  }
+
+  /**
+   * Não-httpOnly de propósito — o frontend precisa ler o valor via
+   * document.cookie para reenviá-lo no header X-CSRF-Token (double-submit
+   * cookie, ver CsrfGuard). path "/" (não "/auth"): a página que lê o
+   * cookie via JS pode estar em qualquer rota da Web, e Path restringe
+   * document.cookie pelo path do documento atual, não só pelo path de quem
+   * setou o cookie.
+   */
+  private setCsrfCookie(res: Response): void {
+    res.cookie(CSRF_COOKIE_NAME, randomBytes(32).toString("hex"), {
+      httpOnly: false,
+      secure: this.configService.get<string>("NODE_ENV") === "production",
+      sameSite: "strict",
+      path: "/",
       maxAge: this.parseExpiresInMs(
         this.configService.getOrThrow<string>("JWT_REFRESH_EXPIRES_IN"),
       ),

@@ -1,3 +1,8 @@
+// Precisa ser o primeiro require do processo, antes de qualquer outro módulo
+// (inclusive reflect-metadata) — a auto-instrumentação do OpenTelemetry só
+// consegue interceptar módulos (http, express, pg) que ainda não foram
+// carregados quando ela roda. Ver comentário completo em tracing.ts.
+import "./tracing";
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { ConfigService } from "@nestjs/config";
@@ -8,6 +13,7 @@ import helmet from "helmet";
 import { Logger } from "nestjs-pino";
 import { AppModule } from "./app.module";
 import { correlationIdMiddleware } from "./common/middleware/correlation-id.middleware";
+import { SanitizationPipe } from "./common/pipes/sanitization.pipe";
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -25,7 +31,10 @@ async function bootstrap(): Promise<void> {
   const corsOrigin = configService.get<string>("CORS_ORIGIN", "http://localhost:3000");
   app.enableCors({ origin: corsOrigin, credentials: true });
 
+  // SanitizationPipe roda primeiro (normaliza o conteúdo textual), depois
+  // ValidationPipe (valida forma/tipos contra o DTO).
   app.useGlobalPipes(
+    new SanitizationPipe(),
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
