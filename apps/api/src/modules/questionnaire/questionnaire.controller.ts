@@ -12,6 +12,7 @@ import { CreateQuestionDto } from "./dto/create-question.dto";
 import { UpdateQuestionDto } from "./dto/update-question.dto";
 import { QuestionOptionDto } from "./dto/question-option.dto";
 import { UpdateQuestionOptionDto } from "./dto/update-question-option.dto";
+import { LinkControlDto } from "./dto/link-control.dto";
 
 @ApiTags("questionnaire")
 @Controller("questionnaire")
@@ -101,5 +102,27 @@ export class QuestionnaireController {
   @Delete("admin/options/:id")
   removeOption(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.questionnaireService.removeOption(user.tenantId, id);
+  }
+
+  @RequirePermissions(PERMISSIONS.CONTROLS_MANAGE)
+  @Audit("CREATE", "QuestionControl")
+  @Post("admin/questions/:id/controls")
+  linkControl(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") questionId: string,
+    @Body() dto: LinkControlDto,
+  ) {
+    return this.questionnaireService.linkControl(user.tenantId, questionId, dto);
+  }
+
+  @RequirePermissions(PERMISSIONS.CONTROLS_MANAGE)
+  @Audit("DELETE", "QuestionControl")
+  @Delete("admin/questions/:id/controls/:controlId")
+  unlinkControl(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") questionId: string,
+    @Param("controlId") controlId: string,
+  ) {
+    return this.questionnaireService.unlinkControl(user.tenantId, questionId, controlId);
   }
 }
