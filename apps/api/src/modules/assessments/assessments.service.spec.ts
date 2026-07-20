@@ -5,6 +5,7 @@ import { AssessmentsRepository, AssessmentDetail } from "./assessments.repositor
 import { AreasService } from "../areas/areas.service";
 import { UsersService } from "../users/users.service";
 import { QuestionnaireService } from "../questionnaire/questionnaire.service";
+import { RiskEvaluationService } from "../risk-engine/risk-evaluation.service";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
@@ -62,6 +63,7 @@ describe("AssessmentsService", () => {
   let areasService: { findAllActive: jest.Mock };
   let usersService: { findById: jest.Mock };
   let questionnaireService: { getCategories: jest.Mock };
+  let riskEvaluationService: { evaluate: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -72,13 +74,14 @@ describe("AssessmentsService", () => {
       upsertAnswers: jest.fn(),
       findAnswers: jest.fn().mockResolvedValue([]),
       countVersions: jest.fn().mockResolvedValue(0),
-      createVersion: jest.fn(),
+      createVersion: jest.fn().mockResolvedValue({ id: "version-1" }),
     };
     areasService = { findAllActive: jest.fn().mockResolvedValue([{ id: "area-1" }]) };
     usersService = {
       findById: jest.fn().mockResolvedValue({ id: "user-requester", tenantId: "tenant-1" }),
     };
     questionnaireService = { getCategories: jest.fn().mockResolvedValue([]) };
+    riskEvaluationService = { evaluate: jest.fn().mockResolvedValue({ id: "risk-result-1" }) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -87,6 +90,7 @@ describe("AssessmentsService", () => {
         { provide: AreasService, useValue: areasService },
         { provide: UsersService, useValue: usersService },
         { provide: QuestionnaireService, useValue: questionnaireService },
+        { provide: RiskEvaluationService, useValue: riskEvaluationService },
       ],
     }).compile();
 
@@ -190,6 +194,65 @@ describe("AssessmentsService", () => {
       expect(repo.createVersion).toHaveBeenLastCalledWith(
         expect.objectContaining({ versionLabel: "v1.1", changeReason: "Reenvio após ajuste" }),
       );
+    });
+
+    it("aciona o motor de risco com a versão recém-criada e as respostas pontuáveis", async () => {
+      repo.findById.mockResolvedValue(makeAssessment());
+      repo.update.mockResolvedValue(makeAssessment({ status: "SUBMITTED" } as never));
+      questionnaireService.getCategories.mockResolvedValue([
+        {
+          questions: [
+            {
+              id: "q-text",
+              text: "Descreva o uso",
+              type: "TEXT",
+              isRequired: false,
+              weight: 1,
+              riskDimension: "BOTH",
+            },
+            {
+              id: "q-scale",
+              text: "Nível de exposição",
+              type: "SCALE",
+              isRequired: false,
+              weight: 2,
+              riskDimension: "IMPACT",
+            },
+            {
+              id: "q-choice",
+              text: "Possui MFA?",
+              type: "SINGLE_CHOICE",
+              isRequired: false,
+              weight: 3,
+              riskDimension: "PROBABILITY",
+            },
+          ],
+        },
+      ]);
+      repo.findAnswers.mockResolvedValue([
+        { questionId: "q-text", textValue: "Uso interno", scaleValue: null, selectedOptions: [] },
+        { questionId: "q-scale", textValue: null, scaleValue: 4, selectedOptions: [] },
+        {
+          questionId: "q-choice",
+          textValue: null,
+          scaleValue: null,
+          selectedOptions: [{ questionOptionId: "opt-1", questionOption: { score: 1 } }],
+        },
+      ]);
+
+      await service.submit(makeUser(), "assessment-1");
+
+      expect(riskEvaluationService.evaluate).toHaveBeenCalledWith(
+        "tenant-1",
+        "version-1",
+        expect.arrayContaining([
+          { riskDimension: "IMPACT", weight: 2, score: 4 },
+          { riskDimension: "PROBABILITY", weight: 3, score: 1 },
+        ]),
+      );
+      // A pergunta TEXT não entra no motor de risco (sem score numérico).
+      const scorable = riskEvaluationService.evaluate.mock.calls[0][2];
+      expect(scorable).toHaveLength(2);
     });
   });
 });

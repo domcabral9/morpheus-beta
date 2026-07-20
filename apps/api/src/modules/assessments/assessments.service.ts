@@ -10,11 +10,18 @@ import type { AuthenticatedUser } from "../../common/interfaces/authenticated-us
 import { AreasService } from "../areas/areas.service";
 import { UsersService } from "../users/users.service";
 import { QuestionnaireService } from "../questionnaire/questionnaire.service";
-import { AssessmentsRepository, AssessmentDetail } from "./assessments.repository";
+import { RiskEvaluationService } from "../risk-engine/risk-evaluation.service";
+import type { RiskDimensionInput, ScorableAnswer } from "../risk-engine/risk-engine.service";
+import {
+  AssessmentsRepository,
+  AssessmentDetail,
+  AnswerWithOptions,
+} from "./assessments.repository";
 import { CreateAssessmentDto } from "./dto/create-assessment.dto";
 import { UpdateAssessmentDto } from "./dto/update-assessment.dto";
 import { SubmitAnswersDto } from "./dto/submit-answers.dto";
 import { ListAssessmentsQueryDto } from "./dto/list-assessments.query.dto";
+import type { QuestionWithOptions } from "../questionnaire/questionnaire.repository";
 
 const EDITABLE_STATUSES: AssessmentStatus[] = ["DRAFT", "PENDING_ADJUSTMENT"];
 
@@ -29,6 +36,7 @@ export class AssessmentsService {
     private readonly areasService: AreasService,
     private readonly usersService: UsersService,
     private readonly questionnaireService: QuestionnaireService,
+    private readonly riskEvaluationService: RiskEvaluationService,
   ) {}
 
   async create(user: AuthenticatedUser, dto: CreateAssessmentDto): Promise<AssessmentDetail> {
@@ -127,12 +135,16 @@ export class AssessmentsService {
       );
     }
 
-    await this.assertQuestionnaireComplete(user.tenantId, id);
-
-    const versionLabel = await this.nextVersionLabel(id);
+    const questions = await this.questionnaireService
+      .getCategories(user.tenantId)
+      .then((categories) => categories.flatMap((category) => category.questions));
     const answers = await this.assessmentsRepository.findAnswers(id);
 
-    await this.assessmentsRepository.createVersion({
+    this.assertQuestionnaireComplete(questions, answers);
+
+    const versionLabel = await this.nextVersionLabel(id);
+
+    const version = await this.assessmentsRepository.createVersion({
       assessmentId: id,
       versionLabel,
       changeReason:
@@ -157,6 +169,11 @@ export class AssessmentsService {
         })),
       },
     });
+
+    // Motor de risco: calcula e persiste o RiskResult desta versão a partir
+    // das mesmas respostas já carregadas para o snapshot acima.
+    const scorableAnswers = this.resolveScorableAnswers(questions, answers);
+    await this.riskEvaluationService.evaluate(user.tenantId, version.id, scorableAnswers);
 
     return this.assessmentsRepository.update(id, { status: "SUBMITTED" });
   }
@@ -212,14 +229,10 @@ export class AssessmentsService {
     return `v1.${count}`;
   }
 
-  private async assertQuestionnaireComplete(tenantId: string, assessmentId: string): Promise<void> {
-    const [questions, answers] = await Promise.all([
-      this.questionnaireService
-        .getCategories(tenantId)
-        .then((categories) => categories.flatMap((category) => category.questions)),
-      this.assessmentsRepository.findAnswers(assessmentId),
-    ]);
-
+  private assertQuestionnaireComplete(
+    questions: QuestionWithOptions[],
+    answers: AnswerWithOptions[],
+  ): void {
     const answerByQuestionId = new Map(answers.map((answer) => [answer.questionId, answer]));
     const missing: string[] = [];
 
@@ -241,5 +254,46 @@ export class AssessmentsService {
         `Existem perguntas obrigatórias sem resposta: ${missing.join("; ")}`,
       );
     }
+  }
+
+  /**
+   * Converte respostas para a entrada do motor de risco. Perguntas TEXT não
+   * têm score numérico e são ignoradas; SCALE usa `scaleValue` diretamente;
+   * SINGLE_CHOICE/MULTI_CHOICE usam a média dos `score` das opções
+   * selecionadas (já carregadas via `answer.selectedOptions[].questionOption`,
+   * sem precisar cruzar com a lista de `questions` por opção).
+   */
+  private resolveScorableAnswers(
+    questions: QuestionWithOptions[],
+    answers: AnswerWithOptions[],
+  ): ScorableAnswer[] {
+    const questionById = new Map(questions.map((question) => [question.id, question]));
+    const scorable: ScorableAnswer[] = [];
+
+    for (const answer of answers) {
+      const question = questionById.get(answer.questionId);
+      if (!question || question.type === "TEXT") continue;
+
+      let score: number | null = null;
+      if (question.type === "SCALE") {
+        score = answer.scaleValue ?? null;
+      } else if (answer.selectedOptions.length > 0) {
+        const sum = answer.selectedOptions.reduce(
+          (acc, selected) => acc + Number(selected.questionOption.score),
+          0,
+        );
+        score = sum / answer.selectedOptions.length;
+      }
+
+      if (score === null) continue;
+
+      scorable.push({
+        riskDimension: question.riskDimension as RiskDimensionInput,
+        weight: Number(question.weight),
+        score,
+      });
+    }
+
+    return scorable;
   }
 }
