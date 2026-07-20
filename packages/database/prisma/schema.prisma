@@ -292,6 +292,12 @@ model QuestionOption {
   /// Contribuição de risco desta opção (0 = sem risco, valores maiores = mais risco).
   score      Decimal  @db.Decimal(5, 2)
   order      Int      @default(0)
+  /// Se marcada nesta opção (ex.: "Sim" em "processa dados pessoais?"), sinaliza
+  /// que a avaliação envolve LGPD — usado pelo workflow (Etapa 6) para decidir
+  /// se a etapa do DPO (`WorkflowStep.requiresLgpd`) entra no fluxo. Mesma ideia
+  /// de gatilho parametrizável já usada em `Recommendation.triggerOptionId`, em
+  /// vez de casar por texto da pergunta.
+  triggersLgpdReview Boolean @default(false)
 
   answerSelections  AssessmentAnswerOption[]
   triggeredRecommendations Recommendation[]

@@ -196,6 +196,19 @@ async function main() {
     create: { userId: demoUser.id, roleId: userRole.id },
   });
 
+  // No tenant demo, o admin também acumula os papéis aprovadores do fluxo
+  // padrão — só para permitir demonstrar a cadeia completa de aprovação com
+  // um único login. Nunca faça isso num tenant real (violaria a própria
+  // Separação de Funções que o workflow existe para impor).
+  for (const approverRoleName of ["Gestor da Área", "Segurança da Informação", "DPO", "Jurídico"]) {
+    const role = roleByName.get(approverRoleName)!;
+    await prisma.userRole.upsert({
+      where: { userId_roleId: { userId: adminUser.id, roleId: role.id } },
+      update: {},
+      create: { userId: adminUser.id, roleId: role.id },
+    });
+  }
+
   // --- Categorias e perguntas do questionário ----------------------------------
   const categoryByName = new Map<string, { id: string }>();
   for (const [index, name] of QUESTION_CATEGORIES.entries()) {
@@ -215,7 +228,12 @@ async function main() {
     type: QuestionType;
     riskDimension: RiskDimension;
     isRequired?: boolean;
-    options: Array<{ label: string; value: string; score: number }>;
+    options: Array<{
+      label: string;
+      value: string;
+      score: number;
+      triggersLgpdReview?: boolean;
+    }>;
   };
 
   const YES_NO = (yesScore: number, noScore: number) => [
@@ -433,7 +451,10 @@ async function main() {
       weight: 10,
       type: "SINGLE_CHOICE",
       riskDimension: "IMPACT",
-      options: YES_NO(4, 0),
+      options: [
+        { label: "Sim", value: "yes", score: 4, triggersLgpdReview: true },
+        { label: "Não", value: "no", score: 0 },
+      ],
     },
     {
       category: "LGPD",
@@ -503,7 +524,7 @@ async function main() {
     for (const [optionIndex, option] of seedQuestion.options.entries()) {
       const questionOption = await prisma.questionOption.upsert({
         where: { id: `${question.id}-${optionIndex}` },
-        update: {},
+        update: { triggersLgpdReview: option.triggersLgpdReview ?? false },
         create: {
           id: `${question.id}-${optionIndex}`,
           questionId: question.id,
@@ -511,6 +532,7 @@ async function main() {
           value: option.value,
           score: option.score,
           order: optionIndex,
+          triggersLgpdReview: option.triggersLgpdReview ?? false,
         },
       });
       questionOptionByLabel.set(`${seedQuestion.text}::${option.label}`, questionOption);
