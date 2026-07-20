@@ -4,14 +4,14 @@ Plataforma de homologação e avaliação de risco de software, usada pela equip
 Informação para reduzir Shadow IT: centraliza o processo de avaliação de risco de novos sistemas
 contratados pela empresa, do questionário ao parecer técnico em PDF.
 
-> **Status:** Etapa 14 - Observabilidade e hardening de segurança. Cinco frentes na API: rate
-> limiting global (`@nestjs/throttler`, limites mais estritos em `/auth/login` e `/auth/refresh`),
-> estrutura de tracing distribuído com OpenTelemetry (console por padrão, OTLP se configurado),
-> proteção CSRF via double-submit cookie nos dois endpoints autenticados só por cookie
-> (`/auth/refresh`, `/auth/logout`), sanitização global de strings de entrada, e criptografia em
-> repouso (AES-256-GCM) do IP salvo em `RefreshToken`. Também entrou um filtro global de exceções
-> (nenhum erro não tratado mais vaza stack trace na resposta). Próximo: arquitetura de adapters para
-> integrações futuras + Provider Pattern para IA (Etapa 15).
+> **Status:** Etapa 15 - Arquitetura de adapters + Provider Pattern para IA. Três adapters novos
+> (SIEM, ITSM, colaboração), mesmo padrão do StorageAdapter/EmailAdapter: interface + token + uma
+> implementação via webhook HTTP genérico que loga e segue sem quebrar nada se a URL não estiver
+> configurada. `AuditLogService` encaminha todo evento ao SIEM; `WorkflowService` abre chamado no
+> ITSM ao reprovar uma avaliação e alerta um canal de colaboração ao homologar algo HIGH/CRITICAL.
+> `AiProvider` também entrou, mas deliberadamente só como estrutura (`NullAiProvider`, sem
+> consumidor de negócio ainda) - é o único item desta etapa cujo escopo era "apenas interfaces".
+> Próximo: testes, documentação final e produção (Etapa 16).
 
 ## Stack
 
@@ -612,6 +612,41 @@ criado com espaços nas pontas voltando já sem eles (sanitização); `RefreshTo
 como ciphertext no Postgres (`iv.authTag.ciphertext` em base64), confirmado via `psql` direto;
 spans reais aparecendo no console ao iniciar a API (criação do módulo Nest, requisições HTTP).
 
+### Etapa 15 - Arquitetura de adapters + Provider Pattern para IA
+
+Módulo novo `integrations` (SIEM/ITSM/colaboração) e módulo novo `ai` (Provider Pattern), reaproveitando
+exatamente o padrão já validado duas vezes nesta base (`StorageAdapter` na Etapa 7, `EmailAdapter`
+na Etapa 10): interface + token via `Symbol()` + implementação concreta que checa sua própria env
+var e vira no-op-com-log quando ela não está configurada.
+
+- **Três adapters, um padrão só**: `SiemAdapter.send()`, `ItsmAdapter.createTicket()` e
+  `CollaborationAdapter.postMessage()` são interfaces distintas (contratos diferentes: evento de
+  segurança, chamado de ticket, mensagem de canal) mas a implementação concreta de cada uma
+  (`WebhookSiemAdapter`/`WebhookItsmAdapter`/`WebhookCollaborationAdapter`) é um POST HTTP genérico
+  - sem SIEM_WEBHOOK_URL/ITSM_WEBHOOK_URL/COLLABORATION_WEBHOOK_URL configurada, cada uma só loga um
+  aviso e segue, mesmo padrão do SmtpEmailAdapter sem SMTP_HOST.
+- **Consumidores reais, não interfaces soltas**: diferente do AiProvider desta mesma etapa (ver
+  abaixo), os três adapters de integração já têm uso de verdade - `AuditLogService.record()`
+  encaminha todo evento de auditoria ao SIEM (best-effort, numa chamada separada da gravação local,
+  uma falha não afeta a outra); `WorkflowService` abre um chamado no ITSM ao reprovar uma avaliação
+  (prioridade = a própria criticidade da avaliação) e posta um alerta no canal `security-alerts`
+  quando a aprovação final é de uma avaliação HIGH ou CRITICAL.
+- **`AiProvider` é deliberadamente só estrutura** - o roteiro original pede "apenas
+  estrutura/interfaces" para este item especificamente. `NullAiProvider` prova que a interface
+  compila e é injetável (lança `ServiceUnavailableException` se alguém tentar usá-la, em vez de
+  fingir uma resposta), mas não tem nenhum consumidor de negócio ainda - um recurso assistido por IA
+  de verdade (ex.: sugestão de justificativa, resumo de parecer técnico) fica para uma etapa futura.
+  Por isso `AiModule` não é `@Global()` como `IntegrationsModule`: só quem precisar dele no futuro
+  importa explicitamente.
+
+Validado de ponta a ponta contra o Postgres real via HTTP: API sobe sem erro de DI com os dois
+módulos novos registrados; login real gera um evento `LOGIN` corretamente encaminhado ao
+`WebhookSiemAdapter`, visível no log estruturado com o aviso esperado (sem `SIEM_WEBHOOK_URL`) e
+com `trace_id`/`span_id` do OpenTelemetry (Etapa 14) corretamente correlacionados. Abertura de
+chamado no ITSM e alerta de colaboração cobertos por testes unitários com asserção exata dos
+argumentos (`workflow.service.spec.ts`), já que simular o fluxo completo de aprovação multi-etapa
+via HTTP exigiria um segundo usuário aprovador só para o smoke test.
+
 ## Roteiro (próximas etapas)
 
 1. ~~Fundação técnica~~ ✅
@@ -630,7 +665,7 @@ spans reais aparecendo no console ao iniciar a API (criação do módulo Nest, r
 12. ~~Biblioteca de controles (ISO 27001/27002, NIST CSF, CIS v8, LGPD, GDPR, OWASP)~~ ✅
 13. ~~i18n, temas e responsividade (polimento)~~ ✅
 14. ~~Observabilidade e hardening de segurança~~ ✅
-15. Arquitetura de adapters para integrações futuras + Provider Pattern para IA
+15. ~~Arquitetura de adapters para integrações futuras + Provider Pattern para IA~~ ✅
 16. Testes, documentação final e produção - inclui estratégia de deploy em AWS ECS/Fargate:
     imagens (já compatíveis, multi-stage/non-root) publicadas no ECR, Postgres migrando de container
     para RDS gerenciado, segredos saindo do `.env` para Secrets Manager/SSM Parameter Store, o

@@ -15,6 +15,8 @@ import { PermissionsGuard } from "./common/guards/permissions.guard";
 import { AuditInterceptor } from "./common/interceptors/audit.interceptor";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import { CryptoModule } from "./common/services/crypto/crypto.module";
+import { IntegrationsModule } from "./modules/integrations/integrations.module";
+import { AiModule } from "./modules/ai/ai.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { HealthModule } from "./health/health.module";
 import { UsersModule } from "./modules/users/users.module";
@@ -72,6 +74,8 @@ const pinoHttpOptions: PinoHttpOptions = {
     }),
     PrismaModule,
     CryptoModule,
+    IntegrationsModule,
+    AiModule,
     AuditLogModule,
     NotificationsModule,
     HealthModule,

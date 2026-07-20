@@ -74,6 +74,15 @@ const envSchema = z
       .refine((value) => Buffer.from(value, "base64").length === 32, {
         message: "ENCRYPTION_KEY deve ser uma chave de 256 bits (32 bytes) em base64",
       }),
+
+    // Arquitetura de adapters (Etapa 15) — todas opcionais de propósito:
+    // sem a URL configurada, cada adapter só loga um aviso e segue (mesmo
+    // padrão do SMTP_HOST). Nenhum SIEM/ITSM/ferramenta de colaboração real
+    // é exigido para a aplicação funcionar em dev/CI.
+    SIEM_WEBHOOK_URL: z.string().optional(),
+    ITSM_WEBHOOK_URL: z.string().optional(),
+    ITSM_API_KEY: z.string().optional(),
+    COLLABORATION_WEBHOOK_URL: z.string().optional(),
   })
   .superRefine((env, ctx) => {
     if (!env.SAML_ENABLED) return;
