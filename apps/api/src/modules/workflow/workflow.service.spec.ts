@@ -9,6 +9,7 @@ import { WorkflowService } from "./workflow.service";
 import { WorkflowRepository } from "./workflow.repository";
 import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
 import { TechnicalOpinionService } from "../technical-opinions/technical-opinion.service";
+import { AuditLogService } from "../audit/audit-log.service";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
@@ -88,6 +89,7 @@ describe("WorkflowService", () => {
     findPendingStepsForRoles: jest.Mock;
   };
   let technicalOpinionService: { generateForAssessment: jest.Mock };
+  let auditLogService: { record: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -106,6 +108,7 @@ describe("WorkflowService", () => {
       findPendingStepsForRoles: jest.fn(),
     };
     technicalOpinionService = { generateForAssessment: jest.fn().mockResolvedValue(undefined) };
+    auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -113,6 +116,7 @@ describe("WorkflowService", () => {
         { provide: WorkflowRepository, useValue: repo },
         SeparationOfDutiesService,
         { provide: TechnicalOpinionService, useValue: technicalOpinionService },
+        { provide: AuditLogService, useValue: auditLogService },
       ],
     }).compile();
 

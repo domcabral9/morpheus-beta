@@ -21,6 +21,7 @@ export const PERMISSIONS = {
   REPORTS_EXPORT_OWN: "reports:export-own",
   INVENTORY_VIEW: "inventory:view",
   INVENTORY_MANAGE: "inventory:manage",
+  AUDIT_VIEW: "audit:view",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
