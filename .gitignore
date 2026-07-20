@@ -18,6 +18,10 @@ coverage/
 # prisma
 packages/database/generated/
 
+# arquivos gerados (pareceres técnicos em PDF, storage local de dev — não
+# confundir com apps/api/src/modules/storage/, o módulo de código-fonte)
+/apps/api/storage/
+
 # logs
 *.log
 npm-debug.log*
