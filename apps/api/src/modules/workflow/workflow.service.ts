@@ -9,6 +9,7 @@ import { WorkflowStep, WorkflowStepStatus } from "@morpheus/database";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
+import { TechnicalOpinionService } from "../technical-opinions/technical-opinion.service";
 import {
   WorkflowRepository,
   WorkflowDefinitionWithSteps,
@@ -39,6 +40,7 @@ export class WorkflowService {
   constructor(
     private readonly workflowRepository: WorkflowRepository,
     private readonly separationOfDutiesService: SeparationOfDutiesService,
+    private readonly technicalOpinionService: TechnicalOpinionService,
   ) {}
 
   /**
@@ -139,13 +141,19 @@ export class WorkflowService {
         status: "REJECTED",
       });
       await this.workflowRepository.updateAssessmentStatus(assessment.id, "REJECTED");
+      await this.technicalOpinionService.generateForAssessment(
+        user.tenantId,
+        assessment.id,
+        "REJECTED",
+        user.id,
+      );
     } else if (dto.decision === "REQUEST_ADJUSTMENT") {
       // A instância fica IN_PROGRESS: quando o solicitante reenviar
       // (Assessments.submit() -> startWorkflow), reinicia da primeira etapa
       // elegível, preservando esta execução no histórico.
       await this.workflowRepository.updateAssessmentStatus(assessment.id, "PENDING_ADJUSTMENT");
     } else {
-      await this.advanceToNextStep(execution);
+      await this.advanceToNextStep(execution, user.id);
     }
 
     const updated = await this.workflowRepository.findStepExecutionById(execution.id);
@@ -257,7 +265,10 @@ export class WorkflowService {
   }
 
   // --- Helpers ------------------------------------------------------------------
-  private async advanceToNextStep(execution: StepExecutionDetail): Promise<void> {
+  private async advanceToNextStep(
+    execution: StepExecutionDetail,
+    issuedById: string,
+  ): Promise<void> {
     const assessment = execution.assessmentWorkflowInstance.assessment;
     const definition = await this.workflowRepository.findDefinitionById(
       execution.assessmentWorkflowInstance.workflowDefinitionId,
@@ -287,6 +298,12 @@ export class WorkflowService {
         status: "APPROVED",
       });
       await this.workflowRepository.updateAssessmentStatus(assessment.id, "APPROVED");
+      await this.technicalOpinionService.generateForAssessment(
+        assessment.tenantId,
+        assessment.id,
+        "APPROVED",
+        issuedById,
+      );
     }
   }
 
