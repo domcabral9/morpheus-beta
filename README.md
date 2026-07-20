@@ -4,11 +4,11 @@ Plataforma de homologação e avaliação de risco de software, usada pela equip
 Informação para reduzir Shadow IT: centraliza o processo de avaliação de risco de novos sistemas
 contratados pela empresa, do questionário ao parecer técnico em PDF.
 
-> **Status:** Etapa 6 - Workflow de aprovação configurável. Ao enviar uma avaliação, além do motor
-> de risco (Etapa 5), o sistema agora inicia automaticamente um fluxo de aprovação em etapas
-> (Gestor da Área -> Segurança da Informação -> DPO condicional -> Jurídico opcional -> Aprovação
-> Final), com Separação de Funções, papel responsável por etapa, SLA e CRUD administrativo
-> (`workflows:manage`). Próximo: geração de parecer técnico em PDF (Etapa 7).
+> **Status:** Etapa 7 - Geração de parecer técnico em PDF. Quando o workflow de aprovação (Etapa 6)
+> chega a um estado terminal (Homologado/Rejeitado), o sistema gera automaticamente o parecer
+> técnico em PDF: identificação do software, resultado do motor de risco, respostas do questionário
+> por categoria e o histórico completo de aprovação, com número sequencial, hash do instalador e
+> QR Code de verificação pública. Próximo: versionamento e auditoria completa (Etapa 8).
 
 ## Stack
 
@@ -311,6 +311,49 @@ envio com LGPD passando pelo DPO, bloqueio por permissão (`assessments:approve`
 aprovador, caixa de entrada (`/workflow/inbox`) e reprovação (`REJECT`) encerrando a avaliação como
 `REJECTED`.
 
+### Etapa 7 - Geração de parecer técnico em PDF
+
+Módulo `technical-opinions` (gerador de PDF via `pdfkit` + QR Code via `qrcode`, sem depender de um
+motor HTML→PDF como Puppeteer) e módulo `storage` (adapter de armazenamento) - acionados
+automaticamente pelo `WorkflowService` quando uma avaliação chega a um estado terminal
+(Homologado/Rejeitado). O layout foi desenhado a partir de um modelo real de parecer já usado pela
+equipe de Segurança da Informação, generalizado para qualquer tenant (sem nenhuma marca ou
+convenção fixa de uma empresa específica).
+
+- **"Hash" do parecer é do instalador do software avaliado, não do PDF em si**: decisão explícita do
+  usuário, alinhada ao modelo real (evidência de verificação antivírus, ex.: VirusTotal) - guardado
+  em `Assessment.installerFileHash` (SHA-256, auto-reportado pelo solicitante) e copiado como
+  snapshot para `TechnicalOpinion.hash` no momento da emissão.
+- **QR Code aponta para um endpoint público de verificação** (`GET
+  /technical-opinions/verify/:tenantSlug/:number`, marcado `@Public()`) que devolve só o mínimo
+  necessário para confirmar autenticidade (número, classificação, data de emissão) - nunca o parecer
+  completo nem dados sensíveis da avaliação.
+- **Número sequencial reaproveita a convenção já usada pela equipe** (`SECOPS-SW-MESANO-NUMERO`),
+  mas o prefixo é configurável por tenant (`Tenant.opinionNumberPrefix`, default `"SECOPS-SW"`) -
+  outros tenants não ficam presos à nomenclatura de uma empresa específica. A sequência reinicia a
+  cada mês; corrida de concorrência é tratada com um retry limitado que reconfere se o número
+  candidato já existe antes de persistir.
+- **Personalização do tenant sem hardcode**: `Tenant.logoUrl` e `Tenant.securityTeamName` são
+  opcionais (cabeçalho cai para texto genérico - "Equipe de Segurança da Informação" - se não
+  configurados), abrindo brecha para customização por empresa sem precisar tocar em código.
+- **Downloads sempre autenticados e nunca por URL pública direta**: `StorageAdapter` (interface com
+  `save`/`read`, implementação de disco local em dev) não expõe `getPublicUrl()` de propósito - a
+  API sempre faz streaming do PDF através de um endpoint autorizado
+  (`GET /technical-opinions/:id/download`), o mesmo contrato que um adapter S3 com bucket privado
+  atenderia em produção (Etapa 16), sem precisar de URLs pré-assinadas.
+- **Seções do questionário no PDF são geradas dinamicamente por categoria**, não hardcoded a
+  "Identificação"/"Segurança"/etc. - qualquer categoria nova que o admin cadastrar via CRUD (Etapa 4)
+  aparece automaticamente em pareceres futuros, sem mudança de código.
+- **Metodologia de score mantida como já validada na Etapa 5** (probabilidade/impacto calculado a
+  partir das perguntas do questionário) em vez de tentar replicar a tabela manual de 4 critérios
+  nomeados (Segurança/Compatibilidade/Suporte/Facilidade) do modelo de referência - decisão explícita
+  do usuário para não reabrir o motor de risco já testado.
+
+Validado de ponta a ponta contra o Postgres real via HTTP: avaliação aprovada em todas as etapas
+gerou parecer com número `SECOPS-SW-072026-001`, hash do instalador, PDF real (~9KB, cabeçalho
+`%PDF-` válido) baixado com sucesso, e o endpoint público de verificação respondendo corretamente
+tanto para o número válido quanto para um inexistente.
+
 ## Roteiro (próximas etapas)
 
 1. ~~Fundação técnica~~ ✅
@@ -319,7 +362,7 @@ aprovador, caixa de entrada (`/workflow/inbox`) e reprovação (`REJECT`) encerr
 4. ~~CRUD de avaliações e questionários~~ ✅
 5. ~~Motor de risco parametrizável~~ ✅
 6. ~~Workflow de aprovação configurável~~ ✅
-7. Geração de parecer técnico em PDF (hash, QR Code, número do parecer)
+7. ~~Geração de parecer técnico em PDF (hash, QR Code, número do parecer)~~ ✅
 8. Versionamento e auditoria completa
 9. Dashboards (usuário, administrador, executivo) + gamificação: placar de maturidade/adesão por
    área (`Area`), combinando volume de submissões, qualidade das respostas e taxa de aprovação -
