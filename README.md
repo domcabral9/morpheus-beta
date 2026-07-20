@@ -4,12 +4,12 @@ Plataforma de homologação e avaliação de risco de software, usada pela equip
 Informação para reduzir Shadow IT: centraliza o processo de avaliação de risco de novos sistemas
 contratados pela empresa, do questionário ao parecer técnico em PDF.
 
-> **Status:** Etapa 8 - Versionamento e auditoria completa. Trilha de auditoria (`GET /audit-logs`,
-> `audit:view`) cobrindo login/logout, CRUDs administrativos, envio de avaliação, decisões de
-> workflow e download de parecer - via decorator `@Audit()` + interceptor global para CRUDs simples,
-> e chamadas explícitas para eventos de negócio com ação dinâmica. Endpoint de histórico de versões
-> (`GET /assessments/:id/versions`) expõe a linha do tempo de score/classificação/parecer de cada
-> reenvio. Próximo: dashboards e gamificação (Etapa 9).
+> **Status:** Etapa 9 - Dashboards e gamificação. `GET /dashboards/me` (usuário), `/dashboards/admin`
+> (fila de aprovação, SLA), `/dashboards/executive` (taxa de aprovação, distribuição de classificação)
+> e `/dashboards/leaderboard` - o placar de maturidade/adesão por área que combina volume de
+> submissões, qualidade média do score de risco e taxa de aprovação, tudo calculado sob demanda a
+> partir dos dados já existentes (sem tabela nova). Próximo: inventário de softwares e notificações
+> por e-mail (Etapa 10).
 
 ## Stack
 
@@ -390,6 +390,36 @@ Validado de ponta a ponta contra o Postgres real via HTTP: login, criação e en
 aprovação em todas as etapas do workflow e download do parecer técnico todos registrados
 corretamente em `GET /audit-logs`, com `action`/`entityType`/`entityId` certos para cada evento.
 
+### Etapa 9 - Dashboards e gamificação
+
+Módulo `dashboards`: quatro endpoints de leitura (`/me`, `/admin`, `/executive`, `/leaderboard`), todos
+calculados sob demanda por agregação direta (Prisma `groupBy`/consultas) sobre `Assessment`,
+`WorkflowStepExecution` e `TechnicalOpinion` - nenhuma tabela nova, nenhum job/cache de
+pré-cálculo.
+
+- **`TechnicalOpinion` como base seguro para taxa de aprovação/qualidade/distribuição**: só é emitido
+  numa decisão terminal (Etapa 7), e hoje `REJECTED`/`APPROVED` não voltam a ser editáveis (reabertura
+  ainda não implementada) - então cada `Assessment` decidido tem no máximo um parecer, o que evita
+  ter que resolver "qual é a versão mais recente" na consulta.
+- **Placar de maturidade por área (gamificação) com pesos fixos, não mais uma entidade
+  configurável**: ao contrário da matriz de risco ou do workflow, isso é um recurso de engajamento,
+  não uma regra de compliance - não justifica o custo de outro CRUD administrativo. Qualidade pesa
+  mais que volume de propósito (40% vs. 30%): o objetivo é premiar áreas que submetem software já
+  bem avaliado, não só quem submete mais.
+- **Volume normalizado por relativo, não por um teto arbitrário**: `volumeScore = (volume da área /
+  maior volume entre as áreas) × 5` - evita ter que adivinhar um número "bom" de submissões por
+  tenant, que varia demais entre empresas pequenas e grandes.
+- **Escopo deliberadamente não coberto nesta etapa**: o roteiro original também previa o gatilho de
+  notificação por e-mail ao uma área subir de nível. Isso ficou de fora aqui porque (a) o módulo SMTP
+  ainda não existe (Etapa 10), (b) `NotificationType` não tem um valor de gamificação ainda, e (c)
+  não há hoje um conceito de "responsável pela área" no schema para saber quem notificar. Como o
+  placar é recalculado ao vivo (não persistido), também não há ainda onde comparar "nível anterior"
+  para detectar a subida - fica para quando o módulo de notificações entrar.
+
+Validado de ponta a ponta contra o Postgres real via HTTP: os quatro endpoints devolvendo dados
+reais do tenant demo, incluindo o cálculo do placar batendo exatamente com a fórmula esperada
+(score composto 4.85, nível "Referência" para a área com maior volume/qualidade/aprovação).
+
 ## Roteiro (próximas etapas)
 
 1. ~~Fundação técnica~~ ✅
@@ -400,9 +430,9 @@ corretamente em `GET /audit-logs`, com `action`/`entityType`/`entityId` certos p
 6. ~~Workflow de aprovação configurável~~ ✅
 7. ~~Geração de parecer técnico em PDF (hash, QR Code, número do parecer)~~ ✅
 8. ~~Versionamento e auditoria completa~~ ✅
-9. Dashboards (usuário, administrador, executivo) + gamificação: placar de maturidade/adesão por
-   área (`Area`), combinando volume de submissões, qualidade das respostas e taxa de aprovação -
-   inclui o gatilho de notificação (e-mail via SMTP, ver item 10) ao conquistar um nível
+9. ~~Dashboards (usuário, administrador, executivo) + gamificação: placar de maturidade/adesão por
+   área~~ ✅ (o gatilho de notificação por e-mail ao subir de nível fica para o item 10, junto do
+   módulo SMTP)
 10. Inventário de softwares e revisão periódica + serviço de notificações: módulo SMTP genérico
     (`NotificationsModule`, grava em `Notification` e dispara e-mail) usado tanto para o job de
     vencimento de `nextReviewDate` quanto para os eventos de workflow (Etapa 6) e gamificação
