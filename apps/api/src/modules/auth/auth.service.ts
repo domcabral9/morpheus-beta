@@ -4,6 +4,7 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService, JwtSignOptions } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import { PrismaService } from "../../prisma/prisma.service";
+import { CryptoService } from "../../common/services/crypto/crypto.service";
 import { AuditLogService } from "../audit/audit-log.service";
 import { UsersService } from "../users/users.service";
 import type { UserWithPermissions } from "../users/users.repository";
@@ -37,6 +38,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
+    private readonly cryptoService: CryptoService,
   ) {
     this.accessSecret = this.configService.getOrThrow<string>("JWT_ACCESS_SECRET");
     this.accessExpiresIn = this.configService.getOrThrow<string>("JWT_ACCESS_EXPIRES_IN");
@@ -195,7 +197,11 @@ export class AuthService {
         familyId,
         expiresAt: new Date(decoded.exp * 1000),
         userAgent: meta.userAgent,
-        ipAddress: meta.ipAddress,
+        // Criptografado em repouso (Etapa 14) — diferente de AuditLog.ipAddress
+        // (trilha de auditoria imutável, precisa ficar legível para
+        // investigação/compliance), este é dado operacional de sessão sem
+        // motivo para ficar em texto plano só de leitura direta no banco.
+        ipAddress: meta.ipAddress ? this.cryptoService.encrypt(meta.ipAddress) : undefined,
       },
     });
 
