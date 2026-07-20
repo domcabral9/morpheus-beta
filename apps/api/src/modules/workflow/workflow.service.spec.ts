@@ -8,6 +8,7 @@ import {
 import { WorkflowService } from "./workflow.service";
 import { WorkflowRepository } from "./workflow.repository";
 import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
+import { TechnicalOpinionService } from "../technical-opinions/technical-opinion.service";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
@@ -86,6 +87,7 @@ describe("WorkflowService", () => {
     findAssessmentContext: jest.Mock;
     findPendingStepsForRoles: jest.Mock;
   };
+  let technicalOpinionService: { generateForAssessment: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -103,12 +105,14 @@ describe("WorkflowService", () => {
       findAssessmentContext: jest.fn(),
       findPendingStepsForRoles: jest.fn(),
     };
+    technicalOpinionService = { generateForAssessment: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
         WorkflowService,
         { provide: WorkflowRepository, useValue: repo },
         SeparationOfDutiesService,
+        { provide: TechnicalOpinionService, useValue: technicalOpinionService },
       ],
     }).compile();
 
@@ -269,6 +273,12 @@ describe("WorkflowService", () => {
 
       expect(repo.updateInstance).toHaveBeenCalledWith("instance-1", { status: "REJECTED" });
       expect(repo.updateAssessmentStatus).toHaveBeenCalledWith("assessment-1", "REJECTED");
+      expect(technicalOpinionService.generateForAssessment).toHaveBeenCalledWith(
+        "tenant-1",
+        "assessment-1",
+        "REJECTED",
+        "approver-1",
+      );
     });
 
     it("REQUEST_ADJUSTMENT devolve a avaliação sem fechar a instância", async () => {
@@ -326,6 +336,12 @@ describe("WorkflowService", () => {
       expect(repo.updateInstance).toHaveBeenCalledWith("instance-1", { status: "APPROVED" });
       expect(repo.updateAssessmentStatus).toHaveBeenCalledWith("assessment-1", "APPROVED");
       expect(repo.createStepExecution).not.toHaveBeenCalled();
+      expect(technicalOpinionService.generateForAssessment).toHaveBeenCalledWith(
+        "tenant-1",
+        "assessment-1",
+        "APPROVED",
+        "approver-1",
+      );
     });
 
     it("SKIP numa etapa opcional avança normalmente", async () => {
