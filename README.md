@@ -4,12 +4,12 @@ Plataforma de homologação e avaliação de risco de software, usada pela equip
 Informação para reduzir Shadow IT: centraliza o processo de avaliação de risco de novos sistemas
 contratados pela empresa, do questionário ao parecer técnico em PDF.
 
-> **Status:** Etapa 11 - Gestão documental (anexos). Contratos, DPAs, relatórios SOC2/ISO27001,
-> pentest e outros documentos agora podem ser anexados a uma avaliação ou a um item de inventário
-> (`POST/GET /attachments`, download autenticado em `GET /attachments/:id/download`), com
-> versionamento automático: reenviar um arquivo com o mesmo nome cria uma nova versão em vez de
-> sobrescrever a anterior. Próximo: biblioteca de controles (ISO 27001/27002, NIST CSF, CIS v8,
-> LGPD, GDPR, OWASP) (Etapa 12).
+> **Status:** Etapa 12 - Biblioteca de controles. Catálogo global (ISO 27001/27002, NIST CSF, CIS
+> v8, LGPD, GDPR, OWASP ASVS/Top 10) exposto em `GET /controls/frameworks` e `GET /controls`, com
+> 77 controles curados já seedados. Perguntas do questionário podem ser vinculadas aos controles que
+> elas avaliam (`POST/DELETE /questionnaire/admin/questions/:id/controls`), útil para o parecer
+> técnico mostrar quais frameworks de conformidade cada avaliação cobre. Próximo: i18n, temas e
+> responsividade (Etapa 13).
 
 ## Stack
 
@@ -486,6 +486,46 @@ listagem ordenada por nome/versão, download retornando os bytes corretos, uploa
 inventário por um usuário com `inventory:manage`, bloqueio (403) de um usuário sem essa permissão
 tentando o mesmo, e rejeição (400) de payload com avaliação e item de inventário ao mesmo tempo.
 
+### Etapa 12 - Biblioteca de controles
+
+Módulo novo `controls`, expondo o catálogo `ControlFramework`/`Control` já modelado desde a Etapa 2
+(sem consumidor até aqui) e conectando-o ao questionário via `QuestionControl` (também já existente
+e sem uso).
+
+- **Catálogo global, sem CRUD via API** - `ControlFramework`/`Control` representam frameworks
+  padronizados (ISO, NIST, CIS, LGPD, GDPR, OWASP), o mesmo conteúdo para qualquer tenant, igual ao
+  catálogo de `Permission`. Só leitura (`GET /controls/frameworks`, `GET /controls`), aberta a
+  qualquer usuário autenticado - mantido pelo seed, não por um admin por tenant.
+- **77 controles curados, não exaustivos** - os frameworks completos seriam inviáveis de manter à
+  mão (ISO 27002 tem 93 controles, NIST CSF ~106 subcategorias, CIS v8 153 safeguards, OWASP ASVS
+  200+ requisitos). Onde o framework tem uma lista oficial curta e completa no nível superior (os 18
+  Controls do CIS v8, os 14 capítulos do OWASP ASVS, os 10 itens do OWASP Top 10), o seed usa essa
+  lista completa; nos demais, uma seleção dos itens mais relevantes para avaliação de risco de
+  software. Ajustável depois por um CRUD administrativo do catálogo, se necessário.
+- **Vínculo pergunta-controle como permissão própria (`controls:manage`), separada de
+  `questions:manage`** - mapear controles de conformidade a perguntas é tipicamente trabalho do time
+  de GRC/compliance, não de quem edita o conteúdo do questionário; times maiores costumam separar
+  essas responsabilidades. Endpoints seguem o mesmo padrão de sub-recurso já usado para opções de
+  pergunta (Etapa 4): `POST/DELETE /questionnaire/admin/questions/:id/controls(/:controlId)`.
+- **Vínculo é um upsert idempotente na chave composta** (`questionId_controlId`) - vincular um
+  controle já vinculado não gera erro nem duplicata, mesmo padrão já usado no upsert de célula da
+  matriz de risco (Etapa 5).
+- **Tipo de leitura administrativa separado do tipo usado pelo motor de risco** - `Question` ganhou
+  um segundo shape de include (`QuestionAdminDetail`, com `controls`) só para as telas
+  administrativas; o restante do sistema (responder questionário, engine de risco) continua usando
+  o shape original (`QuestionWithOptions`, sem `controls`) - evita carregar/expor a biblioteca de
+  controles em fluxos que não precisam dela.
+- **Integração com o parecer técnico em PDF (Etapa 7) fica fora de escopo por ora** - mostrar quais
+  frameworks uma avaliação cobre no PDF é um bom próximo passo, mas expandiria uma etapa já fechada;
+  fica documentado aqui como possibilidade futura, não implementado.
+
+Validado de ponta a ponta contra o Postgres real via HTTP: listagem de frameworks com contagem de
+controles, filtro de controles por framework (18 resultados exatos para CIS v8), vínculo de um
+controle a uma pergunta por um admin, bloqueio (403) da mesma ação por um usuário sem
+`controls:manage`, rejeição (404) ao vincular um controle inexistente, desvínculo, e conferência de
+que os vínculos seedados (MFA → ISO 27001 A.9/8.5, NIST CSF PR.AA, CIS v8 Control 6, OWASP ASVS V2)
+aparecem corretamente na listagem administrativa de perguntas.
+
 ## Roteiro (próximas etapas)
 
 1. ~~Fundação técnica~~ ✅
@@ -501,7 +541,7 @@ tentando o mesmo, e rejeição (400) de payload com avaliação e item de invent
    módulo SMTP)
 10. ~~Inventário de softwares e revisão periódica + serviço de notificações~~ ✅
 11. ~~Gestão documental (anexos)~~ ✅
-12. Biblioteca de controles (ISO 27001/27002, NIST CSF, CIS v8, LGPD, GDPR, OWASP)
+12. ~~Biblioteca de controles (ISO 27001/27002, NIST CSF, CIS v8, LGPD, GDPR, OWASP)~~ ✅
 13. i18n, temas e responsividade (polimento)
 14. Observabilidade e hardening de segurança
 15. Arquitetura de adapters para integrações futuras + Provider Pattern para IA
