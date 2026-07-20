@@ -4,13 +4,14 @@ Plataforma de homologação e avaliação de risco de software, usada pela equip
 Informação para reduzir Shadow IT: centraliza o processo de avaliação de risco de novos sistemas
 contratados pela empresa, do questionário ao parecer técnico em PDF.
 
-> **Status:** Etapa 13 - i18n, temas e responsividade. Passo de polimento no frontend (`apps/web`):
-> strings que ainda estavam hardcoded em português foram movidas para o catálogo de traduções,
-> `<title>`/metadata passaram a ser localizados por rota, o alternador de tema virou um ciclo de 3
-> estados (claro/escuro/sistema), e os 5 telas existentes (home, login, dashboard, nova avaliação,
-> detalhe da avaliação) ganharam layouts responsivos de verdade (grids que colapsam em coluna única,
-> tabela com colunas priorizadas em telas estreitas, headers que quebram linha). Próximo:
-> observabilidade e hardening de segurança (Etapa 14).
+> **Status:** Etapa 14 - Observabilidade e hardening de segurança. Cinco frentes na API: rate
+> limiting global (`@nestjs/throttler`, limites mais estritos em `/auth/login` e `/auth/refresh`),
+> estrutura de tracing distribuído com OpenTelemetry (console por padrão, OTLP se configurado),
+> proteção CSRF via double-submit cookie nos dois endpoints autenticados só por cookie
+> (`/auth/refresh`, `/auth/logout`), sanitização global de strings de entrada, e criptografia em
+> repouso (AES-256-GCM) do IP salvo em `RefreshToken`. Também entrou um filtro global de exceções
+> (nenhum erro não tratado mais vaza stack trace na resposta). Próximo: arquitetura de adapters para
+> integrações futuras + Provider Pattern para IA (Etapa 15).
 
 ## Stack
 
@@ -560,6 +561,57 @@ Validado via build de produção (`next build` + `next start`) servindo as rotas
 título traduzido corretamente por locale, botão "Entrar"/"Sign in" renderizando o texto certo por
 idioma, e nenhuma chave de tradução (`Namespace.key`) vazando como texto literal no HTML.
 
+### Etapa 14 - Observabilidade e hardening de segurança
+
+Cinco frentes independentes na API, sem novo módulo de domínio - todas cross-cutting, registradas
+como providers/guards/pipes globais em `app.module.ts`/`main.ts`, no mesmo espírito de
+`AuditInterceptor`/`JwtAuthGuard` desde as primeiras etapas.
+
+- **Rate limiting (`@nestjs/throttler`)**: limite global de 100 requisições/minuto por IP
+  (`THROTTLE_TTL_MS`/`THROTTLE_LIMIT`, configuráveis), com `ThrottlerGuard` registrado *antes* do
+  `JwtAuthGuard` - protege até rotas `@Public()` (login, refresh) sem depender de autenticação já
+  ter acontecido. `/auth/login` (alvo clássico de força bruta) tem limite próprio de 5/min via
+  `@Throttle()`; `/auth/refresh` (chamado automaticamente a cada carregamento de página) tem 20/min.
+- **Estrutura de OpenTelemetry**: `tracing.ts` roda como o primeiro `require()` do processo (antes
+  até de `reflect-metadata` em `main.ts`) porque a auto-instrumentação só consegue interceptar
+  módulos (`http`, `express`, `pg`) que ainda não foram carregados. Sem `OTEL_EXPORTER_OTLP_ENDPOINT`
+  configurado, os spans vão para o console - funciona em dev/CI sem precisar de um collector
+  rodando, mesmo espírito do `SmtpEmailAdapter` (Etapa 10). O Correlation ID (Etapa 1) continua
+  existindo em paralelo, propositalmente não unificado com o trace ID do OTel: são concerns
+  diferentes (identificador simples de requisição já usado pelos logs vs. correlação de tracing
+  distribuído entre serviços) - unificar os dois seria trabalho de instrumentação customizada, fora
+  do que "estrutura" pede aqui.
+- **CSRF via double-submit cookie**: como todo endpoint de negócio já usa JWT bearer (nunca cookie)
+  para autenticar, CSRF clássico já não se aplica a eles - só `/auth/refresh` e `/auth/logout` são
+  autenticados unicamente por um cookie httpOnly, e por isso são os únicos que ganharam um
+  `CsrfGuard`. Login emite um segundo cookie (`morpheus_csrf_token`, não-httpOnly de propósito - o
+  frontend precisa ler via `document.cookie`) que o `apiFetch` da Web reenvia como header
+  `X-CSRF-Token` em toda chamada; o guard compara os dois com `timingSafeEqual`. `sameSite: "strict"`
+  no cookie de refresh (desde a Etapa 3) já bloqueava a maior parte do vetor clássico - isto é defesa
+  em profundidade, não a única barreira. Efeito colateral esperado: sessões que já existiam antes
+  desta etapa vão pedir um novo login uma vez (não têm o cookie CSRF ainda).
+- **Sanitização global**: `SanitizationPipe`, registrado antes do `ValidationPipe`, faz trim e remove
+  caracteres de controle (exceto tab/LF/CR) recursivamente em todo `body`/`query`/`params` - sem
+  tocar em nenhum DTO existente. `ValidationPipe` continua responsável por validar forma/tipos; este
+  pipe só normaliza conteúdo textual.
+- **Criptografia em repouso (AES-256-GCM)**: `CryptoService` novo (`ENCRYPTION_KEY`, 32 bytes em
+  base64), aplicado hoje a `RefreshToken.ipAddress`. Deliberadamente **não** aplicado a
+  `AuditLog.ipAddress`, apesar de guardar o mesmo tipo de dado - a trilha de auditoria é um registro
+  de compliance que precisa ficar legível para investigação, enquanto o IP da sessão de refresh é
+  dado operacional sem motivo para ficar em texto plano só de leitura direta no banco. Sem backfill
+  das linhas antigas: só passa a criptografar dali para frente.
+- **Filtro global de exceções**: `AllExceptionsFilter` (via `APP_FILTER`) deixa `HttpException`
+  (400/403/404/...) passarem como já formatadas pelos controllers/services, mas qualquer exceção não
+  tratada agora vira um 500 genérico na resposta - o detalhe completo (stack trace incluído) só
+  aparece no log estruturado (pino), nunca no corpo da resposta HTTP.
+
+Validado de ponta a ponta contra o Postgres real via HTTP: 6 tentativas de login seguidas (5
+passam pela lógica de autenticação, a 6ª recebe 429); refresh sem header CSRF rejeitado com 403,
+com o header correto aceito com 200, com header errado rejeitado com 403; nome de categoria
+criado com espaços nas pontas voltando já sem eles (sanitização); `RefreshToken.ipAddress` gravado
+como ciphertext no Postgres (`iv.authTag.ciphertext` em base64), confirmado via `psql` direto;
+spans reais aparecendo no console ao iniciar a API (criação do módulo Nest, requisições HTTP).
+
 ## Roteiro (próximas etapas)
 
 1. ~~Fundação técnica~~ ✅
@@ -577,7 +629,7 @@ idioma, e nenhuma chave de tradução (`Namespace.key`) vazando como texto liter
 11. ~~Gestão documental (anexos)~~ ✅
 12. ~~Biblioteca de controles (ISO 27001/27002, NIST CSF, CIS v8, LGPD, GDPR, OWASP)~~ ✅
 13. ~~i18n, temas e responsividade (polimento)~~ ✅
-14. Observabilidade e hardening de segurança
+14. ~~Observabilidade e hardening de segurança~~ ✅
 15. Arquitetura de adapters para integrações futuras + Provider Pattern para IA
 16. Testes, documentação final e produção - inclui estratégia de deploy em AWS ECS/Fargate:
     imagens (já compatíveis, multi-stage/non-root) publicadas no ECR, Postgres migrando de container

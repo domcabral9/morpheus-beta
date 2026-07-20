@@ -50,6 +50,30 @@ const envSchema = z
     // PENDING_REVIEW e notificar o responsável (job diário — ver
     // SoftwareReviewScheduler).
     INVENTORY_REVIEW_WARNING_DAYS: z.coerce.number().default(30),
+
+    // Lidas diretamente de process.env em tracing.ts, antes do ConfigModule
+    // existir — declaradas aqui só para documentação e para o restante da
+    // aplicação conseguir lê-las via ConfigService se precisar. Sem
+    // OTEL_EXPORTER_OTLP_ENDPOINT, os spans vão para o console (dev/CI não
+    // precisam de um collector rodando).
+    OTEL_SERVICE_NAME: z.string().default("morpheus-api"),
+    OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
+
+    // Rate limiting global (Etapa 14) — janela em ms e máximo de requisições
+    // por IP dentro dela. Endpoints sensíveis (login, refresh) têm limites
+    // mais estritos via @Throttle() nos controllers.
+    THROTTLE_TTL_MS: z.coerce.number().default(60_000),
+    THROTTLE_LIMIT: z.coerce.number().default(100),
+
+    // Chave simétrica para o CryptoService (AES-256-GCM) — usada hoje para
+    // criptografar RefreshToken.ipAddress em repouso. Precisa ter exatamente
+    // 32 bytes quando decodificada de base64 (chave de 256 bits).
+    ENCRYPTION_KEY: z
+      .string()
+      .min(1, "ENCRYPTION_KEY é obrigatório")
+      .refine((value) => Buffer.from(value, "base64").length === 32, {
+        message: "ENCRYPTION_KEY deve ser uma chave de 256 bits (32 bytes) em base64",
+      }),
   })
   .superRefine((env, ctx) => {
     if (!env.SAML_ENABLED) return;
