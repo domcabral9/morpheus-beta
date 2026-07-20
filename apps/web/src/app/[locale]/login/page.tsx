@@ -45,15 +45,15 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-full flex-1 flex-col">
-      <header className="flex items-center justify-between px-6 py-4">
+      <header className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
         <span className="text-sm font-semibold tracking-tight">{t("title")}</span>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <LocaleSwitcher label={t("localeSwitcherLabel")} />
           <ThemeToggle label={t("themeToggleLabel")} />
         </div>
       </header>
 
-      <div className="flex flex-1 items-center justify-center px-6 py-12">
+      <div className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
         <Card className="w-full max-w-sm">
           <CardHeader>
             <CardTitle className="text-2xl">{t("title")}</CardTitle>

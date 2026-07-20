@@ -13,11 +13,11 @@ export function AppHeader() {
   const router = useRouter();
 
   return (
-    <header className="flex items-center justify-between border-b px-6 py-4">
+    <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-4 sm:px-6">
       <span className="text-sm font-semibold tracking-tight">Morpheus</span>
-      <div className="flex items-center gap-3">
-        <LocaleSwitcher label="" />
-        <ThemeToggle label="" />
+      <div className="flex items-center gap-2 sm:gap-3">
+        <LocaleSwitcher label={t("localeSwitcherLabel")} />
+        <ThemeToggle label={t("themeToggleLabel")} />
         <Button
           variant="outline"
           size="sm"
