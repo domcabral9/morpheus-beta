@@ -25,6 +25,7 @@ import { AuditLogModule } from "./modules/audit/audit-log.module";
 import { DashboardsModule } from "./modules/dashboards/dashboards.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { InventoryModule } from "./modules/inventory/inventory.module";
+import { AttachmentsModule } from "./modules/attachments/attachments.module";
 
 const pinoHttpOptions: PinoHttpOptions = {
   genReqId: (req) => req.headers[CORRELATION_ID_HEADER] as string,
@@ -67,6 +68,7 @@ const pinoHttpOptions: PinoHttpOptions = {
     WorkflowModule,
     DashboardsModule,
     InventoryModule,
+    AttachmentsModule,
   ],
   providers: [
     // Protegido por padrão em toda a aplicação — rotas ficam públicas só com

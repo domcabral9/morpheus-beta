@@ -4,13 +4,12 @@ Plataforma de homologação e avaliação de risco de software, usada pela equip
 Informação para reduzir Shadow IT: centraliza o processo de avaliação de risco de novos sistemas
 contratados pela empresa, do questionário ao parecer técnico em PDF.
 
-> **Status:** Etapa 10 - Inventário de softwares e notificações. Avaliações homologadas viram
-> automaticamente um item de `SoftwareInventoryItem` (`GET/POST/PATCH /inventory`), com revisão
-> periódica via job diário que marca itens vencendo como `PENDING_REVIEW` e notifica o
-> gestor/responsável técnico. Módulo `notifications` genérico (grava em `Notification` + tenta
-> e-mail via SMTP, nunca derruba a ação de negócio) usado tanto pelo workflow (nova etapa,
-> aprovação, reprovação, ajuste) quanto pela emissão do parecer técnico. Próximo: gestão documental
-> de anexos (Etapa 11).
+> **Status:** Etapa 11 - Gestão documental (anexos). Contratos, DPAs, relatórios SOC2/ISO27001,
+> pentest e outros documentos agora podem ser anexados a uma avaliação ou a um item de inventário
+> (`POST/GET /attachments`, download autenticado em `GET /attachments/:id/download`), com
+> versionamento automático: reenviar um arquivo com o mesmo nome cria uma nova versão em vez de
+> sobrescrever a anterior. Próximo: biblioteca de controles (ISO 27001/27002, NIST CSF, CIS v8,
+> LGPD, GDPR, OWASP) (Etapa 12).
 
 ## Stack
 
@@ -455,6 +454,38 @@ etapa, `APPROVAL`/`OPINION_ISSUED` ao aprovador final, item de inventário criad
 `nextReviewDate` exatamente 12 meses à frente, CRUD manual (`PATCH /inventory/:id`) e
 marcar-como-lida (`PATCH /notifications/:id/read`) todos funcionando contra dados reais.
 
+### Etapa 11 - Gestão documental (anexos)
+
+Módulo novo `attachments`, reaproveitando o `Attachment` já modelado desde a Etapa 2 (nunca usado
+até aqui) e o `StorageAdapter` da Etapa 7 (mesma dupla local-disk/S3-pronto, sem URL pública -
+download sempre passa autenticado pelo controller).
+
+- **Anexo pertence a exatamente uma avaliação ou a um item de inventário, nunca aos dois** -
+  validado explicitamente no service (`assertExactlyOneParent`) em vez de modelar como duas FKs
+  soltas e confiar em disciplina de uso; upload e listagem exigem um dos dois IDs via DTO.
+- **Versionamento por nome de arquivo, nunca sobrescreve** - reenviar `contrato.pdf` no mesmo
+  parent não apaga o anterior: cria uma nova linha `Attachment` com `version = max anterior + 1` e
+  um novo objeto no storage (chave inclui timestamp). Mesma filosofia de histórico imutável já
+  usada em `AssessmentVersion` (Etapa 8) e `TechnicalOpinion` (Etapa 7) - nunca perder uma versão
+  anterior de um documento de compliance é mais importante que economizar espaço em disco.
+- **Autorização diferente por tipo de parent**: anexo de avaliação segue a mesma regra de
+  visibilidade já usada em `assessments` (requester dono, ou `assessments:view-all`/`assessments:approve`
+  para outros papéis); anexo de item de inventário usa as permissões já existentes
+  `inventory:view`/`inventory:manage` (Etapa 10) - nenhuma permissão nova precisou ser criada.
+- **Upload validado na borda**: `FileInterceptor` do Nest com allowlist de MIME type (PDF, Word,
+  Excel, PNG/JPEG, ZIP) e limite de 25MB, rejeitados antes de qualquer lógica de negócio rodar -
+  consistente com a postura de segurança do resto da API (ValidationPipe global, Helmet, etc).
+- **Download sempre autenticado, nunca por URL pública** - o controller le o buffer via
+  `StorageAdapter.read()` e retorna como `application/octet-stream` com `Content-Disposition`,
+  registrando um `AuditLogService.record()` de `DOWNLOAD` a cada acesso (quem baixou o quê e quando
+  fica no trilho de auditoria da Etapa 8).
+
+Validado de ponta a ponta contra o Postgres real via HTTP: upload em uma avaliação com sucesso pelo
+requester, reenvio do mesmo nome de arquivo incrementando a versão (v1 → v2) sem apagar a anterior,
+listagem ordenada por nome/versão, download retornando os bytes corretos, upload em item de
+inventário por um usuário com `inventory:manage`, bloqueio (403) de um usuário sem essa permissão
+tentando o mesmo, e rejeição (400) de payload com avaliação e item de inventário ao mesmo tempo.
+
 ## Roteiro (próximas etapas)
 
 1. ~~Fundação técnica~~ ✅
@@ -469,7 +500,7 @@ marcar-como-lida (`PATCH /notifications/:id/read`) todos funcionando contra dado
    área~~ ✅ (o gatilho de notificação por e-mail ao subir de nível fica para o item 10, junto do
    módulo SMTP)
 10. ~~Inventário de softwares e revisão periódica + serviço de notificações~~ ✅
-11. Gestão documental (anexos)
+11. ~~Gestão documental (anexos)~~ ✅
 12. Biblioteca de controles (ISO 27001/27002, NIST CSF, CIS v8, LGPD, GDPR, OWASP)
 13. i18n, temas e responsividade (polimento)
 14. Observabilidade e hardening de segurança
