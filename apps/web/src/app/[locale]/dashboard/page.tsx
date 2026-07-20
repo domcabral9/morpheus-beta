@@ -16,6 +16,7 @@ import type { PaginatedAssessments } from "@/lib/assessment-types";
 export default function DashboardPage() {
   const t = useTranslations("Assessments");
   const dashboardT = useTranslations("Dashboard");
+  const criticalityT = useTranslations("Criticality");
   const user = useRequireAuth();
   const api = useApi();
 
@@ -42,15 +43,15 @@ export default function DashboardPage() {
     <main className="flex flex-1 flex-col">
       <AppHeader />
 
-      <section className="flex flex-1 flex-col gap-6 px-6 py-8">
+      <section className="flex flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
             {dashboardT("welcome", { name: user.name })}
           </h1>
         </div>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>{t("title")}</CardTitle>
             <Button asChild size="sm">
               <Link href="/assessments/new">
@@ -78,10 +79,16 @@ export default function DashboardPage() {
                   <thead>
                     <tr className="border-b text-left text-muted-foreground">
                       <th className="py-2 pr-4 font-medium">{t("columnSoftware")}</th>
-                      <th className="py-2 pr-4 font-medium">{t("columnArea")}</th>
-                      <th className="py-2 pr-4 font-medium">{t("columnCriticality")}</th>
+                      <th className="hidden py-2 pr-4 font-medium md:table-cell">
+                        {t("columnArea")}
+                      </th>
+                      <th className="hidden py-2 pr-4 font-medium sm:table-cell">
+                        {t("columnCriticality")}
+                      </th>
                       <th className="py-2 pr-4 font-medium">{t("columnStatus")}</th>
-                      <th className="py-2 pr-4 font-medium">{t("columnCreatedAt")}</th>
+                      <th className="hidden py-2 pr-4 font-medium md:table-cell">
+                        {t("columnCreatedAt")}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -95,12 +102,16 @@ export default function DashboardPage() {
                             {assessment.softwareName}
                           </Link>
                         </td>
-                        <td className="py-2 pr-4 text-muted-foreground">{assessment.area.name}</td>
-                        <td className="py-2 pr-4 text-muted-foreground">{assessment.criticality}</td>
+                        <td className="hidden py-2 pr-4 text-muted-foreground md:table-cell">
+                          {assessment.area.name}
+                        </td>
+                        <td className="hidden py-2 pr-4 text-muted-foreground sm:table-cell">
+                          {criticalityT(assessment.criticality)}
+                        </td>
                         <td className="py-2 pr-4">
                           <AssessmentStatusBadge status={assessment.status} />
                         </td>
-                        <td className="py-2 pr-4 text-muted-foreground">
+                        <td className="hidden py-2 pr-4 text-muted-foreground md:table-cell">
                           {new Date(assessment.createdAt).toLocaleDateString()}
                         </td>
                       </tr>

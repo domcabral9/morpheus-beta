@@ -130,7 +130,7 @@ export default function AssessmentDetailPage() {
     <main className="flex flex-1 flex-col">
       <AppHeader />
 
-      <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-8">
+      <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
         <Link href="/dashboard" className="flex items-center gap-1 text-sm text-muted-foreground hover:underline">
           <ArrowLeft className="size-4" />
           {t("back")}
@@ -151,7 +151,7 @@ export default function AssessmentDetailPage() {
                 <CardTitle>{assessment.softwareName}</CardTitle>
                 <AssessmentStatusBadge status={assessment.status} />
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+              <CardContent className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
                 <div>
                   <span className="text-muted-foreground">{t("vendor")}: </span>
                   {assessment.vendor}
@@ -170,11 +170,11 @@ export default function AssessmentDetailPage() {
                   <span className="text-muted-foreground">{t("responsible")}: </span>
                   {assessment.responsible.name}
                 </div>
-                <div className="col-span-2">
-                  <span className="text-muted-foreground">Criticidade: </span>
+                <div className="sm:col-span-2">
+                  <span className="text-muted-foreground">{t("criticality")}: </span>
                   {criticalityT(assessment.criticality)}
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <span className="text-muted-foreground">{t("justification")}: </span>
                   {assessment.justification}
                 </div>
