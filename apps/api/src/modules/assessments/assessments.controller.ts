@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Put, Query } from "@nestjs/c
 import { ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
+import { Audit } from "../../common/decorators/audit.decorator";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { AssessmentsService } from "./assessments.service";
@@ -16,6 +17,7 @@ export class AssessmentsController {
   constructor(private readonly assessmentsService: AssessmentsService) {}
 
   @RequirePermissions(PERMISSIONS.ASSESSMENTS_CREATE)
+  @Audit("CREATE", "Assessment")
   @Post()
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAssessmentDto) {
     return this.assessmentsService.create(user, dto);
@@ -35,6 +37,7 @@ export class AssessmentsController {
   }
 
   @RequirePermissions(PERMISSIONS.ASSESSMENTS_EDIT_OWN)
+  @Audit("UPDATE", "Assessment")
   @Patch(":id")
   update(
     @CurrentUser() user: AuthenticatedUser,
@@ -42,6 +45,11 @@ export class AssessmentsController {
     @Body() dto: UpdateAssessmentDto,
   ) {
     return this.assessmentsService.update(user, id, dto);
+  }
+
+  @Get(":id/versions")
+  getVersionHistory(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.assessmentsService.getVersionHistory(user, id);
   }
 
   @Get(":id/answers")

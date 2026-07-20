@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/commo
 import { ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
+import { Audit } from "../../common/decorators/audit.decorator";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { QuestionnaireService } from "./questionnaire.service";
@@ -32,12 +33,14 @@ export class QuestionnaireController {
   }
 
   @RequirePermissions(PERMISSIONS.QUESTIONS_MANAGE)
+  @Audit("CREATE", "QuestionCategory")
   @Post("admin/categories")
   createCategory(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateCategoryDto) {
     return this.questionnaireService.createCategory(user.tenantId, dto);
   }
 
   @RequirePermissions(PERMISSIONS.QUESTIONS_MANAGE)
+  @Audit("UPDATE", "QuestionCategory")
   @Patch("admin/categories/:id")
   updateCategory(
     @CurrentUser() user: AuthenticatedUser,
@@ -54,12 +57,14 @@ export class QuestionnaireController {
   }
 
   @RequirePermissions(PERMISSIONS.QUESTIONS_MANAGE)
+  @Audit("CREATE", "Question")
   @Post("admin/questions")
   createQuestion(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateQuestionDto) {
     return this.questionnaireService.createQuestion(user.tenantId, dto);
   }
 
   @RequirePermissions(PERMISSIONS.QUESTIONS_MANAGE)
+  @Audit("UPDATE", "Question")
   @Patch("admin/questions/:id")
   updateQuestion(
     @CurrentUser() user: AuthenticatedUser,
@@ -70,6 +75,7 @@ export class QuestionnaireController {
   }
 
   @RequirePermissions(PERMISSIONS.QUESTIONS_MANAGE)
+  @Audit("CREATE", "QuestionOption")
   @Post("admin/questions/:id/options")
   addOption(
     @CurrentUser() user: AuthenticatedUser,
@@ -80,6 +86,7 @@ export class QuestionnaireController {
   }
 
   @RequirePermissions(PERMISSIONS.QUESTIONS_MANAGE)
+  @Audit("UPDATE", "QuestionOption")
   @Patch("admin/options/:id")
   updateOption(
     @CurrentUser() user: AuthenticatedUser,
@@ -90,6 +97,7 @@ export class QuestionnaireController {
   }
 
   @RequirePermissions(PERMISSIONS.QUESTIONS_MANAGE)
+  @Audit("DELETE", "QuestionOption")
   @Delete("admin/options/:id")
   removeOption(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.questionnaireService.removeOption(user.tenantId, id);

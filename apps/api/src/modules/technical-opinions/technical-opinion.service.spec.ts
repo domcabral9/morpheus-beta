@@ -9,6 +9,7 @@ import { TechnicalOpinionService } from "./technical-opinion.service";
 import { TechnicalOpinionRepository } from "./technical-opinion.repository";
 import { PdfGeneratorService } from "./pdf-generator.service";
 import { STORAGE_ADAPTER } from "../storage/storage.interface";
+import { AuditLogService } from "../audit/audit-log.service";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 jest.mock("qrcode", () => ({
@@ -68,6 +69,7 @@ describe("TechnicalOpinionService", () => {
   };
   let pdfGenerator: { build: jest.Mock };
   let storage: { save: jest.Mock; read: jest.Mock };
+  let auditLogService: { record: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -86,6 +88,7 @@ describe("TechnicalOpinionService", () => {
     };
     pdfGenerator = { build: jest.fn().mockResolvedValue(Buffer.from("%PDF-fake")) };
     storage = { save: jest.fn().mockResolvedValue(undefined), read: jest.fn() };
+    auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -93,6 +96,7 @@ describe("TechnicalOpinionService", () => {
         { provide: TechnicalOpinionRepository, useValue: repo },
         { provide: PdfGeneratorService, useValue: pdfGenerator },
         { provide: ConfigService, useValue: { get: () => "http://localhost:3001" } },
+        { provide: AuditLogService, useValue: auditLogService },
         { provide: STORAGE_ADAPTER, useValue: storage },
       ],
     }).compile();

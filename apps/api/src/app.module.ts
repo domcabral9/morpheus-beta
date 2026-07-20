@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { Module } from "@nestjs/common";
-import { APP_GUARD } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { PrometheusModule } from "@willsoto/nestjs-prometheus";
 import { LoggerModule } from "nestjs-pino";
@@ -10,6 +10,7 @@ import { CORRELATION_ID_HEADER } from "./common/middleware/correlation-id.middle
 import { MetricsController } from "./common/controllers/metrics.controller";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
 import { PermissionsGuard } from "./common/guards/permissions.guard";
+import { AuditInterceptor } from "./common/interceptors/audit.interceptor";
 import { PrismaModule } from "./prisma/prisma.module";
 import { HealthModule } from "./health/health.module";
 import { UsersModule } from "./modules/users/users.module";
@@ -19,6 +20,7 @@ import { QuestionnaireModule } from "./modules/questionnaire/questionnaire.modul
 import { AssessmentsModule } from "./modules/assessments/assessments.module";
 import { RiskMatrixModule } from "./modules/risk-matrix/risk-matrix.module";
 import { WorkflowModule } from "./modules/workflow/workflow.module";
+import { AuditLogModule } from "./modules/audit/audit-log.module";
 
 const pinoHttpOptions: PinoHttpOptions = {
   genReqId: (req) => req.headers[CORRELATION_ID_HEADER] as string,
@@ -48,6 +50,7 @@ const pinoHttpOptions: PinoHttpOptions = {
       controller: MetricsController,
     }),
     PrismaModule,
+    AuditLogModule,
     HealthModule,
     UsersModule,
     AuthModule,
@@ -64,6 +67,8 @@ const pinoHttpOptions: PinoHttpOptions = {
     // Roda depois do JwtAuthGuard (ordem de registro = ordem de execução):
     // precisa de request.user já populado para checar @RequirePermissions().
     { provide: APP_GUARD, useClass: PermissionsGuard },
+    // No-op para rotas sem @Audit() — ver common/decorators/audit.decorator.ts.
+    { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
   ],
 })
 export class AppModule {}

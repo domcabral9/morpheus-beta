@@ -5,10 +5,11 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from "@nestjs/common";
-import { WorkflowStep, WorkflowStepStatus } from "@morpheus/database";
+import { AuditAction, WorkflowStep, WorkflowStepStatus } from "@morpheus/database";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
+import { AuditLogService } from "../audit/audit-log.service";
 import { TechnicalOpinionService } from "../technical-opinions/technical-opinion.service";
 import {
   WorkflowRepository,
@@ -29,6 +30,16 @@ const DECISION_TO_STATUS: Record<DecideStepDto["decision"], WorkflowStepStatus> 
   SKIP: "SKIPPED",
 };
 
+// AuditAction não tem REQUEST_ADJUSTMENT/SKIP (enum genérico o suficiente
+// para outros domínios) — os dois caem em UPDATE, com a decisão exata
+// preservada em `metadata.decision`.
+const DECISION_TO_AUDIT_ACTION: Record<DecideStepDto["decision"], AuditAction> = {
+  APPROVE: "APPROVE",
+  REJECT: "REJECT",
+  REQUEST_ADJUSTMENT: "UPDATE",
+  SKIP: "UPDATE",
+};
+
 /**
  * Motor de workflow configurável (Etapa 6). A definição (etapas, papel
  * responsável, SLA, opcional/condicional-LGPD) é dado, não código — o motor
@@ -41,6 +52,7 @@ export class WorkflowService {
     private readonly workflowRepository: WorkflowRepository,
     private readonly separationOfDutiesService: SeparationOfDutiesService,
     private readonly technicalOpinionService: TechnicalOpinionService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   /**
@@ -155,6 +167,19 @@ export class WorkflowService {
     } else {
       await this.advanceToNextStep(execution, user.id);
     }
+
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: DECISION_TO_AUDIT_ACTION[dto.decision],
+      entityType: "WorkflowStepExecution",
+      entityId: execution.id,
+      metadata: {
+        decision: dto.decision,
+        stepName: execution.workflowStep.name,
+        comments: dto.comments ?? null,
+      },
+    });
 
     const updated = await this.workflowRepository.findStepExecutionById(execution.id);
     if (!updated) throw new NotFoundException("Etapa de workflow não encontrada após a decisão.");

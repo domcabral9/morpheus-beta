@@ -6,6 +6,7 @@ import * as bcrypt from "bcrypt";
 import { AuthService } from "./auth.service";
 import { UsersService } from "../users/users.service";
 import { PrismaService } from "../../prisma/prisma.service";
+import { AuditLogService } from "../audit/audit-log.service";
 import type { UserWithPermissions } from "../users/users.repository";
 
 const CONFIG_VALUES: Record<string, string> = {
@@ -40,6 +41,7 @@ describe("AuthService", () => {
       updateMany: jest.Mock;
     };
   };
+  let auditLogService: { record: jest.Mock };
 
   beforeEach(async () => {
     usersService = {
@@ -55,6 +57,7 @@ describe("AuthService", () => {
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
     };
+    auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -63,6 +66,7 @@ describe("AuthService", () => {
         { provide: ConfigService, useValue: { getOrThrow: (key: string) => CONFIG_VALUES[key] } },
         { provide: UsersService, useValue: usersService },
         { provide: PrismaService, useValue: prisma },
+        { provide: AuditLogService, useValue: auditLogService },
       ],
     }).compile();
 
@@ -114,6 +118,9 @@ describe("AuthService", () => {
       const createArgs = prisma.refreshToken.create.mock.calls[0][0];
       expect(createArgs.data.userId).toBe("user-1");
       expect(createArgs.data.tokenHash).not.toBe(tokens.refreshToken);
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "LOGIN", entityType: "User", userId: "user-1" }),
+      );
     });
   });
 
@@ -171,6 +178,20 @@ describe("AuthService", () => {
       await authService.logout(refreshToken);
       expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({ data: { revokedAt: expect.any(Date) } }),
+      );
+    });
+
+    it("grava o log de auditoria de LOGOUT quando o token é reconhecido", async () => {
+      const { refreshToken } = await authService.login(baseUser, {});
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        userId: "user-1",
+        user: { tenantId: "tenant-1" },
+      });
+
+      await authService.logout(refreshToken);
+
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "LOGOUT", entityType: "User", userId: "user-1" }),
       );
     });
   });

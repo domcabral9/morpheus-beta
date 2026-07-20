@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/commo
 import { ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
+import { Audit } from "../../common/decorators/audit.decorator";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { RiskMatrixService } from "./risk-matrix.service";
@@ -30,11 +31,13 @@ export class RiskMatrixController {
     return this.riskMatrixService.getConfig(user.tenantId, id);
   }
 
+  @Audit("CREATE", "RiskMatrixConfig")
   @Post("configs")
   createConfig(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateRiskMatrixConfigDto) {
     return this.riskMatrixService.createConfig(user.tenantId, dto);
   }
 
+  @Audit("UPDATE", "RiskMatrixConfig")
   @Patch("configs/:id")
   updateConfig(
     @CurrentUser() user: AuthenticatedUser,
@@ -44,12 +47,14 @@ export class RiskMatrixController {
     return this.riskMatrixService.updateConfig(user.tenantId, id, dto);
   }
 
+  @Audit("UPDATE", "RiskMatrixConfig")
   @Post("configs/:id/activate")
   activateConfig(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.riskMatrixService.activateConfig(user.tenantId, id);
   }
 
   // --- Faixas de probabilidade --------------------------------------------------
+  @Audit("CREATE", "ProbabilityLevel")
   @Post("configs/:id/probability-levels")
   addProbabilityLevel(
     @CurrentUser() user: AuthenticatedUser,
@@ -59,6 +64,7 @@ export class RiskMatrixController {
     return this.riskMatrixService.addProbabilityLevel(user.tenantId, configId, dto);
   }
 
+  @Audit("UPDATE", "ProbabilityLevel")
   @Patch("probability-levels/:levelId")
   updateProbabilityLevel(
     @CurrentUser() user: AuthenticatedUser,
@@ -68,6 +74,7 @@ export class RiskMatrixController {
     return this.riskMatrixService.updateProbabilityLevel(user.tenantId, levelId, dto);
   }
 
+  @Audit("DELETE", "ProbabilityLevel")
   @Delete("probability-levels/:levelId")
   removeProbabilityLevel(
     @CurrentUser() user: AuthenticatedUser,
@@ -77,6 +84,7 @@ export class RiskMatrixController {
   }
 
   // --- Faixas de impacto ---------------------------------------------------------
+  @Audit("CREATE", "ImpactLevel")
   @Post("configs/:id/impact-levels")
   addImpactLevel(
     @CurrentUser() user: AuthenticatedUser,
@@ -86,6 +94,7 @@ export class RiskMatrixController {
     return this.riskMatrixService.addImpactLevel(user.tenantId, configId, dto);
   }
 
+  @Audit("UPDATE", "ImpactLevel")
   @Patch("impact-levels/:levelId")
   updateImpactLevel(
     @CurrentUser() user: AuthenticatedUser,
@@ -95,12 +104,14 @@ export class RiskMatrixController {
     return this.riskMatrixService.updateImpactLevel(user.tenantId, levelId, dto);
   }
 
+  @Audit("DELETE", "ImpactLevel")
   @Delete("impact-levels/:levelId")
   removeImpactLevel(@CurrentUser() user: AuthenticatedUser, @Param("levelId") levelId: string) {
     return this.riskMatrixService.removeImpactLevel(user.tenantId, levelId);
   }
 
   // --- Classificações --------------------------------------------------------------
+  @Audit("CREATE", "RiskClassification")
   @Post("configs/:id/classifications")
   addClassification(
     @CurrentUser() user: AuthenticatedUser,
@@ -110,6 +121,7 @@ export class RiskMatrixController {
     return this.riskMatrixService.addClassification(user.tenantId, configId, dto);
   }
 
+  @Audit("UPDATE", "RiskClassification")
   @Patch("classifications/:classificationId")
   updateClassification(
     @CurrentUser() user: AuthenticatedUser,
@@ -119,6 +131,7 @@ export class RiskMatrixController {
     return this.riskMatrixService.updateClassification(user.tenantId, classificationId, dto);
   }
 
+  @Audit("DELETE", "RiskClassification")
   @Delete("classifications/:classificationId")
   removeClassification(
     @CurrentUser() user: AuthenticatedUser,
@@ -128,6 +141,7 @@ export class RiskMatrixController {
   }
 
   // --- Células da matriz (heatmap, reservado para Etapa 9) ------------------------
+  @Audit("CREATE", "RiskMatrixCell")
   @Post("configs/:id/cells")
   upsertCell(
     @CurrentUser() user: AuthenticatedUser,
@@ -137,6 +151,7 @@ export class RiskMatrixController {
     return this.riskMatrixService.upsertCell(user.tenantId, configId, dto);
   }
 
+  @Audit("DELETE", "RiskMatrixCell")
   @Delete("cells/:cellId")
   removeCell(@CurrentUser() user: AuthenticatedUser, @Param("cellId") cellId: string) {
     return this.riskMatrixService.removeCell(user.tenantId, cellId);

@@ -4,11 +4,12 @@ Plataforma de homologação e avaliação de risco de software, usada pela equip
 Informação para reduzir Shadow IT: centraliza o processo de avaliação de risco de novos sistemas
 contratados pela empresa, do questionário ao parecer técnico em PDF.
 
-> **Status:** Etapa 7 - Geração de parecer técnico em PDF. Quando o workflow de aprovação (Etapa 6)
-> chega a um estado terminal (Homologado/Rejeitado), o sistema gera automaticamente o parecer
-> técnico em PDF: identificação do software, resultado do motor de risco, respostas do questionário
-> por categoria e o histórico completo de aprovação, com número sequencial, hash do instalador e
-> QR Code de verificação pública. Próximo: versionamento e auditoria completa (Etapa 8).
+> **Status:** Etapa 8 - Versionamento e auditoria completa. Trilha de auditoria (`GET /audit-logs`,
+> `audit:view`) cobrindo login/logout, CRUDs administrativos, envio de avaliação, decisões de
+> workflow e download de parecer - via decorator `@Audit()` + interceptor global para CRUDs simples,
+> e chamadas explícitas para eventos de negócio com ação dinâmica. Endpoint de histórico de versões
+> (`GET /assessments/:id/versions`) expõe a linha do tempo de score/classificação/parecer de cada
+> reenvio. Próximo: dashboards e gamificação (Etapa 9).
 
 ## Stack
 
@@ -354,6 +355,41 @@ gerou parecer com número `SECOPS-SW-072026-001`, hash do instalador, PDF real (
 `%PDF-` válido) baixado com sucesso, e o endpoint público de verificação respondendo corretamente
 tanto para o número válido quanto para um inexistente.
 
+### Etapa 8 - Versionamento e auditoria completa
+
+`AuditLog` já existia no schema desde a Etapa 2 mas não tinha nenhum consumidor até aqui. Módulo
+`audit` (global, como `PrismaModule`) grava e consulta a trilha via duas rotas deliberadamente
+diferentes:
+
+- **`@Audit(action, entityType)` + `AuditInterceptor` global para CRUDs simples**: a ação e o tipo de
+  entidade já são conhecidos em tempo de desenvolvimento (criar/editar/excluir categoria, pergunta,
+  matriz de risco, definição de workflow, etc.) - um decorator por rota, sem duplicar lógica de
+  gravação em cada controller. Mesma ideia de `@RequirePermissions()` já usada desde a Etapa 3.
+- **Chamada explícita a `AuditLogService.record()` para eventos de negócio com ação dinâmica**: login/
+  logout (a ação só é conhecida depois de validar/revogar o token), decisão de workflow (aprovar,
+  reprovar, pedir ajuste ou pular só se sabe pelo corpo da requisição), envio de avaliação, download
+  de parecer.
+- **`entityId` em rotas de criação aninhada prioriza o corpo da resposta sobre o param de rota**: em
+  `POST /configs/:id/probability-levels`, o `:id` da rota é o config PAI, não a faixa recém-criada -
+  gravar o `entityId` errado teria sido um bug sutil e silencioso.
+- **Auditoria nunca derruba a ação de negócio**: `AuditLogService.record()` nunca lança - uma falha ao
+  gravar (ex.: banco fora do ar num instante ruim) vira só log de aplicação, nunca um 500 numa ação
+  que já tinha sucedido de verdade.
+- **Histórico de versões (`GET /assessments/:id/versions`)**: expõe a linha do tempo de
+  score/classificação/parecer de cada reenvio de uma avaliação, sem repetir os `include` mais pesados
+  no endpoint de detalhe (que é hot path) - consulta dedicada, só usada por essa rota.
+- **Escopo deliberadamente não coberto**: `WorkflowStep`/`RiskMatrixConfig` continuam mutáveis - editar
+  o nome de uma etapa ou uma faixa depois de decisões já tomadas não gera uma nova versão desses
+  registros, só do `Question`/`Assessment` (via `AssessmentVersion`, já existente desde a Etapa 4). O
+  parecer em PDF já emitido é o registro imutável de verdade; consultas ao vivo do histórico de
+  workflow refletem o estado atual da configuração, não um snapshot ponto-a-ponto - trade-off comum em
+  sistemas de auditoria, documentado aqui em vez de resolvido com versionamento de configuração
+  inteiro.
+
+Validado de ponta a ponta contra o Postgres real via HTTP: login, criação e envio de avaliação,
+aprovação em todas as etapas do workflow e download do parecer técnico todos registrados
+corretamente em `GET /audit-logs`, com `action`/`entityType`/`entityId` certos para cada evento.
+
 ## Roteiro (próximas etapas)
 
 1. ~~Fundação técnica~~ ✅
@@ -363,7 +399,7 @@ tanto para o número válido quanto para um inexistente.
 5. ~~Motor de risco parametrizável~~ ✅
 6. ~~Workflow de aprovação configurável~~ ✅
 7. ~~Geração de parecer técnico em PDF (hash, QR Code, número do parecer)~~ ✅
-8. Versionamento e auditoria completa
+8. ~~Versionamento e auditoria completa~~ ✅
 9. Dashboards (usuário, administrador, executivo) + gamificação: placar de maturidade/adesão por
    área (`Area`), combinando volume de submissões, qualidade das respostas e taxa de aprovação -
    inclui o gatilho de notificação (e-mail via SMTP, ver item 10) ao conquistar um nível
