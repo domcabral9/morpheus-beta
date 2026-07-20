@@ -35,6 +35,21 @@ const envSchema = z
     // Cada deploy do IdP atende um único tenant (ver comentário em
     // SamlStrategy) até existir seleção de tenant de verdade no fluxo SSO.
     SAML_TENANT_SLUG: z.string().optional(),
+
+    // SMTP (Etapa 10) — opcional de propósito: sem SMTP_HOST configurado, o
+    // NotificationsService ainda grava a notificação em `Notification`
+    // normalmente, só não tenta enviar e-mail (log avisando, nunca derruba
+    // a ação de negócio que disparou a notificação).
+    SMTP_HOST: z.string().optional(),
+    SMTP_PORT: z.coerce.number().default(587),
+    SMTP_SECURE: booleanFromEnv(false),
+    SMTP_USER: z.string().optional(),
+    SMTP_PASSWORD: z.string().optional(),
+    SMTP_FROM: z.string().default("Morpheus <no-reply@morpheus.local>"),
+    // Dias de antecedência para marcar um item do inventário como
+    // PENDING_REVIEW e notificar o responsável (job diário — ver
+    // SoftwareReviewScheduler).
+    INVENTORY_REVIEW_WARNING_DAYS: z.coerce.number().default(30),
   })
   .superRefine((env, ctx) => {
     if (!env.SAML_ENABLED) return;

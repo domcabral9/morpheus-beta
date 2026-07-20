@@ -11,6 +11,7 @@ import { TechnicalOpinion } from "@morpheus/database";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { AuditLogService } from "../audit/audit-log.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { STORAGE_ADAPTER, StorageAdapter } from "../storage/storage.interface";
 import {
   TechnicalOpinionRepository,
@@ -36,6 +37,7 @@ export class TechnicalOpinionService {
     private readonly pdfGenerator: PdfGeneratorService,
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
+    private readonly notificationsService: NotificationsService,
     @Inject(STORAGE_ADAPTER) private readonly storage: StorageAdapter,
   ) {}
 
@@ -120,7 +122,7 @@ export class TechnicalOpinionService {
     const storageKey = `technical-opinions/${tenantId}/${version.id}.pdf`;
     await this.storage.save(storageKey, pdfBuffer);
 
-    return this.repository.create({
+    const opinion = await this.repository.create({
       tenantId,
       assessmentVersionId: version.id,
       number,
@@ -130,6 +132,18 @@ export class TechnicalOpinionService {
       issuedById,
       storageKey,
     });
+
+    await this.notificationsService.notify({
+      tenantId,
+      userId: assessment.requester.id,
+      type: "OPINION_ISSUED",
+      title: `Parecer técnico emitido: ${assessment.softwareName}`,
+      body: `O parecer técnico nº ${number} da avaliação "${assessment.softwareName}" (${classificationLabel}) já está disponível para download.`,
+      relatedEntityType: "TechnicalOpinion",
+      relatedEntityId: opinion.id,
+    });
+
+    return opinion;
   }
 
   async getPdfForDownload(

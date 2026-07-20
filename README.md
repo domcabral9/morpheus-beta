@@ -4,12 +4,13 @@ Plataforma de homologação e avaliação de risco de software, usada pela equip
 Informação para reduzir Shadow IT: centraliza o processo de avaliação de risco de novos sistemas
 contratados pela empresa, do questionário ao parecer técnico em PDF.
 
-> **Status:** Etapa 9 - Dashboards e gamificação. `GET /dashboards/me` (usuário), `/dashboards/admin`
-> (fila de aprovação, SLA), `/dashboards/executive` (taxa de aprovação, distribuição de classificação)
-> e `/dashboards/leaderboard` - o placar de maturidade/adesão por área que combina volume de
-> submissões, qualidade média do score de risco e taxa de aprovação, tudo calculado sob demanda a
-> partir dos dados já existentes (sem tabela nova). Próximo: inventário de softwares e notificações
-> por e-mail (Etapa 10).
+> **Status:** Etapa 10 - Inventário de softwares e notificações. Avaliações homologadas viram
+> automaticamente um item de `SoftwareInventoryItem` (`GET/POST/PATCH /inventory`), com revisão
+> periódica via job diário que marca itens vencendo como `PENDING_REVIEW` e notifica o
+> gestor/responsável técnico. Módulo `notifications` genérico (grava em `Notification` + tenta
+> e-mail via SMTP, nunca derruba a ação de negócio) usado tanto pelo workflow (nova etapa,
+> aprovação, reprovação, ajuste) quanto pela emissão do parecer técnico. Próximo: gestão documental
+> de anexos (Etapa 11).
 
 ## Stack
 
@@ -420,6 +421,40 @@ Validado de ponta a ponta contra o Postgres real via HTTP: os quatro endpoints d
 reais do tenant demo, incluindo o cálculo do placar batendo exatamente com a fórmula esperada
 (score composto 4.85, nível "Referência" para a área com maior volume/qualidade/aprovação).
 
+### Etapa 10 - Inventário de softwares e notificações
+
+Dois módulos novos: `notifications` (genérico, global como `AuditLogModule`) e `inventory`
+(`SoftwareInventoryItem`, já modelado desde a Etapa 2 mas sem nenhum consumidor até aqui).
+
+- **`EmailAdapter` como interface, `SmtpEmailAdapter` como implementação** - mesmo padrão do
+  `StorageAdapter` (Etapa 7): sem `SMTP_HOST` configurado, o adapter simplesmente loga um aviso em
+  vez de tentar enviar - dev/CI não precisam de um servidor SMTP de verdade, e a notificação
+  continua sendo gravada em `Notification` normalmente (a linha do sino/inbox no produto não
+  depende do e-mail ter sido entregue).
+- **`NotificationsService.notify()` nunca lança** - mesmo raciocínio do `AuditLogService` (Etapa 8):
+  uma falha ao gravar ou enviar e-mail não pode derrubar a ação de negócio (aprovar uma etapa,
+  emitir um parecer) que disparou a notificação.
+- **Item de inventário criado automaticamente na aprovação final do workflow**, com categoria/tipo/
+  classificação de dados nascendo em valores padrão conservadores em vez de tentativa de inferência
+  automática a partir do questionário (frágil, já evitado antes - ver decisão equivalente na Etapa
+  7) - o gestor refina depois pelo CRUD (`inventory:manage`).
+- **Revisão periódica por job diário (`@nestjs/schedule`), disparo por borda**: a consulta só olha
+  itens ainda `ACTIVE` com `nextReviewDate` dentro da janela de aviso (`INVENTORY_REVIEW_WARNING_DAYS`,
+  30 dias por padrão); ao marcar como `PENDING_REVIEW` ele some da consulta do dia seguinte -
+  notifica só uma vez por vencimento, sem precisar de um campo extra tipo "última notificação
+  enviada".
+- **Gatilhos de workflow cobertos**: nova etapa liberada (`NEW_REQUEST` para todo usuário com o
+  papel responsável), aprovação/reprovação/pedido de ajuste (para quem solicitou) e parecer técnico
+  emitido (`OPINION_ISSUED`) - o gatilho de gamificação (subida de nível) que ficou pendente da
+  Etapa 9 continua fora do escopo: falta um conceito de "responsável pela área" no schema, e o
+  placar sendo recalculado ao vivo (não persistido) não tem onde comparar "nível anterior" para
+  detectar a subida.
+
+Validado de ponta a ponta contra o Postgres real via HTTP: notificação `NEW_REQUEST` na primeira
+etapa, `APPROVAL`/`OPINION_ISSUED` ao aprovador final, item de inventário criado com
+`nextReviewDate` exatamente 12 meses à frente, CRUD manual (`PATCH /inventory/:id`) e
+marcar-como-lida (`PATCH /notifications/:id/read`) todos funcionando contra dados reais.
+
 ## Roteiro (próximas etapas)
 
 1. ~~Fundação técnica~~ ✅
@@ -433,10 +468,7 @@ reais do tenant demo, incluindo o cálculo do placar batendo exatamente com a f�
 9. ~~Dashboards (usuário, administrador, executivo) + gamificação: placar de maturidade/adesão por
    área~~ ✅ (o gatilho de notificação por e-mail ao subir de nível fica para o item 10, junto do
    módulo SMTP)
-10. Inventário de softwares e revisão periódica + serviço de notificações: módulo SMTP genérico
-    (`NotificationsModule`, grava em `Notification` e dispara e-mail) usado tanto para o job de
-    vencimento de `nextReviewDate` quanto para os eventos de workflow (Etapa 6) e gamificação
-    (Etapa 9) - infraestrutura compartilhada, não reimplementada em cada etapa
+10. ~~Inventário de softwares e revisão periódica + serviço de notificações~~ ✅
 11. Gestão documental (anexos)
 12. Biblioteca de controles (ISO 27001/27002, NIST CSF, CIS v8, LGPD, GDPR, OWASP)
 13. i18n, temas e responsividade (polimento)
