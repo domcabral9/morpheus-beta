@@ -7,6 +7,7 @@ import { UsersService } from "../users/users.service";
 import { QuestionnaireService } from "../questionnaire/questionnaire.service";
 import { RiskEvaluationService } from "../risk-engine/risk-evaluation.service";
 import { WorkflowService } from "../workflow/workflow.service";
+import { AuditLogService } from "../audit/audit-log.service";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
@@ -60,12 +61,14 @@ describe("AssessmentsService", () => {
     findAnswers: jest.Mock;
     countVersions: jest.Mock;
     createVersion: jest.Mock;
+    findVersionsWithDetails: jest.Mock;
   };
   let areasService: { findAllActive: jest.Mock };
   let usersService: { findById: jest.Mock };
   let questionnaireService: { getCategories: jest.Mock };
   let riskEvaluationService: { evaluate: jest.Mock };
   let workflowService: { startWorkflow: jest.Mock };
+  let auditLogService: { record: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -77,6 +80,7 @@ describe("AssessmentsService", () => {
       findAnswers: jest.fn().mockResolvedValue([]),
       countVersions: jest.fn().mockResolvedValue(0),
       createVersion: jest.fn().mockResolvedValue({ id: "version-1" }),
+      findVersionsWithDetails: jest.fn().mockResolvedValue([]),
     };
     areasService = { findAllActive: jest.fn().mockResolvedValue([{ id: "area-1" }]) };
     usersService = {
@@ -85,6 +89,7 @@ describe("AssessmentsService", () => {
     questionnaireService = { getCategories: jest.fn().mockResolvedValue([]) };
     riskEvaluationService = { evaluate: jest.fn().mockResolvedValue({ id: "risk-result-1" }) };
     workflowService = { startWorkflow: jest.fn().mockResolvedValue(undefined) };
+    auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -95,6 +100,7 @@ describe("AssessmentsService", () => {
         { provide: QuestionnaireService, useValue: questionnaireService },
         { provide: RiskEvaluationService, useValue: riskEvaluationService },
         { provide: WorkflowService, useValue: workflowService },
+        { provide: AuditLogService, useValue: auditLogService },
       ],
     }).compile();
 
@@ -268,6 +274,45 @@ describe("AssessmentsService", () => {
       // A pergunta TEXT não entra no motor de risco (sem score numérico).
       const scorable = riskEvaluationService.evaluate.mock.calls[0][2];
       expect(scorable).toHaveLength(2);
+    });
+
+    it("grava um log de auditoria SUBMIT após o envio", async () => {
+      repo.findById.mockResolvedValue(makeAssessment());
+      repo.findAnswers.mockResolvedValue([]);
+      repo.update.mockResolvedValue(makeAssessment({ status: "IN_REVIEW" } as never));
+
+      await service.submit(makeUser(), "assessment-1");
+
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId: "tenant-1",
+          userId: "user-requester",
+          action: "SUBMIT",
+          entityType: "Assessment",
+          entityId: "assessment-1",
+        }),
+      );
+    });
+  });
+
+  describe("getVersionHistory", () => {
+    it("bloqueia quem não pode visualizar a avaliação", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ requesterId: "outro-user" } as never));
+      await expect(service.getVersionHistory(makeUser(), "assessment-1")).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it("devolve a linha do tempo de versões para quem pode visualizar", async () => {
+      repo.findById.mockResolvedValue(makeAssessment());
+      repo.findVersionsWithDetails.mockResolvedValue([
+        { id: "v1", versionLabel: "v1.0", riskResult: null, technicalOpinion: null },
+      ]);
+
+      const result = await service.getVersionHistory(makeUser(), "assessment-1");
+
+      expect(result).toHaveLength(1);
+      expect(repo.findVersionsWithDetails).toHaveBeenCalledWith("assessment-1");
     });
   });
 });

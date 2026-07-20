@@ -43,6 +43,7 @@ const PERMISSIONS = [
   { key: "reports:export-own", description: "Exportar o PDF das próprias avaliações" },
   { key: "inventory:view", description: "Visualizar o inventário de softwares" },
   { key: "inventory:manage", description: "Gerenciar itens do inventário de softwares" },
+  { key: "audit:view", description: "Consultar a trilha de auditoria" },
 ] as const;
 
 const ADMIN_PERMISSION_KEYS = PERMISSIONS.map((p) => p.key);

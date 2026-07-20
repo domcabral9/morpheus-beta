@@ -10,6 +10,7 @@ import * as QRCode from "qrcode";
 import { TechnicalOpinion } from "@morpheus/database";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
+import { AuditLogService } from "../audit/audit-log.service";
 import { STORAGE_ADAPTER, StorageAdapter } from "../storage/storage.interface";
 import {
   TechnicalOpinionRepository,
@@ -34,6 +35,7 @@ export class TechnicalOpinionService {
     private readonly repository: TechnicalOpinionRepository,
     private readonly pdfGenerator: PdfGeneratorService,
     private readonly configService: ConfigService,
+    private readonly auditLogService: AuditLogService,
     @Inject(STORAGE_ADAPTER) private readonly storage: StorageAdapter,
   ) {}
 
@@ -143,6 +145,16 @@ export class TechnicalOpinionService {
     const opinion = await this.repository.findById(id);
     if (!opinion) throw new NotFoundException("Parecer técnico não encontrado.");
     const buffer = await this.storage.read(opinion.storageKey);
+
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "DOWNLOAD",
+      entityType: "TechnicalOpinion",
+      entityId: opinion.id,
+      metadata: { number: opinion.number },
+    });
+
     return { opinion, buffer };
   }
 

@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/commo
 import { ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
+import { Audit } from "../../common/decorators/audit.decorator";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { WorkflowService } from "./workflow.service";
@@ -52,6 +53,7 @@ export class WorkflowController {
   }
 
   @RequirePermissions(PERMISSIONS.WORKFLOWS_MANAGE)
+  @Audit("CREATE", "WorkflowDefinition")
   @Post("admin/definitions")
   createDefinition(
     @CurrentUser() user: AuthenticatedUser,
@@ -61,6 +63,7 @@ export class WorkflowController {
   }
 
   @RequirePermissions(PERMISSIONS.WORKFLOWS_MANAGE)
+  @Audit("UPDATE", "WorkflowDefinition")
   @Patch("admin/definitions/:id")
   updateDefinition(
     @CurrentUser() user: AuthenticatedUser,
@@ -71,12 +74,14 @@ export class WorkflowController {
   }
 
   @RequirePermissions(PERMISSIONS.WORKFLOWS_MANAGE)
+  @Audit("UPDATE", "WorkflowDefinition")
   @Post("admin/definitions/:id/set-default")
   setDefaultDefinition(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.workflowService.setDefaultDefinition(user.tenantId, id);
   }
 
   @RequirePermissions(PERMISSIONS.WORKFLOWS_MANAGE)
+  @Audit("CREATE", "WorkflowStep")
   @Post("admin/definitions/:id/steps")
   addStep(
     @CurrentUser() user: AuthenticatedUser,
@@ -87,6 +92,7 @@ export class WorkflowController {
   }
 
   @RequirePermissions(PERMISSIONS.WORKFLOWS_MANAGE)
+  @Audit("UPDATE", "WorkflowStep")
   @Patch("admin/steps/:stepId")
   updateStep(
     @CurrentUser() user: AuthenticatedUser,
@@ -97,6 +103,7 @@ export class WorkflowController {
   }
 
   @RequirePermissions(PERMISSIONS.WORKFLOWS_MANAGE)
+  @Audit("DELETE", "WorkflowStep")
   @Delete("admin/steps/:stepId")
   removeStep(@CurrentUser() user: AuthenticatedUser, @Param("stepId") stepId: string) {
     return this.workflowService.removeStep(user.tenantId, stepId);
