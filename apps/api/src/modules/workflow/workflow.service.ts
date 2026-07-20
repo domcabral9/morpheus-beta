@@ -1,7 +1,9 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
+  Logger,
   NotFoundException,
   UnprocessableEntityException,
 } from "@nestjs/common";
@@ -13,6 +15,11 @@ import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { InventoryService } from "../inventory/inventory.service";
 import { TechnicalOpinionService } from "../technical-opinions/technical-opinion.service";
+import { ITSM_ADAPTER, ItsmAdapter } from "../integrations/itsm/itsm.interface";
+import {
+  COLLABORATION_ADAPTER,
+  CollaborationAdapter,
+} from "../integrations/collaboration/collaboration.interface";
 import {
   WorkflowRepository,
   WorkflowDefinitionWithSteps,
@@ -42,6 +49,11 @@ const DECISION_TO_AUDIT_ACTION: Record<DecideStepDto["decision"], AuditAction> =
   SKIP: "UPDATE",
 };
 
+// Criticidades que disparam alerta no canal de colaboração na aprovação
+// final — o time de segurança quer saber logo, sem depender de olhar o
+// dashboard, quando algo de alto risco acaba de ser homologado.
+const COLLABORATION_ALERT_CRITICALITIES = new Set(["HIGH", "CRITICAL"]);
+
 /**
  * Motor de workflow configurável (Etapa 6). A definição (etapas, papel
  * responsável, SLA, opcional/condicional-LGPD) é dado, não código — o motor
@@ -50,6 +62,8 @@ const DECISION_TO_AUDIT_ACTION: Record<DecideStepDto["decision"], AuditAction> =
  */
 @Injectable()
 export class WorkflowService {
+  private readonly logger = new Logger(WorkflowService.name);
+
   constructor(
     private readonly workflowRepository: WorkflowRepository,
     private readonly separationOfDutiesService: SeparationOfDutiesService,
@@ -57,6 +71,8 @@ export class WorkflowService {
     private readonly auditLogService: AuditLogService,
     private readonly notificationsService: NotificationsService,
     private readonly inventoryService: InventoryService,
+    @Inject(ITSM_ADAPTER) private readonly itsmAdapter: ItsmAdapter,
+    @Inject(COLLABORATION_ADAPTER) private readonly collaborationAdapter: CollaborationAdapter,
   ) {}
 
   /**
@@ -181,6 +197,23 @@ export class WorkflowService {
         relatedEntityType: "Assessment",
         relatedEntityId: assessment.id,
       });
+      // Best-effort: um chamado de acompanhamento no ITSM não pode impedir a
+      // reprovação de ser concluída, mesma postura de AuditLogService/
+      // NotificationsService para chamadas a sistemas externos.
+      try {
+        await this.itsmAdapter.createTicket({
+          tenantId: user.tenantId,
+          title: `Avaliação reprovada: ${assessment.softwareName}`,
+          description: `A avaliação "${assessment.softwareName}" foi reprovada na etapa "${execution.workflowStep.name}".${dto.comments ? ` Comentário: ${dto.comments}` : ""}`,
+          priority: assessment.criticality,
+          externalReference: assessment.id,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.logger.error(
+          `Falha ao abrir chamado no ITSM para a avaliação ${assessment.id}: ${message}`,
+        );
+      }
     } else if (dto.decision === "REQUEST_ADJUSTMENT") {
       // A instância fica IN_PROGRESS: quando o solicitante reenviar
       // (Assessments.submit() -> startWorkflow), reinicia da primeira etapa
@@ -386,6 +419,20 @@ export class WorkflowService {
         relatedEntityType: "Assessment",
         relatedEntityId: assessment.id,
       });
+
+      if (COLLABORATION_ALERT_CRITICALITIES.has(assessment.criticality)) {
+        try {
+          await this.collaborationAdapter.postMessage({
+            channel: "security-alerts",
+            text: `Software de criticidade ${assessment.criticality} homologado: "${assessment.softwareName}" (avaliação ${assessment.id}).`,
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          this.logger.error(
+            `Falha ao postar alerta de colaboração para a avaliação ${assessment.id}: ${message}`,
+          );
+        }
+      }
     }
   }
 

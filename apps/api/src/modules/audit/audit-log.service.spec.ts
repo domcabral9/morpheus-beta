@@ -1,16 +1,23 @@
 import { Test } from "@nestjs/testing";
 import { AuditLogService } from "./audit-log.service";
 import { AuditLogRepository } from "./audit-log.repository";
+import { SIEM_ADAPTER } from "../integrations/siem/siem.interface";
 
 describe("AuditLogService", () => {
   let service: AuditLogService;
   let repository: { create: jest.Mock; findMany: jest.Mock };
+  let siemAdapter: { send: jest.Mock };
 
   beforeEach(async () => {
     repository = { create: jest.fn(), findMany: jest.fn() };
+    siemAdapter = { send: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
-      providers: [AuditLogService, { provide: AuditLogRepository, useValue: repository }],
+      providers: [
+        AuditLogService,
+        { provide: AuditLogRepository, useValue: repository },
+        { provide: SIEM_ADAPTER, useValue: siemAdapter },
+      ],
     }).compile();
 
     service = moduleRef.get(AuditLogService);
@@ -33,6 +40,28 @@ describe("AuditLogService", () => {
 
     it("nunca lança — uma falha ao gravar não pode derrubar a ação de negócio auditada", async () => {
       repository.create.mockRejectedValue(new Error("db indisponível"));
+      await expect(
+        service.record({ action: "CREATE", entityType: "Assessment" }),
+      ).resolves.toBeUndefined();
+    });
+
+    it("encaminha o evento para o SIEM", async () => {
+      repository.create.mockResolvedValue({ id: "log-1" });
+      await service.record({
+        tenantId: "tenant-1",
+        userId: "user-1",
+        action: "LOGIN",
+        entityType: "User",
+        entityId: "user-1",
+      });
+      expect(siemAdapter.send).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: "tenant-1", action: "LOGIN", entityType: "User" }),
+      );
+    });
+
+    it("nunca lança quando o SIEM falha, mesmo que a gravação local tenha funcionado", async () => {
+      repository.create.mockResolvedValue({ id: "log-1" });
+      siemAdapter.send.mockRejectedValue(new Error("siem indisponível"));
       await expect(
         service.record({ action: "CREATE", entityType: "Assessment" }),
       ).resolves.toBeUndefined();
