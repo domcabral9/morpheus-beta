@@ -12,6 +12,7 @@ import { UsersService } from "../users/users.service";
 import { QuestionnaireService } from "../questionnaire/questionnaire.service";
 import { RiskEvaluationService } from "../risk-engine/risk-evaluation.service";
 import type { RiskDimensionInput, ScorableAnswer } from "../risk-engine/risk-engine.service";
+import { WorkflowService } from "../workflow/workflow.service";
 import {
   AssessmentsRepository,
   AssessmentDetail,
@@ -37,6 +38,7 @@ export class AssessmentsService {
     private readonly usersService: UsersService,
     private readonly questionnaireService: QuestionnaireService,
     private readonly riskEvaluationService: RiskEvaluationService,
+    private readonly workflowService: WorkflowService,
   ) {}
 
   async create(user: AuthenticatedUser, dto: CreateAssessmentDto): Promise<AssessmentDetail> {
@@ -175,7 +177,11 @@ export class AssessmentsService {
     const scorableAnswers = this.resolveScorableAnswers(questions, answers);
     await this.riskEvaluationService.evaluate(user.tenantId, version.id, scorableAnswers);
 
-    return this.assessmentsRepository.update(id, { status: "SUBMITTED" });
+    // Workflow de aprovação: inicia (ou reinicia, se for reenvio após ajuste)
+    // a instância de aprovação na primeira etapa elegível.
+    await this.workflowService.startWorkflow(user.tenantId, id);
+
+    return this.assessmentsRepository.update(id, { status: "IN_REVIEW" });
   }
 
   // --- Helpers ------------------------------------------------------------------

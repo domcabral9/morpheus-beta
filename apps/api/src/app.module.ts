@@ -18,6 +18,7 @@ import { AreasModule } from "./modules/areas/areas.module";
 import { QuestionnaireModule } from "./modules/questionnaire/questionnaire.module";
 import { AssessmentsModule } from "./modules/assessments/assessments.module";
 import { RiskMatrixModule } from "./modules/risk-matrix/risk-matrix.module";
+import { WorkflowModule } from "./modules/workflow/workflow.module";
 
 const pinoHttpOptions: PinoHttpOptions = {
   genReqId: (req) => req.headers[CORRELATION_ID_HEADER] as string,
@@ -54,6 +55,7 @@ const pinoHttpOptions: PinoHttpOptions = {
     QuestionnaireModule,
     AssessmentsModule,
     RiskMatrixModule,
+    WorkflowModule,
   ],
   providers: [
     // Protegido por padrão em toda a aplicação — rotas ficam públicas só com

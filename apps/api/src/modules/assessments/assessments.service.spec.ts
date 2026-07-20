@@ -6,6 +6,7 @@ import { AreasService } from "../areas/areas.service";
 import { UsersService } from "../users/users.service";
 import { QuestionnaireService } from "../questionnaire/questionnaire.service";
 import { RiskEvaluationService } from "../risk-engine/risk-evaluation.service";
+import { WorkflowService } from "../workflow/workflow.service";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
@@ -64,6 +65,7 @@ describe("AssessmentsService", () => {
   let usersService: { findById: jest.Mock };
   let questionnaireService: { getCategories: jest.Mock };
   let riskEvaluationService: { evaluate: jest.Mock };
+  let workflowService: { startWorkflow: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -82,6 +84,7 @@ describe("AssessmentsService", () => {
     };
     questionnaireService = { getCategories: jest.fn().mockResolvedValue([]) };
     riskEvaluationService = { evaluate: jest.fn().mockResolvedValue({ id: "risk-result-1" }) };
+    workflowService = { startWorkflow: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -91,6 +94,7 @@ describe("AssessmentsService", () => {
         { provide: UsersService, useValue: usersService },
         { provide: QuestionnaireService, useValue: questionnaireService },
         { provide: RiskEvaluationService, useValue: riskEvaluationService },
+        { provide: WorkflowService, useValue: workflowService },
       ],
     }).compile();
 
@@ -171,15 +175,26 @@ describe("AssessmentsService", () => {
         },
       ]);
       repo.findAnswers.mockResolvedValue([]);
-      repo.update.mockResolvedValue(makeAssessment({ status: "SUBMITTED" } as never));
+      repo.update.mockResolvedValue(makeAssessment({ status: "IN_REVIEW" } as never));
 
       const result = await service.submit(makeUser(), "assessment-1");
-      expect(result.status).toBe("SUBMITTED");
+      expect(result.status).toBe("IN_REVIEW");
       expect(repo.createVersion).toHaveBeenCalledTimes(1);
+      expect(repo.update).toHaveBeenLastCalledWith("assessment-1", { status: "IN_REVIEW" });
+    });
+
+    it("inicia o workflow de aprovação antes de marcar a avaliação como IN_REVIEW", async () => {
+      repo.findById.mockResolvedValue(makeAssessment());
+      repo.findAnswers.mockResolvedValue([]);
+      repo.update.mockResolvedValue(makeAssessment({ status: "IN_REVIEW" } as never));
+
+      await service.submit(makeUser(), "assessment-1");
+
+      expect(workflowService.startWorkflow).toHaveBeenCalledWith("tenant-1", "assessment-1");
     });
 
     it("cria a versão v1.0 no primeiro envio e v1.1 no reenvio após ajuste", async () => {
-      repo.update.mockResolvedValue(makeAssessment({ status: "SUBMITTED" } as never));
+      repo.update.mockResolvedValue(makeAssessment({ status: "IN_REVIEW" } as never));
 
       repo.findById.mockResolvedValue(makeAssessment());
       repo.countVersions.mockResolvedValue(0);
@@ -198,7 +213,7 @@ describe("AssessmentsService", () => {
 
     it("aciona o motor de risco com a versão recém-criada e as respostas pontuáveis", async () => {
       repo.findById.mockResolvedValue(makeAssessment());
-      repo.update.mockResolvedValue(makeAssessment({ status: "SUBMITTED" } as never));
+      repo.update.mockResolvedValue(makeAssessment({ status: "IN_REVIEW" } as never));
       questionnaireService.getCategories.mockResolvedValue([
         {
           questions: [
