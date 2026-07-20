@@ -17,6 +17,7 @@ import { HealthModule } from "./health/health.module";
 import { UsersModule } from "./modules/users/users.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { AreasModule } from "./modules/areas/areas.module";
+import { ControlsModule } from "./modules/controls/controls.module";
 import { QuestionnaireModule } from "./modules/questionnaire/questionnaire.module";
 import { AssessmentsModule } from "./modules/assessments/assessments.module";
 import { RiskMatrixModule } from "./modules/risk-matrix/risk-matrix.module";
@@ -62,6 +63,7 @@ const pinoHttpOptions: PinoHttpOptions = {
     UsersModule,
     AuthModule,
     AreasModule,
+    ControlsModule,
     QuestionnaireModule,
     AssessmentsModule,
     RiskMatrixModule,

@@ -24,6 +24,22 @@ export type QuestionWithOptions = Prisma.QuestionGetPayload<{
   include: typeof questionWithOptionsInclude;
 }>;
 
+// Só para as telas administrativas (listagem/detalhe/vínculo de controles) —
+// o restante do sistema (responder questionário, engine de risco) usa
+// QuestionWithOptions e não precisa saber de biblioteca de controles.
+const questionAdminDetailInclude = {
+  options: { orderBy: { order: "asc" } },
+  controls: {
+    include: {
+      control: { include: { framework: { select: { id: true, code: true, name: true } } } },
+    },
+  },
+} satisfies Prisma.QuestionInclude;
+
+export type QuestionAdminDetail = Prisma.QuestionGetPayload<{
+  include: typeof questionAdminDetailInclude;
+}>;
+
 @Injectable()
 export class QuestionnaireRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -67,18 +83,18 @@ export class QuestionnaireRepository {
     return this.prisma.questionCategory.update({ where: { id }, data });
   }
 
-  findAllQuestions(tenantId: string): Promise<QuestionWithOptions[]> {
+  findAllQuestions(tenantId: string): Promise<QuestionAdminDetail[]> {
     return this.prisma.question.findMany({
       where: { tenantId },
       orderBy: [{ categoryId: "asc" }, { order: "asc" }],
-      include: questionWithOptionsInclude,
+      include: questionAdminDetailInclude,
     });
   }
 
-  findQuestionById(id: string): Promise<QuestionWithOptions | null> {
+  findQuestionById(id: string): Promise<QuestionAdminDetail | null> {
     return this.prisma.question.findUnique({
       where: { id },
-      include: questionWithOptionsInclude,
+      include: questionAdminDetailInclude,
     });
   }
 
@@ -144,5 +160,24 @@ export class QuestionnaireRepository {
 
   deleteOption(id: string): Promise<QuestionOption> {
     return this.prisma.questionOption.delete({ where: { id } });
+  }
+
+  // --- Administração: vínculo com a biblioteca de controles -----------------------
+  linkControl(questionId: string, controlId: string): Promise<QuestionAdminDetail> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.questionControl.upsert({
+        where: { questionId_controlId: { questionId, controlId } },
+        update: {},
+        create: { questionId, controlId },
+      });
+      return tx.question.findUniqueOrThrow({
+        where: { id: questionId },
+        include: questionAdminDetailInclude,
+      });
+    });
+  }
+
+  async unlinkControl(questionId: string, controlId: string): Promise<void> {
+    await this.prisma.questionControl.deleteMany({ where: { questionId, controlId } });
   }
 }
