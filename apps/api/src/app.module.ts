@@ -1,8 +1,9 @@
 import { join } from "node:path";
 import { Module } from "@nestjs/common";
-import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
-import { ConfigModule } from "@nestjs/config";
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { PrometheusModule } from "@willsoto/nestjs-prometheus";
 import { LoggerModule } from "nestjs-pino";
 import type { Options as PinoHttpOptions } from "pino-http";
@@ -12,6 +13,8 @@ import { MetricsController } from "./common/controllers/metrics.controller";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
 import { PermissionsGuard } from "./common/guards/permissions.guard";
 import { AuditInterceptor } from "./common/interceptors/audit.interceptor";
+import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
+import { CryptoModule } from "./common/services/crypto/crypto.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { HealthModule } from "./health/health.module";
 import { UsersModule } from "./modules/users/users.module";
@@ -50,6 +53,17 @@ const pinoHttpOptions: PinoHttpOptions = {
       envFilePath: join(__dirname, "..", "..", "..", ".env"),
     }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [
+          {
+            ttl: config.get<number>("THROTTLE_TTL_MS", 60_000),
+            limit: config.get<number>("THROTTLE_LIMIT", 100),
+          },
+        ],
+      }),
+    }),
     LoggerModule.forRoot({ pinoHttp: pinoHttpOptions }),
     PrometheusModule.register({
       defaultMetrics: { enabled: true },
@@ -57,6 +71,7 @@ const pinoHttpOptions: PinoHttpOptions = {
       controller: MetricsController,
     }),
     PrismaModule,
+    CryptoModule,
     AuditLogModule,
     NotificationsModule,
     HealthModule,
@@ -73,6 +88,10 @@ const pinoHttpOptions: PinoHttpOptions = {
     AttachmentsModule,
   ],
   providers: [
+    // Roda antes de tudo (ordem de registro = ordem de execução): protege
+    // até rotas @Public() (login, refresh) contra força bruta, sem depender
+    // de autenticação já ter acontecido.
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     // Protegido por padrão em toda a aplicação — rotas ficam públicas só com
     // @Public() explícito (ver common/decorators/public.decorator.ts).
     { provide: APP_GUARD, useClass: JwtAuthGuard },
@@ -81,6 +100,9 @@ const pinoHttpOptions: PinoHttpOptions = {
     { provide: APP_GUARD, useClass: PermissionsGuard },
     // No-op para rotas sem @Audit() — ver common/decorators/audit.decorator.ts.
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
+    // Última linha de defesa: nenhuma exceção não tratada deve vazar stack
+    // trace/mensagem interna na resposta HTTP.
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],
 })
 export class AppModule {}
