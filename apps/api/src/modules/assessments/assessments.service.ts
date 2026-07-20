@@ -55,6 +55,8 @@ export class AssessmentsService {
       areaId: dto.areaId,
       criticality: dto.criticality,
       justification: dto.justification,
+      linkedTicket: dto.linkedTicket,
+      installerFileHash: dto.installerFileHash,
       requesterId: user.id,
       status: "DRAFT",
     });
