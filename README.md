@@ -4,12 +4,13 @@ Plataforma de homologação e avaliação de risco de software, usada pela equip
 Informação para reduzir Shadow IT: centraliza o processo de avaliação de risco de novos sistemas
 contratados pela empresa, do questionário ao parecer técnico em PDF.
 
-> **Status:** Etapa 12 - Biblioteca de controles. Catálogo global (ISO 27001/27002, NIST CSF, CIS
-> v8, LGPD, GDPR, OWASP ASVS/Top 10) exposto em `GET /controls/frameworks` e `GET /controls`, com
-> 77 controles curados já seedados. Perguntas do questionário podem ser vinculadas aos controles que
-> elas avaliam (`POST/DELETE /questionnaire/admin/questions/:id/controls`), útil para o parecer
-> técnico mostrar quais frameworks de conformidade cada avaliação cobre. Próximo: i18n, temas e
-> responsividade (Etapa 13).
+> **Status:** Etapa 13 - i18n, temas e responsividade. Passo de polimento no frontend (`apps/web`):
+> strings que ainda estavam hardcoded em português foram movidas para o catálogo de traduções,
+> `<title>`/metadata passaram a ser localizados por rota, o alternador de tema virou um ciclo de 3
+> estados (claro/escuro/sistema), e os 5 telas existentes (home, login, dashboard, nova avaliação,
+> detalhe da avaliação) ganharam layouts responsivos de verdade (grids que colapsam em coluna única,
+> tabela com colunas priorizadas em telas estreitas, headers que quebram linha). Próximo:
+> observabilidade e hardening de segurança (Etapa 14).
 
 ## Stack
 
@@ -526,6 +527,39 @@ controle a uma pergunta por um admin, bloqueio (403) da mesma ação por um usu�
 que os vínculos seedados (MFA → ISO 27001 A.9/8.5, NIST CSF PR.AA, CIS v8 Control 6, OWASP ASVS V2)
 aparecem corretamente na listagem administrativa de perguntas.
 
+### Etapa 13 - i18n, temas e responsividade
+
+Sem novos módulos - passo de polimento sobre as 5 telas que já existiam no frontend (`apps/web`)
+desde a Etapa 1: home, login, dashboard (lista de avaliações), nova avaliação e detalhe da
+avaliação. A base de i18n/tema (next-intl + next-themes, roteamento `[locale]`) já estava correta
+desde a fundação técnica - o trabalho aqui foi fechar lacunas, não reconstruir.
+
+- **Strings hardcoded corrigidas**: o botão "Entrar" da home e o rótulo "Criticidade" no detalhe da
+  avaliação escapavam do catálogo de traduções (aparentemente por terem sido escritos direto em
+  português depois que a tradução da tela já estava pronta); a coluna de criticidade na tabela do
+  dashboard renderizava o valor cru do enum (`HIGH`) em vez do rótulo traduzido - todos os três
+  agora passam por `useTranslations()`.
+- **`<title>`/metadata por rota**: o layout usava `export const metadata` estático (sempre em
+  português, mesmo na rota `en`) - virou `generateMetadata` assíncrono lendo de um namespace
+  `Metadata` dedicado, coerente com o resto do app.
+- **Alternador de tema com 3 estados**: antes alternava só claro/escuro, perdendo a opção "seguir o
+  sistema operacional" assim que o usuário clicava uma vez. Agora cicla claro → escuro → sistema,
+  sem precisar de um novo componente de menu (evita puxar mais uma dependência Radix só para isso).
+- **Responsividade real, não só `overflow-x-auto`**: os dois formulários (nova avaliação, detalhe da
+  avaliação) tinham grids de 2 colunas fixas que espremiam em telas estreitas - viram coluna única
+  abaixo do breakpoint `sm`. A tabela de avaliações no dashboard escondia as colunas de menor
+  prioridade (área, data de criação) abaixo de `md`, e criticidade abaixo de `sm`, mantendo sempre
+  visíveis software e status - mesmo padrão de tabela responsiva usado por qualquer painel
+  corporativo, sem reescrever a tabela inteira como lista de cards. Headers com controles de
+  idioma/tema ganharam `flex-wrap` para não estourar em telas muito estreitas.
+- **Rótulos de acessibilidade que estavam vazios**: `AppHeader` passava `label=""` para o seletor de
+  idioma e o alternador de tema (texto `sr-only` ficava em branco para leitores de tela) - corrigido
+  usando as chaves já existentes no namespace `Dashboard`.
+
+Validado via build de produção (`next build` + `next start`) servindo as rotas `pt-BR` e `en`:
+título traduzido corretamente por locale, botão "Entrar"/"Sign in" renderizando o texto certo por
+idioma, e nenhuma chave de tradução (`Namespace.key`) vazando como texto literal no HTML.
+
 ## Roteiro (próximas etapas)
 
 1. ~~Fundação técnica~~ ✅
@@ -542,7 +576,7 @@ aparecem corretamente na listagem administrativa de perguntas.
 10. ~~Inventário de softwares e revisão periódica + serviço de notificações~~ ✅
 11. ~~Gestão documental (anexos)~~ ✅
 12. ~~Biblioteca de controles (ISO 27001/27002, NIST CSF, CIS v8, LGPD, GDPR, OWASP)~~ ✅
-13. i18n, temas e responsividade (polimento)
+13. ~~i18n, temas e responsividade (polimento)~~ ✅
 14. Observabilidade e hardening de segurança
 15. Arquitetura de adapters para integrações futuras + Provider Pattern para IA
 16. Testes, documentação final e produção - inclui estratégia de deploy em AWS ECS/Fargate:

@@ -83,7 +83,7 @@ export default function NewAssessmentPage() {
     <main className="flex flex-1 flex-col">
       <AppHeader />
 
-      <section className="flex flex-1 justify-center px-6 py-8">
+      <section className="flex flex-1 justify-center px-4 py-8 sm:px-6">
         <Card className="w-full max-w-xl">
           <CardHeader>
             <CardTitle>{t("title")}</CardTitle>
@@ -100,7 +100,7 @@ export default function NewAssessmentPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="vendor">{t("vendorLabel")}</Label>
                   <Input
@@ -131,7 +131,7 @@ export default function NewAssessmentPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="area">{t("areaLabel")}</Label>
                   <NativeSelect

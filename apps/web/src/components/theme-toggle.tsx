@@ -1,14 +1,20 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, SunMoon } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 import { useMounted } from "@/lib/use-mounted";
 
+const THEME_ORDER = ["light", "dark", "system"] as const;
+const THEME_ICON = { light: Sun, dark: Moon, system: SunMoon } as const;
+
 export function ThemeToggle({ label }: { label: string }) {
-  const { resolvedTheme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const mounted = useMounted();
+
+  const current = mounted ? (theme as (typeof THEME_ORDER)[number] | undefined) ?? "system" : "system";
+  const Icon = THEME_ICON[current];
 
   return (
     <Button
@@ -16,9 +22,12 @@ export function ThemeToggle({ label }: { label: string }) {
       size="icon"
       aria-label={label}
       disabled={!mounted}
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      onClick={() => {
+        const nextIndex = (THEME_ORDER.indexOf(current) + 1) % THEME_ORDER.length;
+        setTheme(THEME_ORDER[nextIndex]);
+      }}
     >
-      {mounted && resolvedTheme === "dark" ? <Sun /> : <Moon />}
+      <Icon />
     </Button>
   );
 }
