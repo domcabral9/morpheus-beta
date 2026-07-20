@@ -1,0 +1,28 @@
+name: morpheus-dev
+
+# Sobe apenas a infraestrutura (Postgres) em container. API e Web rodam
+# nativamente via `pnpm dev` na raiz, para hot-reload rápido sem rebuild
+# de imagem a cada alteração de código.
+#
+# Uso: docker compose -f docker-compose.dev.yml up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-morpheus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-morpheus}
+      POSTGRES_DB: ${POSTGRES_DB:-morpheus}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - morpheus_postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-morpheus} -d ${POSTGRES_DB:-morpheus}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  morpheus_postgres_dev_data:

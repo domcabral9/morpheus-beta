@@ -1,0 +1,963 @@
+// Morpheus — schema Prisma
+// Etapa 2: modelagem de dados completa.
+//
+// Convenções adotadas neste schema:
+// - Multi-tenancy row-level: todo modelo com escopo de tenant tem `tenantId`
+//   (decisão da Etapa 1). Modelos de catálogo global (Permission,
+//   ControlFramework, Control) não são tenant-scoped por representarem
+//   capacidades do sistema / frameworks padronizados, iguais para todos os
+//   tenants.
+// - Identificadores de enum em inglês, sem acentos (ex.: `LOW`, não `BAIXA`).
+//   A tradução dos rótulos fica na camada de app (i18n já configurado na
+//   Etapa 1) — evita reescrever o enum sempre que um idioma for adicionado.
+// - Tabelas mapeadas para snake_case plural via @@map; colunas ficam em
+//   camelCase (Prisma sempre cita identificadores no Postgres).
+// - Toda tabela tenant-scoped tem @@index([tenantId]) — é o filtro mais
+//   comum de todas as queries do sistema.
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated/client"
+  // "native" cobre o ambiente de desenvolvimento (Windows/macOS/Linux glibc);
+  // linux-musl-openssl-3.0.x é necessário para rodar em imagens Docker Alpine.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+// A partir do Prisma 7, a `url` de conexão não é mais lida daqui — ela é
+// resolvida via prisma.config.ts (datasource.url) para os comandos de CLI
+// (migrate/studio) e passada explicitamente ao `PrismaClient` em runtime.
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+// Tenant
+// =============================================================================
+
+/// Empresa/organização. Base da estratégia de multi-tenancy row-level.
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users               User[]
+  roles               Role[]
+  areas               Area[]
+  questionCategories  QuestionCategory[]
+  questions           Question[]
+  riskMatrixConfigs   RiskMatrixConfig[]
+  recommendations     Recommendation[]
+  workflowDefinitions WorkflowDefinition[]
+  assessments         Assessment[]
+  inventoryItems      SoftwareInventoryItem[]
+  attachments         Attachment[]
+  comments            Comment[]
+  auditLogs           AuditLog[]
+  notifications       Notification[]
+  technicalOpinions   TechnicalOpinion[]
+
+  @@map("tenants")
+}
+
+// =============================================================================
+// RBAC (Etapa 3 usa isto; a tabela já nasce aqui por afetar FKs do sistema todo)
+// =============================================================================
+
+/// Catálogo global de capacidades do sistema (ex.: "assessments:approve").
+/// Não é tenant-scoped: é o mesmo conjunto de permissões possíveis para
+/// qualquer tenant — o que varia por tenant é quais Roles têm quais Permissions.
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  description String
+  createdAt   DateTime @default(now())
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+/// Papel dentro de um tenant (Administrador, Usuário, Gestor de Área,
+/// Segurança da Informação, DPO, Jurídico, ...). Tenant-scoped para permitir
+/// que cada organização adapte nomes/composição sem afetar as demais.
+model Role {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  /// Papéis seedados (Administrador, Usuário) não podem ser excluídos pela UI.
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+  workflowSteps   WorkflowStep[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("roles")
+}
+
+model RolePermission {
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  tenantId     String
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String
+  email        String
+  /// Login local (dev / usuários sem SSO). Null quando o acesso é só via SAML.
+  passwordHash String?
+  /// NameID retornado pelo Identity Provider SAML.
+  ssoSubject   String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  userRoles               UserRole[]
+  refreshTokens           RefreshToken[]
+  requestedAssessments    Assessment[]             @relation("AssessmentRequester")
+  responsibleAssessments  Assessment[]             @relation("AssessmentResponsible")
+  assessmentVersions      AssessmentVersion[]
+  workflowAssignments     WorkflowStepExecution[]  @relation("WorkflowStepAssignee")
+  workflowDecisions       WorkflowStepExecution[]  @relation("WorkflowStepDecidedBy")
+  technicalOpinionsIssued TechnicalOpinion[]
+  managedInventoryItems   SoftwareInventoryItem[]  @relation("InventoryManager")
+  ownedInventoryItems     SoftwareInventoryItem[]  @relation("InventoryTechnicalResponsible")
+  attachments             Attachment[]
+  comments                Comment[]
+  auditLogs               AuditLog[]
+  notifications           Notification[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("users")
+}
+
+model UserRole {
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+/// Refresh tokens são persistidos (hash, nunca o valor puro) para permitir
+/// revogação real — logout, rotação a cada uso e detecção de reuso (se um
+/// token já rotacionado for apresentado de novo, é sinal de token roubado;
+/// a Etapa 3 usa isso para revogar toda a família). Sem essa tabela, JWT de
+/// refresh só poderia expirar sozinho, nunca ser invalidado antes da hora.
+model RefreshToken {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash   String    @unique
+  /// Agrupa a cadeia de tokens rotacionados a partir do mesmo login — permite
+  /// revogar a família inteira de uma vez ao detectar reuso.
+  familyId    String
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  replacedById String?
+  userAgent   String?
+  ipAddress   String?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+// =============================================================================
+// Área / departamento
+// =============================================================================
+
+/// Entidade normalizada (não texto livre) de propósito: além de exibir em
+/// formulários, "área" é a chave de agrupamento de métricas do dashboard
+/// executivo ("Média de risco por área") e do placar de maturidade/adesão
+/// por área (gamificação, Etapa 9) — texto livre deixaria "TI" e "T.I."
+/// virarem áreas diferentes num ranking.
+model Area {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assessments    Assessment[]
+  inventoryItems SoftwareInventoryItem[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("areas")
+}
+
+// =============================================================================
+// Questionário
+// =============================================================================
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTI_CHOICE
+  SCALE
+  TEXT
+}
+
+/// Em qual eixo do motor de risco a pergunta pesa. Sem essa marcação não há
+/// como o motor separar "probabilidade" de "impacto" a partir de um único
+/// questionário — ver nota de decisão em RiskMatrixConfig.
+enum RiskDimension {
+  PROBABILITY
+  IMPACT
+  BOTH
+}
+
+model QuestionCategory {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  order       Int      @default(0)
+  /// Soft delete: categorias com perguntas já respondidas não podem ser
+  /// removidas de verdade sem quebrar o histórico de avaliações — desativar
+  /// só as tira de novos questionários.
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questions Question[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("question_categories")
+}
+
+model Question {
+  id            String        @id @default(cuid())
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      QuestionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  text          String
+  description   String?
+  /// Peso da pergunta no score final (ex.: 1.00 a 10.00).
+  weight        Decimal       @db.Decimal(5, 2)
+  type          QuestionType
+  riskDimension RiskDimension
+  order         Int           @default(0)
+  isActive      Boolean       @default(true)
+  /// false para perguntas condicionais (ex.: "como o MFA está implementado?",
+  /// só relevante se a pergunta anterior de MFA foi "Sim") — a validação de
+  /// completude no envio da avaliação não as exige.
+  isRequired    Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  options   QuestionOption[]
+  controls  QuestionControl[]
+  answers   AssessmentAnswer[]
+
+  @@index([tenantId])
+  @@index([categoryId])
+  @@map("questions")
+}
+
+/// Uma pergunta do tipo booleano é modelada como SINGLE_CHOICE com duas
+/// opções ("Sim"/"Não"), cada uma com seu próprio `score` — evita um tipo
+/// BOOLEAN à parte e mantém o motor de risco uniforme para qualquer pergunta
+/// de escolha.
+model QuestionOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  label      String
+  value      String
+  /// Contribuição de risco desta opção (0 = sem risco, valores maiores = mais risco).
+  score      Decimal  @db.Decimal(5, 2)
+  order      Int      @default(0)
+
+  answerSelections  AssessmentAnswerOption[]
+  triggeredRecommendations Recommendation[]
+
+  @@index([questionId])
+  @@map("question_options")
+}
+
+// =============================================================================
+// Biblioteca de controles (ISO 27001/27002, NIST CSF, CIS v8, LGPD, GDPR, OWASP)
+// =============================================================================
+
+enum ControlFrameworkCode {
+  ISO_27001
+  ISO_27002
+  NIST_CSF
+  CIS_V8
+  LGPD
+  GDPR
+  OWASP_ASVS
+  OWASP_TOP10
+}
+
+/// Catálogo global (não tenant-scoped): frameworks padronizados, mesmo
+/// conteúdo para qualquer organização que use a plataforma.
+model ControlFramework {
+  id          String               @id @default(cuid())
+  code        ControlFrameworkCode @unique
+  name        String
+  description String?
+
+  controls Control[]
+
+  @@map("control_frameworks")
+}
+
+model Control {
+  id          String   @id @default(cuid())
+  frameworkId String
+  framework   ControlFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+  code        String
+  title       String
+  description String?
+
+  questionControls QuestionControl[]
+
+  @@unique([frameworkId, code])
+  @@index([frameworkId])
+  @@map("controls")
+}
+
+/// Vincula perguntas do questionário aos controles de segurança que elas
+/// avaliam — usado no parecer técnico para informar quais controles foram
+/// atendidos e quais precisam de mitigação.
+model QuestionControl {
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  controlId  String
+  control    Control  @relation(fields: [controlId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, controlId])
+  @@map("question_controls")
+}
+
+// =============================================================================
+// Motor de risco (matriz parametrizável)
+// =============================================================================
+
+/// Configuração de uma matriz de risco. Tenant-scoped e versionada
+/// (`version`) porque o admin pode "alterar pesos, impacto, probabilidade,
+/// score mínimo de aprovação" a qualquer momento — sem isso, mudar a matriz
+/// reescreveria silenciosamente o critério usado em avaliações já aprovadas.
+/// Apenas uma config pode estar `isActive` por tenant; as demais são histórico.
+model RiskMatrixConfig {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name             String
+  version          Int      @default(1)
+  isActive         Boolean  @default(true)
+  /// Score mínimo (0-100) para aprovação automática/recomendada.
+  minApprovalScore Decimal  @db.Decimal(5, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  probabilityLevels   ProbabilityLevel[]
+  impactLevels        ImpactLevel[]
+  riskClassifications RiskClassification[]
+  matrixCells         RiskMatrixCell[]
+  riskResults         RiskResult[]
+
+  @@index([tenantId])
+  @@map("risk_matrix_configs")
+}
+
+/// Faixa de score que classifica a "probabilidade" calculada a partir das
+/// perguntas com riskDimension PROBABILITY/BOTH (ex.: Baixa 0-25, Média
+/// 26-60, Alta 61-100).
+model ProbabilityLevel {
+  id                 String           @id @default(cuid())
+  riskMatrixConfigId String
+  riskMatrixConfig   RiskMatrixConfig @relation(fields: [riskMatrixConfigId], references: [id], onDelete: Cascade)
+  label              String
+  order              Int
+  minScore           Decimal          @db.Decimal(5, 2)
+  maxScore           Decimal          @db.Decimal(5, 2)
+
+  matrixCells RiskMatrixCell[]
+  riskResults RiskResult[]
+
+  @@index([riskMatrixConfigId])
+  @@map("probability_levels")
+}
+
+/// Mesma ideia de ProbabilityLevel, para o eixo de impacto (perguntas com
+/// riskDimension IMPACT/BOTH).
+model ImpactLevel {
+  id                 String           @id @default(cuid())
+  riskMatrixConfigId String
+  riskMatrixConfig   RiskMatrixConfig @relation(fields: [riskMatrixConfigId], references: [id], onDelete: Cascade)
+  label              String
+  order              Int
+  minScore           Decimal          @db.Decimal(5, 2)
+  maxScore           Decimal          @db.Decimal(5, 2)
+
+  matrixCells RiskMatrixCell[]
+  riskResults RiskResult[]
+
+  @@index([riskMatrixConfigId])
+  @@map("impact_levels")
+}
+
+/// Classificação final (Baixo/Médio/Alto/Crítico), com cor para dashboards e
+/// texto-base de recomendação/parecer.
+model RiskClassification {
+  id                 String           @id @default(cuid())
+  riskMatrixConfigId String
+  riskMatrixConfig   RiskMatrixConfig @relation(fields: [riskMatrixConfigId], references: [id], onDelete: Cascade)
+  label              String
+  order              Int
+  color              String
+  recommendationText String?
+
+  matrixCells RiskMatrixCell[]
+  riskResults RiskResult[]
+
+  @@index([riskMatrixConfigId])
+  @@map("risk_classifications")
+}
+
+/// Célula da matriz probabilidade × impacto → classificação. É o que torna a
+/// matriz de fato uma "matriz" (grade 2D) e não só dois thresholds somados —
+/// permite, por exemplo, que probabilidade Alta + impacto Baixo dê um
+/// resultado diferente de probabilidade Baixa + impacto Alto.
+model RiskMatrixCell {
+  id                    String              @id @default(cuid())
+  riskMatrixConfigId    String
+  riskMatrixConfig      RiskMatrixConfig    @relation(fields: [riskMatrixConfigId], references: [id], onDelete: Cascade)
+  probabilityLevelId    String
+  probabilityLevel      ProbabilityLevel    @relation(fields: [probabilityLevelId], references: [id], onDelete: Cascade)
+  impactLevelId         String
+  impactLevel           ImpactLevel         @relation(fields: [impactLevelId], references: [id], onDelete: Cascade)
+  riskClassificationId  String
+  riskClassification    RiskClassification  @relation(fields: [riskClassificationId], references: [id], onDelete: Cascade)
+
+  @@unique([probabilityLevelId, impactLevelId])
+  @@index([riskMatrixConfigId])
+  @@map("risk_matrix_cells")
+}
+
+/// Texto de recomendação automática (ex.: "Implementar MFA"), disparado
+/// quando uma QuestionOption de risco elevado é selecionada numa resposta.
+/// Parametrizável pelo admin, conforme exigido no requisito de "Recomendações
+/// Automáticas".
+model Recommendation {
+  id               String          @id @default(cuid())
+  tenantId         String
+  tenant           Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  text             String
+  isActive         Boolean         @default(true)
+  /// Opção de resposta que dispara esta recomendação. Null = recomendação
+  /// genérica, aplicável manualmente ou por classificação de risco.
+  triggerOptionId  String?
+  triggerOption    QuestionOption? @relation(fields: [triggerOptionId], references: [id], onDelete: SetNull)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  assessmentRecommendations AssessmentRecommendation[]
+
+  @@index([tenantId])
+  @@map("recommendations")
+}
+
+// =============================================================================
+// Workflow de aprovação configurável
+// =============================================================================
+
+enum WorkflowStepStatus {
+  PENDING
+  IN_PROGRESS
+  APPROVED
+  REJECTED
+  ADJUSTMENT_REQUESTED
+  SKIPPED
+}
+
+enum WorkflowInstanceStatus {
+  IN_PROGRESS
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model WorkflowDefinition {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  isDefault Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  steps     WorkflowStep[]
+  instances AssessmentWorkflowInstance[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("workflow_definitions")
+}
+
+/// Uma etapa do fluxo (ex.: Gestor da Área, Segurança da Informação, DPO,
+/// Jurídico, Aprovação Final). `requiresLgpd` implementa a regra do fluxo
+/// padrão em que o DPO só entra "quando envolver LGPD".
+model WorkflowStep {
+  id                   String             @id @default(cuid())
+  workflowDefinitionId String
+  workflowDefinition   WorkflowDefinition @relation(fields: [workflowDefinitionId], references: [id], onDelete: Cascade)
+  order                Int
+  name                 String
+  responsibleRoleId    String
+  responsibleRole      Role               @relation(fields: [responsibleRoleId], references: [id])
+  slaHours             Int
+  isOptional           Boolean            @default(false)
+  requiresLgpd         Boolean            @default(false)
+
+  executions WorkflowStepExecution[]
+
+  @@unique([workflowDefinitionId, order])
+  @@index([workflowDefinitionId])
+  @@map("workflow_steps")
+}
+
+/// Uma execução do WorkflowDefinition para um Assessment específico. 1:1 com
+/// Assessment — reaberturas reiniciam/avançam a mesma instância em vez de
+/// criar outra, mantendo um único histórico de decisões por avaliação.
+model AssessmentWorkflowInstance {
+  id                   String                  @id @default(cuid())
+  assessmentId         String                  @unique
+  assessment           Assessment              @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  workflowDefinitionId String
+  workflowDefinition   WorkflowDefinition      @relation(fields: [workflowDefinitionId], references: [id])
+  currentStepOrder     Int                     @default(1)
+  status               WorkflowInstanceStatus  @default(IN_PROGRESS)
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+
+  stepExecutions WorkflowStepExecution[]
+
+  @@map("assessment_workflow_instances")
+}
+
+model WorkflowStepExecution {
+  id                           String                     @id @default(cuid())
+  assessmentWorkflowInstanceId String
+  assessmentWorkflowInstance   AssessmentWorkflowInstance @relation(fields: [assessmentWorkflowInstanceId], references: [id], onDelete: Cascade)
+  workflowStepId               String
+  workflowStep                 WorkflowStep               @relation(fields: [workflowStepId], references: [id])
+  assignedUserId               String?
+  assignedUser                 User?                      @relation("WorkflowStepAssignee", fields: [assignedUserId], references: [id])
+  status                       WorkflowStepStatus         @default(PENDING)
+  comments                     String?
+  decidedById                  String?
+  decidedBy                    User?                      @relation("WorkflowStepDecidedBy", fields: [decidedById], references: [id])
+  decidedAt                    DateTime?
+  slaDueAt                     DateTime?
+  createdAt                    DateTime                   @default(now())
+  updatedAt                    DateTime                   @updatedAt
+
+  @@index([assessmentWorkflowInstanceId])
+  @@map("workflow_step_executions")
+}
+
+// =============================================================================
+// Avaliação (Assessment)
+// =============================================================================
+
+enum Criticality {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AssessmentStatus {
+  DRAFT
+  SUBMITTED
+  IN_REVIEW
+  PENDING_ADJUSTMENT
+  APPROVED
+  REJECTED
+  REOPENED
+}
+
+model Assessment {
+  id               String            @id @default(cuid())
+  tenantId         String
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  softwareName     String
+  vendor           String
+  version          String?
+  url              String?
+  /// Responsável indicado pelo solicitante (pode ou não ser o próprio requester).
+  responsibleId    String
+  responsible      User              @relation("AssessmentResponsible", fields: [responsibleId], references: [id])
+  areaId           String
+  area             Area              @relation(fields: [areaId], references: [id])
+  criticality      Criticality
+  justification    String
+  /// Quem criou a avaliação — nunca pode ser quem a aprova (Separação de Funções).
+  requesterId      String
+  requester        User              @relation("AssessmentRequester", fields: [requesterId], references: [id])
+  status           AssessmentStatus  @default(DRAFT)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  answers            AssessmentAnswer[]
+  versions           AssessmentVersion[]
+  workflowInstance   AssessmentWorkflowInstance?
+  inventoryItems     SoftwareInventoryItem[]
+  attachments        Attachment[]
+  comments           Comment[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, areaId])
+  @@map("assessments")
+}
+
+/// Resposta a uma pergunta. `textValue`/`scaleValue` cobrem os tipos TEXT e
+/// SCALE; SINGLE_CHOICE/MULTI_CHOICE usam AssessmentAnswerOption. Um único
+/// registro por (assessment, question) — a resposta é sobrescrita enquanto a
+/// avaliação está aberta; o histórico "antes da edição" vive em
+/// AssessmentVersion.snapshotJson, não aqui.
+model AssessmentAnswer {
+  id           String     @id @default(cuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     Question   @relation(fields: [questionId], references: [id])
+  textValue    String?
+  scaleValue   Int?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  selectedOptions AssessmentAnswerOption[]
+
+  @@unique([assessmentId, questionId])
+  @@index([assessmentId])
+  @@map("assessment_answers")
+}
+
+model AssessmentAnswerOption {
+  id                 String           @id @default(cuid())
+  assessmentAnswerId String
+  assessmentAnswer   AssessmentAnswer @relation(fields: [assessmentAnswerId], references: [id], onDelete: Cascade)
+  questionOptionId   String
+  questionOption     QuestionOption   @relation(fields: [questionOptionId], references: [id])
+
+  @@unique([assessmentAnswerId, questionOptionId])
+  @@map("assessment_answer_options")
+}
+
+/// Snapshot imutável de uma versão da avaliação. Nunca é sobrescrito —
+/// cada alteração relevante (envio, ajuste solicitado, reabertura) gera uma
+/// nova linha (v1.0, v1.1, v2.0, ...), conforme exigido no requisito de
+/// versionamento.
+model AssessmentVersion {
+  id            String     @id @default(cuid())
+  assessmentId  String
+  assessment    Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  versionLabel  String
+  snapshotJson  Json
+  changeReason  String?
+  createdById   String
+  createdBy     User       @relation(fields: [createdById], references: [id])
+  createdAt     DateTime   @default(now())
+
+  riskResult        RiskResult?
+  technicalOpinion  TechnicalOpinion?
+  recommendations   AssessmentRecommendation[]
+
+  @@unique([assessmentId, versionLabel])
+  @@index([assessmentId])
+  @@map("assessment_versions")
+}
+
+/// Resultado do motor de risco para uma versão específica da avaliação.
+/// 1:1 com AssessmentVersion (nunca recalculado in-place — uma nova versão
+/// gera um novo RiskResult).
+model RiskResult {
+  id                   String             @id @default(cuid())
+  assessmentVersionId  String             @unique
+  assessmentVersion    AssessmentVersion  @relation(fields: [assessmentVersionId], references: [id], onDelete: Cascade)
+  riskMatrixConfigId   String
+  riskMatrixConfig     RiskMatrixConfig   @relation(fields: [riskMatrixConfigId], references: [id])
+  probabilityScore     Decimal            @db.Decimal(5, 2)
+  impactScore          Decimal            @db.Decimal(5, 2)
+  totalScore           Decimal            @db.Decimal(5, 2)
+  probabilityLevelId   String
+  probabilityLevel     ProbabilityLevel   @relation(fields: [probabilityLevelId], references: [id])
+  impactLevelId        String
+  impactLevel          ImpactLevel        @relation(fields: [impactLevelId], references: [id])
+  riskClassificationId String
+  riskClassification   RiskClassification @relation(fields: [riskClassificationId], references: [id])
+  calculatedAt         DateTime           @default(now())
+
+  @@map("risk_results")
+}
+
+model AssessmentRecommendation {
+  id                  String            @id @default(cuid())
+  assessmentVersionId String
+  assessmentVersion   AssessmentVersion @relation(fields: [assessmentVersionId], references: [id], onDelete: Cascade)
+  recommendationId    String
+  recommendation      Recommendation    @relation(fields: [recommendationId], references: [id])
+  appliedAt           DateTime          @default(now())
+
+  @@unique([assessmentVersionId, recommendationId])
+  @@map("assessment_recommendations")
+}
+
+/// Parecer técnico emitido para uma versão da avaliação. 1:1 com
+/// AssessmentVersion pelo mesmo motivo do RiskResult: o documento (com hash e
+/// número únicos) nunca é alterado depois de emitido.
+model TechnicalOpinion {
+  id                  String            @id @default(cuid())
+  tenantId            String
+  tenant              Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assessmentVersionId String            @unique
+  assessmentVersion   AssessmentVersion @relation(fields: [assessmentVersionId], references: [id], onDelete: Cascade)
+  /// Número sequencial do parecer, único por tenant (ex.: "2026-000123").
+  number              String
+  hash                String
+  qrCodeData          String
+  classificationLabel String
+  issuedById          String
+  issuedBy            User              @relation(fields: [issuedById], references: [id])
+  issuedAt            DateTime          @default(now())
+  storageKey          String
+
+  @@unique([tenantId, number])
+  @@index([tenantId])
+  @@map("technical_opinions")
+}
+
+// =============================================================================
+// Inventário de softwares
+// =============================================================================
+
+enum SoftwareType {
+  SAAS
+  ON_PREMISES
+  DESKTOP
+  MOBILE
+  API_INTEGRATION
+}
+
+enum InventoryStatus {
+  ACTIVE
+  PENDING_REVIEW
+  EXPIRED
+  DECOMMISSIONED
+}
+
+enum DataClassification {
+  PUBLIC
+  INTERNAL
+  CONFIDENTIAL
+  RESTRICTED
+}
+
+/// Criado automaticamente quando uma Assessment é aprovada. `assessmentId` é
+/// opcional para permitir, no futuro, cadastro manual de itens de inventário
+/// legado que nunca passaram pelo fluxo de homologação.
+model SoftwareInventoryItem {
+  id                     String              @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assessmentId           String?
+  assessment             Assessment?         @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  name                   String
+  vendor                 String
+  version                String?
+  url                    String?
+  category               String
+  type                   SoftwareType
+  /// Onde o ativo está hospedado (ex.: "AWS", "Google Cloud", "Magalu Cloud",
+  /// "Datacenter próprio"). Texto livre — a lista de provedores muda com o
+  /// tempo e travar isso em enum geraria migration a cada novo provedor
+  /// contratado. Alimenta o corte "Cloud x Local" do dashboard executivo,
+  /// que é uma dimensão diferente de `type` (SaaS x On-Premises).
+  hostingProvider        String?
+  areaId                 String
+  area                   Area                @relation(fields: [areaId], references: [id])
+  managerId              String
+  manager                User                @relation("InventoryManager", fields: [managerId], references: [id])
+  technicalResponsibleId String
+  technicalResponsible   User                @relation("InventoryTechnicalResponsible", fields: [technicalResponsibleId], references: [id])
+  homologationDate       DateTime
+  nextReviewDate         DateTime
+  status                 InventoryStatus     @default(ACTIVE)
+  criticality             Criticality
+  dataClassification     DataClassification
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+
+  attachments Attachment[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, areaId])
+  @@index([nextReviewDate])
+  @@map("software_inventory_items")
+}
+
+// =============================================================================
+// Gestão documental (anexos)
+// =============================================================================
+
+enum AttachmentCategory {
+  CONTRACT
+  DPA
+  SOC2_REPORT
+  ISO27001_CERTIFICATE
+  PENTEST_REPORT
+  ARCHITECTURE_DOCUMENT
+  DPIA
+  PRIVACY_POLICY
+  OTHER
+}
+
+/// FKs próprias por entidade (em vez de um par genérico relatedType/relatedId)
+/// para manter integridade referencial real no banco — mais previsível para
+/// um sistema corporativo do que um polimorfismo sem constraint.
+model Attachment {
+  id              String              @id @default(cuid())
+  tenantId        String
+  tenant          Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assessmentId    String?
+  assessment      Assessment?         @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  inventoryItemId String?
+  inventoryItem   SoftwareInventoryItem? @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  category        AttachmentCategory
+  fileName        String
+  storageKey      String
+  version         Int                 @default(1)
+  uploadedById    String
+  uploadedBy      User                @relation(fields: [uploadedById], references: [id])
+  uploadedAt      DateTime            @default(now())
+
+  @@index([tenantId])
+  @@index([assessmentId])
+  @@index([inventoryItemId])
+  @@map("attachments")
+}
+
+// =============================================================================
+// Comentários (thread de discussão de uma avaliação)
+// =============================================================================
+
+model Comment {
+  id           String     @id @default(cuid())
+  tenantId     String
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User       @relation(fields: [authorId], references: [id])
+  body         String
+  createdAt    DateTime   @default(now())
+
+  @@index([tenantId])
+  @@index([assessmentId])
+  @@map("comments")
+}
+
+// =============================================================================
+// Auditoria
+// =============================================================================
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  CREATE
+  UPDATE
+  DELETE
+  DOWNLOAD
+  APPROVE
+  REJECT
+  REOPEN
+  SUBMIT
+}
+
+/// `userId` e `tenantId` opcionais para sobreviver à exclusão do usuário/tenant
+/// sem perder a trilha de auditoria (onDelete: SetNull) — auditoria não pode
+/// ser um efeito colateral apagável.
+model AuditLog {
+  id         String      @id @default(cuid())
+  tenantId   String?
+  tenant     Tenant?     @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  userId     String?
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     AuditAction
+  entityType String
+  entityId   String?
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime    @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+// =============================================================================
+// Notificações
+// =============================================================================
+
+enum NotificationType {
+  NEW_REQUEST
+  APPROVAL
+  REJECTION
+  ADJUSTMENT_REQUEST
+  HOMOLOGATION_EXPIRING
+  NEW_COMMENT
+  OPINION_ISSUED
+}
+
+model Notification {
+  id                String           @id @default(cuid())
+  tenantId          String
+  tenant            Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              NotificationType
+  title             String
+  body              String
+  isRead            Boolean          @default(false)
+  relatedEntityType String?
+  relatedEntityId   String?
+  createdAt         DateTime         @default(now())
+
+  @@index([tenantId])
+  @@index([userId, isRead])
+  @@map("notifications")
+}

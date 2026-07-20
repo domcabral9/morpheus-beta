@@ -1,0 +1,100 @@
+{
+  "HomePage": {
+    "title": "Morpheus",
+    "subtitle": "Plataforma de homologação e avaliação de risco de software",
+    "description": "Etapa 1 concluída: fundação técnica do monorepo rodando de ponta a ponta.",
+    "themeToggleLabel": "Alternar tema",
+    "localeSwitcherLabel": "Idioma"
+  },
+  "HealthStatus": {
+    "title": "Status da API",
+    "checking": "Verificando conexão com a API...",
+    "healthy": "API e banco de dados operacionais",
+    "unhealthy": "Não foi possível conectar à API",
+    "retry": "Tentar novamente"
+  },
+  "LoginPage": {
+    "title": "Morpheus",
+    "subtitle": "Entre com sua conta corporativa",
+    "tenantSlugLabel": "Organização",
+    "tenantSlugPlaceholder": "ex.: demo",
+    "emailLabel": "E-mail",
+    "emailPlaceholder": "voce@empresa.com",
+    "passwordLabel": "Senha",
+    "submit": "Entrar",
+    "submitting": "Entrando...",
+    "ssoDivider": "ou",
+    "ssoButton": "Entrar com SSO corporativo",
+    "genericError": "Não foi possível entrar. Verifique os dados e tente novamente.",
+    "themeToggleLabel": "Alternar tema",
+    "localeSwitcherLabel": "Idioma"
+  },
+  "Dashboard": {
+    "welcome": "Olá, {name}",
+    "signOut": "Sair"
+  },
+  "Status": {
+    "DRAFT": "Rascunho",
+    "SUBMITTED": "Enviada",
+    "IN_REVIEW": "Em análise",
+    "PENDING_ADJUSTMENT": "Aguardando ajustes",
+    "APPROVED": "Aprovada",
+    "REJECTED": "Reprovada",
+    "REOPENED": "Reaberta"
+  },
+  "Criticality": {
+    "LOW": "Baixa",
+    "MEDIUM": "Média",
+    "HIGH": "Alta",
+    "CRITICAL": "Crítica"
+  },
+  "Assessments": {
+    "title": "Minhas avaliações",
+    "newButton": "Nova avaliação",
+    "empty": "Você ainda não criou nenhuma avaliação.",
+    "columnSoftware": "Software",
+    "columnArea": "Área",
+    "columnCriticality": "Criticidade",
+    "columnStatus": "Status",
+    "columnCreatedAt": "Criada em",
+    "loadError": "Não foi possível carregar suas avaliações."
+  },
+  "NewAssessment": {
+    "title": "Nova avaliação",
+    "softwareNameLabel": "Nome do software",
+    "vendorLabel": "Fabricante",
+    "versionLabel": "Versão",
+    "urlLabel": "URL",
+    "areaLabel": "Área solicitante",
+    "criticalityLabel": "Criticidade",
+    "justificationLabel": "Justificativa",
+    "submit": "Criar e continuar para o questionário",
+    "submitting": "Criando...",
+    "cancel": "Cancelar",
+    "genericError": "Não foi possível criar a avaliação. Verifique os dados e tente novamente.",
+    "selectPlaceholder": "Selecione"
+  },
+  "AssessmentDetail": {
+    "back": "Voltar",
+    "generalInfo": "Informações gerais",
+    "vendor": "Fabricante",
+    "version": "Versão",
+    "area": "Área",
+    "responsible": "Responsável",
+    "justification": "Justificativa",
+    "questionnaire": "Questionário",
+    "saveAnswers": "Salvar respostas",
+    "saving": "Salvando...",
+    "saveSuccess": "Respostas salvas.",
+    "saveError": "Não foi possível salvar as respostas.",
+    "submitButton": "Enviar para análise",
+    "submitting": "Enviando...",
+    "submitSuccess": "Avaliação enviada para análise.",
+    "submitError": "Não foi possível enviar — confira se todas as perguntas obrigatórias foram respondidas.",
+    "readOnlyNotice": "Esta avaliação não está mais em edição (status atual: {status}).",
+    "requiredMark": "obrigatória",
+    "textPlaceholder": "Digite sua resposta",
+    "loadError": "Não foi possível carregar esta avaliação.",
+    "notFound": "Avaliação não encontrada ou você não tem acesso a ela."
+  }
+}

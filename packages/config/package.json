@@ -1,0 +1,13 @@
+{
+  "name": "@morpheus/config",
+  "version": "0.1.0",
+  "private": true,
+  "files": [
+    "tsconfig"
+  ],
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/nestjs.json": "./tsconfig/nestjs.json",
+    "./tsconfig/nextjs.json": "./tsconfig/nextjs.json"
+  }
+}

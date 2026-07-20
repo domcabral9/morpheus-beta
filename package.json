@@ -1,0 +1,25 @@
+{
+  "name": "morpheus-beta",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Morpheus — plataforma de homologação e avaliação de risco de software",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@11.15.1",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "db:generate": "pnpm --filter @morpheus/database generate",
+    "db:migrate": "pnpm --filter @morpheus/database migrate:dev",
+    "db:seed": "pnpm --filter @morpheus/database seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.5",
+    "typescript": "^5.9.3"
+  }
+}

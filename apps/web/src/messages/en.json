@@ -1,0 +1,100 @@
+{
+  "HomePage": {
+    "title": "Morpheus",
+    "subtitle": "Software risk assessment and homologation platform",
+    "description": "Step 1 complete: technical foundation of the monorepo running end to end.",
+    "themeToggleLabel": "Toggle theme",
+    "localeSwitcherLabel": "Language"
+  },
+  "HealthStatus": {
+    "title": "API Status",
+    "checking": "Checking connection to the API...",
+    "healthy": "API and database are operational",
+    "unhealthy": "Could not connect to the API",
+    "retry": "Retry"
+  },
+  "LoginPage": {
+    "title": "Morpheus",
+    "subtitle": "Sign in with your corporate account",
+    "tenantSlugLabel": "Organization",
+    "tenantSlugPlaceholder": "e.g.: demo",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@company.com",
+    "passwordLabel": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "ssoDivider": "or",
+    "ssoButton": "Sign in with corporate SSO",
+    "genericError": "Could not sign in. Check your details and try again.",
+    "themeToggleLabel": "Toggle theme",
+    "localeSwitcherLabel": "Language"
+  },
+  "Dashboard": {
+    "welcome": "Hello, {name}",
+    "signOut": "Sign out"
+  },
+  "Status": {
+    "DRAFT": "Draft",
+    "SUBMITTED": "Submitted",
+    "IN_REVIEW": "In review",
+    "PENDING_ADJUSTMENT": "Pending adjustment",
+    "APPROVED": "Approved",
+    "REJECTED": "Rejected",
+    "REOPENED": "Reopened"
+  },
+  "Criticality": {
+    "LOW": "Low",
+    "MEDIUM": "Medium",
+    "HIGH": "High",
+    "CRITICAL": "Critical"
+  },
+  "Assessments": {
+    "title": "My assessments",
+    "newButton": "New assessment",
+    "empty": "You haven't created any assessments yet.",
+    "columnSoftware": "Software",
+    "columnArea": "Area",
+    "columnCriticality": "Criticality",
+    "columnStatus": "Status",
+    "columnCreatedAt": "Created at",
+    "loadError": "Could not load your assessments."
+  },
+  "NewAssessment": {
+    "title": "New assessment",
+    "softwareNameLabel": "Software name",
+    "vendorLabel": "Vendor",
+    "versionLabel": "Version",
+    "urlLabel": "URL",
+    "areaLabel": "Requesting area",
+    "criticalityLabel": "Criticality",
+    "justificationLabel": "Justification",
+    "submit": "Create and continue to the questionnaire",
+    "submitting": "Creating...",
+    "cancel": "Cancel",
+    "genericError": "Could not create the assessment. Check your details and try again.",
+    "selectPlaceholder": "Select"
+  },
+  "AssessmentDetail": {
+    "back": "Back",
+    "generalInfo": "General information",
+    "vendor": "Vendor",
+    "version": "Version",
+    "area": "Area",
+    "responsible": "Responsible",
+    "justification": "Justification",
+    "questionnaire": "Questionnaire",
+    "saveAnswers": "Save answers",
+    "saving": "Saving...",
+    "saveSuccess": "Answers saved.",
+    "saveError": "Could not save the answers.",
+    "submitButton": "Submit for review",
+    "submitting": "Submitting...",
+    "submitSuccess": "Assessment submitted for review.",
+    "submitError": "Could not submit — check that all required questions are answered.",
+    "readOnlyNotice": "This assessment is no longer editable (current status: {status}).",
+    "requiredMark": "required",
+    "textPlaceholder": "Type your answer",
+    "loadError": "Could not load this assessment.",
+    "notFound": "Assessment not found or you don't have access to it."
+  }
+}

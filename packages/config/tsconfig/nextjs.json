@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "noEmit": true,
+    "allowJs": true,
+    "incremental": true,
+    "plugins": [{ "name": "next" }]
+  }
+}
