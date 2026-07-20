@@ -35,7 +35,13 @@ const stepExecutionDetailInclude = {
           id: true,
           tenantId: true,
           requesterId: true,
+          responsibleId: true,
           softwareName: true,
+          vendor: true,
+          version: true,
+          url: true,
+          areaId: true,
+          criticality: true,
           status: true,
         },
       },
@@ -165,7 +171,7 @@ export class WorkflowRepository {
   findAssessmentContext(assessmentId: string) {
     return this.prisma.assessment.findUnique({
       where: { id: assessmentId },
-      select: { id: true, tenantId: true, requesterId: true, status: true },
+      select: { id: true, tenantId: true, requesterId: true, softwareName: true, status: true },
     });
   }
 

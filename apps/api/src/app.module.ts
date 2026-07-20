@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { Module } from "@nestjs/common";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { PrometheusModule } from "@willsoto/nestjs-prometheus";
 import { LoggerModule } from "nestjs-pino";
 import type { Options as PinoHttpOptions } from "pino-http";
@@ -22,6 +23,8 @@ import { RiskMatrixModule } from "./modules/risk-matrix/risk-matrix.module";
 import { WorkflowModule } from "./modules/workflow/workflow.module";
 import { AuditLogModule } from "./modules/audit/audit-log.module";
 import { DashboardsModule } from "./modules/dashboards/dashboards.module";
+import { NotificationsModule } from "./modules/notifications/notifications.module";
+import { InventoryModule } from "./modules/inventory/inventory.module";
 
 const pinoHttpOptions: PinoHttpOptions = {
   genReqId: (req) => req.headers[CORRELATION_ID_HEADER] as string,
@@ -44,6 +47,7 @@ const pinoHttpOptions: PinoHttpOptions = {
       // process.env normalmente.
       envFilePath: join(__dirname, "..", "..", "..", ".env"),
     }),
+    ScheduleModule.forRoot(),
     LoggerModule.forRoot({ pinoHttp: pinoHttpOptions }),
     PrometheusModule.register({
       defaultMetrics: { enabled: true },
@@ -52,6 +56,7 @@ const pinoHttpOptions: PinoHttpOptions = {
     }),
     PrismaModule,
     AuditLogModule,
+    NotificationsModule,
     HealthModule,
     UsersModule,
     AuthModule,
@@ -61,6 +66,7 @@ const pinoHttpOptions: PinoHttpOptions = {
     RiskMatrixModule,
     WorkflowModule,
     DashboardsModule,
+    InventoryModule,
   ],
   providers: [
     // Protegido por padrão em toda a aplicação — rotas ficam públicas só com

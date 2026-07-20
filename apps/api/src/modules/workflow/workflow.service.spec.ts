@@ -10,6 +10,8 @@ import { WorkflowRepository } from "./workflow.repository";
 import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
 import { TechnicalOpinionService } from "../technical-opinions/technical-opinion.service";
 import { AuditLogService } from "../audit/audit-log.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { InventoryService } from "../inventory/inventory.service";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
@@ -90,6 +92,8 @@ describe("WorkflowService", () => {
   };
   let technicalOpinionService: { generateForAssessment: jest.Mock };
   let auditLogService: { record: jest.Mock };
+  let notificationsService: { notify: jest.Mock; notifyRole: jest.Mock };
+  let inventoryService: { createFromApprovedAssessment: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -104,11 +108,16 @@ describe("WorkflowService", () => {
       findUserRoleIds: jest.fn(),
       findDefinitionById: jest.fn(),
       updateAssessmentStatus: jest.fn(),
-      findAssessmentContext: jest.fn(),
+      findAssessmentContext: jest.fn().mockResolvedValue({ softwareName: "Sistema X" }),
       findPendingStepsForRoles: jest.fn(),
     };
     technicalOpinionService = { generateForAssessment: jest.fn().mockResolvedValue(undefined) };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
+    notificationsService = {
+      notify: jest.fn().mockResolvedValue(undefined),
+      notifyRole: jest.fn().mockResolvedValue(undefined),
+    };
+    inventoryService = { createFromApprovedAssessment: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -117,6 +126,8 @@ describe("WorkflowService", () => {
         SeparationOfDutiesService,
         { provide: TechnicalOpinionService, useValue: technicalOpinionService },
         { provide: AuditLogService, useValue: auditLogService },
+        { provide: NotificationsService, useValue: notificationsService },
+        { provide: InventoryService, useValue: inventoryService },
       ],
     }).compile();
 
@@ -192,6 +203,13 @@ describe("WorkflowService", () => {
             id: "assessment-1",
             tenantId: "tenant-1",
             requesterId: "requester-1",
+            responsibleId: "responsible-1",
+            softwareName: "Sistema X",
+            vendor: "Fornecedor X",
+            version: "1.0.0",
+            url: null,
+            areaId: "area-1",
+            criticality: "MEDIUM",
             status: "IN_REVIEW",
           },
         },
