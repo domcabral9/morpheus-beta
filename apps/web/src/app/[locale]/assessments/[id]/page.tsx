@@ -61,7 +61,7 @@ export default function AssessmentDetailPage() {
 
   React.useEffect(() => {
     if (!user) return;
-    // Fetch-on-mount idiomático (mesmo caso de HealthStatus.tsx, Etapa 1):
+    // Fetch-on-mount idiomático (mesmo caso de theme-provider.tsx):
     // o setState só roda depois do await dentro de load()/catch, mas a regra
     // experimental do react-hooks não consegue provar isso estaticamente.
     // eslint-disable-next-line react-hooks/set-state-in-effect

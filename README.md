@@ -760,3 +760,10 @@ os registros aqui são mais curtos que os das etapas.
     Homologado/Aguardando Ajustes/Rejeitado é parte-de-um-todo, e a forma certa para isso é uma
     barra horizontal empilhada (dá pra ver a composição num único relance), não um gráfico de
     pizza.
+- **Home e login com identidade própria** (`security-hero-background.tsx`): fundo escuro fixo
+  (independente do alternador de tema - essas duas telas são vitrine, não uso diário) com acento
+  vermelho e grade de pontos sutil, adaptado de uma referência visual de segurança ofensiva trazida
+  pelo usuário, não copiado literalmente. O resto do app (dashboards, formulários) continua no
+  visual neutro claro/escuro de sempre - mais adequado para uso interno constante. O card de
+  "Status da API" que existia na home desde a Etapa 1 (prova de conectividade ponta a ponta) saiu
+  de cena - fazia sentido como checkpoint técnico daquela etapa, não numa tela pública polida.
