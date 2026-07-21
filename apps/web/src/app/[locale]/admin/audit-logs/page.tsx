@@ -19,14 +19,17 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination } from "@/components/ui/pagination";
 import { AUDIT_ACTIONS, type AuditAction, type PaginatedAuditLogs } from "@/lib/audit-log-types";
+import type { UserOption } from "@/lib/user-picker-types";
 import { AdminSectionGate } from "../_components/section-gate";
 
 const PAGE_SIZE = 20;
 const ALL_ACTIONS_VALUE = "__all__";
+const ALL_USERS_VALUE = "__all__";
 
 interface FiltersState {
   entityType: string;
   action: AuditAction | typeof ALL_ACTIONS_VALUE;
+  userId: string;
   from: string;
   to: string;
 }
@@ -34,6 +37,7 @@ interface FiltersState {
 const EMPTY_FILTERS: FiltersState = {
   entityType: "",
   action: ALL_ACTIONS_VALUE,
+  userId: ALL_USERS_VALUE,
   from: "",
   to: "",
 };
@@ -42,6 +46,7 @@ function buildQuery(filters: FiltersState, page: number): string {
   const params = new URLSearchParams();
   if (filters.entityType.trim()) params.set("entityType", filters.entityType.trim());
   if (filters.action !== ALL_ACTIONS_VALUE) params.set("action", filters.action);
+  if (filters.userId !== ALL_USERS_VALUE) params.set("userId", filters.userId);
   if (filters.from) params.set("from", new Date(`${filters.from}T00:00:00`).toISOString());
   if (filters.to) params.set("to", new Date(`${filters.to}T23:59:59.999`).toISOString());
   params.set("page", String(page));
@@ -57,6 +62,7 @@ function AuditLogsContent() {
   const [page, setPage] = React.useState(1);
   const [data, setData] = React.useState<PaginatedAuditLogs | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [users, setUsers] = React.useState<UserOption[]>([]);
 
   React.useEffect(() => {
     api
@@ -67,6 +73,10 @@ function AuditLogsContent() {
       })
       .catch(() => setError(t("loadError")));
   }, [filters, page, api, t]);
+
+  React.useEffect(() => {
+    api.get<UserOption[]>("/users").then(setUsers).catch(() => {});
+  }, [api]);
 
   const totalPages = data ? Math.max(Math.ceil(data.total / data.pageSize), 1) : 1;
 
@@ -82,7 +92,7 @@ function AuditLogsContent() {
           <CardTitle className="text-base">{t("filtersTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div className="flex flex-col gap-2">
               <Label htmlFor="entityType">{t("filterEntityType")}</Label>
               <Input
@@ -123,6 +133,29 @@ function AuditLogsContent() {
             </div>
 
             <div className="flex flex-col gap-2">
+              <Label htmlFor="userId">{t("filterUser")}</Label>
+              <Select
+                value={filters.userId}
+                onValueChange={(value) => {
+                  setPage(1);
+                  setFilters((current) => ({ ...current, userId: value }));
+                }}
+              >
+                <SelectTrigger id="userId">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_USERS_VALUE}>{t("filterUserAll")}</SelectItem>
+                  {users.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-2">
               <Label htmlFor="from">{t("filterFrom")}</Label>
               <Input
                 id="from"
@@ -149,7 +182,11 @@ function AuditLogsContent() {
             </div>
           </div>
 
-          {(filters.entityType || filters.action !== ALL_ACTIONS_VALUE || filters.from || filters.to) && (
+          {(filters.entityType ||
+            filters.action !== ALL_ACTIONS_VALUE ||
+            filters.userId !== ALL_USERS_VALUE ||
+            filters.from ||
+            filters.to) && (
             <Button
               type="button"
               variant="ghost"
