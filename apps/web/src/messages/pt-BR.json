@@ -3,15 +3,8 @@
     "title": "Morpheus",
     "description": "Plataforma de homologação e avaliação de risco de software"
   },
-  "HomePage": {
-    "title": "Morpheus",
-    "subtitle": "Plataforma de homologação e avaliação de risco de software",
-    "description": "Centralize o processo de avaliação de risco de novos sistemas, do questionário ao parecer técnico em PDF.",
-    "enterButton": "Entrar",
-    "themeToggleLabel": "Alternar tema",
-    "localeSwitcherLabel": "Idioma"
-  },
   "LoginPage": {
+    "tagline": "Plataforma de homologação de software",
     "title": "Morpheus",
     "subtitle": "Entre com sua conta corporativa",
     "tenantSlugLabel": "Organização",
@@ -24,7 +17,6 @@
     "ssoDivider": "ou",
     "ssoButton": "Entrar com SSO corporativo",
     "genericError": "Não foi possível entrar. Verifique os dados e tente novamente.",
-    "themeToggleLabel": "Alternar tema",
     "localeSwitcherLabel": "Idioma"
   },
   "Dashboard": {
