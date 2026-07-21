@@ -783,3 +783,17 @@ os registros aqui são mais curtos que os das etapas.
   administrativa) para o novo shell `/admin`, com sub-navegação (Questionário, Matriz de Risco,
   Workflow, Auditoria) - cada seção já protegida pela permissão do backend correspondente, mesmo
   antes de ter conteúdo de verdade (as próximas etapas do plano pós-roteiro preenchem cada uma).
+- **Inbox de aprovações** (`/approvals`): `workflow/inbox` e `workflow/steps/:id/decide` existiam
+  desde a Etapa 9 do roteiro original sem nenhuma tela - lacuna funcional de alto impacto (nenhum
+  aprovador conseguia ver ou decidir suas etapas pendentes pela interface). Lista as etapas
+  pendentes nos papéis do usuário logado (`Table` novo da fundação de UI), cada linha abre um
+  `Dialog` com as opções de decisão (aprovar, reprovar, solicitar ajuste, pular - "pular" só fica
+  habilitado se a etapa for opcional) e comentário opcional. Primeiro formulário do projeto com
+  `react-hook-form` + `zod`; o campo de decisão usa `Controller` (não `watch`/`setValue` direto) -
+  API do `react-hook-form` que o React Compiler consegue memoizar com segurança, evitando o aviso
+  de lint "incompatible library" que `watch()` sozinho dispara. `AppHeader` ganhou o link
+  "Aprovações", visível só para quem tem `assessments:approve`.
+  - **`zod` subiu de v3 para v4** ainda nesta etapa: `@hookform/resolvers@5.x` (instalado na etapa
+    anterior) importa `zod/v4/core`, que não existe no `zod` v3 - o build falhava com "module not
+    found". Como `zod` ainda não tinha uso nenhum no projeto até este ponto, corrigir a versão base
+    agora evitou ter que migrar um monte de schemas v3 mais adiante.

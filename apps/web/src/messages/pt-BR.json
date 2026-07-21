@@ -26,7 +26,35 @@
     "localeSwitcherLabel": "Idioma",
     "assessmentsLink": "Avaliações",
     "dashboardsLink": "Dashboards",
-    "adminLink": "Administração"
+    "adminLink": "Administração",
+    "approvalsLink": "Aprovações"
+  },
+  "Approvals": {
+    "title": "Aprovações pendentes",
+    "subtitle": "Etapas de workflow aguardando sua decisão.",
+    "cardTitle": "Minha fila",
+    "empty": "Nenhuma aprovação pendente no momento.",
+    "loadError": "Não foi possível carregar suas aprovações pendentes.",
+    "columnSoftware": "Software",
+    "columnStep": "Etapa",
+    "columnCriticality": "Criticidade",
+    "columnSla": "Prazo",
+    "columnAction": "Ação",
+    "decideAction": "Decidir",
+    "dialogSubtitle": "Etapa \"{step}\" — criticidade {criticality}.",
+    "decisionLabel": "Decisão",
+    "decisions": {
+      "APPROVE": "Aprovar",
+      "REJECT": "Reprovar",
+      "REQUEST_ADJUSTMENT": "Solicitar ajustes",
+      "SKIP": "Pular etapa"
+    },
+    "skipDisabled": "etapa não é opcional",
+    "commentsLabel": "Comentário (opcional)",
+    "submit": "Confirmar decisão",
+    "submitting": "Enviando...",
+    "decisionSuccess": "Decisão registrada.",
+    "decisionError": "Não foi possível registrar a decisão."
   },
   "Admin": {
     "title": "Administração",

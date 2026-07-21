@@ -26,7 +26,35 @@
     "localeSwitcherLabel": "Language",
     "assessmentsLink": "Assessments",
     "dashboardsLink": "Dashboards",
-    "adminLink": "Administration"
+    "adminLink": "Administration",
+    "approvalsLink": "Approvals"
+  },
+  "Approvals": {
+    "title": "Pending approvals",
+    "subtitle": "Workflow steps waiting on your decision.",
+    "cardTitle": "My queue",
+    "empty": "No pending approvals right now.",
+    "loadError": "Could not load your pending approvals.",
+    "columnSoftware": "Software",
+    "columnStep": "Step",
+    "columnCriticality": "Criticality",
+    "columnSla": "Due",
+    "columnAction": "Action",
+    "decideAction": "Decide",
+    "dialogSubtitle": "Step \"{step}\" - {criticality} criticality.",
+    "decisionLabel": "Decision",
+    "decisions": {
+      "APPROVE": "Approve",
+      "REJECT": "Reject",
+      "REQUEST_ADJUSTMENT": "Request adjustment",
+      "SKIP": "Skip step"
+    },
+    "skipDisabled": "step is not optional",
+    "commentsLabel": "Comment (optional)",
+    "submit": "Confirm decision",
+    "submitting": "Submitting...",
+    "decisionSuccess": "Decision recorded.",
+    "decisionError": "Could not record the decision."
   },
   "Admin": {
     "title": "Administration",
