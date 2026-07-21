@@ -27,7 +27,8 @@
     "assessmentsLink": "Assessments",
     "dashboardsLink": "Dashboards",
     "adminLink": "Administration",
-    "approvalsLink": "Approvals"
+    "approvalsLink": "Approvals",
+    "inventoryLink": "Inventory"
   },
   "Approvals": {
     "title": "Pending approvals",
@@ -104,6 +105,70 @@
       "REJECT": "Reject",
       "REOPEN": "Reopen",
       "SUBMIT": "Submit"
+    }
+  },
+  "Inventory": {
+    "title": "Software inventory",
+    "subtitle": "Homologated software assets in use across the organization.",
+    "newButton": "New item",
+    "loadError": "Could not load the inventory.",
+    "detailLoadError": "Could not load this item.",
+    "empty": "No items found.",
+    "back": "Back",
+    "filtersTitle": "Filters",
+    "filterStatusAll": "All statuses",
+    "columnName": "Name",
+    "columnArea": "Area",
+    "columnCriticality": "Criticality",
+    "columnStatus": "Status",
+    "columnNextReview": "Next review",
+    "paginationPrevious": "Previous",
+    "paginationNext": "Next",
+    "paginationPageOf": "Page {current} of {total}",
+    "editButton": "Edit",
+    "createTitle": "New inventory item",
+    "editTitle": "Edit inventory item",
+    "fieldName": "Name",
+    "fieldVendor": "Vendor",
+    "fieldVersion": "Version",
+    "fieldUrl": "URL",
+    "fieldCategory": "Category",
+    "fieldType": "Type",
+    "fieldHostingProvider": "Hosting provider",
+    "fieldArea": "Area",
+    "fieldAreaPlaceholder": "Select",
+    "fieldManagerId": "Manager",
+    "fieldTechnicalResponsibleId": "Technical responsible",
+    "fieldUserIdPlaceholder": "User ID",
+    "userIdHint": "Manager and technical responsible are entered by user ID for now - a name-based picker lands together with the user management screen.",
+    "fieldHomologationDate": "Homologation date",
+    "fieldNextReviewDate": "Next review",
+    "fieldCriticality": "Criticality",
+    "fieldDataClassification": "Data classification",
+    "fieldStatus": "Status",
+    "saving": "Saving...",
+    "save": "Save",
+    "createSuccess": "Item created.",
+    "updateSuccess": "Item updated.",
+    "saveError": "Could not save the item.",
+    "types": {
+      "SAAS": "SaaS",
+      "ON_PREMISES": "On-premises",
+      "DESKTOP": "Desktop",
+      "MOBILE": "Mobile",
+      "API_INTEGRATION": "API integration"
+    },
+    "statuses": {
+      "ACTIVE": "Active",
+      "PENDING_REVIEW": "Pending review",
+      "EXPIRED": "Expired",
+      "DECOMMISSIONED": "Decommissioned"
+    },
+    "dataClassifications": {
+      "PUBLIC": "Public",
+      "INTERNAL": "Internal",
+      "CONFIDENTIAL": "Confidential",
+      "RESTRICTED": "Restricted"
     }
   },
   "Dashboards": {
