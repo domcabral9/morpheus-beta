@@ -829,3 +829,35 @@ os registros aqui são mais curtos que os das etapas.
     páginas existiam, só o cache é que estava velho. `rm -rf apps/web/.next` antes do build (e
     reiniciar o `next dev` depois) resolveu; não é um problema do código, só uma armadilha deste
     ambiente de validação que vale lembrar nas próximas etapas.
+- **Questionário administrativo** (`/admin/questionnaire`): a mais complexa das telas do plano -
+  árvore categoria → pergunta, com sub-formulário de opções e um seletor para vincular/desvincular
+  controles de compliance. Lista de categorias expansíveis (cada uma com suas perguntas), criação de
+  categoria/pergunta via `Dialog`, pergunta nova já nasce com suas opções inline (`useFieldArray` do
+  `react-hook-form`, só para tipos de escolha) e cai numa página de detalhe própria
+  (`/admin/questionnaire/questions/[id]`) para editar dados básicos, gerenciar opções (adicionar/
+  editar/remover, com `AlertDialog` de confirmação na remoção) e o vínculo com controles.
+  - **Vínculo de controle é gated por `controls:manage`, não `questions:manage`**: o backend exige
+    uma permissão diferente para `POST/DELETE .../controls` do resto do CRUD de perguntas - o botão
+    "Vincular controle" e o de remover vínculo só aparecem se o usuário tiver especificamente
+    `controls:manage`, checado à parte do gate geral da página (`questions:manage`).
+  - **`triggersLgpdReview` de uma opção não é editável por aqui**: o campo existe no modelo
+    (sinaliza pra o workflow que a etapa do DPO entra no fluxo) mas nem `QuestionOptionDto` nem
+    `UpdateQuestionOptionDto` o expõem - só pode ser setado via seed hoje. Não fazia parte do escopo
+    desta etapa adicionar isso ao backend; fica registrado como lacuna conhecida, não fingido como
+    resolvido.
+  - **Sem `GET /questionnaire/admin/questions/:id`**: só existe a listagem completa
+    (`GET .../questions`). A página de detalhe da pergunta busca a lista inteira e filtra pelo id no
+    cliente - razoável para o volume de dados de um banco de perguntas (dezenas, não milhares), mas
+    vale trocar por um endpoint dedicado se o catálogo crescer muito.
+  - **DELETE devolve 200 com corpo vazio, não 204**: `removeOption`/`unlinkControl` não têm
+    `@HttpCode(204)` explícito no backend - o `apiFetch` só tratava `204` como "sem corpo" e chamaria
+    `response.json()` numa string vazia nos outros casos, o que lança exceção. Corrigido para tratar
+    qualquer corpo vazio como `undefined` antes de tentar o parse, independente do status - conserta
+    esses dois endpoints e protege qualquer DELETE futuro com o mesmo formato de resposta.
+  - **`useForm` com `z.coerce.number()` precisa de dois tipos, não um**: o mesmo padrão descoberto na
+    Etapa B (`Controller` em vez de `watch`) apareceu de novo, mas o typecheck revelou um problema
+    novo - `z.coerce.number()` tem tipo de entrada `unknown` e saída `number`, então declarar
+    `useForm<MeuTipo>()` com um único tipo colide com o que o `zodResolver` realmente produz. Padrão
+    adotado em todos os formulários desta etapa: `useForm<z.input<typeof schema>, unknown,
+    z.output<typeof schema>>`, com `onSubmit` recebendo o tipo de saída (já convertido para
+    `number`) - substitui os tipos de formulário escritos à mão que existiam antes.

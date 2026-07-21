@@ -33,6 +33,8 @@ export function useApi() {
           accessToken: accessToken ?? undefined,
           body: body !== undefined ? JSON.stringify(body) : undefined,
         }),
+      delete: <T,>(path: string) =>
+        apiFetch<T>(path, { method: "DELETE", accessToken: accessToken ?? undefined }),
     }),
     [accessToken],
   );
