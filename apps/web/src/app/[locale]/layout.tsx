@@ -9,6 +9,7 @@ import { routing } from "@/i18n/routing";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import { themeAntiFlashScript } from "@/lib/theme-script";
+import { Toaster } from "@/components/ui/sonner";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -69,7 +70,10 @@ export default async function LocaleLayout({
         />
         <NextIntlClientProvider>
           <ThemeProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              {children}
+              <Toaster />
+            </AuthProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

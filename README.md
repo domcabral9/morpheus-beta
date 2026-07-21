@@ -767,3 +767,19 @@ os registros aqui são mais curtos que os das etapas.
   visual neutro claro/escuro de sempre - mais adequado para uso interno constante. O card de
   "Status da API" que existia na home desde a Etapa 1 (prova de conectividade ponta a ponta) saiu
   de cena - fazia sentido como checkpoint técnico daquela etapa, não numa tela pública polida.
+- **Home vira redirect direto para o login**: a landing separada (título + botão pequeno "Entrar")
+  não agregava nada além de um clique a mais - `/` agora é um redirect server-side de verdade para
+  `/login` (mesmo helper `redirect` de `@/i18n/navigation` usado no resto do app), não uma página
+  que só parece login. Refino visual do card de login junto: tipografia maior no título, espaçamento
+  mais generoso, legenda curta acima do card, `autofocus` no primeiro campo.
+- **Fundação de UI para as telas administrativas**: kit de componentes novo em
+  `components/ui/` (Dialog, Select, DropdownMenu, Checkbox, RadioGroup, AlertDialog, Separator,
+  Skeleton, Table/Pagination, Toast via `sonner`), seguindo a mesma convenção `cva` + `data-slot` +
+  `cn()` dos componentes existentes. `react-hook-form` + `zod` entram como o padrão de formulário
+  daqui em diante (os dois formulários existentes até então não foram retrofitados). Hook
+  `usePermission`/`useHasAnyManagePermission` centraliza o gate de permissão que antes era um
+  `.includes()` inline repetido. `AppHeader` ganhou um menu de usuário (`DropdownMenu`) no lugar do
+  botão de sign-out solto, e um link "Administração" (visível só para quem tem alguma permissão
+  administrativa) para o novo shell `/admin`, com sub-navegação (Questionário, Matriz de Risco,
+  Workflow, Auditoria) - cada seção já protegida pela permissão do backend correspondente, mesmo
+  antes de ter conteúdo de verdade (as próximas etapas do plano pós-roteiro preenchem cada uma).
