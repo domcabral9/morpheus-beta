@@ -20,6 +20,7 @@ import { AiModule } from "./modules/ai/ai.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { HealthModule } from "./health/health.module";
 import { UsersModule } from "./modules/users/users.module";
+import { RolesModule } from "./modules/roles/roles.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { AreasModule } from "./modules/areas/areas.module";
 import { ControlsModule } from "./modules/controls/controls.module";
@@ -80,6 +81,7 @@ const pinoHttpOptions: PinoHttpOptions = {
     NotificationsModule,
     HealthModule,
     UsersModule,
+    RolesModule,
     AuthModule,
     AreasModule,
     ControlsModule,
