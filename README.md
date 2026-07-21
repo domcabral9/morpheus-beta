@@ -797,3 +797,15 @@ os registros aqui são mais curtos que os das etapas.
     anterior) importa `zod/v4/core`, que não existe no `zod` v3 - o build falhava com "module not
     found". Como `zod` ainda não tinha uso nenhum no projeto até este ponto, corrigir a versão base
     agora evitou ter que migrar um monte de schemas v3 mais adiante.
+- **Auditoria administrativa** (`/admin/audit-logs`): primeira tela real dentro do shell `/admin` -
+  `GET /audit-logs` já existia desde a Etapa 8 sem interface. `Table` paginada (`Pagination` novo da
+  fundação de UI) com filtros por tipo de entidade, ação e intervalo de datas acima da tabela. Sem
+  filtro por usuário nesta etapa - o endpoint filtra por `userId` exato, e sem uma lista de usuários
+  do tenant (isso só chega na Etapa H) expor um campo de texto para um ID não seria um filtro
+  utilizável de verdade; melhor deixar de fora agora do que simular um filtro que não funciona.
+  - **Efeito de busca sem `setState` síncrono**: o primeiro rascunho zerava `data`/`error` no início
+    do `useEffect` antes de disparar a requisição (para mostrar o spinner de novo a cada mudança de
+    filtro) - o eslint do React Compiler bloqueia esse padrão (`react-hooks/set-state-in-effect`),
+    porque `setState` síncrono dentro do corpo do efeito causa uma renderização em cascata evitável.
+    Ajustado para só atualizar o estado dentro do `.then`/`.catch`, igual ao padrão já usado em
+    `dashboard/page.tsx` - o resultado anterior fica visível até o novo chegar, sem flash pra vazio.
