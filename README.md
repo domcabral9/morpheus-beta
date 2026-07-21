@@ -887,3 +887,24 @@ os registros aqui são mais curtos que os das etapas.
     `level` presente quando elas chegam por caminhos de código diferentes. Corrigido com dois blocos
     JSX condicionais (`dialogState?.mode === "create"` / `=== "edit"`) em vez de um só - o mesmo
     padrão já usado no `OptionsSection` da Etapa E.
+- **Workflow administrativo** (`/admin/workflow`): CRUD de definições de fluxo de aprovação (lista +
+  criação, marcar como padrão do tenant) e CRUD de etapas ordenadas por definição (nome, papel
+  responsável, prazo em horas, se é opcional/pode ser pulada, se só entra no fluxo quando a avaliação
+  envolve LGPD) - o mesmo `Dialog`/`AlertDialog` de confirmação já usado nas Etapas E e F, e a mesma
+  correção de narrowing em union discriminada (dois blocos JSX condicionais para `dialogState`).
+  - **Endpoint novo no backend: `GET /roles`** (`apps/api/src/modules/roles/`) - o editor de etapas
+    precisa de um seletor de "papel responsável", e nenhum endpoint listava papéis do tenant até
+    agora (nem `RolesController`, nem nada exposto via outro módulo). Módulo mínimo, mesmo padrão do
+    `AreasModule` (repository + service + controller finos, `select: { id, name }`, sem paginação -
+    volume de papéis por tenant é sempre pequeno). Gated por `workflows:manage`, reaproveitando a
+    permissão já usada no resto deste módulo em vez de introduzir uma nova só para leitura - se uma
+    tela futura (ex.: atribuição de papéis a usuários, Etapa H) precisar do mesmo endpoint com um
+    gate diferente, vale revisitar então, já que `RequirePermissions` com múltiplos argumentos exige
+    todas as permissões (E lógico), não qualquer uma delas (OU) - não daria pra simplesmente somar
+    `users:manage` na mesma linha sem mudar o comportamento pra quem só tem uma das duas.
+  - **Smoke test que altera estado precisa desfazer o que alterou**: testar `set-default` contra a
+    API de dev trocou o workflow padrão do tenant pela definição de teste (que ficou sem etapas depois
+    de outro teste remover a única que tinha) - efeito colateral real que quebraria a criação de
+    novas avaliações no ambiente de dev. Corrigido restaurando o "Fluxo Padrão" original como
+    definição padrão antes de seguir - qualquer smoke test que muda estado compartilhado (não só lê)
+    precisa terminar revertendo, não só validar que o endpoint respondeu certo.
