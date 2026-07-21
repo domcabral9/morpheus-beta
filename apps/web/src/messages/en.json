@@ -71,6 +71,41 @@
       "auditLogsDescription": "Trail of actions taken on the platform."
     }
   },
+  "AuditLogs": {
+    "title": "Audit log",
+    "subtitle": "Trail of actions taken on the platform.",
+    "loadError": "Could not load the audit log.",
+    "empty": "No records found for the applied filters.",
+    "filtersTitle": "Filters",
+    "filterEntityType": "Entity type",
+    "filterEntityTypePlaceholder": "e.g.: Assessment, Question",
+    "filterAction": "Action",
+    "filterActionAll": "All",
+    "filterFrom": "From",
+    "filterTo": "To",
+    "clearFilters": "Clear filters",
+    "columnDate": "Date/time",
+    "columnAction": "Action",
+    "columnEntity": "Entity",
+    "columnUser": "User",
+    "columnIp": "IP",
+    "systemUser": "System",
+    "paginationPrevious": "Previous",
+    "paginationNext": "Next",
+    "paginationPageOf": "Page {current} of {total}",
+    "actions": {
+      "LOGIN": "Login",
+      "LOGOUT": "Logout",
+      "CREATE": "Create",
+      "UPDATE": "Update",
+      "DELETE": "Delete",
+      "DOWNLOAD": "Download",
+      "APPROVE": "Approve",
+      "REJECT": "Reject",
+      "REOPEN": "Reopen",
+      "SUBMIT": "Submit"
+    }
+  },
   "Dashboards": {
     "title": "Dashboards",
     "subtitle": "Overview of software risk assessments.",
