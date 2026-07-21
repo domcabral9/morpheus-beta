@@ -6,7 +6,6 @@ import { Loader2 } from "lucide-react";
 
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useApi } from "@/lib/use-api";
-import { AppHeader } from "@/components/app-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -39,19 +38,11 @@ export default function ApprovalsPage() {
     loadInbox();
   }, [user, loadInbox]);
 
-  if (!user) {
-    return (
-      <main className="flex min-h-full flex-1 items-center justify-center">
-        <Loader2 className="animate-spin text-muted-foreground" />
-      </main>
-    );
-  }
+  if (!user) return null;
 
   return (
-    <main className="flex flex-1 flex-col">
-      <AppHeader />
-
-      <section className="flex flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
+    <>
+      <div className="flex flex-1 flex-col gap-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
@@ -120,7 +111,7 @@ export default function ApprovalsPage() {
             )}
           </CardContent>
         </Card>
-      </section>
+      </div>
 
       <DecisionDialog
         execution={selected}
@@ -132,6 +123,6 @@ export default function ApprovalsPage() {
           setSelected(null);
         }}
       />
-    </main>
+    </>
   );
 }

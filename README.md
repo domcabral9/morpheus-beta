@@ -984,3 +984,21 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     via JS - tanto busca direta quanto via proxy leitor só retornaram a casca estática HTML, sem o
     bloco de CSS. Resolvido pedindo ao usuário para colar o CSS exportado direto (botão "Code" no
     editor do tweakcn) - mais confiável que tentar adivinhar ou raspar valores de uma SPA.
+- **Navegação lateral retrátil (estilo AWS Console / Oracle Cloud)**: o `AppHeader` horizontal e a
+  sub-navegação horizontal de `/admin` foram substituídos por uma sidebar vertical única
+  (`apps/web/src/components/app-sidebar.tsx` + `app-shell.tsx`), usando o componente composto
+  `sidebar` oficial do shadcn/ui - os tokens `--sidebar-*` já estavam no tema desde a etapa anterior,
+  só faltava o componente para consumi-los. Colapsa para uma régua só de ícones (com tooltip ao
+  passar o mouse), vira `Sheet` (drawer) abaixo de 768px, e tem atalho de teclado Cmd/Ctrl+B. Estado
+  colapsado/expandido persiste via cookie (`sidebar_state`, lido no novo `(app)/layout.tsx` como
+  Server Component) em vez de `localStorage` - evita o flash de estado errado no primeiro render sem
+  precisar do hack de script `beforeInteractive` que o tema (claro/escuro) usa.
+  - **Route group `(app)`**: `dashboard/`, `dashboards/`, `approvals/`, `inventory/`, `assessments/`
+    e `admin/` foram movidos para `apps/web/src/app/[locale]/(app)/` via `git mv`, para que o shell da
+    sidebar seja definido uma única vez em vez de em cada uma das 8 páginas que antes renderizavam
+    `<AppHeader />` individualmente. `login/` ficou fora do grupo, sem sidebar. Parênteses não entram
+    na URL - transparente para o roteamento e para o `next-intl`.
+  - **Sub-navegação de `/admin` virou grupo aninhado colapsável** dentro da mesma sidebar, reusando
+    `ADMIN_NAV_ITEMS` sem mudar seu formato. De quebra, a duplicação `ADMIN_SECTION_PERMISSIONS` em
+    `apps/web/src/lib/use-permission.ts` (um array hardcoded que só "espelhava" `ADMIN_NAV_ITEMS`)
+    foi eliminada - `useHasAnyManagePermission` agora deriva direto da lista única.

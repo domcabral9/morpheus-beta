@@ -20,15 +20,19 @@
     "localeSwitcherLabel": "Idioma"
   },
   "Dashboard": {
-    "welcome": "Olá, {name}",
-    "signOut": "Sair",
-    "themeToggleLabel": "Alternar tema",
+    "welcome": "Olá, {name}"
+  },
+  "Nav": {
+    "brand": "Morpheus",
+    "assessments": "Avaliações",
+    "dashboards": "Dashboards",
+    "inventory": "Inventário",
+    "approvals": "Aprovações",
+    "admin": "Administração",
+    "toggleSidebarLabel": "Alternar barra lateral",
     "localeSwitcherLabel": "Idioma",
-    "assessmentsLink": "Avaliações",
-    "dashboardsLink": "Dashboards",
-    "adminLink": "Administração",
-    "approvalsLink": "Aprovações",
-    "inventoryLink": "Inventário"
+    "themeToggleLabel": "Alternar tema",
+    "signOut": "Sair"
   },
   "Approvals": {
     "title": "Aprovações pendentes",
