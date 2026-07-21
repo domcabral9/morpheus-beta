@@ -11,13 +11,6 @@
     "themeToggleLabel": "Alternar tema",
     "localeSwitcherLabel": "Idioma"
   },
-  "HealthStatus": {
-    "title": "Status da API",
-    "checking": "Verificando conexão com a API...",
-    "healthy": "API e banco de dados operacionais",
-    "unhealthy": "Não foi possível conectar à API",
-    "retry": "Tentar novamente"
-  },
   "LoginPage": {
     "title": "Morpheus",
     "subtitle": "Entre com sua conta corporativa",
