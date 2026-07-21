@@ -968,3 +968,19 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     (as demais rotas do controller - detalhe, atribuir/remover papel - continuam exigindo
     `users:manage` de verdade, via `@RequirePermissions` por método em vez de por classe). Mesmo
     decorator criado na Etapa H para o mesmo problema em `GET /roles`.
+- **Tema visual customizado (tweakcn "Light Green")**: usuário indicou um tema pronto do
+  [tweakcn.com](https://tweakcn.com) e colou o CSS exportado - aplicado em `apps/web/src/app/globals.css`
+  (cores base, `--radius` de `0.625rem` para `1rem`, tokens de sombra `--shadow-*`, tokens de
+  tracking de letra, tokens de `--sidebar-*` já prontos para uma futura navegação lateral) e
+  `apps/web/src/app/[locale]/layout.tsx` (fonte trocada de Geist para Inter/JetBrains Mono, como o
+  tema pede).
+  - **Paleta de gráficos mantida fora do tema**: o export do tweakcn trazia `--chart-1` a `--chart-5`
+    genéricos, mas o app já tem uma paleta de 8 tons categóricos + escala de status validada pelo
+    skill de dataviz (CVD, contraste), usada em todos os dashboards. Trocar por 5 cores não validadas
+    de um gerador de tema quebraria essa cobertura de acessibilidade - os `--chart-*` existentes
+    ficaram como estavam, só o restante do tema (cores de UI, radius, sombras, tipografia) foi
+    aplicado.
+  - **Fetch automatizado da página do tweakcn não trouxe os valores**: a página é uma SPA renderizada
+    via JS - tanto busca direta quanto via proxy leitor só retornaram a casca estática HTML, sem o
+    bloco de CSS. Resolvido pedindo ao usuário para colar o CSS exportado direto (botão "Code" no
+    editor do tweakcn) - mais confiável que tentar adivinhar ou raspar valores de uma SPA.
