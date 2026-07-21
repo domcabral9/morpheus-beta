@@ -1,9 +1,13 @@
-import { Injectable } from "@nestjs/common";
-import { UsersRepository, UserWithPermissions } from "./users.repository";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { RolesService } from "../roles/roles.service";
+import { UsersRepository, UserWithPermissions, UserAdminRaw } from "./users.repository";
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly usersRepository: UsersRepository) {}
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    private readonly rolesService: RolesService,
+  ) {}
 
   findByEmail(tenantId: string, email: string): Promise<UserWithPermissions | null> {
     return this.usersRepository.findByEmail(tenantId, email.toLowerCase().trim());
@@ -48,5 +52,40 @@ export class UsersService {
 
   touchLastLogin(id: string): Promise<void> {
     return this.usersRepository.updateLastLogin(id);
+  }
+
+  // --- Administração (users:manage) --------------------------------------------
+  listForTenant(tenantId: string): Promise<UserAdminRaw[]> {
+    return this.usersRepository.findAllForTenant(tenantId);
+  }
+
+  async getForTenant(tenantId: string, id: string): Promise<UserAdminRaw> {
+    return this.assertUserInTenant(tenantId, id);
+  }
+
+  async assignRole(tenantId: string, userId: string, roleId: string): Promise<UserAdminRaw> {
+    await this.assertUserInTenant(tenantId, userId);
+    await this.assertRoleInTenant(tenantId, roleId);
+    await this.usersRepository.assignRole(userId, roleId);
+    return this.assertUserInTenant(tenantId, userId);
+  }
+
+  async removeRole(tenantId: string, userId: string, roleId: string): Promise<void> {
+    await this.assertUserInTenant(tenantId, userId);
+    await this.usersRepository.removeRole(userId, roleId);
+  }
+
+  // --- Helpers de tenant scoping ------------------------------------------------
+  private async assertUserInTenant(tenantId: string, id: string): Promise<UserAdminRaw> {
+    const user = await this.usersRepository.findByIdRaw(id);
+    if (!user) throw new NotFoundException("Usuário não encontrado.");
+    if (user.tenantId !== tenantId) throw new ForbiddenException("Usuário de outro tenant.");
+    return user;
+  }
+
+  private async assertRoleInTenant(tenantId: string, id: string): Promise<void> {
+    const role = await this.rolesService.findById(id);
+    if (!role) throw new NotFoundException("Papel não encontrado.");
+    if (role.tenantId !== tenantId) throw new ForbiddenException("Papel de outro tenant.");
   }
 }
