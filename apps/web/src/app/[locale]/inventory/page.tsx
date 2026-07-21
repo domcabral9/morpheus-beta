@@ -22,6 +22,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination } from "@/components/ui/pagination";
 import type { Area } from "@/lib/assessment-types";
+import type { UserOption } from "@/lib/user-picker-types";
 import { INVENTORY_STATUSES, type PaginatedInventory } from "@/lib/inventory-types";
 import { ItemFormDialog } from "./_components/item-form-dialog";
 
@@ -47,6 +48,7 @@ export default function InventoryPage() {
   const [data, setData] = React.useState<PaginatedInventory | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [areas, setAreas] = React.useState<Area[]>([]);
+  const [users, setUsers] = React.useState<UserOption[]>([]);
   const [createOpen, setCreateOpen] = React.useState(false);
 
   const loadItems = React.useCallback(
@@ -75,6 +77,11 @@ export default function InventoryPage() {
     if (!user) return;
     api.get<Area[]>("/areas").then(setAreas).catch(() => {});
   }, [user, api]);
+
+  React.useEffect(() => {
+    if (!user || !canManage) return;
+    api.get<UserOption[]>("/users").then(setUsers).catch(() => {});
+  }, [user, canManage, api]);
 
   const totalPages = data ? Math.max(Math.ceil(data.total / data.pageSize), 1) : 1;
 
@@ -203,6 +210,7 @@ export default function InventoryPage() {
         <ItemFormDialog
           mode="create"
           areas={areas}
+          users={users}
           open={createOpen}
           onOpenChange={setCreateOpen}
           onSaved={() => {
