@@ -27,7 +27,8 @@
     "assessmentsLink": "Avaliações",
     "dashboardsLink": "Dashboards",
     "adminLink": "Administração",
-    "approvalsLink": "Aprovações"
+    "approvalsLink": "Aprovações",
+    "inventoryLink": "Inventário"
   },
   "Approvals": {
     "title": "Aprovações pendentes",
@@ -104,6 +105,70 @@
       "REJECT": "Reprovação",
       "REOPEN": "Reabertura",
       "SUBMIT": "Envio"
+    }
+  },
+  "Inventory": {
+    "title": "Inventário de software",
+    "subtitle": "Ativos de software homologados em uso na organização.",
+    "newButton": "Novo item",
+    "loadError": "Não foi possível carregar o inventário.",
+    "detailLoadError": "Não foi possível carregar este item.",
+    "empty": "Nenhum item encontrado.",
+    "back": "Voltar",
+    "filtersTitle": "Filtros",
+    "filterStatusAll": "Todos os status",
+    "columnName": "Nome",
+    "columnArea": "Área",
+    "columnCriticality": "Criticidade",
+    "columnStatus": "Status",
+    "columnNextReview": "Próxima revisão",
+    "paginationPrevious": "Anterior",
+    "paginationNext": "Próxima",
+    "paginationPageOf": "Página {current} de {total}",
+    "editButton": "Editar",
+    "createTitle": "Novo item de inventário",
+    "editTitle": "Editar item de inventário",
+    "fieldName": "Nome",
+    "fieldVendor": "Fabricante",
+    "fieldVersion": "Versão",
+    "fieldUrl": "URL",
+    "fieldCategory": "Categoria",
+    "fieldType": "Tipo",
+    "fieldHostingProvider": "Provedor de hospedagem",
+    "fieldArea": "Área",
+    "fieldAreaPlaceholder": "Selecione",
+    "fieldManagerId": "Gestor responsável",
+    "fieldTechnicalResponsibleId": "Responsável técnico",
+    "fieldUserIdPlaceholder": "ID do usuário",
+    "userIdHint": "Gestor e responsável técnico são informados pelo ID do usuário por enquanto - um seletor por nome chega junto da tela de gestão de usuários.",
+    "fieldHomologationDate": "Data de homologação",
+    "fieldNextReviewDate": "Próxima revisão",
+    "fieldCriticality": "Criticidade",
+    "fieldDataClassification": "Classificação de dados",
+    "fieldStatus": "Status",
+    "saving": "Salvando...",
+    "save": "Salvar",
+    "createSuccess": "Item criado.",
+    "updateSuccess": "Item atualizado.",
+    "saveError": "Não foi possível salvar o item.",
+    "types": {
+      "SAAS": "SaaS",
+      "ON_PREMISES": "On-premises",
+      "DESKTOP": "Desktop",
+      "MOBILE": "Mobile",
+      "API_INTEGRATION": "Integração via API"
+    },
+    "statuses": {
+      "ACTIVE": "Ativo",
+      "PENDING_REVIEW": "Aguardando revisão",
+      "EXPIRED": "Expirado",
+      "DECOMMISSIONED": "Descontinuado"
+    },
+    "dataClassifications": {
+      "PUBLIC": "Pública",
+      "INTERNAL": "Interna",
+      "CONFIDENTIAL": "Confidencial",
+      "RESTRICTED": "Restrita"
     }
   },
   "Dashboards": {
