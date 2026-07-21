@@ -953,6 +953,21 @@ matriz de risco, workflow, usuários, configurações) estão todas mescladas em
 permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum endpoint
 (`USERS_MANAGE`, `SYSTEM_CONFIGURE`) finalmente têm um controller por trás.
 
+- **Pontas soltas resolvidas com o que a Etapa H já trouxe**: duas limitações documentadas como
+  conhecidas durante o plano principal só existiam porque não havia listagem de usuários do tenant
+  ainda - agora que existe (`GET /users`, Etapa H), ambas foram fechadas sem precisar de backend
+  novo. `managerId`/`technicalResponsibleId` no formulário de inventário
+  (`apps/web/src/app/[locale]/inventory/_components/item-form-dialog.tsx`) trocaram de campo de
+  texto pedindo um ID cru para um `Select` por nome + e-mail. O filtro de auditoria
+  (`apps/web/src/app/[locale]/admin/audit-logs/page.tsx`) ganhou um `Select` de usuário, alimentando
+  o `userId` que o `GET /audit-logs` já aceitava desde a Etapa C.
+  - **`GET /users` precisou de um gate mais aberto**: o endpoint era só `users:manage` (Etapa H),
+    mas quem usa o formulário de inventário só tem `inventory:manage`, e quem usa o filtro de
+    auditoria só tem `audit:view` - nenhum dos dois necessariamente tem `users:manage`. Resolvido
+    com `@RequireAnyPermission(USERS_MANAGE, INVENTORY_MANAGE, AUDIT_VIEW)` só no método `list()`
+    (as demais rotas do controller - detalhe, atribuir/remover papel - continuam exigindo
+    `users:manage` de verdade, via `@RequirePermissions` por método em vez de por classe). Mesmo
+    decorator criado na Etapa H para o mesmo problema em `GET /roles`.
 - **Tema visual customizado (tweakcn "Light Green")**: usuário indicou um tema pronto do
   [tweakcn.com](https://tweakcn.com) e colou o CSS exportado - aplicado em `apps/web/src/app/globals.css`
   (cores base, `--radius` de `0.625rem` para `1rem`, tokens de sombra `--shadow-*`, tokens de

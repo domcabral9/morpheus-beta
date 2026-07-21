@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Area } from "@/lib/assessment-types";
+import type { UserOption } from "@/lib/user-picker-types";
 import type { InventoryItemDetail } from "@/lib/inventory-types";
 import { ItemFormDialog } from "../_components/item-form-dialog";
 
@@ -44,6 +45,7 @@ export default function InventoryItemPage() {
   const [item, setItem] = React.useState<InventoryItemDetail | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [areas, setAreas] = React.useState<Area[]>([]);
+  const [users, setUsers] = React.useState<UserOption[]>([]);
   const [editOpen, setEditOpen] = React.useState(false);
 
   const loadItem = React.useCallback(() => {
@@ -65,6 +67,11 @@ export default function InventoryItemPage() {
     if (!user) return;
     api.get<Area[]>("/areas").then(setAreas).catch(() => {});
   }, [user, api]);
+
+  React.useEffect(() => {
+    if (!user || !canManage) return;
+    api.get<UserOption[]>("/users").then(setUsers).catch(() => {});
+  }, [user, canManage, api]);
 
   if (!user) {
     return (
@@ -158,6 +165,7 @@ export default function InventoryItemPage() {
           mode="edit"
           item={item}
           areas={areas}
+          users={users}
           open={editOpen}
           onOpenChange={setEditOpen}
           onSaved={(saved) => {
