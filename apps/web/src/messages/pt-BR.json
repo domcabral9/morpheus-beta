@@ -25,7 +25,23 @@
     "themeToggleLabel": "Alternar tema",
     "localeSwitcherLabel": "Idioma",
     "assessmentsLink": "Avaliações",
-    "dashboardsLink": "Dashboards"
+    "dashboardsLink": "Dashboards",
+    "adminLink": "Administração"
+  },
+  "Admin": {
+    "title": "Administração",
+    "subtitle": "Configurações e cadastros administrativos da plataforma.",
+    "comingSoon": "Esta seção ainda está em construção — chega em uma etapa futura do plano.",
+    "nav": {
+      "questionnaire": "Questionário",
+      "questionnaireDescription": "Categorias, perguntas, opções e vínculo com controles de compliance.",
+      "riskMatrix": "Matriz de risco",
+      "riskMatrixDescription": "Níveis de probabilidade e impacto, classificações e a grade de risco.",
+      "workflow": "Workflow",
+      "workflowDescription": "Definições de fluxo de aprovação e suas etapas.",
+      "auditLogs": "Auditoria",
+      "auditLogsDescription": "Trilha de ações realizadas na plataforma."
+    }
   },
   "Dashboards": {
     "title": "Dashboards",
