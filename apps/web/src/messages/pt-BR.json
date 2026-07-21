@@ -71,6 +71,41 @@
       "auditLogsDescription": "Trilha de ações realizadas na plataforma."
     }
   },
+  "AuditLogs": {
+    "title": "Auditoria",
+    "subtitle": "Trilha de ações realizadas na plataforma.",
+    "loadError": "Não foi possível carregar o log de auditoria.",
+    "empty": "Nenhum registro encontrado para os filtros aplicados.",
+    "filtersTitle": "Filtros",
+    "filterEntityType": "Tipo de entidade",
+    "filterEntityTypePlaceholder": "ex.: Assessment, Question",
+    "filterAction": "Ação",
+    "filterActionAll": "Todas",
+    "filterFrom": "De",
+    "filterTo": "Até",
+    "clearFilters": "Limpar filtros",
+    "columnDate": "Data/hora",
+    "columnAction": "Ação",
+    "columnEntity": "Entidade",
+    "columnUser": "Usuário",
+    "columnIp": "IP",
+    "systemUser": "Sistema",
+    "paginationPrevious": "Anterior",
+    "paginationNext": "Próxima",
+    "paginationPageOf": "Página {current} de {total}",
+    "actions": {
+      "LOGIN": "Login",
+      "LOGOUT": "Logout",
+      "CREATE": "Criação",
+      "UPDATE": "Atualização",
+      "DELETE": "Exclusão",
+      "DOWNLOAD": "Download",
+      "APPROVE": "Aprovação",
+      "REJECT": "Reprovação",
+      "REOPEN": "Reabertura",
+      "SUBMIT": "Envio"
+    }
+  },
   "Dashboards": {
     "title": "Dashboards",
     "subtitle": "Visão geral das avaliações de risco de software.",
