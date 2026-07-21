@@ -33,6 +33,16 @@ empresa - uma forma de reduzir Shadow IT. Do questionário de risco à decisão 
   OpenTelemetry.
 - **Multi-tenancy row-level**, isolamento por `tenantId` em toda query, banco único.
 
+## Telas
+
+| Minha visão | Administrativo |
+| --- | --- |
+| ![Dashboard - minha visão](./docs/screenshots/dashboard-minha-visao.png) | ![Dashboard - administrativo](./docs/screenshots/dashboard-administrativo.png) |
+
+| Executivo | Placar por área |
+| --- | --- |
+| ![Dashboard - executivo](./docs/screenshots/dashboard-executivo.png) | ![Dashboard - placar por área](./docs/screenshots/dashboard-placar-por-area.png) |
+
 ## Stack
 
 | Camada          | Tecnologia                                                             |
@@ -110,6 +120,16 @@ reduce Shadow IT. From risk questionnaire to final decision:
 - **Encryption at rest (AES-256-GCM)** for sensitive fields via `CryptoService`.
 - **Observability**: structured logs, correlation ID, Prometheus metrics, OpenTelemetry tracing.
 - **Row-level multi-tenancy**, `tenantId` isolation on every query, single database.
+
+## Screenshots
+
+| My view | Admin |
+| --- | --- |
+| ![Dashboard - my view](./docs/screenshots/dashboard-minha-visao.png) | ![Dashboard - admin](./docs/screenshots/dashboard-administrativo.png) |
+
+| Executive | Leaderboard |
+| --- | --- |
+| ![Dashboard - executive](./docs/screenshots/dashboard-executivo.png) | ![Dashboard - leaderboard](./docs/screenshots/dashboard-placar-por-area.png) |
 
 ## Stack
 
