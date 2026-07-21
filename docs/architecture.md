@@ -1,7 +1,8 @@
 # Arquitetura
 
 Diagramas de referência do schema de dados e da topologia de deploy em produção. Complementam o
-`README.md` da raiz (que documenta as decisões etapa a etapa) - aqui o foco é a visão estrutural.
+[`docs/DEVELOPMENT.md`](./DEVELOPMENT.md) (que documenta as decisões etapa a etapa) - aqui o foco é
+a visão estrutural.
 
 ## Modelo de dados (ER)
 
