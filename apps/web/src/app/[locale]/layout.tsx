@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 
 import { routing } from "@/i18n/routing";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -53,10 +54,19 @@ export default async function LocaleLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeAntiFlashScript }} />
-      </head>
       <body className="min-h-full flex flex-col">
+        {/* next/script com beforeInteractive: diferente de uma <script> crua via
+            dangerouslySetInnerHTML (que o React 19 avisa como "encountered a
+            script tag" mesmo vindo de um Server Component - o aviso é sobre
+            hidratação no cliente, não sobre onde a tag nasceu), este componente
+            é a forma que o próprio Next.js documenta pra script que precisa
+            rodar antes da hidratação (aqui: aplicar a classe "dark" antes do
+            primeiro paint, evitar flash de tema errado). */}
+        <Script
+          id="theme-anti-flash"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeAntiFlashScript }}
+        />
         <NextIntlClientProvider>
           <ThemeProvider>
             <AuthProvider>{children}</AuthProvider>
