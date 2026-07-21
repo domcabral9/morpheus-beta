@@ -1,18 +1,7 @@
 "use client";
 
 import { useAuth } from "@/components/auth-provider";
-
-/** Permissões que dão acesso a pelo menos uma seção de `/admin` — espelha
- * ADMIN_NAV_ITEMS em admin-shell.tsx. Usado só para decidir se o link
- * "Administração" aparece no header (cada sub-seção ainda se auto-protege). */
-const ADMIN_SECTION_PERMISSIONS = [
-  "questions:manage",
-  "risk-matrix:manage",
-  "workflows:manage",
-  "audit:view",
-  "users:manage",
-  "system:configure",
-] as const;
+import { ADMIN_NAV_ITEMS } from "@/lib/nav-items";
 
 /** `usePermission("workflow:approve")` -> true se a sessão atual tiver essa permissão. */
 export function usePermission(permission: string): boolean {
@@ -24,5 +13,5 @@ export function usePermission(permission: string): boolean {
 export function useHasAnyManagePermission(): boolean {
   const { user } = useAuth();
   if (!user) return false;
-  return ADMIN_SECTION_PERMISSIONS.some((permission) => user.permissions.includes(permission));
+  return ADMIN_NAV_ITEMS.some((item) => user.permissions.includes(item.permission));
 }
