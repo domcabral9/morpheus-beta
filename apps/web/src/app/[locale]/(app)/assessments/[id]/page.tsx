@@ -9,7 +9,6 @@ import { useRequireAuth } from "@/lib/use-require-auth";
 import { useApi } from "@/lib/use-api";
 import { ApiError } from "@/lib/api-client";
 import { Link } from "@/i18n/navigation";
-import { AppHeader } from "@/components/app-header";
 import { AssessmentStatusBadge } from "@/components/assessment-status-badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,13 +67,7 @@ export default function AssessmentDetailPage() {
     load().catch((err) => setLoadError(err instanceof ApiError ? err.message : t("loadError")));
   }, [user, load, t]);
 
-  if (!user) {
-    return (
-      <main className="flex min-h-full flex-1 items-center justify-center">
-        <Loader2 className="animate-spin text-muted-foreground" />
-      </main>
-    );
-  }
+  if (!user) return null;
 
   const isEditable =
     Boolean(assessment) &&
@@ -127,11 +120,8 @@ export default function AssessmentDetailPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col">
-      <AppHeader />
-
-      <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
-        <Link href="/dashboard" className="flex items-center gap-1 text-sm text-muted-foreground hover:underline">
+    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6">
+      <Link href="/dashboard" className="flex items-center gap-1 text-sm text-muted-foreground hover:underline">
           <ArrowLeft className="size-4" />
           {t("back")}
         </Link>
@@ -309,7 +299,6 @@ export default function AssessmentDetailPage() {
             )}
           </>
         )}
-      </section>
-    </main>
+    </div>
   );
 }

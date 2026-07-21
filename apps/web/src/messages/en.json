@@ -20,15 +20,19 @@
     "localeSwitcherLabel": "Language"
   },
   "Dashboard": {
-    "welcome": "Hello, {name}",
-    "signOut": "Sign out",
-    "themeToggleLabel": "Toggle theme",
+    "welcome": "Hello, {name}"
+  },
+  "Nav": {
+    "brand": "Morpheus",
+    "assessments": "Assessments",
+    "dashboards": "Dashboards",
+    "inventory": "Inventory",
+    "approvals": "Approvals",
+    "admin": "Administration",
+    "toggleSidebarLabel": "Toggle sidebar",
     "localeSwitcherLabel": "Language",
-    "assessmentsLink": "Assessments",
-    "dashboardsLink": "Dashboards",
-    "adminLink": "Administration",
-    "approvalsLink": "Approvals",
-    "inventoryLink": "Inventory"
+    "themeToggleLabel": "Toggle theme",
+    "signOut": "Sign out"
   },
   "Approvals": {
     "title": "Pending approvals",
