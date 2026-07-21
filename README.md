@@ -861,3 +861,29 @@ os registros aqui são mais curtos que os das etapas.
     adotado em todos os formulários desta etapa: `useForm<z.input<typeof schema>, unknown,
     z.output<typeof schema>>`, com `onSubmit` recebendo o tipo de saída (já convertido para
     `number`) - substitui os tipos de formulário escritos à mão que existiam antes.
+- **Matriz de risco administrativa** (`/admin/risk-matrix`): CRUD de configurações (`GET/POST/PATCH
+  .../configs`, ativar via `POST .../configs/:id/activate`), faixas de probabilidade e impacto, e
+  classificações (label + cor + texto-base de recomendação), cada seção com `Dialog` de criar/editar
+  e `AlertDialog` de confirmação na remoção (o backend bloqueia remover algo já usado em resultados
+  de risco calculados). Editor visual da grade (`HeatmapEditor`) - uma tabela probabilidade × impacto
+  onde cada célula é um `Select` de classificação, colorido com a cor da própria classificação
+  (contraste de texto preto/branco calculado por luminância relativa, mesma heurística usada em
+  badges de status).
+  - **Célula da grade é só visualização, não o que decide a classificação real**: o motor de risco
+    (Etapa 5) deriva a classificação de uma avaliação direto do `totalScore` contra o `minScore`/
+    `maxScore` de cada `RiskClassification` - a grade 2D (`RiskMatrixCell`) é um mapa de referência
+    visual separado, reservado desde a Etapa 9 do roteiro original. Editar a grade não muda como uma
+    avaliação é decidida.
+  - **Endpoints de nível/classificação devolvem só a entidade criada, não a config inteira**: ao
+    contrário do padrão visto em outras etapas (ex.: vincular controle devolvia a pergunta inteira
+    atualizada), `addProbabilityLevel`/`addClassification`/etc. respondem só com o registro novo.
+    Em vez de tentar fundir isso manualmente no estado local, cada mutação recarrega a config
+    completa (`GET .../configs/:id`) depois - mais simples e sempre correto, e o volume de dados por
+    matriz (algumas faixas e classificações) não justifica otimizar a chamada extra.
+  - **Mesma armadilha de narrowing em union discriminada da Etapa D**: ao reabrir um `Dialog` de
+    editar nível/classificação, computar `mode`/`level` (ou `mode`/`classification`) como variáveis
+    separadas a partir de um estado `{mode:"create"} | {mode:"edit", level}` e passá-las como props
+    individuais quebra a inferência - o TypeScript não consegue provar que `mode="edit"` implica
+    `level` presente quando elas chegam por caminhos de código diferentes. Corrigido com dois blocos
+    JSX condicionais (`dialogState?.mode === "create"` / `=== "edit"`) em vez de um só - o mesmo
+    padrão já usado no `OptionsSection` da Etapa E.
