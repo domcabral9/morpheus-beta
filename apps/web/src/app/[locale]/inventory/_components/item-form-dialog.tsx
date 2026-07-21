@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useApi } from "@/lib/use-api";
 import { ApiError } from "@/components/auth-provider";
 import type { Area } from "@/lib/assessment-types";
+import type { UserOption } from "@/lib/user-picker-types";
 import {
   SOFTWARE_TYPES,
   DATA_CLASSIFICATIONS,
@@ -65,12 +66,13 @@ function toIsoDate(value: string): string {
 
 type ItemFormDialogProps = {
   areas: Area[];
+  users: UserOption[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved: (item: InventoryItemDetail) => void;
 } & ({ mode: "create"; item?: undefined } | { mode: "edit"; item: InventoryItemDetail });
 
-export function ItemFormDialog({ mode, item, areas, open, onOpenChange, onSaved }: ItemFormDialogProps) {
+export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, onSaved }: ItemFormDialogProps) {
   const t = useTranslations("Inventory");
   const criticalityT = useTranslations("Criticality");
   const api = useApi();
@@ -224,20 +226,44 @@ export function ItemFormDialog({ mode, item, areas, open, onOpenChange, onSaved 
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="managerId">{t("fieldManagerId")}</Label>
-              <Input
-                id="managerId"
-                {...register("managerId")}
-                aria-invalid={!!errors.managerId}
-                placeholder={t("fieldUserIdPlaceholder")}
+              <Controller
+                control={control}
+                name="managerId"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="managerId" aria-invalid={!!errors.managerId}>
+                      <SelectValue placeholder={t("fieldUserPlaceholder")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name} ({user.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="technicalResponsibleId">{t("fieldTechnicalResponsibleId")}</Label>
-              <Input
-                id="technicalResponsibleId"
-                {...register("technicalResponsibleId")}
-                aria-invalid={!!errors.technicalResponsibleId}
-                placeholder={t("fieldUserIdPlaceholder")}
+              <Controller
+                control={control}
+                name="technicalResponsibleId"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="technicalResponsibleId" aria-invalid={!!errors.technicalResponsibleId}>
+                      <SelectValue placeholder={t("fieldUserPlaceholder")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name} ({user.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -324,8 +350,6 @@ export function ItemFormDialog({ mode, item, areas, open, onOpenChange, onSaved 
               </div>
             )}
           </div>
-
-          <p className="text-xs text-muted-foreground">{t("userIdHint")}</p>
 
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>
