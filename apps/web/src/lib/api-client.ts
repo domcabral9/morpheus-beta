@@ -57,5 +57,9 @@ export async function apiFetch<T>(
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  // Handlers que retornam void (ex.: remoção de opção, desvínculo de
+  // controle) não têm @HttpCode(204) explícito — o Nest responde 200 com
+  // corpo vazio. `response.json()` direto lançaria em cima de string vazia.
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
