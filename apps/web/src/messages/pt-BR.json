@@ -38,7 +38,50 @@
     "welcome": "Olá, {name}",
     "signOut": "Sair",
     "themeToggleLabel": "Alternar tema",
-    "localeSwitcherLabel": "Idioma"
+    "localeSwitcherLabel": "Idioma",
+    "assessmentsLink": "Avaliações",
+    "dashboardsLink": "Dashboards"
+  },
+  "Dashboards": {
+    "title": "Dashboards",
+    "subtitle": "Visão geral das avaliações de risco de software.",
+    "empty": "Sem dados suficientes ainda.",
+    "loadError": "Não foi possível carregar os dados do dashboard.",
+    "recentAssessments": "Avaliações recentes",
+    "tabs": {
+      "me": "Minha visão",
+      "admin": "Administrativo",
+      "executive": "Executivo",
+      "leaderboard": "Placar por área"
+    },
+    "stats": {
+      "total": "Total de avaliações",
+      "tenantTotal": "Total no tenant",
+      "slaBreaches": "Etapas com SLA vencido",
+      "slaBreachesHint": "Etapas de workflow aguardando decisão além do prazo.",
+      "pendingSteps": "Etapas pendentes",
+      "totalDecided": "Avaliações decididas",
+      "approved": "Homologadas",
+      "rejected": "Reprovadas",
+      "approvalRate": "Taxa de aprovação",
+      "approvalRateHint": "Com base em {total} avaliações decididas."
+    },
+    "charts": {
+      "myStatusDistribution": "Minhas avaliações por status",
+      "tenantStatusDistribution": "Avaliações por status (tenant)",
+      "pendingByStep": "Etapas pendentes por fase do workflow",
+      "compliancePosture": "Postura de conformidade",
+      "leaderboard": "Placar de maturidade por área"
+    },
+    "leaderboard": {
+      "detailTitle": "Detalhamento por área",
+      "compositeScore": "Placar composto",
+      "columnArea": "Área",
+      "columnLevel": "Nível",
+      "columnVolume": "Volume",
+      "columnQuality": "Qualidade",
+      "columnApprovalRate": "Taxa de aprovação"
+    }
   },
   "Status": {
     "DRAFT": "Rascunho",
