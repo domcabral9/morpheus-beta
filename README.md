@@ -809,3 +809,23 @@ os registros aqui são mais curtos que os das etapas.
     porque `setState` síncrono dentro do corpo do efeito causa uma renderização em cascata evitável.
     Ajustado para só atualizar o estado dentro do `.then`/`.catch`, igual ao padrão já usado em
     `dashboard/page.tsx` - o resultado anterior fica visível até o novo chegar, sem flash pra vazio.
+- **Inventário de software** (`/inventory`, fora do shell `/admin` - `inventory:view` é uma
+  permissão própria, separada de qualquer `*:manage`): listagem paginada com filtro por status,
+  detalhe por item, e criar/editar via `Dialog` + `react-hook-form` (gated adicionalmente por
+  `inventory:manage`). Sem rota de exclusão - o backend não expõe uma, então não há botão de
+  excluir. `Dialog` de formulário compartilhado entre criação e edição (`ItemFormDialog`), com union
+  discriminada em `mode` para o TypeScript garantir em tempo de compilação que `item` só falta no
+  modo de criação.
+  - **Gestor e responsável técnico ainda são só um ID de usuário**: `managerId` e
+    `technicalResponsibleId` são obrigatórios no formulário, mas não há endpoint de listagem de
+    usuários até a Etapa H - diferente do filtro de usuário da tela de auditoria (que pôde ficar de
+    fora por ser opcional), aqui o campo é obrigatório para salvar o item, então não dava pra
+    simplesmente omitir. Fica como campo de texto pedindo o ID diretamente, com uma nota no
+    formulário avisando que um seletor por nome chega junto da tela de gestão de usuários.
+  - **Cache `.next` colidindo entre `next dev` e `next build`**: rodar `pnpm turbo run build` com o
+    servidor de desenvolvimento ainda ativo (mesmo diretório `.next` para os dois, sem `distDir`
+    customizado) deixou o typegen de rotas (`next-env`/`AppRoutes`) desatualizado, e o build passou a
+    falhar reclamando que `/inventory` e `/inventory/[id]` "não satisfazem" o tipo de rotas - as
+    páginas existiam, só o cache é que estava velho. `rm -rf apps/web/.next` antes do build (e
+    reiniciar o `next dev` depois) resolveu; não é um problema do código, só uma armadilha deste
+    ambiente de validação que vale lembrar nas próximas etapas.

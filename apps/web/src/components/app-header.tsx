@@ -31,6 +31,7 @@ export function AppHeader() {
   const pathname = usePathname();
   const canAccessAdmin = useHasAnyManagePermission();
   const canApprove = usePermission("assessments:approve");
+  const canViewInventory = usePermission("inventory:view");
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-4 sm:px-6">
@@ -49,6 +50,17 @@ export function AppHeader() {
               {t(item.labelKey)}
             </Link>
           ))}
+          {canViewInventory && (
+            <Link
+              href="/inventory"
+              className={cn(
+                "text-sm text-muted-foreground transition-colors hover:text-foreground",
+                pathname.startsWith("/inventory") && "font-medium text-foreground",
+              )}
+            >
+              {t("inventoryLink")}
+            </Link>
+          )}
           {canApprove && (
             <Link
               href="/approvals"
