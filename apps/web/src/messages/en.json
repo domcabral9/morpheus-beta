@@ -25,7 +25,23 @@
     "themeToggleLabel": "Toggle theme",
     "localeSwitcherLabel": "Language",
     "assessmentsLink": "Assessments",
-    "dashboardsLink": "Dashboards"
+    "dashboardsLink": "Dashboards",
+    "adminLink": "Administration"
+  },
+  "Admin": {
+    "title": "Administration",
+    "subtitle": "Platform administrative settings and records.",
+    "comingSoon": "This section is still being built — it lands in a future step of the plan.",
+    "nav": {
+      "questionnaire": "Questionnaire",
+      "questionnaireDescription": "Categories, questions, options, and links to compliance controls.",
+      "riskMatrix": "Risk matrix",
+      "riskMatrixDescription": "Probability and impact levels, classifications, and the risk grid.",
+      "workflow": "Workflow",
+      "workflowDescription": "Approval workflow definitions and their steps.",
+      "auditLogs": "Audit log",
+      "auditLogsDescription": "Trail of actions taken on the platform."
+    }
   },
   "Dashboards": {
     "title": "Dashboards",
