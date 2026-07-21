@@ -3,15 +3,8 @@
     "title": "Morpheus",
     "description": "Software risk assessment and homologation platform"
   },
-  "HomePage": {
-    "title": "Morpheus",
-    "subtitle": "Software risk assessment and homologation platform",
-    "description": "Centralize the risk assessment process for new systems, from the questionnaire to the PDF technical opinion.",
-    "enterButton": "Sign in",
-    "themeToggleLabel": "Toggle theme",
-    "localeSwitcherLabel": "Language"
-  },
   "LoginPage": {
+    "tagline": "Software homologation platform",
     "title": "Morpheus",
     "subtitle": "Sign in with your corporate account",
     "tenantSlugLabel": "Organization",
@@ -24,7 +17,6 @@
     "ssoDivider": "or",
     "ssoButton": "Sign in with corporate SSO",
     "genericError": "Could not sign in. Check your details and try again.",
-    "themeToggleLabel": "Toggle theme",
     "localeSwitcherLabel": "Language"
   },
   "Dashboard": {
