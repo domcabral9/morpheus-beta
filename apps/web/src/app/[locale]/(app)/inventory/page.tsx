@@ -7,7 +7,6 @@ import { Loader2, Plus } from "lucide-react";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useApi } from "@/lib/use-api";
 import { usePermission } from "@/lib/use-permission";
-import { AppHeader } from "@/components/app-header";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -85,19 +84,11 @@ export default function InventoryPage() {
 
   const totalPages = data ? Math.max(Math.ceil(data.total / data.pageSize), 1) : 1;
 
-  if (!user) {
-    return (
-      <main className="flex min-h-full flex-1 items-center justify-center">
-        <Loader2 className="animate-spin text-muted-foreground" />
-      </main>
-    );
-  }
+  if (!user) return null;
 
   return (
-    <main className="flex flex-1 flex-col">
-      <AppHeader />
-
-      <section className="flex flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
+    <>
+      <div className="flex flex-1 flex-col gap-6">
         <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
             <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("title")}</h1>
@@ -204,7 +195,7 @@ export default function InventoryPage() {
             )}
           </CardContent>
         </Card>
-      </section>
+      </div>
 
       {canManage && (
         <ItemFormDialog
@@ -223,6 +214,6 @@ export default function InventoryPage() {
           }}
         />
       )}
-    </main>
+    </>
   );
 }

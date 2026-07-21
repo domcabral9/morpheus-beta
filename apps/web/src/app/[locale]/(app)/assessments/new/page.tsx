@@ -2,13 +2,11 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { Loader2 } from "lucide-react";
 
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useApi } from "@/lib/use-api";
 import { useRouter } from "@/i18n/navigation";
 import { ApiError } from "@/lib/api-client";
-import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,13 +46,7 @@ export default function NewAssessmentPage() {
       .catch(() => setError(t("genericError")));
   }, [user, api, t]);
 
-  if (!user) {
-    return (
-      <main className="flex min-h-full flex-1 items-center justify-center">
-        <Loader2 className="animate-spin text-muted-foreground" />
-      </main>
-    );
-  }
+  if (!user) return null;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -80,11 +72,8 @@ export default function NewAssessmentPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col">
-      <AppHeader />
-
-      <section className="flex flex-1 justify-center px-4 py-8 sm:px-6">
-        <Card className="w-full max-w-xl">
+    <div className="flex flex-1 justify-center">
+      <Card className="w-full max-w-xl">
           <CardHeader>
             <CardTitle>{t("title")}</CardTitle>
           </CardHeader>
@@ -189,7 +178,6 @@ export default function NewAssessmentPage() {
             </form>
           </CardContent>
         </Card>
-      </section>
-    </main>
+    </div>
   );
 }

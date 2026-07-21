@@ -8,7 +8,6 @@ import { Loader2 } from "lucide-react";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useApi } from "@/lib/use-api";
 import { usePermission } from "@/lib/use-permission";
-import { AppHeader } from "@/components/app-header";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,19 +72,11 @@ export default function InventoryItemPage() {
     api.get<UserOption[]>("/users").then(setUsers).catch(() => {});
   }, [user, canManage, api]);
 
-  if (!user) {
-    return (
-      <main className="flex min-h-full flex-1 items-center justify-center">
-        <Loader2 className="animate-spin text-muted-foreground" />
-      </main>
-    );
-  }
+  if (!user) return null;
 
   return (
-    <main className="flex flex-1 flex-col">
-      <AppHeader />
-
-      <section className="flex flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
+    <>
+      <div className="flex flex-1 flex-col gap-6">
         <Link href="/inventory" className="text-sm text-muted-foreground hover:text-foreground">
           {t("back")}
         </Link>
@@ -158,7 +149,7 @@ export default function InventoryItemPage() {
             </CardContent>
           </Card>
         )}
-      </section>
+      </div>
 
       {item && canManage && (
         <ItemFormDialog
@@ -174,6 +165,6 @@ export default function InventoryItemPage() {
           }}
         />
       )}
-    </main>
+    </>
   );
 }
