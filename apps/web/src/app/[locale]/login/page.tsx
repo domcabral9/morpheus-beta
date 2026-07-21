@@ -57,14 +57,18 @@ export default function LoginPage() {
           <LocaleSwitcher label={t("localeSwitcherLabel")} />
         </header>
 
-        <div className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
-          <Card className="w-full max-w-sm border-white/10 bg-zinc-950/80 shadow-[0_0_60px_-15px_var(--hero-accent)] backdrop-blur-sm">
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-12 sm:px-6">
+          <p className="text-center text-xs font-semibold tracking-[0.2em] text-zinc-500 uppercase">
+            {t("tagline")}
+          </p>
+
+          <Card className="w-full max-w-sm gap-7 border-white/10 bg-zinc-950/80 py-7 shadow-[0_0_60px_-15px_var(--hero-accent)] backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-2xl">{t("title")}</CardTitle>
+              <CardTitle className="text-3xl tracking-tight">{t("title")}</CardTitle>
               <CardDescription className="text-zinc-400">{t("subtitle")}</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="tenantSlug">{t("tenantSlugLabel")}</Label>
                   <Input
@@ -74,6 +78,7 @@ export default function LoginPage() {
                     value={tenantSlug}
                     onChange={(event) => setTenantSlug(event.target.value)}
                     className="border-white/15 bg-black/40 focus-visible:ring-[var(--hero-accent)]/50"
+                    autoFocus
                     required
                   />
                 </div>
