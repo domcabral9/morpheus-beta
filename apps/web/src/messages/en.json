@@ -38,7 +38,50 @@
     "welcome": "Hello, {name}",
     "signOut": "Sign out",
     "themeToggleLabel": "Toggle theme",
-    "localeSwitcherLabel": "Language"
+    "localeSwitcherLabel": "Language",
+    "assessmentsLink": "Assessments",
+    "dashboardsLink": "Dashboards"
+  },
+  "Dashboards": {
+    "title": "Dashboards",
+    "subtitle": "Overview of software risk assessments.",
+    "empty": "Not enough data yet.",
+    "loadError": "Could not load dashboard data.",
+    "recentAssessments": "Recent assessments",
+    "tabs": {
+      "me": "My view",
+      "admin": "Admin",
+      "executive": "Executive",
+      "leaderboard": "Area leaderboard"
+    },
+    "stats": {
+      "total": "Total assessments",
+      "tenantTotal": "Tenant total",
+      "slaBreaches": "Steps past SLA",
+      "slaBreachesHint": "Workflow steps awaiting a decision past their deadline.",
+      "pendingSteps": "Pending steps",
+      "totalDecided": "Decided assessments",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "approvalRate": "Approval rate",
+      "approvalRateHint": "Based on {total} decided assessments."
+    },
+    "charts": {
+      "myStatusDistribution": "My assessments by status",
+      "tenantStatusDistribution": "Assessments by status (tenant)",
+      "pendingByStep": "Pending steps by workflow stage",
+      "compliancePosture": "Compliance posture",
+      "leaderboard": "Area maturity leaderboard"
+    },
+    "leaderboard": {
+      "detailTitle": "Breakdown by area",
+      "compositeScore": "Composite score",
+      "columnArea": "Area",
+      "columnLevel": "Level",
+      "columnVolume": "Volume",
+      "columnQuality": "Quality",
+      "columnApprovalRate": "Approval rate"
+    }
   },
   "Status": {
     "DRAFT": "Draft",
