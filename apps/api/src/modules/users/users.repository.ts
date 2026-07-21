@@ -36,6 +36,23 @@ function flattenPermissions(user: UserWithRoles): UserWithPermissions {
   return { ...rest, permissionKeys: [...keys] };
 }
 
+// --- Administração (users:manage) — visualização + atribuição de papéis ------------
+// `select` explícito, não `include`: a tela administrativa não deve nunca ver
+// `passwordHash`/`ssoSubject` de outro usuário — só os campos realmente
+// exibidos na tela (nome, e-mail, status, último login, papéis).
+const userAdminSelect = {
+  id: true,
+  tenantId: true,
+  name: true,
+  email: true,
+  isActive: true,
+  lastLoginAt: true,
+  createdAt: true,
+  userRoles: { select: { role: { select: { id: true, name: true } } } },
+} satisfies Prisma.UserSelect;
+
+export type UserAdminRaw = Prisma.UserGetPayload<{ select: typeof userAdminSelect }>;
+
 @Injectable()
 export class UsersRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -73,5 +90,30 @@ export class UsersRepository {
 
   async updateLastLogin(id: string): Promise<void> {
     await this.prisma.user.update({ where: { id }, data: { lastLoginAt: new Date() } });
+  }
+
+  // --- Administração (users:manage) --------------------------------------------
+  findAllForTenant(tenantId: string): Promise<UserAdminRaw[]> {
+    return this.prisma.user.findMany({
+      where: { tenantId },
+      orderBy: { name: "asc" },
+      select: userAdminSelect,
+    });
+  }
+
+  findByIdRaw(id: string): Promise<UserAdminRaw | null> {
+    return this.prisma.user.findUnique({ where: { id }, select: userAdminSelect });
+  }
+
+  async assignRole(userId: string, roleId: string): Promise<void> {
+    await this.prisma.userRole.upsert({
+      where: { userId_roleId: { userId, roleId } },
+      update: {},
+      create: { userId, roleId },
+    });
+  }
+
+  async removeRole(userId: string, roleId: string): Promise<void> {
+    await this.prisma.userRole.deleteMany({ where: { userId, roleId } });
   }
 }

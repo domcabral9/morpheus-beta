@@ -11,4 +11,5 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin/risk-matrix", labelKey: "nav.riskMatrix", permission: "risk-matrix:manage" },
   { href: "/admin/workflow", labelKey: "nav.workflow", permission: "workflows:manage" },
   { href: "/admin/audit-logs", labelKey: "nav.auditLogs", permission: "audit:view" },
+  { href: "/admin/users", labelKey: "nav.users", permission: "users:manage" },
 ];

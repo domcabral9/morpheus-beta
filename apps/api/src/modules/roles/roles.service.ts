@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { RolesRepository, RoleSummary } from "./roles.repository";
+import { RolesRepository, RoleSummary, RoleWithTenant } from "./roles.repository";
 
 @Injectable()
 export class RolesService {
@@ -7,5 +7,9 @@ export class RolesService {
 
   findAll(tenantId: string): Promise<RoleSummary[]> {
     return this.rolesRepository.findAllForTenant(tenantId);
+  }
+
+  findById(id: string): Promise<RoleWithTenant | null> {
+    return this.rolesRepository.findById(id);
   }
 }
