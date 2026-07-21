@@ -732,3 +732,31 @@ explicitamente, não escondido.
     serviço) disparada no deploy, e `api`/`web` atrás de um ALB - tudo em Terraform
     (`infra/terraform/`, nunca aplicado contra uma conta AWS real). Teste e2e do caminho crítico em
     `apps/api/test/`. Diagramas de arquitetura em `docs/architecture.md`.
+
+## Depois do roteiro
+
+Trabalho sobre a base já fechada acima - não é mais uma etapa numerada do roteiro original, então
+os registros aqui são mais curtos que os das etapas.
+
+- **Dashboards reais no frontend**: até aqui a rota `/dashboard` da Web sempre foi só a lista de
+  avaliações do usuário - os quatro endpoints de `dashboards` (Etapa 9: `/me`, `/admin`,
+  `/executive`, `/leaderboard`) nunca tiveram nenhuma tela. Nova rota `/dashboards` (plural,
+  `apps/web/src/app/[locale]/dashboards/`) com abas - Minha visão, Administrativo e Executivo
+  (as duas últimas só aparecem para quem tem `assessments:view-all`, mesmo gate do backend) e
+  Placar por área. Gráficos com `recharts` atrás de um wrapper próprio
+  (`components/ui/chart.tsx`) que injeta cor por CSS custom property, então tema claro/escuro
+  troca sem recalcular nada em JS.
+  - **Paleta de gráficos com origem, não inventada**: os 8 tons categóricos + a escala de status
+    (bom/atenção/sério/crítico) em `globals.css` (`--chart-1`..`--chart-8`, `--chart-good`, etc.)
+    vêm da paleta de referência já validada (CVD, contraste, banda de luminosidade) de um skill
+    interno de visualização de dados - não foram escolhidos no olho.
+  - **Cor por significado, não por posição**: status de avaliação/parecer que já *são* um
+    resultado bom ou ruim (`APPROVED`/`Homologado` = bom, `REJECTED`/`Rejeitado` = crítico,
+    `PENDING_ADJUSTMENT`/`Aguardando Ajustes` = atenção) usam a escala de status reservada, não a
+    paleta categórica - estágios ainda em andamento (rascunho, em análise) ficam num cinza neutro,
+    já que não são "mais uma categoria" e sim só "ainda não decidido". A paleta categórica de 8
+    tons fica reservada para quando a cor precisa mesmo identificar séries distintas.
+  - **Postura de conformidade como barra empilhada única**, não pizza: a proporção
+    Homologado/Aguardando Ajustes/Rejeitado é parte-de-um-todo, e a forma certa para isso é uma
+    barra horizontal empilhada (dá pra ver a composição num único relance), não um gráfico de
+    pizza.
