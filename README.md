@@ -935,3 +935,20 @@ os registros aqui são mais curtos que os das etapas.
     nova em `permissions.guard.spec.ts` com um reflector "keyed" (retorna valores diferentes por
     metadata key) - o mock anterior, de um valor único para qualquer chamada, não conseguia exercitar
     os dois decorators isoladamente.
+- **Configurações da plataforma** (`/admin/settings`) - última etapa do plano pós-roteiro: formulário
+  simples (`logoUrl`, `securityTeamName`, `opinionNumberPrefix`) para os três únicos campos do
+  `Tenant` pensados para serem configuráveis pelo admin (`name`/`slug` ficam de fora - mudar o slug
+  quebraria login de todo mundo do tenant). Sem upload de logo - só aceita uma URL por enquanto, não
+  existe endpoint de upload de imagem genérico (só o de anexo vinculado a avaliação/inventário).
+  - **Backend novo: `TenantsController`** (`GET/PATCH /tenants/current`, `apps/api/src/modules/tenants/`)
+    - `SYSTEM_CONFIGURE` estava seedado desde a Etapa 1 e nunca foi usado por nenhum endpoint, mesma
+    situação de `USERS_MANAGE` na Etapa H. Módulo mínimo, mesmo padrão dos outros (`findById`/
+    `update` finos no repository, `assertTenantExists` no service antes de editar).
+
+## Plano pós-roteiro concluído
+
+Etapas A a I do plano pós-roteiro (fundação de UI, aprovações, auditoria, inventário, questionário,
+matriz de risco, workflow, usuários, configurações) estão todas mescladas em `main`. Toda seção de
+`/admin` que antes tinha placeholder "em construção" (Etapa A) agora tem conteúdo real, e as duas
+permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum endpoint
+(`USERS_MANAGE`, `SYSTEM_CONFIGURE`) finalmente têm um controller por trás.

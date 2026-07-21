@@ -71,7 +71,9 @@
       "auditLogs": "Audit log",
       "auditLogsDescription": "Trail of actions taken on the platform.",
       "users": "Users",
-      "usersDescription": "View users and assign roles."
+      "usersDescription": "View users and assign roles.",
+      "settings": "Settings",
+      "settingsDescription": "Technical opinion branding and numbering."
     }
   },
   "AuditLogs": {
@@ -428,6 +430,22 @@
     "assignError": "Could not assign the role.",
     "removeSuccess": "Role removed.",
     "removeError": "Could not remove the role."
+  },
+  "AdminSettings": {
+    "title": "Platform settings",
+    "subtitle": "Branding and numbering used in the technical opinion.",
+    "loadError": "Could not load the settings.",
+    "fieldLogoUrl": "Logo URL",
+    "fieldLogoUrlHint": "Shown in the PDF technical opinion header. Accepts only a URL for now - image upload lands in a future increment.",
+    "fieldSecurityTeamName": "Security team name",
+    "fieldSecurityTeamNamePlaceholder": "e.g.: SecOps",
+    "fieldSecurityTeamNameHint": "Shown as the opinion's author. Without a value, a generic label is used.",
+    "fieldOpinionNumberPrefix": "Opinion number prefix",
+    "fieldOpinionNumberPrefixHint": "e.g.: \"SECOPS-SW\" produces numbers like \"SECOPS-SW-072026-001\".",
+    "saving": "Saving...",
+    "save": "Save",
+    "saveSuccess": "Settings updated.",
+    "saveError": "Could not save the settings."
   },
   "Dashboards": {
     "title": "Dashboards",
