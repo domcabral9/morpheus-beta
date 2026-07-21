@@ -71,7 +71,9 @@
       "auditLogs": "Auditoria",
       "auditLogsDescription": "Trilha de ações realizadas na plataforma.",
       "users": "Usuários",
-      "usersDescription": "Visualização de usuários e atribuição de papéis."
+      "usersDescription": "Visualização de usuários e atribuição de papéis.",
+      "settings": "Configurações",
+      "settingsDescription": "Identidade visual e nomenclatura do parecer técnico."
     }
   },
   "AuditLogs": {
@@ -428,6 +430,22 @@
     "assignError": "Não foi possível atribuir o papel.",
     "removeSuccess": "Papel removido.",
     "removeError": "Não foi possível remover o papel."
+  },
+  "AdminSettings": {
+    "title": "Configurações da plataforma",
+    "subtitle": "Identidade visual e nomenclatura usadas no parecer técnico.",
+    "loadError": "Não foi possível carregar as configurações.",
+    "fieldLogoUrl": "URL do logo",
+    "fieldLogoUrlHint": "Exibido no cabeçalho do parecer técnico em PDF. Aceita só uma URL por enquanto - upload de imagem fica para um incremento futuro.",
+    "fieldSecurityTeamName": "Nome da equipe de segurança",
+    "fieldSecurityTeamNamePlaceholder": "ex.: SecOps",
+    "fieldSecurityTeamNameHint": "Exibido como autora do parecer. Sem valor, usa um rótulo genérico.",
+    "fieldOpinionNumberPrefix": "Prefixo do número do parecer",
+    "fieldOpinionNumberPrefixHint": "ex.: \"SECOPS-SW\" produz números como \"SECOPS-SW-072026-001\".",
+    "saving": "Salvando...",
+    "save": "Salvar",
+    "saveSuccess": "Configurações atualizadas.",
+    "saveError": "Não foi possível salvar as configurações."
   },
   "Dashboards": {
     "title": "Dashboards",
