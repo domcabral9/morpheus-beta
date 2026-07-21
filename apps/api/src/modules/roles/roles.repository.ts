@@ -6,6 +6,10 @@ export interface RoleSummary {
   name: string;
 }
 
+export interface RoleWithTenant extends RoleSummary {
+  tenantId: string;
+}
+
 @Injectable()
 export class RolesRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -15,6 +19,13 @@ export class RolesRepository {
       where: { tenantId },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+    });
+  }
+
+  findById(id: string): Promise<RoleWithTenant | null> {
+    return this.prisma.role.findUnique({
+      where: { id },
+      select: { id: true, name: true, tenantId: true },
     });
   }
 }

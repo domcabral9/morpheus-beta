@@ -69,7 +69,9 @@
       "workflow": "Workflow",
       "workflowDescription": "Approval workflow definitions and their steps.",
       "auditLogs": "Audit log",
-      "auditLogsDescription": "Trail of actions taken on the platform."
+      "auditLogsDescription": "Trail of actions taken on the platform.",
+      "users": "Users",
+      "usersDescription": "View users and assign roles."
     }
   },
   "AuditLogs": {
@@ -401,6 +403,31 @@
       "deleteConfirmDescription": "Steps already used in workflow executions cannot be removed.",
       "deleteConfirmAction": "Remove"
     }
+  },
+  "AdminUsers": {
+    "title": "Users",
+    "subtitle": "Tenant users and their roles.",
+    "loadError": "Could not load the users.",
+    "columnName": "Name",
+    "columnEmail": "Email",
+    "columnStatus": "Status",
+    "columnRoles": "Roles",
+    "columnAction": "Action",
+    "active": "Active",
+    "inactive": "Inactive",
+    "noRoles": "No roles assigned.",
+    "manageRolesButton": "Manage roles",
+    "rolesDialogTitle": "{name}'s roles",
+    "currentRoles": "Current roles",
+    "removeRoleAria": "Remove role {role}",
+    "addRole": "Add role",
+    "addRolePlaceholder": "Select",
+    "addRoleButton": "Add",
+    "allRolesAssigned": "All roles are already assigned.",
+    "assignSuccess": "Role assigned.",
+    "assignError": "Could not assign the role.",
+    "removeSuccess": "Role removed.",
+    "removeError": "Could not remove the role."
   },
   "Dashboards": {
     "title": "Dashboards",
