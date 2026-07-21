@@ -36,8 +36,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [resolvedTheme, setResolvedTheme] = React.useState<"light" | "dark">("light");
 
   React.useEffect(() => {
-    // Sincronização com localStorage no mount (mesmo caso de HealthStatus.tsx
-    // e assessments/[id]/page.tsx) - a regra experimental não consegue provar
+    // Sincronização com localStorage no mount (mesmo caso de
+    // assessments/[id]/page.tsx) - a regra experimental não consegue provar
     // estaticamente que isto não causa um loop de renderização (roda só uma
     // vez, array de dependências vazio).
     /* eslint-disable react-hooks/set-state-in-effect */
