@@ -902,9 +902,36 @@ os registros aqui são mais curtos que os das etapas.
     gate diferente, vale revisitar então, já que `RequirePermissions` com múltiplos argumentos exige
     todas as permissões (E lógico), não qualquer uma delas (OU) - não daria pra simplesmente somar
     `users:manage` na mesma linha sem mudar o comportamento pra quem só tem uma das duas.
+    *(Revisitado na Etapa H - ver abaixo: `@RequireAnyPermission()`, um decorator novo.)*
   - **Smoke test que altera estado precisa desfazer o que alterou**: testar `set-default` contra a
     API de dev trocou o workflow padrão do tenant pela definição de teste (que ficou sem etapas depois
     de outro teste remover a única que tinha) - efeito colateral real que quebraria a criação de
     novas avaliações no ambiente de dev. Corrigido restaurando o "Fluxo Padrão" original como
     definição padrão antes de seguir - qualquer smoke test que muda estado compartilhado (não só lê)
     precisa terminar revertendo, não só validar que o endpoint respondeu certo.
+- **Usuários administrativos** (`/admin/users`): visualização de usuários do tenant + atribuição/
+  remoção de papel via `Dialog` - sem criar ou desativar usuário nesta etapa (provisionamento hoje é
+  só via SSO just-in-time ou seed; um fluxo de criação manual fica para um incremento futuro, se for
+  necessário).
+  - **Backend novo: `UsersController`** (`GET /users`, `GET /users/:id`, `POST/DELETE
+    /users/:id/roles`) - `USERS_MANAGE` estava seedado desde a Etapa 1 e nunca foi usado por nenhum
+    endpoint. `UsersService` ganhou métodos administrativos ao lado dos já existentes (usados pelo
+    fluxo de autenticação) - mesmo padrão de `assertXInTenant` das outras etapas para impedir
+    atribuir papel de outro tenant (`RolesService.findById`, reaproveitado de dentro de
+    `UsersModule` via `imports: [RolesModule]`).
+  - **`select` explícito, não `include`, na query de usuários**: o primeiro rascunho usava `include:
+    { userRoles: ... }`, que traz o modelo `User` inteiro - incluindo `passwordHash` (hash bcrypt) e
+    `ssoSubject`. Pego antes do smoke test, revisando a query, não durante - `include` sempre que só
+    alguns campos vão para uma resposta HTTP é um hábito arriscado; `select` explícito nomeando cada
+    campo é mais verboso mas não vaza nada por acidente quando o modelo ganha um campo sensível novo
+    no futuro.
+  - **`@RequireAnyPermission()` - decorator novo** (`apps/api/src/common/decorators/require-any-permission.decorator.ts`
+    + `PermissionsGuard` atualizado): resolve a lacuna já identificada na Etapa G - `GET /roles`
+    passou a exigir `workflows:manage` OU `users:manage` (antes só aceitava a primeira), já que agora
+    duas telas diferentes, com permissões diferentes, precisam da mesma listagem. `RequirePermissions`
+    continua com semântica E (todas as permissões exigidas); o guard agora checa as duas metadata
+    keys de forma independente, então uma rota pode usar uma, a outra, ou nenhuma - não dá pra
+    combinar as duas no mesmo endpoint hoje (não havia caso de uso para isso). Cobertura de teste
+    nova em `permissions.guard.spec.ts` com um reflector "keyed" (retorna valores diferentes por
+    metadata key) - o mock anterior, de um valor único para qualquer chamada, não conseguia exercitar
+    os dois decorators isoladamente.

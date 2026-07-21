@@ -69,7 +69,9 @@
       "workflow": "Workflow",
       "workflowDescription": "Definições de fluxo de aprovação e suas etapas.",
       "auditLogs": "Auditoria",
-      "auditLogsDescription": "Trilha de ações realizadas na plataforma."
+      "auditLogsDescription": "Trilha de ações realizadas na plataforma.",
+      "users": "Usuários",
+      "usersDescription": "Visualização de usuários e atribuição de papéis."
     }
   },
   "AuditLogs": {
@@ -401,6 +403,31 @@
       "deleteConfirmDescription": "Etapas já usadas em execuções de workflow não podem ser removidas.",
       "deleteConfirmAction": "Remover"
     }
+  },
+  "AdminUsers": {
+    "title": "Usuários",
+    "subtitle": "Usuários do tenant e seus papéis.",
+    "loadError": "Não foi possível carregar os usuários.",
+    "columnName": "Nome",
+    "columnEmail": "E-mail",
+    "columnStatus": "Status",
+    "columnRoles": "Papéis",
+    "columnAction": "Ação",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "noRoles": "Nenhum papel atribuído.",
+    "manageRolesButton": "Gerenciar papéis",
+    "rolesDialogTitle": "Papéis de {name}",
+    "currentRoles": "Papéis atuais",
+    "removeRoleAria": "Remover papel {role}",
+    "addRole": "Adicionar papel",
+    "addRolePlaceholder": "Selecione",
+    "addRoleButton": "Adicionar",
+    "allRolesAssigned": "Todos os papéis já foram atribuídos.",
+    "assignSuccess": "Papel atribuído.",
+    "assignError": "Não foi possível atribuir o papel.",
+    "removeSuccess": "Papel removido.",
+    "removeError": "Não foi possível remover o papel."
   },
   "Dashboards": {
     "title": "Dashboards",
