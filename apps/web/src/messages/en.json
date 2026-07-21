@@ -11,13 +11,6 @@
     "themeToggleLabel": "Toggle theme",
     "localeSwitcherLabel": "Language"
   },
-  "HealthStatus": {
-    "title": "API Status",
-    "checking": "Checking connection to the API...",
-    "healthy": "API and database are operational",
-    "unhealthy": "Could not connect to the API",
-    "retry": "Retry"
-  },
   "LoginPage": {
     "title": "Morpheus",
     "subtitle": "Sign in with your corporate account",

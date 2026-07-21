@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
+import { ShieldCheck } from "lucide-react";
 
 import { useAuth, ApiError } from "@/components/auth-provider";
 import { useRouter } from "@/i18n/navigation";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { SecurityHeroBackground } from "@/components/security-hero-background";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,91 +45,102 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-full flex-1 flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-        <span className="text-sm font-semibold tracking-tight">{t("title")}</span>
-        <div className="flex items-center gap-2 sm:gap-3">
+    <SecurityHeroBackground>
+      <main className="flex flex-1 flex-col">
+        <header className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="size-5 text-[var(--hero-accent)]" />
+            <span className="text-sm font-bold tracking-wide">
+              MORPHE<span className="text-[var(--hero-accent)]">US</span>
+            </span>
+          </div>
           <LocaleSwitcher label={t("localeSwitcherLabel")} />
-          <ThemeToggle label={t("themeToggleLabel")} />
-        </div>
-      </header>
+        </header>
 
-      <div className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle className="text-2xl">{t("title")}</CardTitle>
-            <CardDescription>{t("subtitle")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="tenantSlug">{t("tenantSlugLabel")}</Label>
-                <Input
-                  id="tenantSlug"
-                  name="tenantSlug"
-                  placeholder={t("tenantSlugPlaceholder")}
-                  value={tenantSlug}
-                  onChange={(event) => setTenantSlug(event.target.value)}
-                  required
-                />
+        <div className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
+          <Card className="w-full max-w-sm border-white/10 bg-zinc-950/80 shadow-[0_0_60px_-15px_var(--hero-accent)] backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-2xl">{t("title")}</CardTitle>
+              <CardDescription className="text-zinc-400">{t("subtitle")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="tenantSlug">{t("tenantSlugLabel")}</Label>
+                  <Input
+                    id="tenantSlug"
+                    name="tenantSlug"
+                    placeholder={t("tenantSlugPlaceholder")}
+                    value={tenantSlug}
+                    onChange={(event) => setTenantSlug(event.target.value)}
+                    className="border-white/15 bg-black/40 focus-visible:ring-[var(--hero-accent)]/50"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="email">{t("emailLabel")}</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="username"
+                    placeholder={t("emailPlaceholder")}
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="border-white/15 bg-black/40 focus-visible:ring-[var(--hero-accent)]/50"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="password">{t("passwordLabel")}</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="border-white/15 bg-black/40 focus-visible:ring-[var(--hero-accent)]/50"
+                    required
+                  />
+                </div>
+
+                {error && (
+                  <p role="alert" className="text-sm text-red-400">
+                    {error}
+                  </p>
+                )}
+
+                <Button
+                  type="submit"
+                  disabled={submitting}
+                  className="mt-2 border border-[var(--hero-accent)] bg-[var(--hero-accent)]/10 text-white hover:bg-[var(--hero-accent)]/20"
+                >
+                  {submitting ? t("submitting") : t("submit")}
+                </Button>
+              </form>
+
+              <div className="mt-6 flex items-center gap-3 text-xs text-zinc-500">
+                <div className="h-px flex-1 bg-white/10" />
+                {t("ssoDivider")}
+                <div className="h-px flex-1 bg-white/10" />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="email">{t("emailLabel")}</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="username"
-                  placeholder={t("emailPlaceholder")}
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="password">{t("passwordLabel")}</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                />
-              </div>
-
-              {error && (
-                <p role="alert" className="text-sm text-destructive">
-                  {error}
-                </p>
-              )}
-
-              <Button type="submit" disabled={submitting} className="mt-2">
-                {submitting ? t("submitting") : t("submit")}
+              <Button
+                variant="outline"
+                className="mt-4 w-full border-white/15 bg-transparent text-white hover:bg-white/5"
+                onClick={() => {
+                  window.location.href = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/auth/saml/login`;
+                }}
+              >
+                {t("ssoButton")}
               </Button>
-            </form>
-
-            <div className="mt-6 flex items-center gap-3 text-xs text-muted-foreground">
-              <div className="h-px flex-1 bg-border" />
-              {t("ssoDivider")}
-              <div className="h-px flex-1 bg-border" />
-            </div>
-
-            <Button
-              variant="outline"
-              className="mt-4 w-full"
-              onClick={() => {
-                window.location.href = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/auth/saml/login`;
-              }}
-            >
-              {t("ssoButton")}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    </SecurityHeroBackground>
   );
 }
