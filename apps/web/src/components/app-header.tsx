@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useHasAnyManagePermission } from "@/lib/use-permission";
+import { useHasAnyManagePermission, usePermission } from "@/lib/use-permission";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -30,6 +30,7 @@ export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const canAccessAdmin = useHasAnyManagePermission();
+  const canApprove = usePermission("assessments:approve");
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-4 sm:px-6">
@@ -48,6 +49,17 @@ export function AppHeader() {
               {t(item.labelKey)}
             </Link>
           ))}
+          {canApprove && (
+            <Link
+              href="/approvals"
+              className={cn(
+                "text-sm text-muted-foreground transition-colors hover:text-foreground",
+                pathname === "/approvals" && "font-medium text-foreground",
+              )}
+            >
+              {t("approvalsLink")}
+            </Link>
+          )}
           {canAccessAdmin && (
             <Link
               href="/admin"
