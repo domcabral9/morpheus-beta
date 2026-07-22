@@ -8,7 +8,8 @@ export type AuditAction =
   | "APPROVE"
   | "REJECT"
   | "REOPEN"
-  | "SUBMIT";
+  | "SUBMIT"
+  | "SWITCH_TENANT";
 
 export const AUDIT_ACTIONS: AuditAction[] = [
   "LOGIN",
@@ -21,6 +22,7 @@ export const AUDIT_ACTIONS: AuditAction[] = [
   "REJECT",
   "REOPEN",
   "SUBMIT",
+  "SWITCH_TENANT",
 ];
 
 export interface AuditLogEntry {
