@@ -1177,3 +1177,22 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     boundary do multipart sozinho). `useApi().postForm()`/`getBlob()` novos. Página de settings
     (aba Geral): campo de URL virou file picker + preview (caminho estático renderiza direto,
     chave de storage busca via `getBlob` e `URL.createObjectURL`).
+- **Verificação visual das telas admin pré-#29** (`/admin/questionnaire`, `/admin/risk-matrix`,
+  `/admin/workflow`, `/admin/audit-logs`): essas 4 telas nunca tinham sido vistas num navegador de
+  verdade (só curl/lint/build até então). QA com Playwright temporário no scratchpad, login como
+  `admin@morpheus.demo`, percorrendo cada tela mais 1-2 interações reais (drill-down em matriz de
+  risco e workflow, dialog de editar categoria do questionário, filtro de ação na auditoria).
+  - **Bug real encontrado, não só um risco teórico**: a coluna "Ação" da tela de Auditoria
+    renderizava o texto bruto da chave de tradução (`AuditLogs.actions.SWITCH_TENANT`) em vez de
+    um rótulo, e a opção nem aparecia no filtro - `SWITCH_TENANT` foi adicionado ao enum
+    `AuditAction` do schema (feature de troca de tenant por super-admin) mas nunca propagado pro
+    tipo/lista `AuditAction`/`AUDIT_ACTIONS` (`audit-log-types.ts`) nem pros mapas de tradução
+    (`pt-BR.json`/`en.json`). Corrigido nos 3 arquivos; confirmado via QA que a coluna e o filtro
+    agora mostram "Troca de organização" (pt-BR) / "Tenant switch" (en) sem erro de console.
+  - As outras 3 telas (questionário, matriz de risco, workflow) renderizam e funcionam
+    corretamente - sem bug de código encontrado. Nota à parte, não é bug de código: o banco de dev
+    tem dados órfãos de smoke tests de sessões anteriores (categoria/pergunta "Smoke Test" no
+    questionário, "Smoke Test Matriz"/"Matriz Smoke Test" na matriz de risco, "Smoke Test Workflow"
+    na tela de workflow) - não foi limpo nesta etapa por não ter sido criado por este agente nesta
+    sessão (risco de apagar dado que o usuário queira manter); fica registrado pra decisão do
+    usuário sobre limpar ou não.
