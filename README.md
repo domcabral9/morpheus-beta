@@ -45,6 +45,14 @@ empresa - uma forma de reduzir Shadow IT. Do questionário de risco à decisão 
 | --- | --- |
 | ![Dashboard - executivo](./docs/screenshots/dashboard-executivo.png) | ![Dashboard - placar por área](./docs/screenshots/dashboard-placar-por-area.png) |
 
+| Login - seleção de organização | Busca rápida (Cmd/Ctrl+K) |
+| --- | --- |
+| ![Login - seleção de organização](./docs/screenshots/login-organizacao.png) | ![Busca rápida](./docs/screenshots/busca-rapida.png) |
+
+| Administração - gestão de papéis |
+| --- |
+| ![Administração - papéis](./docs/screenshots/admin-papeis.png) |
+
 ## Stack
 
 | Camada          | Tecnologia                                                             |
@@ -74,6 +82,12 @@ pnpm dev
 
 Passo a passo completo (incluindo a stack via Docker) em
 [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md#como-rodar).
+
+A API é documentada via Swagger/OpenAPI (`@nestjs/swagger`), disponível em `/docs` com o servidor
+local rodando - toda rota, DTO e esquema de autenticação (Bearer JWT) gerado automaticamente a
+partir do código, não mantido à parte. Pensado para facilitar integrações futuras: qualquer time
+que precise consumir a API tem ali um contrato navegável e sempre atualizado, sem depender deste
+README ou de documentação escrita à mão.
 
 ## Documentação técnica completa
 
@@ -135,6 +149,14 @@ reduce Shadow IT. From risk questionnaire to final decision:
 | --- | --- |
 | ![Dashboard - executive](./docs/screenshots/dashboard-executivo.png) | ![Dashboard - leaderboard](./docs/screenshots/dashboard-placar-por-area.png) |
 
+| Login - organization picker | Quick search (Cmd/Ctrl+K) |
+| --- | --- |
+| ![Login - organization picker](./docs/screenshots/login-organizacao.png) | ![Quick search](./docs/screenshots/busca-rapida.png) |
+
+| Admin - role management |
+| --- |
+| ![Admin - roles](./docs/screenshots/admin-papeis.png) |
+
 ## Stack
 
 | Layer            | Technology                                                                |
@@ -165,6 +187,12 @@ pnpm dev
 Full walkthrough (including the Docker stack) in
 [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md#como-rodar) (Portuguese - the project's technical log
 is written in Portuguese; happy to translate specific sections on request).
+
+The API is documented via Swagger/OpenAPI (`@nestjs/swagger`), available at `/docs` with the local
+server running - every route, DTO and the authentication scheme (Bearer JWT) is generated
+automatically from the code, not maintained separately. Meant to ease future integrations: any
+team that needs to consume the API gets a browsable, always-current contract there, without
+depending on this README or hand-written documentation.
 
 ## Full technical documentation
 
