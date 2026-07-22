@@ -1080,3 +1080,14 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     próprio `RolesController` por ser o único consumidor. Ordem de declaração dos métodos importa
     aqui: precisou vir antes de `GET /roles/:id` na classe, porque o Nest casa rotas por ordem de
     declaração e o `:id` genérico "engoliria" o path `/permissions` se viesse primeiro.
+- **Configurações em abas (`/admin/settings`)**: primeira etapa de um backlog maior (settings
+  avançados, dropdown de login, busca rápida, upload de logo, pareceres técnicos, prints do README —
+  plano completo fora do repo). `ADMIN_NAV_ITEMS` é uma lista flat sem conceito de agrupamento, e a
+  sidebar só suporta um nível de `Collapsible`/`SidebarMenuSub` (usado pelo grupo "Administração"
+  inteiro) — em vez de aprofundar o menu pra caber SMTP/SSO/IA, a página `/admin/settings` virou uma
+  tela com abas (`Geral`/`SMTP`/`SSO`/`IA`), reaproveitando o componente `Tabs` já usado em
+  `dashboards/page.tsx`. `ADMIN_NAV_ITEMS` continua com as mesmas 7 entradas — zero mudança de
+  navegação, só a página interna ganhou abas. As 3 abas novas são só placeholder "em construção" por
+  enquanto (mesmo padrão de `ComingSoon`, mas com chaves i18n próprias em `AdminSettings.tabs`, já
+  que `Admin.nav.*` é metadata de item de menu, não texto de aba de uma página). Zero mudança de
+  backend nesta etapa.
