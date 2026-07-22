@@ -41,9 +41,69 @@ export type AnswerForOpinion = Prisma.AssessmentAnswerGetPayload<{
   include: typeof answerForOpinionInclude;
 }>;
 
+const technicalOpinionListInclude = {
+  assessmentVersion: {
+    select: {
+      assessment: { select: { id: true, softwareName: true, vendor: true } },
+    },
+  },
+  issuedBy: { select: { id: true, name: true, email: true } },
+} satisfies Prisma.TechnicalOpinionInclude;
+
+export type TechnicalOpinionListItem = Prisma.TechnicalOpinionGetPayload<{
+  include: typeof technicalOpinionListInclude;
+}>;
+
+export interface TechnicalOpinionFilters {
+  tenantId: string;
+  /** Sem permissão de visão ampla: só pareceres de avaliações que o próprio usuário solicitou. */
+  requesterId?: string;
+  assessmentId?: string;
+  issuedById?: string;
+  classificationLabel?: string;
+  number?: string;
+  from?: Date;
+  to?: Date;
+}
+
 @Injectable()
 export class TechnicalOpinionRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findAllForTenant(
+    filters: TechnicalOpinionFilters,
+    page: number,
+    pageSize: number,
+  ): Promise<{ items: TechnicalOpinionListItem[]; total: number }> {
+    const where: Prisma.TechnicalOpinionWhereInput = {
+      tenantId: filters.tenantId,
+      ...(filters.requesterId
+        ? { assessmentVersion: { assessment: { requesterId: filters.requesterId } } }
+        : {}),
+      ...(filters.assessmentId
+        ? { assessmentVersion: { assessmentId: filters.assessmentId } }
+        : {}),
+      ...(filters.issuedById ? { issuedById: filters.issuedById } : {}),
+      ...(filters.classificationLabel ? { classificationLabel: filters.classificationLabel } : {}),
+      ...(filters.number ? { number: { startsWith: filters.number } } : {}),
+      ...(filters.from || filters.to
+        ? { issuedAt: { gte: filters.from, lte: filters.to } }
+        : {}),
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.technicalOpinion.findMany({
+        where,
+        include: technicalOpinionListInclude,
+        orderBy: { issuedAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.technicalOpinion.count({ where }),
+    ]);
+
+    return { items, total };
+  }
 
   findAssessmentContext(assessmentId: string): Promise<OpinionContextAssessment | null> {
     return this.prisma.assessment.findUnique({

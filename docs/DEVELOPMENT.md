@@ -1215,3 +1215,34 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
   dropdown (`LoginPage.tenantSlugHint`, pt-BR/en) explicando que login direto exige credenciais
   daquela organização específica, e acesso cross-tenant é via login na organização de origem +
   seletor no topo.
+- **Pareceres técnicos: tela de gestão (Etapa 6, fase 1 - listar/filtrar/visualizar/baixar)**: a
+  emissão do parecer já funcionava (PDF numerado, QR code, hash, disparado automaticamente pelo
+  `WorkflowService` em decisão terminal), mas não existia nenhuma tela pra ver os pareceres já
+  emitidos - só download direto por ID ou verificação pública por número. Escopo desta fase,
+  deliberadamente restrito (customização de template, aprovação/lifecycle do parecer, geração
+  assistida por IA e assinatura digital ficam de fora, sem precedente no schema pra nenhum deles).
+  - `GET /technical-opinions` (paginado; filtros `number` (prefixo), `classificationLabel`,
+    `issuedById`, `assessmentId`, `from`/`to` sobre `issuedAt`) - **sem permissão nova**: reusa a
+    mesma regra que já existia em `assertCanView()` (um parecer só), agora como cláusula `where`
+    pra lista inteira em `findAllForTenant()` - com `ASSESSMENTS_VIEW_ALL` ou `ASSESSMENTS_APPROVE`
+    vê tudo do tenant, senão só pareceres de avaliações que o próprio usuário solicitou. Mesmo
+    padrão de `AssessmentsService.findAllForUser` (`canViewAll ? undefined : user.id`) - não um
+    padrão novo.
+  - Não existe conceito de "status" no `TechnicalOpinion` (é imutável assim que emitido) - o mais
+    próximo é `classificationLabel` (texto livre vindo da matriz de risco do tenant, ex.
+    "Homologado"/"Rejeitado"/"Aguardando Ajustes"), por isso o filtro se chama assim e não
+    `status`, pra não sugerir um ciclo de vida que não existe.
+  - Tela nova em `/technical-opinions` (fora de `/admin/`, de propósito - um usuário comum sem
+    `ASSESSMENTS_VIEW_ALL`/`ASSESSMENTS_APPROVE` ainda vê os próprios pareceres; a visibilidade
+    real é resolvida no backend, não por um gate de permissão fixo como `AdminSectionGate`).
+    Entrada nova em `PRIMARY_NAV_ITEMS` sem `permission` (mesmo raciocínio). Botão "Baixar" usa
+    `api.getBlob()` (já existia desde a Etapa 4) + um `<a download>` temporário com
+    `URL.createObjectURL` - primeira vez que esse padrão de download-pro-disco aparece no app
+    (Etapa 4 só tinha usado `getBlob` pra preview inline, nunca pra salvar arquivo).
+  - Validado via curl real: listagem, filtro por prefixo de número, filtro por classificação sem
+    resultado, download retornando `application/pdf`, 401 sem token. Confirmado também que os 3
+    pareceres já existentes no banco de dev (resíduo de smoke tests de sessões anteriores) foram
+    todos solicitados pelo mesmo usuário de teste - então o resultado idêntico entre admin e
+    usuário comum nesse ambiente é coincidência dos dados, não um teste vazio de visibilidade; a
+    regra em si já está coberta por 4 testes unitários novos que verificam a cláusula exata
+    passada ao repository por combinação de permissão.

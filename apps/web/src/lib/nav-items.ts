@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Boxes, CheckCircle2, ClipboardList, LayoutDashboard } from "lucide-react";
+import { Boxes, CheckCircle2, ClipboardList, FileText, LayoutDashboard } from "lucide-react";
 
 export interface PrimaryNavItem {
   href: string;
@@ -15,6 +15,10 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
   { href: "/dashboards", labelKey: "dashboards", icon: LayoutDashboard },
   { href: "/inventory", labelKey: "inventory", icon: Boxes, permission: "inventory:view" },
   { href: "/approvals", labelKey: "approvals", icon: CheckCircle2, permission: "assessments:approve" },
+  // Sem `permission`: visibilidade (própria vs. todas) é resolvida no backend
+  // via cláusula `where`, não por um gate de permissão fixo — ver
+  // TechnicalOpinionService.findAllForTenant().
+  { href: "/technical-opinions", labelKey: "technicalOpinions", icon: FileText },
 ];
 
 export interface AdminNavItem {
