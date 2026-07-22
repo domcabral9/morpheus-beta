@@ -1258,3 +1258,28 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
   API é gerada automaticamente do código, não mantida à parte, pensada pra futuras integrações;
   sem criar um `docs/API.md` separado - o Swagger interativo em `/docs` já cumpre esse papel, um
   markdown paralelo só duplicaria manutenção.
+- **Visualizar parecer técnico em PDF direto no navegador** (primeiro item de um backlog novo de
+  ideias trazido pelo usuário após uso real do sistema - escolhido de propósito por ser o
+  menor/mais isolado do grupo, entre inventário como módulo dedicado, campos customizados de API,
+  vínculo parecer↔inventário, fluxo de aprovação de ativo manual, FAQ, exportação e
+  ART/cláusula de segurança de terceiros). Botão "Visualizar" novo ao
+  lado do "Baixar" já existente (Etapa 6), reaproveitando o mesmo `GET
+  /technical-opinions/:id/download` - nenhuma mudança de backend.
+  - **Duas abordagens tentadas e descartadas antes da que funcionou, via QA real (não assumido)**:
+    (1) `window.open("", "_blank")` síncrono seguido de `newTab.location.href = objectUrl` depois
+    do `await` do fetch - a aba abria mas nunca navegava, ficava presa em `about:blank`. (2) `<a
+    target="_blank">` sintético (mesmo padrão do botão "Baixar", só trocando `download` por
+    `target="_blank"`) - mesmo resultado. As duas esbarram na mesma restrição do Chromium: navegar
+    uma *outra* janela/aba pra uma URL `blob:` criada depois, num contexto de navegação diferente
+    de onde ela foi criada, é bloqueado (proteção contra blob URLs vazando entre abas). Solução
+    final: abrir o PDF num `<iframe>` dentro de um `Dialog` (shadcn) na própria página - iframe não
+    esbarra nessa restrição por não ser uma navegação de topo pra outro contexto.
+  - Validado via curl (endpoint já teria sido validado na Etapa 6) e Playwright: `src` do iframe
+    confirmado como `blob:...` depois do clique, sem erro de console, dialog fecha corretamente via
+    botão "X" e clique fora - `Escape` especificamente **não** fecha o dialog quando o foco está
+    preso dentro do iframe (limitação conhecida de iframes: eventos de teclado não sobem pro
+    documento pai), aceito como comportamento esperado já que "X" e clique fora cobrem o caso.
+    Renderização visual do PDF em si não foi possível conferir via Playwright headless (mesma
+    limitação já documentada na Etapa 5 pro parecer com logo - Chromium headless não renderiza o
+    plugin de PDF) - `src` correto + ausência de erro é a evidência disponível dentro dessa
+    limitação de ferramental.
