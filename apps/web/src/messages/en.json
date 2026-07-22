@@ -127,7 +127,8 @@
       "APPROVE": "Approve",
       "REJECT": "Reject",
       "REOPEN": "Reopen",
-      "SUBMIT": "Submit"
+      "SUBMIT": "Submit",
+      "SWITCH_TENANT": "Tenant switch"
     }
   },
   "Inventory": {

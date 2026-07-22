@@ -127,7 +127,8 @@
       "APPROVE": "Aprovação",
       "REJECT": "Reprovação",
       "REOPEN": "Reabertura",
-      "SUBMIT": "Envio"
+      "SUBMIT": "Envio",
+      "SWITCH_TENANT": "Troca de organização"
     }
   },
   "Inventory": {
