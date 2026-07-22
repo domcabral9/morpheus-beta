@@ -92,6 +92,10 @@ export class UsersRepository {
     await this.prisma.user.update({ where: { id }, data: { lastLoginAt: new Date() } });
   }
 
+  async setActive(id: string, isActive: boolean): Promise<void> {
+    await this.prisma.user.update({ where: { id }, data: { isActive } });
+  }
+
   // --- Administração (users:manage) --------------------------------------------
   findAllForTenant(tenantId: string): Promise<UserAdminRaw[]> {
     return this.prisma.user.findMany({

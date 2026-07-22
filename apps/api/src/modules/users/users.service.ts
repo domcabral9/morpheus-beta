@@ -1,6 +1,7 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { RolesService } from "../roles/roles.service";
 import { UsersRepository, UserWithPermissions, UserAdminRaw } from "./users.repository";
+import { CreateUserDto } from "./dto/create-user.dto";
 
 @Injectable()
 export class UsersService {
@@ -57,6 +58,55 @@ export class UsersService {
   // --- Administração (users:manage) --------------------------------------------
   listForTenant(tenantId: string): Promise<UserAdminRaw[]> {
     return this.usersRepository.findAllForTenant(tenantId);
+  }
+
+  /**
+   * Sem senha local aqui de propósito: como o login por senha não tem fluxo
+   * de "definir senha" implementado, um usuário criado por aqui só consegue
+   * entrar via SSO (mesmo padrão de findOrProvisionBySso) até um incremento
+   * futuro cobrir esse caso.
+   */
+  async create(tenantId: string, dto: CreateUserDto): Promise<UserAdminRaw> {
+    const email = dto.email.toLowerCase().trim();
+    const existing = await this.usersRepository.findByEmail(tenantId, email);
+    if (existing) {
+      throw new BadRequestException("E-mail já cadastrado neste tenant.");
+    }
+
+    // "Replicar papéis" é uma alternativa à lista manual, não um complemento
+    // - se vier um usuário de referência, os papéis dele que valem.
+    let roleIds: string[];
+    if (dto.replicateRolesFromUserId) {
+      const source = await this.assertUserInTenant(tenantId, dto.replicateRolesFromUserId);
+      roleIds = source.userRoles.map((link) => link.role.id);
+    } else {
+      roleIds = [...new Set(dto.roleIds ?? [])];
+    }
+
+    for (const roleId of roleIds) {
+      await this.assertRoleInTenant(tenantId, roleId);
+    }
+
+    const created = await this.usersRepository.create({ tenantId, name: dto.name, email });
+    for (const roleId of roleIds) {
+      await this.usersRepository.assignRole(created.id, roleId);
+    }
+
+    return this.assertUserInTenant(tenantId, created.id);
+  }
+
+  async setActive(
+    tenantId: string,
+    actingUserId: string,
+    id: string,
+    isActive: boolean,
+  ): Promise<UserAdminRaw> {
+    if (id === actingUserId && !isActive) {
+      throw new BadRequestException("Você não pode desativar a própria conta.");
+    }
+    await this.assertUserInTenant(tenantId, id);
+    await this.usersRepository.setActive(id, isActive);
+    return this.assertUserInTenant(tenantId, id);
   }
 
   async getForTenant(tenantId: string, id: string): Promise<UserAdminRaw> {
