@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Patch } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { ApiTags } from "@nestjs/swagger";
+import { Public } from "../../common/decorators/public.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
 import { Audit } from "../../common/decorators/audit.decorator";
@@ -29,6 +31,22 @@ export class TenantsController {
   @Get()
   listAll() {
     return this.tenantsService.listAll();
+  }
+
+  // Pré-autenticado e sem paginação de propósito: alimenta o dropdown de
+  // organização da tela de login. @RequirePermissions() vazio sobrepõe o
+  // SYSTEM_CONFIGURE de classe (mesmo mecanismo do listAll acima, só que
+  // zerando a exigência em vez de trocar por outra). Em um SaaS de produção
+  // real isso vaza o nome de todos os clientes para qualquer visitante não
+  // autenticado — aceito aqui porque este é um projeto de portfólio/demo,
+  // não uma base de clientes pagantes real. Retorna só name/slug (nunca
+  // id) para manter a superfície exposta no mínimo necessário.
+  @Public()
+  @RequirePermissions()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @Get("public")
+  listAllPublic() {
+    return this.tenantsService.listAllPublic();
   }
 
   @Get("current")

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { ShieldCheck } from "lucide-react";
 
 import { useAuth, ApiError } from "@/components/auth-provider";
+import { useApi } from "@/lib/use-api";
 import { useRouter } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { SecurityHeroBackground } from "@/components/security-hero-background";
@@ -12,12 +13,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { TenantPublicSummary } from "@/lib/auth-types";
+
+const SELECT_DARK_CLASSNAME =
+  "border-white/15 bg-black/40 text-white focus-visible:ring-[var(--hero-accent)]/50 data-[placeholder]:text-zinc-500";
 
 export default function LoginPage() {
   const t = useTranslations("LoginPage");
   const { login, status, user } = useAuth();
+  const api = useApi();
   const router = useRouter();
 
+  const [tenants, setTenants] = React.useState<TenantPublicSummary[] | null>(null);
   const [tenantSlug, setTenantSlug] = React.useState("demo");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -29,6 +37,18 @@ export default function LoginPage() {
       router.replace("/dashboard");
     }
   }, [status, user, router]);
+
+  React.useEffect(() => {
+    api
+      .get<TenantPublicSummary[]>("/tenants/public")
+      .then((result) => {
+        setTenants(result);
+        if (result.length > 0 && !result.some((item) => item.slug === "demo")) {
+          setTenantSlug(result[0].slug);
+        }
+      })
+      .catch(() => setTenants([]));
+  }, [api]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -71,16 +91,18 @@ export default function LoginPage() {
               <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="tenantSlug">{t("tenantSlugLabel")}</Label>
-                  <Input
-                    id="tenantSlug"
-                    name="tenantSlug"
-                    placeholder={t("tenantSlugPlaceholder")}
-                    value={tenantSlug}
-                    onChange={(event) => setTenantSlug(event.target.value)}
-                    className="border-white/15 bg-black/40 focus-visible:ring-[var(--hero-accent)]/50"
-                    autoFocus
-                    required
-                  />
+                  <Select value={tenantSlug} onValueChange={setTenantSlug} disabled={!tenants}>
+                    <SelectTrigger id="tenantSlug" className={SELECT_DARK_CLASSNAME}>
+                      <SelectValue placeholder={t("tenantSelectPlaceholder")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(tenants ?? []).map((tenant) => (
+                        <SelectItem key={tenant.slug} value={tenant.slug}>
+                          {tenant.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex flex-col gap-2">
