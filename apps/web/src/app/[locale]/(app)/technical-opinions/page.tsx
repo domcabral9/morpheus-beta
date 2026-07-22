@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Eye, Loader2 } from "lucide-react";
 
 import { useApi } from "@/lib/use-api";
 import { Link } from "@/i18n/navigation";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -73,6 +74,9 @@ export default function TechnicalOpinionsPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [users, setUsers] = React.useState<UserOption[]>([]);
   const [downloadingId, setDownloadingId] = React.useState<string | null>(null);
+  const [viewingId, setViewingId] = React.useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
+  const [previewNumber, setPreviewNumber] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     api
@@ -105,6 +109,30 @@ export default function TechnicalOpinionsPage() {
     } finally {
       setDownloadingId(null);
     }
+  }
+
+  /** Visualiza o PDF num dialog embutido (iframe), não numa aba nova: o
+   * Chromium bloqueia navegar uma janela `window.open()`/`<a target="_blank">`
+   * pra uma URL `blob:` criada depois de um `await` (proteção contra blob
+   * URLs vazando entre contextos de navegação) - um `<iframe>` dentro do
+   * próprio documento não esbarra nessa restrição. */
+  async function handleView(id: string, number: string) {
+    setViewingId(id);
+    try {
+      const blob = await api.getBlob(`/technical-opinions/${id}/download`);
+      setPreviewUrl(URL.createObjectURL(blob));
+      setPreviewNumber(number);
+    } catch {
+      setError(t("viewError"));
+    } finally {
+      setViewingId(null);
+    }
+  }
+
+  function closePreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewNumber(null);
   }
 
   return (
@@ -267,20 +295,36 @@ export default function TechnicalOpinionsPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">{opinion.issuedBy.name}</TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={downloadingId === opinion.id}
-                          onClick={() => handleDownload(opinion.id, opinion.number)}
-                        >
-                          {downloadingId === opinion.id ? (
-                            <Loader2 className="size-4 animate-spin" />
-                          ) : (
-                            <Download className="size-4" />
-                          )}
-                          {t("download")}
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={viewingId === opinion.id}
+                            onClick={() => handleView(opinion.id, opinion.number)}
+                          >
+                            {viewingId === opinion.id ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                              <Eye className="size-4" />
+                            )}
+                            {t("view")}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={downloadingId === opinion.id}
+                            onClick={() => handleDownload(opinion.id, opinion.number)}
+                          >
+                            {downloadingId === opinion.id ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                              <Download className="size-4" />
+                            )}
+                            {t("download")}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -301,6 +345,21 @@ export default function TechnicalOpinionsPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={previewUrl !== null} onOpenChange={(open) => !open && closePreview()}>
+        <DialogContent className="flex h-[85vh] max-w-4xl flex-col">
+          <DialogHeader>
+            <DialogTitle>{previewNumber}</DialogTitle>
+          </DialogHeader>
+          {previewUrl && (
+            <iframe
+              src={previewUrl}
+              title={previewNumber ?? t("view")}
+              className="flex-1 rounded-md border"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
