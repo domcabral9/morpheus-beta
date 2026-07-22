@@ -1091,3 +1091,39 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
   enquanto (mesmo padrão de `ComingSoon`, mas com chaves i18n próprias em `AdminSettings.tabs`, já
   que `Admin.nav.*` é metadata de item de menu, não texto de aba de uma página). Zero mudança de
   backend nesta etapa.
+- **Dropdown de organização no login + 3 tenants novos completos**: até aqui, `/login` tinha um
+  campo de texto livre pra `tenantSlug` (default `"demo"`) - sem forma de descobrir o nome de uma
+  segunda organização sem perguntar. Novo endpoint público `GET /tenants/public` (sem autenticação,
+  rate-limited a 20/60s, retorna só `{name, slug}[]`, nunca `id`) alimenta um `Select` no lugar do
+  campo de texto. `GET /tenants` original (autenticado, `platform:cross-tenant`-only, usado pelo
+  seletor de organização do super-admin) fica intocado - são dois endpoints com propósitos e
+  superfícies de exposição bem diferentes.
+  - **Trade-off aceito de propósito**: expor nome de todas as organizações pré-autenticação vaza a
+    lista de clientes pra qualquer visitante em um SaaS de produção real. Aceitável aqui por ser
+    projeto de portfólio/demo, não uma base de clientes pagantes - documentado inline no código.
+  - **3 tenants novos totalmente seedados** (`zion`, `matrix`, `machine-city`/"Cidade das Máquinas",
+    temáticos ao nome do projeto) com a mesma profundidade do tenant `demo` (áreas, RBAC, 21
+    perguntas, matriz de risco, workflow de 5 etapas, 1 admin + 1 usuário comum com senha
+    conhecida) - login direto pelo dropdown, não só via super-admin switch-tenant como o `demo2`
+    (que continua existindo, minimalista, só pra teste de isolamento). Só o admin de `demo` ganha a
+    role de super-admin de plataforma - menos contas com `platform:cross-tenant` reduz o raio de
+    impacto dessa credencial.
+  - **`seedFullTenant()`**: a lógica que antes existia só pra `demo`, inline em `main()`, virou uma
+    função parametrizada chamada 4x. Catálogo global (`Permission`, `ControlFramework`/`Control` -
+    confirmado via schema que nenhum dos dois tem `tenantId`) segue seedado uma única vez fora da
+    função; todo o resto é genuinamente tenant-scoped e existe uma vez por tenant. Mesmos dados de
+    questionário/matriz/workflow reaproveitados como consts compartilhadas entre os 4 tenants (é
+    conteúdo genérico de risk assessment, não haveria uma versão "mais leve" que fizesse sentido
+    autorar à parte).
+  - **Achado no processo**: `prisma.question.deleteMany()` (reset de perguntas antes de re-seedar)
+    já falhava com violação de FK pra `demo` num banco de dev já usado manualmente (Assessments
+    reais referenciando as perguntas) - limitação pré-existente e conhecida. Como isso agora roda
+    dentro de uma função chamada pra 4 tenants, um erro não tratado ali bloquearia a seed inteira
+    dos 3 tenants novos também. Envolvido num try/catch que detecta especificamente `P2003`
+    (violação de FK) e pula o reset nesse caso - o loop de criação de perguntas logo abaixo já é
+    idempotente (`existing ?? create`), então pular o delete não quebra nada, só deixa de "resetar"
+    um tenant que já tem dado real.
+  - Logos dos 3 tenants novos (`apps/web/public/tenant-logos/*.png`, gerados a partir de uma imagem
+    única do usuário e recortados nesta sessão) referenciados como `Tenant.logoUrl` estático - ainda
+    não há upload real (isso é a próxima etapa do plano), mas já aparecem prontos pra quando a
+    tela/PDF passarem a consumir esse campo de verdade.

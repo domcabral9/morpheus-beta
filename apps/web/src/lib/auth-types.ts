@@ -20,3 +20,9 @@ export interface TenantSummary {
   name: string;
   slug: string;
 }
+
+/** Shape enxuto de GET /tenants/public (pré-autenticação) — sem `id` de propósito. */
+export interface TenantPublicSummary {
+  name: string;
+  slug: string;
+}

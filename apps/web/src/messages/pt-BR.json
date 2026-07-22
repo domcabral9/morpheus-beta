@@ -8,7 +8,7 @@
     "title": "Morpheus",
     "subtitle": "Entre com sua conta corporativa",
     "tenantSlugLabel": "Organização",
-    "tenantSlugPlaceholder": "ex.: demo",
+    "tenantSelectPlaceholder": "Selecione sua organização",
     "emailLabel": "E-mail",
     "emailPlaceholder": "voce@empresa.com",
     "passwordLabel": "Senha",

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Tenant } from "@morpheus/database";
-import { TenantsRepository, TenantSummary } from "./tenants.repository";
+import { TenantPublicSummary, TenantsRepository, TenantSummary } from "./tenants.repository";
 import { UpdateTenantDto } from "./dto/update-tenant.dto";
 
 @Injectable()
@@ -9,6 +9,10 @@ export class TenantsService {
 
   listAll(): Promise<TenantSummary[]> {
     return this.tenantsRepository.findAllSummary();
+  }
+
+  listAllPublic(): Promise<TenantPublicSummary[]> {
+    return this.tenantsRepository.findAllPublicSummary();
   }
 
   async getCurrent(tenantId: string): Promise<Tenant> {
