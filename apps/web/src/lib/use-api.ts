@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useAuth } from "@/components/auth-provider";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 
 /**
  * Wrapper de apiFetch já com o access token da sessão atual. Componentes de
@@ -35,6 +35,9 @@ export function useApi() {
         }),
       delete: <T,>(path: string) =>
         apiFetch<T>(path, { method: "DELETE", accessToken: accessToken ?? undefined }),
+      postForm: <T,>(path: string, formData: FormData) =>
+        apiFetch<T>(path, { method: "POST", accessToken: accessToken ?? undefined, body: formData }),
+      getBlob: (path: string) => apiFetchBlob(path, { accessToken: accessToken ?? undefined }),
     }),
     [accessToken],
   );
