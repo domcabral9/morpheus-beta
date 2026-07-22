@@ -32,7 +32,12 @@ export interface OpinionPdfData {
 
   tenantName: string;
   securityTeamName: string;
-  logoUrl?: string | null;
+  /** Já resolvido para bytes antes de chegar aqui — o gerador de PDF não faz
+   * I/O (nem de disco, nem de rede) para buscar o logo, só desenha o que
+   * recebeu. `null` = sem logo configurado, ou logo é um caminho estático do
+   * Next.js em vez de uma chave de StorageAdapter (ver
+   * `isStorageBackedLogo` em `tenants.service.ts`). */
+  logoBuffer?: Buffer | null;
 
   softwareName: string;
   vendor: string;

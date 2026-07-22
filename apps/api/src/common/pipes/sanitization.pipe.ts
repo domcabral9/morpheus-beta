@@ -22,6 +22,15 @@ export class SanitizationPipe implements PipeTransform {
     if (typeof value === "string") {
       return value.replace(CONTROL_CHARS, "").trim();
     }
+    // Buffer/TypedArray (ex.: file.buffer de um upload via @UploadedFile())
+    // também é `typeof "object"` — sem este guard, a recursão abaixo trata
+    // cada byte como uma entrada de objeto (Object.entries de um Buffer dá
+    // pares índice->byte) e devolve um objeto plano {0: 137, 1: 80, ...} no
+    // lugar do Buffer real, quebrando qualquer upload de arquivo que passe
+    // por este pipe global.
+    if (ArrayBuffer.isView(value)) {
+      return value;
+    }
     if (Array.isArray(value)) {
       return value.map((item) => this.sanitize(item));
     }

@@ -2,6 +2,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
   UnprocessableEntityException,
 } from "@nestjs/common";
@@ -13,6 +14,7 @@ import type { AuthenticatedUser } from "../../common/interfaces/authenticated-us
 import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { STORAGE_ADAPTER, StorageAdapter } from "../storage/storage.interface";
+import { isStorageBackedLogo } from "../tenants/tenants.service";
 import {
   TechnicalOpinionRepository,
   AnswerForOpinion,
@@ -32,6 +34,8 @@ const MAX_NUMBER_RETRIES = 5;
  */
 @Injectable()
 export class TechnicalOpinionService {
+  private readonly logger = new Logger(TechnicalOpinionService.name);
+
   constructor(
     private readonly repository: TechnicalOpinionRepository,
     private readonly pdfGenerator: PdfGeneratorService,
@@ -81,6 +85,7 @@ export class TechnicalOpinionService {
       (finalStatus === "APPROVED" ? "Homologado" : "Rejeitado");
     const classificationColor =
       riskResult?.riskClassification.color ?? (finalStatus === "APPROVED" ? "#16a34a" : "#dc2626");
+    const logoBuffer = await this.resolveLogoBuffer(assessment.tenant.logoUrl);
 
     const pdfData: OpinionPdfData = {
       documentNumber: number,
@@ -90,7 +95,7 @@ export class TechnicalOpinionService {
       classificationColor,
       tenantName: assessment.tenant.name,
       securityTeamName: assessment.tenant.securityTeamName ?? "Equipe de Segurança da Informação",
-      logoUrl: assessment.tenant.logoUrl,
+      logoBuffer,
       softwareName: assessment.softwareName,
       vendor: assessment.vendor,
       version: assessment.version,
@@ -205,6 +210,20 @@ export class TechnicalOpinionService {
     const isRequester = requesterId === user.id;
     if (!canViewAll && !canApprove && !isRequester) {
       throw new ForbiddenException("Sem permissão para visualizar este parecer técnico.");
+    }
+  }
+
+  /** `null` quando não há logo, ou quando o logo é um caminho estático do
+   * Next.js (não passa pelo StorageAdapter — ver `isStorageBackedLogo`). Uma
+   * falha de leitura (arquivo removido do storage, por exemplo) não deve
+   * derrubar a emissão do parecer inteiro — só cai para o cabeçalho sem logo. */
+  private async resolveLogoBuffer(logoUrl: string | null): Promise<Buffer | null> {
+    if (!logoUrl || !isStorageBackedLogo(logoUrl)) return null;
+    try {
+      return await this.storage.read(logoUrl);
+    } catch (error) {
+      this.logger.warn(`Falha ao ler o logo do tenant para o parecer técnico: ${String(error)}`);
+      return null;
     }
   }
 

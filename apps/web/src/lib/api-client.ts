@@ -23,6 +23,36 @@ function readCsrfToken(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+type FetchOptions = RequestInit & { accessToken?: string };
+
+/** Monta headers/credentials comuns a `apiFetch`/`apiFetchBlob` — única fonte da lógica de
+ * auth/CSRF, pra nunca divergir entre as duas variantes. Quando `body` é `FormData` (upload
+ * multipart), não força `Content-Type: application/json` - o browser precisa definir o seu
+ * próprio boundary, e forçar o header aqui quebraria o upload. */
+function buildRequestInit(options: FetchOptions): RequestInit {
+  const { accessToken, headers, ...rest } = options;
+  const csrfToken = readCsrfToken();
+  const isFormData = typeof FormData !== "undefined" && rest.body instanceof FormData;
+
+  return {
+    ...rest,
+    credentials: "include",
+    headers: {
+      ...(rest.body && !isFormData ? { "Content-Type": "application/json" } : {}),
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+      ...headers,
+    },
+  };
+}
+
+async function throwIfError(response: Response): Promise<void> {
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new ApiError(body.message ?? `Erro ${response.status}`, response.status);
+  }
+}
+
 /**
  * Chama a API diretamente do browser (não via proxy da Web) com
  * `credentials: "include"` — necessário para o cookie httpOnly do refresh
@@ -30,28 +60,9 @@ function readCsrfToken(): string | null {
  * localhost:3001 são portas do mesmo "site" (SameSite considera só o domínio
  * registrável, não a porta).
  */
-export async function apiFetch<T>(
-  path: string,
-  options: RequestInit & { accessToken?: string } = {},
-): Promise<T> {
-  const { accessToken, headers, ...rest } = options;
-  const csrfToken = readCsrfToken();
-
-  const response = await fetch(`${API_URL}${path}`, {
-    ...rest,
-    credentials: "include",
-    headers: {
-      ...(rest.body ? { "Content-Type": "application/json" } : {}),
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-      ...headers,
-    },
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new ApiError(body.message ?? `Erro ${response.status}`, response.status);
-  }
+export async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, buildRequestInit(options));
+  await throwIfError(response);
 
   if (response.status === 204) {
     return undefined as T;
@@ -62,4 +73,12 @@ export async function apiFetch<T>(
   // corpo vazio. `response.json()` direto lançaria em cima de string vazia.
   const text = await response.text();
   return (text ? JSON.parse(text) : undefined) as T;
+}
+
+/** Variante binária de `apiFetch` — pra respostas tipo imagem/PDF, onde `response.text()` +
+ * `JSON.parse` corromperia os bytes. Mesma lógica de auth/CSRF/erro, só o corpo de sucesso muda. */
+export async function apiFetchBlob(path: string, options: FetchOptions = {}): Promise<Blob> {
+  const response = await fetch(`${API_URL}${path}`, buildRequestInit(options));
+  await throwIfError(response);
+  return response.blob();
 }

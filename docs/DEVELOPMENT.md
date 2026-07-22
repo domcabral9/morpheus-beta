@@ -1141,3 +1141,39 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     feature ("digito 'papeis' e ele me disponibiliza um botão de acesso rápido") não funcionaria.
   - Atalho global `Cmd/Ctrl+K` registrado uma vez em `AppShell` (`preventDefault()` pra não abrir a
     busca de favoritos do navegador), `Escape` fecha sem navegar.
+- **Upload real de logo do tenant**: até aqui `logoUrl` era só um campo de texto livre pra URL
+  externa. Agora `POST /tenants/current/logo` (multipart, PNG/JPEG até 2MB) salva via
+  `StorageAdapter` em `tenant-logos/{tenantId}/logo.{ext}` (mesmo padrão já usado por
+  `TechnicalOpinionService` pro PDF - não pelo módulo de attachments, que é escopado só a
+  assessment/inventory) e atualiza `Tenant.logoUrl` pra essa chave; `GET /tenants/current/logo`
+  serve os bytes autenticado. `logoUrl` no PATCH JSON (`UpdateTenantDto`) foi removido de
+  propósito - só o upload real gerencia esse campo agora.
+  - **Duas semânticas possíveis na mesma coluna**: `logoUrl` começando com "/" é um caminho
+    estático do Next.js (os 3 tenants novos da Etapa 2 usam isso, `/tenant-logos/{slug}.png`);
+    sem "/" é uma chave real de `StorageAdapter`. Um helper `isStorageBackedLogo()` (exportado de
+    `tenants.service.ts`) decide qual é qual - o PDF só tenta embutir o segundo tipo, evitando
+    acoplar o gerador de PDF (pacote da API) ao filesystem do app Next.js.
+  - **Fechei o loop que já existia como stub**: `PdfGeneratorService.renderHeader()` tinha um
+    `if (data.logoUrl)` vazio desde etapas antigas - o logo nunca aparecia no parecer técnico de
+    verdade. `OpinionPdfData.logoUrl` virou `logoBuffer` (já resolvido pra `Buffer` antes de
+    chegar no gerador - PDF não faz I/O), `TechnicalOpinionService.resolveLogoBuffer()` lê via
+    `storage.read()` só quando `isStorageBackedLogo`, com try/catch (arquivo removido do storage
+    não derruba a emissão do parecer, só cai pro cabeçalho sem logo). `doc.image(buffer, x, y,
+    {fit:[...]})` embutido de verdade, confirmado via inspeção dos bytes do PDF gerado
+    (`/Subtype /Image` presente).
+  - **Bug real e sério encontrado ao testar de verdade (curl), não só nos testes unitários**: todo
+    upload de arquivo na API (o attachments existente também, não só este novo) estava quebrado -
+    `SanitizationPipe` é um pipe global (`main.ts`) que sanitiza recursivamente qualquer
+    `body`/`query`/`params`, e um `Buffer` também é `typeof "object"`. Sem um guard, a recursão
+    tratava cada byte de `file.buffer` como uma entrada de objeto (`Object.entries` de um Buffer
+    dá pares índice->byte) e devolvia `{0: 137, 1: 80, ...}` no lugar do Buffer real -
+    `fs.writeFile` então falhava com `ERR_INVALID_ARG_TYPE`. Corrigido com um guard
+    `ArrayBuffer.isView(value)` logo no início do `sanitize()`, antes da recursão genérica de
+    objeto. Os testes unitários existentes nunca pegaram isso porque usavam mocks de
+    `StorageAdapter`/arquivo, nunca um Buffer de verdade passando pelo pipe real.
+  - Frontend: `apiFetch`/`apiFetchBlob` compartilham a mesma lógica de headers/auth/CSRF via um
+    `buildRequestInit()` interno (`api-client.ts`) - a única mudança pra suportar upload foi não
+    forçar `Content-Type: application/json` quando `body instanceof FormData` (o browser define o
+    boundary do multipart sozinho). `useApi().postForm()`/`getBlob()` novos. Página de settings
+    (aba Geral): campo de URL virou file picker + preview (caminho estático renderiza direto,
+    chave de storage busca via `getBlob` e `URL.createObjectURL`).

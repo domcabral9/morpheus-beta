@@ -11,7 +11,7 @@ function makeData(qrCodePng: Buffer, overrides: Partial<OpinionPdfData> = {}): O
     classificationColor: "#16a34a",
     tenantName: "Empresa Demo",
     securityTeamName: "Equipe de Segurança da Informação",
-    logoUrl: null,
+    logoBuffer: null,
     softwareName: "Sistema X",
     vendor: "Fornecedor X",
     version: "1.0.0",

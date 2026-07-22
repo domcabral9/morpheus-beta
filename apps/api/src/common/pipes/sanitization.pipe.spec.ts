@@ -28,4 +28,15 @@ describe("SanitizationPipe", () => {
     expect(pipe.transform(null)).toBe(null);
     expect(pipe.transform(date)).toBe(date);
   });
+
+  it("preserva Buffer intacto, mesmo aninhado (ex.: file.buffer de um upload)", () => {
+    const buffer = Buffer.from([137, 80, 78, 71]);
+    expect(pipe.transform(buffer)).toBe(buffer);
+
+    const file = { fieldname: "  file  ", buffer, mimetype: "image/png" };
+    const result = pipe.transform(file) as typeof file;
+    expect(result.fieldname).toBe("file");
+    expect(Buffer.isBuffer(result.buffer)).toBe(true);
+    expect(result.buffer).toBe(buffer);
+  });
 });

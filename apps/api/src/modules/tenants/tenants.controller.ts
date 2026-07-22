@@ -1,6 +1,18 @@
-import { Body, Controller, Get, Patch } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { Throttle } from "@nestjs/throttler";
 import { ApiTags } from "@nestjs/swagger";
+import type { Response } from "express";
 import { Public } from "../../common/decorators/public.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
@@ -9,6 +21,9 @@ import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { TenantsService } from "./tenants.service";
 import { UpdateTenantDto } from "./dto/update-tenant.dto";
+
+const MAX_LOGO_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
+const ALLOWED_LOGO_MIME_TYPES = new Set(["image/png", "image/jpeg"]);
 
 /**
  * Escopo mínimo desta etapa (Etapa I do plano pós-roteiro): ver e editar os
@@ -58,5 +73,38 @@ export class TenantsController {
   @Patch("current")
   updateCurrent(@CurrentUser() user: AuthenticatedUser, @Body() dto: UpdateTenantDto) {
     return this.tenantsService.updateCurrent(user.tenantId, dto);
+  }
+
+  @Audit("UPDATE", "Tenant")
+  @Post("current/logo")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      limits: { fileSize: MAX_LOGO_SIZE_BYTES },
+      fileFilter: (_req, file, callback) => {
+        callback(null, ALLOWED_LOGO_MIME_TYPES.has(file.mimetype));
+      },
+    }),
+  )
+  uploadLogo(@CurrentUser() user: AuthenticatedUser, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException(
+        "Nenhum arquivo enviado, ou o tipo/tamanho do arquivo não é permitido (só PNG/JPEG até 2MB).",
+      );
+    }
+    return this.tenantsService.uploadLogo(user.tenantId, file);
+  }
+
+  @Get("current/logo")
+  async getLogo(
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: false }) res: Response,
+  ): Promise<void> {
+    const { buffer, contentType } = await this.tenantsService.getLogo(user.tenantId);
+    res.set({
+      "Content-Type": contentType,
+      "Content-Disposition": "inline",
+      "Content-Length": String(buffer.length),
+    });
+    res.send(buffer);
   }
 }
