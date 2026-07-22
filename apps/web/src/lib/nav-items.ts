@@ -31,6 +31,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin/workflow", labelKey: "nav.workflow", permission: "workflows:manage" },
   { href: "/admin/audit-logs", labelKey: "nav.auditLogs", permission: "audit:view" },
   { href: "/admin/users", labelKey: "nav.users", permission: "users:manage" },
+  { href: "/admin/roles", labelKey: "nav.roles", permission: "roles:manage" },
   { href: "/admin/settings", labelKey: "nav.settings", permission: "system:configure" },
 ];
 

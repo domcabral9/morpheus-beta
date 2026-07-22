@@ -1057,3 +1057,26 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     pelo provisionamento SSO), a projeção `UserAdminRaw` já retornava `userRoles` inline,
     `assertUserInTenant`/`assertRoleInTenant`/`assignRole` já existiam - o novo `create()` de service
     só orquestra peças já prontas, sem padrão novo. Zero migração de banco.
+- **Gestão de papéis (`/admin/roles`)**: `ROLES_MANAGE` estava seedada desde a Etapa 1 e nunca foi
+  usada por nenhum endpoint — só existia `GET /roles` (lean, `id`+`name`), consumida por seletores
+  em outras telas. Agora tem CRUD completo: criar/editar papel, gerenciar seu conjunto de
+  `Permission` (`PATCH /roles/:id/permissions`, substituição total — não add/remove incremental,
+  edição de permissão é naturalmente um checklist com um botão "Salvar"), excluir. `GET /roles`
+  original fica intocado (endpoints novos vivem em `GET /roles/admin`, `GET /roles/:id`, etc.,
+  todos `roles:manage`-only) — os 3+ consumidores existentes continuam funcionando sem mudança.
+  - **Achado crítico de schema que definiu os guards de exclusão**: `RolePermission.roleId` é
+    `CASCADE` (ok), mas `WorkflowStep.responsibleRoleId` é **`RESTRICT`** (excluir um papel em uso
+    numa etapa de workflow estouraria um erro de FK cru sem guard) e `UserRole.roleId` é
+    **`CASCADE`** (excluir um papel **desatribuiria silenciosamente** de todo mundo que o tem, sem
+    aviso nenhum). `RolesService.remove` checa os dois antes de excluir, com mensagem clara em cada
+    caso — nenhum dos dois comportamentos de banco é aceitável exposto direto pela API.
+  - **`isSystem` finalmente implementado**: a coluna existe desde a Etapa 2 com um comentário no
+    schema prometendo que papéis seedados não podem ser excluídos pela UI, mas nenhum código lia
+    esse campo até agora. Bloqueia exclusão e renomeação; edição de permissões continua livre
+    (ajustar o que "Administrador" pode fazer é RBAC normal, não deveria exigir recriar o papel).
+  - **Replicar permissões**: mesmo padrão exato de `replicateRolesFromUserId` de ontem, aplicado a
+    papéis (`replicateFromRoleId` em `CreateRoleDto`) — alternativa à lista manual, não complemento.
+  - **Novo `GET /roles/permissions`** (catálogo global) não existia em lugar nenhum — vive no
+    próprio `RolesController` por ser o único consumidor. Ordem de declaração dos métodos importa
+    aqui: precisou vir antes de `GET /roles/:id` na classe, porque o Nest casa rotas por ordem de
+    declaração e o `:id` genérico "engoliria" o path `/permissions` se viesse primeiro.
