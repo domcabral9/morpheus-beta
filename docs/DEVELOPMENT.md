@@ -1127,3 +1127,17 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     única do usuário e recortados nesta sessão) referenciados como `Tenant.logoUrl` estático - ainda
     não há upload real (isso é a próxima etapa do plano), mas já aparecem prontos pra quando a
     tela/PDF passarem a consumir esse campo de verdade.
+- **Busca rápida (cmd-k)**: feature 100% nova - `cmdk` como dependência nova,
+  `components/ui/command.tsx` (primitiva shadcn, compõe com `@radix-ui/react-dialog` já existente) e
+  `components/command-palette.tsx` (o índice de busca, montado uma vez em `AppShell`). Índice é só
+  `PRIMARY_NAV_ITEMS` + `ADMIN_NAV_ITEMS` (`@/lib/nav-items.ts`) - não é busca de conteúdo (avaliação,
+  usuário, etc.), só atalho pra uma tela que já está no menu. Filtro de permissão usa a mesma lógica
+  da sidebar via um helper novo `getVisibleNavItems()` extraído pra `nav-items.ts` (ambas nunca
+  divergem sobre o que é visível; `app-sidebar.tsx` foi refatorado pra usar o mesmo helper).
+  - **Bug real encontrado na verificação visual, não só um risco teórico**: o filtro padrão do cmdk é
+    sensível a diacríticos - digitar "papeis" não encontrava "Papéis". Corrigido com um `filter`
+    customizado no componente `Command` (normaliza via `.normalize("NFD").replace(/\p{Diacritic}/gu, "")`
+    dos dois lados antes de comparar) - sem isso, o exemplo literal que o usuário deu ao pedir a
+    feature ("digito 'papeis' e ele me disponibiliza um botão de acesso rápido") não funcionaria.
+  - Atalho global `Cmd/Ctrl+K` registrado uma vez em `AppShell` (`preventDefault()` pra não abrir a
+    busca de favoritos do navegador), `Escape` fecha sem navegar.

@@ -30,7 +30,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useHasAnyManagePermission } from "@/lib/use-permission";
-import { ADMIN_NAV_ITEMS, PRIMARY_NAV_ITEMS, isNavItemActive } from "@/lib/nav-items";
+import { ADMIN_NAV_ITEMS, PRIMARY_NAV_ITEMS, getVisibleNavItems, isNavItemActive } from "@/lib/nav-items";
 import { OrgSwitcher } from "@/components/org-switcher";
 
 function getInitials(name: string | undefined): string {
@@ -50,10 +50,8 @@ export function AppSidebar() {
   const canAccessAdmin = useHasAnyManagePermission();
   const permissions = user?.permissions ?? [];
 
-  const visiblePrimaryItems = PRIMARY_NAV_ITEMS.filter(
-    (item) => !item.permission || permissions.includes(item.permission),
-  );
-  const visibleAdminItems = ADMIN_NAV_ITEMS.filter((item) => permissions.includes(item.permission));
+  const visiblePrimaryItems = getVisibleNavItems(PRIMARY_NAV_ITEMS, permissions);
+  const visibleAdminItems = getVisibleNavItems(ADMIN_NAV_ITEMS, permissions);
   const adminActive = isNavItemActive(pathname, "/admin");
 
   return (

@@ -39,3 +39,12 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
 export function isNavItemActive(pathname: string, href: string, exact = false): boolean {
   return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 }
+
+/** Filtra itens (primary ou admin) pelas permissões da sessão atual — mesma lógica reaproveitada
+ * pela sidebar e pela busca rápida (cmd-k), para as duas nunca divergirem sobre o que é visível. */
+export function getVisibleNavItems<T extends { permission?: string }>(
+  items: T[],
+  permissions: string[],
+): T[] {
+  return items.filter((item) => !item.permission || permissions.includes(item.permission));
+}
