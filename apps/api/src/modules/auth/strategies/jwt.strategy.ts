@@ -22,9 +22,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
     return {
       id: payload.sub,
       tenantId: payload.tenantId,
+      homeTenantId: payload.homeTenantId,
       email: payload.email,
       name: payload.name,
       permissions: payload.permissions,
+      isSuperAdmin: payload.isSuperAdmin,
     };
   }
 }

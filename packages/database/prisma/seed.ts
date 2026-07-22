@@ -45,9 +45,20 @@ const PERMISSIONS = [
   { key: "inventory:view", description: "Visualizar o inventário de softwares" },
   { key: "inventory:manage", description: "Gerenciar itens do inventário de softwares" },
   { key: "audit:view", description: "Consultar a trilha de auditoria" },
+  {
+    key: "platform:cross-tenant",
+    description: "Ler e editar dados de qualquer tenant via /auth/switch-tenant (super-admin, uso restrito)",
+  },
 ] as const;
 
-const ADMIN_PERMISSION_KEYS = PERMISSIONS.map((p) => p.key);
+// "platform:cross-tenant" fica de fora: é uma permissão de escopo (sai do
+// próprio tenant), não uma capacidade de administração dentro dele — dar
+// esse acesso a todo "Administrador" local, por engano, quebraria o
+// isolamento entre organizações. Concedida à parte, só à role de
+// super-admin definida abaixo.
+const ADMIN_PERMISSION_KEYS = PERMISSIONS.map((p) => p.key).filter(
+  (key) => key !== "platform:cross-tenant",
+);
 const USER_PERMISSION_KEYS = [
   "assessments:create",
   "assessments:edit-own",
@@ -102,6 +113,33 @@ async function main() {
     create: { name: "Empresa Demo", slug: "demo" },
   });
 
+  // --- Segundo tenant (só para testar isolamento multi-tenant / super-admin) ---
+  // Deliberadamente enxuto (sem questionário/matriz de risco/workflow
+  // próprios) — o objetivo aqui é só ter uma organização genuinamente
+  // separada, com dado próprio, para verificar que a troca de contexto do
+  // super-admin (POST /auth/switch-tenant) realmente isola dados entre
+  // tenants. Roda antes da seção de questionário (abaixo) de propósito: essa
+  // seção reseta e recria as perguntas do tenant 1 via deleteMany, o que
+  // falha assim que existir alguma Assessment real respondida (ok em prod/
+  // primeira seed, mas comum num ambiente de dev já usado manualmente) — ao
+  // rodar antes, este bloco sempre é aplicado, mesmo se aquele passo adiante
+  // falhar.
+  const tenant2 = await prisma.tenant.upsert({
+    where: { slug: "demo2" },
+    update: {},
+    create: { name: "Empresa Demo 2", slug: "demo2" },
+  });
+  const TENANT2_AREAS = ["Tecnologia da Informação", "Financeiro"];
+  await Promise.all(
+    TENANT2_AREAS.map((name) =>
+      prisma.area.upsert({
+        where: { tenantId_name: { tenantId: tenant2.id, name } },
+        update: {},
+        create: { tenantId: tenant2.id, name },
+      }),
+    ),
+  );
+
   // --- Áreas/departamentos -----------------------------------------------------
   await Promise.all(
     AREAS.map((name) =>
@@ -134,6 +172,7 @@ async function main() {
     { name: "Segurança da Informação", permissionKeys: APPROVER_PERMISSION_KEYS },
     { name: "DPO", permissionKeys: APPROVER_PERMISSION_KEYS },
     { name: "Jurídico", permissionKeys: APPROVER_PERMISSION_KEYS },
+    { name: "Super Administrador (Plataforma)", permissionKeys: ["platform:cross-tenant"] },
   ];
 
   const roleByName = new Map<string, { id: string }>();
@@ -210,6 +249,17 @@ async function main() {
       create: { userId: adminUser.id, roleId: role.id },
     });
   }
+
+  // O admin do tenant demo também acumula a role de super-admin de
+  // plataforma — só para permitir testar/demonstrar o acesso cross-tenant
+  // com o mesmo login já usado no resto do seed, sem criar um terceiro
+  // usuário só para isso.
+  const superAdminRole = roleByName.get("Super Administrador (Plataforma)")!;
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: adminUser.id, roleId: superAdminRole.id } },
+    update: {},
+    create: { userId: adminUser.id, roleId: superAdminRole.id },
+  });
 
   // --- Categorias e perguntas do questionário ----------------------------------
   const categoryByName = new Map<string, { id: string }>();
@@ -1073,7 +1123,6 @@ async function main() {
       },
     });
   }
-
   console.log("Seed concluído:", {
     tenant: tenant.slug,
     areas: AREAS.length,
@@ -1087,6 +1136,8 @@ async function main() {
     controls: CONTROLS.length,
     riskMatrix: riskMatrix.name,
     workflow: workflow.name,
+    tenant2: tenant2.slug,
+    tenant2Areas: TENANT2_AREAS.length,
   });
 }
 

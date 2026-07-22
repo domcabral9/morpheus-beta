@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useHasAnyManagePermission } from "@/lib/use-permission";
 import { ADMIN_NAV_ITEMS, PRIMARY_NAV_ITEMS, isNavItemActive } from "@/lib/nav-items";
+import { OrgSwitcher } from "@/components/org-switcher";
 
 function getInitials(name: string | undefined): string {
   if (!name) return "?";
@@ -67,6 +68,7 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          <OrgSwitcher />
         </SidebarMenu>
       </SidebarHeader>
 

@@ -14,6 +14,7 @@ function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser
   return {
     id: "user-requester",
     tenantId: "tenant-1",
+    homeTenantId: "tenant-1",
     email: "req@example.com",
     name: "Requester",
     permissions: [
@@ -22,6 +23,7 @@ function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser
       "assessments:view-own",
       "assessments:submit",
     ],
+    isSuperAdmin: false,
     ...overrides,
   };
 }

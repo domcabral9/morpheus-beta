@@ -939,6 +939,7 @@ enum AuditAction {
   REJECT
   REOPEN
   SUBMIT
+  SWITCH_TENANT
 }
 
 /// `userId` e `tenantId` opcionais para sobreviver à exclusão do usuário/tenant
