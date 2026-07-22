@@ -103,6 +103,7 @@ export default function LoginPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-zinc-500">{t("tenantSlugHint")}</p>
                 </div>
 
                 <div className="flex flex-col gap-2">

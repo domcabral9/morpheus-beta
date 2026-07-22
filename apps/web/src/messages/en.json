@@ -9,6 +9,7 @@
     "subtitle": "Sign in with your corporate account",
     "tenantSlugLabel": "Organization",
     "tenantSelectPlaceholder": "Select your organization",
+    "tenantSlugHint": "Use that organization's own credentials. Super-admins with access to other organizations can switch context from the menu selector after signing in to their home organization.",
     "emailLabel": "Email",
     "emailPlaceholder": "you@company.com",
     "passwordLabel": "Password",
