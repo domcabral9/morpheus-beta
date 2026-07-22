@@ -1039,3 +1039,21 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     da seção que reseta as perguntas do tenant 1 (`question.deleteMany`), porque essa seção já não é
     mais segura de rodar num banco de dev que já tem alguma `Assessment` respondida de verdade (o
     comentário original assumia "nenhuma Assessment é seedada" - válido só na primeira seed).
+- **Criar/desativar usuário**: a Etapa H tinha deixado só visualização + atribuição de papel
+  (comentário explícito no controller: "sem criar ou desativar usuário"). Agora `/admin/users` tem
+  `POST /users` e `PATCH /users/:id/active`, ambos `users:manage`. Sem senha local na criação - só
+  SSO just-in-time ou o seed definem `passwordHash` hoje, então um usuário criado por aqui só
+  consegue entrar via SSO até um fluxo de "definir senha" existir.
+  - **Replicar papéis, pedido explícito do usuário**: o formulário tem um toggle - ligado, esconde
+    a lista manual de papéis e mostra um seletor de usuário-referência (reaproveita a lista de
+    usuários já carregada na própria página, com `userRoles` inline - zero fetch novo); desligado,
+    mostra a lista de papéis do tenant via `Checkbox`. É uma alternativa à lista manual, não um
+    complemento - escolher "replicar" ignora qualquer papel marcado manualmente.
+  - **Guard de auto-desativação**: `setActive` recebe o id de quem está agindo, não só o tenant,
+    especificamente para bloquear um admin desativando a própria conta (erro claro, botão desabilitado
+    no frontend com `title` explicando por quê) - sem essa checagem seria possível se auto-trancar
+    fora do sistema sem ter outro super-admin/admin pra reverter.
+  - **Reaproveitamento total dos helpers existentes**: `create()` de repository já existia (usado só
+    pelo provisionamento SSO), a projeção `UserAdminRaw` já retornava `userRoles` inline,
+    `assertUserInTenant`/`assertRoleInTenant`/`assignRole` já existiam - o novo `create()` de service
+    só orquestra peças já prontas, sem padrão novo. Zero migração de banco.
