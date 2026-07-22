@@ -8,7 +8,7 @@
     "title": "Morpheus",
     "subtitle": "Sign in with your corporate account",
     "tenantSlugLabel": "Organization",
-    "tenantSlugPlaceholder": "e.g.: demo",
+    "tenantSelectPlaceholder": "Select your organization",
     "emailLabel": "Email",
     "emailPlaceholder": "you@company.com",
     "passwordLabel": "Password",

@@ -8,6 +8,11 @@ export interface TenantSummary {
   slug: string;
 }
 
+export interface TenantPublicSummary {
+  name: string;
+  slug: string;
+}
+
 @Injectable()
 export class TenantsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -27,5 +32,15 @@ export class TenantsRepository {
 
   update(id: string, data: Prisma.TenantUncheckedUpdateInput): Promise<Tenant> {
     return this.prisma.tenant.update({ where: { id }, data });
+  }
+
+  // Nem id nem qualquer outro campo além de name/slug — este método alimenta
+  // o dropdown de organização da tela de login (pré-autenticação), então o
+  // conjunto exposto tem que ser o mínimo absoluto.
+  findAllPublicSummary(): Promise<TenantPublicSummary[]> {
+    return this.prisma.tenant.findMany({
+      select: { name: true, slug: true },
+      orderBy: { name: "asc" },
+    });
   }
 }
