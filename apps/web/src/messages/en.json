@@ -32,7 +32,11 @@
     "toggleSidebarLabel": "Toggle sidebar",
     "localeSwitcherLabel": "Language",
     "themeToggleLabel": "Toggle theme",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "orgSwitcher": "Organization",
+    "orgSwitcherLoading": "Loading...",
+    "impersonationBanner": "Viewing: {tenant} (super-admin mode)",
+    "impersonationReturn": "Return to my organization"
   },
   "Approvals": {
     "title": "Pending approvals",

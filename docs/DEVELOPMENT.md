@@ -1002,3 +1002,40 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     `ADMIN_NAV_ITEMS` sem mudar seu formato. De quebra, a duplicação `ADMIN_SECTION_PERMISSIONS` em
     `apps/web/src/lib/use-permission.ts` (um array hardcoded que só "espelhava" `ADMIN_NAV_ITEMS`)
     foi eliminada - `useHasAnyManagePermission` agora deriva direto da lista única.
+- **Super-admin cross-org (multi-tenant)**: administradores comuns continuam 100% restritos à
+  própria organização - a novidade é uma permissão nova, `platform:cross-tenant`, concedida a um
+  papel dedicado ("Super Administrador (Plataforma)") que libera `POST /auth/switch-tenant`. Quem
+  tem essa permissão reemite o próprio access token com o `tenantId` trocado para outra organização
+  e um seletor na sidebar (`OrgSwitcher`) escolhe qual.
+  - **Achado que definiu o design**: não existe um chokepoint central de escopo por tenant no
+    backend - cada repository/service filtra `tenantId` manualmente (recebido como parâmetro em
+    queries de lista, ou comparado depois de um `findById` sem filtro). Rastrear e alterar isso em
+    10+ módulos seria um projeto à parte. A saída foi não mexer em nenhum desses módulos: como todos
+    já confiam cegamente em `user.tenantId` vindo do JWT, reemitir um token com `tenantId` diferente
+    faz o super-admin "virar" administrador daquele outro tenant para todos os efeitos práticos, sem
+    tocar uma linha de lógica de negócio existente.
+  - **Sessão trocada não é sócio real do tenant alvo** (sem `User` row lá) - o token reemitido carrega
+    o catálogo *completo* de `Permission`, não uma role real (que não existe pra ele naquele tenant).
+    Voltar pro tenant de casa (`switchTenant(homeTenantId)`) busca as permissões *reais* do usuário no
+    banco - nunca fica "mais poderoso" na própria organização do que o RBAC normal permite.
+  - **`sub` do JWT nunca muda entre trocas** - só `tenantId`/`permissions`. A trilha de auditoria já
+    deriva `tenantId` de `request.user.tenantId` (`AuditInterceptor`), então toda escrita feita "como"
+    outro tenant cai automaticamente no `AuditLog` daquele tenant, com o `userId` do super-admin real -
+    zero mudança no interceptor. A própria troca de tenant também gera um `AuditLog`
+    (`action: SWITCH_TENANT`, adicionado ao enum `AuditAction` - única migration desta etapa).
+  - **Refresh token nunca é tocado**: `AuthService.refresh()` sempre re-deriva do banco (volta pro
+    tenant de casa) - não dá pra fazer o refresh "lembrar" uma sessão trocada sem inventar estado de
+    sessão novo no backend. Em vez disso, o frontend guarda qual tenant está "sendo visto" em
+    `sessionStorage` (nunca cookie/localStorage - não trafega pra rede, some ao fechar a aba, e é
+    limpo explicitamente em `login()`/`logout()` pra nunca vazar entre usuários diferentes na mesma
+    aba) e reaplica `switch-tenant` automaticamente logo após todo refresh silencioso.
+  - **Gap de isolamento pré-existente corrigido junto**: `assessments.service.ts`'s
+    `getOwnedOrThrow(id)` não comparava `tenantId` (só existência) - diferente de todo o resto do
+    app (`inventory.service.ts`, `users.service.ts`). Ficaria mais perigoso justo quando "ter um
+    `tenantId` diferente no token" vira um caso de uso legítimo em vez de só cenário de erro/ataque.
+  - **Segundo tenant de teste (`demo2`) no seed**: deliberadamente enxuto (só tenant + 2 áreas, sem
+    questionário/matriz de risco/workflow próprios) - o objetivo era só ter uma organização
+    genuinamente separada para provar isolamento, não replicar o seed inteiro. Precisou rodar antes
+    da seção que reseta as perguntas do tenant 1 (`question.deleteMany`), porque essa seção já não é
+    mais segura de rodar num banco de dev que já tem alguma `Assessment` respondida de verdade (o
+    comentário original assumia "nenhuma Assessment é seedada" - válido só na primeira seed).

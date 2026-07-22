@@ -20,9 +20,11 @@ function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser
   return {
     id: "approver-1",
     tenantId: "tenant-1",
+    homeTenantId: "tenant-1",
     email: "approver@example.com",
     name: "Aprovador",
     permissions: ["assessments:approve", "assessments:view-all"],
+    isSuperAdmin: false,
     ...overrides,
   };
 }

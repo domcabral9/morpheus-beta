@@ -31,7 +31,9 @@ empresa - uma forma de reduzir Shadow IT. Do questionário de risco à decisão 
 - **Criptografia em repouso (AES-256-GCM)** para campos sensíveis via `CryptoService`.
 - **Observabilidade**: logs estruturados, correlation ID, métricas Prometheus, tracing
   OpenTelemetry.
-- **Multi-tenancy row-level**, isolamento por `tenantId` em toda query, banco único.
+- **Multi-tenancy row-level**, isolamento por `tenantId` em toda query, banco único - com acesso
+  cross-organização restrito a super-admins (permissão dedicada + trilha de auditoria própria),
+  sem afetar o isolamento padrão de nenhum outro usuário.
 
 ## Telas
 
@@ -119,7 +121,9 @@ reduce Shadow IT. From risk questionnaire to final decision:
   endpoint (`@nestjs/throttler`, stricter limits on sensitive routes).
 - **Encryption at rest (AES-256-GCM)** for sensitive fields via `CryptoService`.
 - **Observability**: structured logs, correlation ID, Prometheus metrics, OpenTelemetry tracing.
-- **Row-level multi-tenancy**, `tenantId` isolation on every query, single database.
+- **Row-level multi-tenancy**, `tenantId` isolation on every query, single database - with
+  cross-organization access restricted to super-admins (dedicated permission + its own audit
+  trail), without affecting the default isolation of any other user.
 
 ## Screenshots
 
