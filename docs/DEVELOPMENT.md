@@ -1246,3 +1246,15 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     usuário comum nesse ambiente é coincidência dos dados, não um teste vazio de visibilidade; a
     regra em si já está coberta por 4 testes unitários novos que verificam a cláusula exata
     passada ao repository por combinação de permissão.
+- **README: prints atualizados + seção sobre documentação Swagger (Etapa 7)**: rodada por último de
+  propósito, depois de todas as etapas que mudam layout visualmente. Prints antigos (só 4 telas de
+  dashboard, capturados antes da Etapa 1) recapturados via o mesmo padrão de Playwright temporário
+  no scratchpad já usado nas etapas anteriores - agora refletem a sidebar atual (item "Pareceres
+  técnicos", seletor "Organização"). Três prints novos: seleção de organização no login (Etapa 2),
+  busca rápida já demonstrando o fix de diacríticos ("papeis" encontrando "Papéis", Etapa 3) e
+  gestão de papéis em `/admin/roles` (PR #29, nunca tinha aparecido no README). Confirmado antes de
+  escrever o texto que `@nestjs/swagger` já está configurado (`main.ts`) servindo em `/docs` com
+  Bearer auth - não assumido, checado. Parágrafo novo (pt-BR/en) explicando que a documentação da
+  API é gerada automaticamente do código, não mantida à parte, pensada pra futuras integrações;
+  sem criar um `docs/API.md` separado - o Swagger interativo em `/docs` já cumpre esse papel, um
+  markdown paralelo só duplicaria manutenção.
