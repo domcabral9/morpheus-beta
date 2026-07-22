@@ -1191,8 +1191,27 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     agora mostram "Troca de organização" (pt-BR) / "Tenant switch" (en) sem erro de console.
   - As outras 3 telas (questionário, matriz de risco, workflow) renderizam e funcionam
     corretamente - sem bug de código encontrado. Nota à parte, não é bug de código: o banco de dev
-    tem dados órfãos de smoke tests de sessões anteriores (categoria/pergunta "Smoke Test" no
+    tinha dados órfãos de smoke tests de sessões anteriores (categoria/pergunta "Smoke Test" no
     questionário, "Smoke Test Matriz"/"Matriz Smoke Test" na matriz de risco, "Smoke Test Workflow"
-    na tela de workflow) - não foi limpo nesta etapa por não ter sido criado por este agente nesta
-    sessão (risco de apagar dado que o usuário queira manter); fica registrado pra decisão do
-    usuário sobre limpar ou não.
+    na tela de workflow) - removidos a pedido do usuário depois de confirmar via script (0
+    respostas/`RiskResult`/instâncias de workflow ligados a eles, então seguro apagar de verdade,
+    sem sub-rota de DELETE pro recurso inteiro na API - só pros filhos tipo faixas/etapas/opções,
+    de propósito, categoria/matriz/workflow usam soft delete via `isActive`). **Achado relevante
+    nessa limpeza**: "Smoke Test Matriz" (resíduo v3) tinha virado sem querer a única matriz de
+    risco *ativa* do tenant `demo` - novas avaliações estavam calculando risco com os limiares do
+    teste, não com "Matriz Padrão". Reativado "Matriz Padrão" via `POST
+    /risk-matrix/admin/configs/:id/activate` (endpoint real, não escrita direta no banco) antes de
+    apagar os órfãos.
+- **Dúvida real do usuário sobre a tela de login, avaliada antes de virar código**: por que
+  selecionar outra organização no dropdown de login (Etapa 2) e usar a conta
+  `admin@morpheus.demo` dava "Credenciais inválidas"? Investigação: são dois mecanismos
+  deliberadamente separados - login (`auth.service.ts`) sempre exige um `User` real *daquela*
+  organização (cada tenant novo tem seu próprio admin, `admin@{slug}.morpheus.demo`, mesma senha
+  `Demo@12345`); troca de contexto sem senha nova (`switchTenant()`, botão "Organização" na
+  sidebar via `org-switcher.tsx`) só existe **depois de logado**, restrita a quem tem
+  `platform:cross-tenant`. Decisão (não a alternativa mais ambiciosa de login direto cross-tenant,
+  que exigiria buscar usuário por e-mail sem escopo de tenant primeiro - mudança de modelo maior,
+  não trivial): manter o comportamento como está e só adicionar um texto de apoio abaixo do
+  dropdown (`LoginPage.tenantSlugHint`, pt-BR/en) explicando que login direto exige credenciais
+  daquela organização específica, e acesso cross-tenant é via login na organização de origem +
+  seletor no topo.
