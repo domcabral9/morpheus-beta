@@ -69,6 +69,7 @@ describe("TechnicalOpinionService", () => {
     create: jest.Mock;
     findById: jest.Mock;
     findLatestForAssessment: jest.Mock;
+    findAllForTenant: jest.Mock;
   };
   let pdfGenerator: { build: jest.Mock };
   let storage: { save: jest.Mock; read: jest.Mock };
@@ -89,6 +90,7 @@ describe("TechnicalOpinionService", () => {
       create: jest.fn().mockImplementation((data) => Promise.resolve({ id: "opinion-1", ...data })),
       findById: jest.fn(),
       findLatestForAssessment: jest.fn(),
+      findAllForTenant: jest.fn().mockResolvedValue({ items: [], total: 0 }),
     };
     pdfGenerator = { build: jest.fn().mockResolvedValue(Buffer.from("%PDF-fake")) };
     storage = { save: jest.fn().mockResolvedValue(undefined), read: jest.fn() };
@@ -209,6 +211,60 @@ describe("TechnicalOpinionService", () => {
       repo.findAuthorizationContext.mockResolvedValue(null);
       await expect(service.getPdfForDownload(makeUser(), "inexistente")).rejects.toThrow(
         NotFoundException,
+      );
+    });
+  });
+
+  describe("findAllForTenant", () => {
+    it("vê todos os pareceres do tenant com ASSESSMENTS_VIEW_ALL (requesterId não filtrado)", async () => {
+      await service.findAllForTenant(makeUser({ permissions: ["assessments:view-all"] }), {});
+      expect(repo.findAllForTenant).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: "tenant-1", requesterId: undefined }),
+        1,
+        20,
+      );
+    });
+
+    it("vê todos os pareceres do tenant com ASSESSMENTS_APPROVE (requesterId não filtrado)", async () => {
+      await service.findAllForTenant(makeUser({ permissions: ["assessments:approve"] }), {});
+      expect(repo.findAllForTenant).toHaveBeenCalledWith(
+        expect.objectContaining({ requesterId: undefined }),
+        1,
+        20,
+      );
+    });
+
+    it("sem view-all/approve, filtra só pelos próprios pareceres (requesterId = user.id)", async () => {
+      await service.findAllForTenant(makeUser({ id: "user-1", permissions: [] }), {});
+      expect(repo.findAllForTenant).toHaveBeenCalledWith(
+        expect.objectContaining({ requesterId: "user-1" }),
+        1,
+        20,
+      );
+    });
+
+    it("repassa filtros e paginação da query", async () => {
+      await service.findAllForTenant(makeUser({ permissions: ["assessments:view-all"] }), {
+        assessmentId: "assessment-1",
+        issuedById: "issuer-1",
+        classificationLabel: "Homologado",
+        number: "SECOPS-SW-072026",
+        from: "2026-07-01T00:00:00.000Z",
+        to: "2026-07-31T23:59:59.999Z",
+        page: 2,
+        pageSize: 10,
+      });
+      expect(repo.findAllForTenant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          assessmentId: "assessment-1",
+          issuedById: "issuer-1",
+          classificationLabel: "Homologado",
+          number: "SECOPS-SW-072026",
+          from: new Date("2026-07-01T00:00:00.000Z"),
+          to: new Date("2026-07-31T23:59:59.999Z"),
+        }),
+        2,
+        10,
       );
     });
   });
