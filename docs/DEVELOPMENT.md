@@ -1305,3 +1305,23 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
   - Validado via curl real (`technicalOpinion` populado pro item vindo de homologação, `null` pro
     de entrada manual) e Playwright: clicar no número do parecer no detalhe do inventário chega em
     `/technical-opinions` com o campo "Número" já preenchido e a lista já filtrada pra 1 resultado.
+- **Painel de Ajuda / FAQ** (terceiro item do backlog pós-uso - standalone, sem dependência de
+  nenhum outro módulo, escolhido como sequência natural depois do vínculo inventário↔parecer).
+  Conteúdo 100% estático (5 seções - Avaliações, Aprovações, Inventário, Pareceres técnicos, Conta e
+  organização - com 2 a 3 perguntas cada), sem nenhuma mudança de backend.
+  - `apps/web/src/components/ui/accordion.tsx` novo - primeiro uso de `Accordion` no projeto
+    (`radix-ui` unificado, já era dependência existente por causa do `Collapsible`; `tw-animate-css`,
+    já importado em `globals.css`, já traz as keyframes `accordion-down`/`accordion-up` que o
+    padrão shadcn espera, então não precisou de CSS novo).
+  - `/faq` (`apps/web/src/app/[locale]/faq/page.tsx`) - item novo em `PRIMARY_NAV_ITEMS`
+    (`nav-items.ts`), sem `permission` (visível a qualquer usuário autenticado, mesmo padrão de
+    `/dashboards`). Conteúdo é uma lista fixa em TS de `{sectionKey, icon, questionKeys[]}` -
+    cada seção vira um `Card` com um `Accordion` dentro; perguntas/respostas vêm de chaves i18n
+    (`Faq.sections.<key>.q<n>Question`/`q<n>Answer`), não de `t.raw()` (sem precedente disso no
+    projeto) - adicionar uma pergunta nova é só estender `questionKeys` + as duas chaves de texto.
+  - Como o item entra em `PRIMARY_NAV_ITEMS`, ele aparece de graça na busca rápida (Etapa 3,
+    `cmdk`) sem nenhuma mudança no `command-palette.tsx` - as duas fontes de navegação (sidebar e
+    palette) já compartilham a mesma lista.
+  - Validado via `build`/`typecheck`/`lint` limpos e Playwright: as 5 seções renderizam em pt-BR e
+    en, o accordion abre e fecha (conteúdo visível → clique → oculto → clique → visível de novo),
+    e digitar "ajuda" na busca rápida encontra e navega pra "Ajuda / FAQ".
