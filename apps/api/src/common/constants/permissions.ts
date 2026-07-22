@@ -23,6 +23,8 @@ export const PERMISSIONS = {
   INVENTORY_VIEW: "inventory:view",
   INVENTORY_MANAGE: "inventory:manage",
   AUDIT_VIEW: "audit:view",
+  /** Super-admin: ler e editar dados de qualquer tenant via /auth/switch-tenant. Uso restrito. */
+  PLATFORM_CROSS_TENANT: "platform:cross-tenant",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

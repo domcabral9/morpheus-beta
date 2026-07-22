@@ -21,6 +21,16 @@ import { UpdateTenantDto } from "./dto/update-tenant.dto";
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
+  // Sobrepõe o @RequirePermissions(SYSTEM_CONFIGURE) de classe acima (guard
+  // usa getAllAndOverride: metadado de método vence o de classe) — só
+  // super-admin lista todas as organizações, mesmo que não tenha
+  // system:configure em nenhuma delas.
+  @RequirePermissions(PERMISSIONS.PLATFORM_CROSS_TENANT)
+  @Get()
+  listAll() {
+    return this.tenantsService.listAll();
+  }
+
   @Get("current")
   getCurrent(@CurrentUser() user: AuthenticatedUser) {
     return this.tenantsService.getCurrent(user.tenantId);

@@ -9,9 +9,11 @@ import type { AuditMetadata } from "../decorators/audit.decorator";
 const user: AuthenticatedUser = {
   id: "user-1",
   tenantId: "tenant-1",
+  homeTenantId: "tenant-1",
   email: "a@b.com",
   name: "A",
   permissions: [],
+  isSuperAdmin: false,
 };
 
 function makeContext(params: Record<string, string> = {}): ExecutionContext {
