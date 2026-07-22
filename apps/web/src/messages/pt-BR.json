@@ -514,7 +514,14 @@
     "saving": "Salvando...",
     "save": "Salvar",
     "saveSuccess": "Configurações atualizadas.",
-    "saveError": "Não foi possível salvar as configurações."
+    "saveError": "Não foi possível salvar as configurações.",
+    "tabs": {
+      "general": "Geral",
+      "smtp": "SMTP",
+      "sso": "SSO",
+      "ai": "IA",
+      "comingSoonDescription": "Esta configuração ainda está em construção — chega em uma etapa futura do plano."
+    }
   },
   "Dashboards": {
     "title": "Dashboards",

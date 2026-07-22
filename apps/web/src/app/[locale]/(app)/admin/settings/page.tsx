@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { TenantAdmin } from "@/lib/tenant-admin-types";
 import { AdminSectionGate } from "../_components/section-gate";
 
@@ -90,6 +91,17 @@ function SettingsForm({ tenant, onSaved }: { tenant: TenantAdmin; onSaved: (tena
   );
 }
 
+function SettingsTabComingSoon({ titleKey }: { titleKey: "smtp" | "sso" | "ai" }) {
+  const t = useTranslations("AdminSettings");
+
+  return (
+    <div className="flex flex-col gap-2 py-4">
+      <h2 className="text-base font-semibold">{t(`tabs.${titleKey}`)}</h2>
+      <p className="text-sm text-muted-foreground">{t("tabs.comingSoonDescription")}</p>
+    </div>
+  );
+}
+
 function SettingsContent() {
   const t = useTranslations("AdminSettings");
   const api = useApi();
@@ -123,14 +135,34 @@ function SettingsContent() {
       )}
 
       {tenant && (
-        <Card className="max-w-xl">
-          <CardHeader>
-            <CardTitle className="text-base">{tenant.name}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SettingsForm tenant={tenant} onSaved={setTenant} />
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="general">
+          <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
+            <TabsTrigger value="general">{t("tabs.general")}</TabsTrigger>
+            <TabsTrigger value="smtp">{t("tabs.smtp")}</TabsTrigger>
+            <TabsTrigger value="sso">{t("tabs.sso")}</TabsTrigger>
+            <TabsTrigger value="ai">{t("tabs.ai")}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="general">
+            <Card className="max-w-xl">
+              <CardHeader>
+                <CardTitle className="text-base">{tenant.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SettingsForm tenant={tenant} onSaved={setTenant} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="smtp">
+            <SettingsTabComingSoon titleKey="smtp" />
+          </TabsContent>
+          <TabsContent value="sso">
+            <SettingsTabComingSoon titleKey="sso" />
+          </TabsContent>
+          <TabsContent value="ai">
+            <SettingsTabComingSoon titleKey="ai" />
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
