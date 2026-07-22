@@ -145,6 +145,21 @@ export default function InventoryItemPage() {
                   label={t("fieldDataClassification")}
                   value={t(`dataClassifications.${item.dataClassification}`)}
                 />
+                <Field
+                  label={t("fieldTechnicalOpinion")}
+                  value={
+                    item.technicalOpinion ? (
+                      <Link
+                        href={`/technical-opinions?number=${encodeURIComponent(item.technicalOpinion.number)}`}
+                        className="hover:underline"
+                      >
+                        {item.technicalOpinion.number}
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground">{t("technicalOpinionNone")}</span>
+                    )
+                  }
+                />
               </div>
             </CardContent>
           </Card>

@@ -6,6 +6,23 @@ const itemDetailInclude = {
   area: true,
   manager: { select: { id: true, name: true, email: true } },
   technicalResponsible: { select: { id: true, name: true, email: true } },
+  // Parecer técnico da homologação que originou este item, quando existir -
+  // itens de entrada manual (`assessmentId` nulo) nunca têm um. Pega só a
+  // versão mais recente da avaliação (`take: 1`) - mesma noção de "o parecer
+  // vigente" já usada em `TechnicalOpinionRepository.findLatestForAssessment`.
+  assessment: {
+    select: {
+      versions: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          technicalOpinion: {
+            select: { id: true, number: true, classificationLabel: true, issuedAt: true },
+          },
+        },
+      },
+    },
+  },
 } satisfies Prisma.SoftwareInventoryItemInclude;
 
 export type InventoryItemDetail = Prisma.SoftwareInventoryItemGetPayload<{

@@ -114,4 +114,43 @@ describe("InventoryService", () => {
       expect(result.id).toBe("item-1");
     });
   });
+
+  describe("technicalOpinion (vínculo com o parecer da homologação)", () => {
+    const opinion = {
+      id: "opinion-1",
+      number: "SECOPS-SW-072026-001",
+      classificationLabel: "Homologado",
+      issuedAt: new Date("2026-07-20"),
+    };
+
+    it("expõe o parecer técnico quando a avaliação vinculada tem um", async () => {
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        assessment: { versions: [{ technicalOpinion: opinion }] },
+      });
+      const result = await service.getById(makeUser(), "item-1");
+      expect(result.technicalOpinion).toEqual(opinion);
+      expect(result).not.toHaveProperty("assessment");
+    });
+
+    it("technicalOpinion é null para item de entrada manual (sem assessmentId)", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", assessment: null });
+      const result = await service.getById(makeUser(), "item-1");
+      expect(result.technicalOpinion).toBeNull();
+    });
+
+    it("repassa technicalOpinion em cada item da listagem", async () => {
+      repo.findMany.mockResolvedValue({
+        items: [
+          { id: "item-1", assessment: { versions: [{ technicalOpinion: opinion }] } },
+          { id: "item-2", assessment: null },
+        ],
+        total: 2,
+      });
+      const result = await service.list(makeUser(), {});
+      expect(result.items[0]!.technicalOpinion).toEqual(opinion);
+      expect(result.items[1]!.technicalOpinion).toBeNull();
+    });
+  });
 });

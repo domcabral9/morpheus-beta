@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Download, Eye, Loader2 } from "lucide-react";
 
@@ -67,8 +68,15 @@ function classificationBadgeVariant(label: string): "success" | "destructive" | 
 export default function TechnicalOpinionsPage() {
   const t = useTranslations("TechnicalOpinions");
   const api = useApi();
+  const searchParams = useSearchParams();
 
-  const [filters, setFilters] = React.useState<FiltersState>(EMPTY_FILTERS);
+  // Permite link direto pré-filtrado (ex.: `?number=...` a partir do
+  // vínculo com parecer na tela de inventário) - lido só na montagem, o
+  // usuário ainda pode limpar/trocar o filtro normalmente depois.
+  const [filters, setFilters] = React.useState<FiltersState>(() => ({
+    ...EMPTY_FILTERS,
+    number: searchParams.get("number") ?? "",
+  }));
   const [page, setPage] = React.useState(1);
   const [data, setData] = React.useState<PaginatedTechnicalOpinions | null>(null);
   const [error, setError] = React.useState<string | null>(null);
