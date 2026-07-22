@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
+import { CommandPalette } from "@/components/command-palette";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -31,6 +32,7 @@ export function AppShell({
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
+      <CommandPalette />
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 sm:px-6">

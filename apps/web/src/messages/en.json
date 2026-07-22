@@ -38,6 +38,13 @@
     "impersonationBanner": "Viewing: {tenant} (super-admin mode)",
     "impersonationReturn": "Return to my organization"
   },
+  "CommandPalette": {
+    "title": "Quick search",
+    "placeholder": "Type a screen name...",
+    "noResults": "No results found.",
+    "groupPrimary": "Navigation",
+    "groupAdmin": "Administration"
+  },
   "Approvals": {
     "title": "Pending approvals",
     "subtitle": "Workflow steps waiting on your decision.",
