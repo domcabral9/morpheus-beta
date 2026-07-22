@@ -155,6 +155,7 @@ export default function InventoryPage() {
                       <TableHead>{t("columnCriticality")}</TableHead>
                       <TableHead>{t("columnStatus")}</TableHead>
                       <TableHead>{t("columnNextReview")}</TableHead>
+                      <TableHead>{t("columnTechnicalOpinion")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -175,6 +176,18 @@ export default function InventoryPage() {
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {new Date(item.nextReviewDate).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {item.technicalOpinion ? (
+                            <Link
+                              href={`/technical-opinions?number=${encodeURIComponent(item.technicalOpinion.number)}`}
+                              className="hover:underline"
+                            >
+                              {item.technicalOpinion.number}
+                            </Link>
+                          ) : (
+                            "—"
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

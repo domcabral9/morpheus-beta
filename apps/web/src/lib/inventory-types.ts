@@ -9,6 +9,13 @@ export type DataClassification = (typeof DATA_CLASSIFICATIONS)[number];
 export const INVENTORY_STATUSES = ["ACTIVE", "PENDING_REVIEW", "EXPIRED", "DECOMMISSIONED"] as const;
 export type InventoryStatus = (typeof INVENTORY_STATUSES)[number];
 
+export interface InventoryTechnicalOpinionSummary {
+  id: string;
+  number: string;
+  classificationLabel: string;
+  issuedAt: string;
+}
+
 export interface InventoryItemSummary {
   id: string;
   name: string;
@@ -21,6 +28,8 @@ export interface InventoryItemSummary {
   area: { id: string; name: string };
   manager: { id: string; name: string; email: string };
   technicalResponsible: { id: string; name: string; email: string };
+  /** Parecer da homologação que originou este item - `null` pra itens de entrada manual. */
+  technicalOpinion: InventoryTechnicalOpinionSummary | null;
 }
 
 export interface InventoryItemDetail extends InventoryItemSummary {

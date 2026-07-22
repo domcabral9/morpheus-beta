@@ -1283,3 +1283,25 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     limitação já documentada na Etapa 5 pro parecer com logo - Chromium headless não renderiza o
     plugin de PDF) - `src` correto + ausência de erro é a evidência disponível dentro dessa
     limitação de ferramental.
+- **Vincular item do inventário ao parecer técnico de homologação** (segundo item do backlog trazido
+  pelo usuário após uso real - avaliado antes com um agente de pesquisa read-only: era o de menor
+  esforço isolado dentre os 5 itens do bloco "inventário como módulo de verdade", zero migration).
+  `SoftwareInventoryItem.assessmentId` já era opcional desde sempre - a modelagem já previa itens
+  sem homologação, só faltava expor o vínculo com o parecer de verdade.
+  - Backend: `itemDetailInclude` (`inventory.repository.ts`) ganhou um include aninhado
+    `assessment.versions` (`orderBy: createdAt desc, take: 1`) `.technicalOpinion` - Prisma resolve
+    "a versão mais recente da avaliação" numa query só, sem N+1. `InventoryService` achata isso num
+    campo `technicalOpinion: {id, number, classificationLabel, issuedAt} | null` antes de devolver
+    pro controller (`attachTechnicalOpinion()`) - a API não deveria expor a rota de navegação do
+    schema (`assessment.versions[0].technicalOpinion`), só o resultado. Aplicado em `list`,
+    `getById`, `create` e `update` (não em `createFromApprovedAssessment`, cujo retorno nunca é
+    exposto via HTTP - só usado internamente pelo `WorkflowService`).
+  - Frontend: coluna nova "Parecer" na listagem e campo novo "Parecer técnico" no detalhe, os dois
+    como link pra `/technical-opinions?number=...` quando existe, "—"/texto explicando "entrada
+    manual" quando não. A página de pareceres técnicos (Etapa 6) não lia nenhum parâmetro de URL
+    até aqui - ganhou leitura do `number` via `useSearchParams()` na montagem (só uma vez, via
+    inicializador preguiçoso do `useState`), senão o link prometeria um filtro que não aplicava
+    nada de verdade ao chegar lá.
+  - Validado via curl real (`technicalOpinion` populado pro item vindo de homologação, `null` pro
+    de entrada manual) e Playwright: clicar no número do parecer no detalhe do inventário chega em
+    `/technical-opinions` com o campo "Número" já preenchido e a lista já filtrada pra 1 resultado.
