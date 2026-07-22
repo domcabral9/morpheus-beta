@@ -32,7 +32,11 @@
     "toggleSidebarLabel": "Alternar barra lateral",
     "localeSwitcherLabel": "Idioma",
     "themeToggleLabel": "Alternar tema",
-    "signOut": "Sair"
+    "signOut": "Sair",
+    "orgSwitcher": "Organização",
+    "orgSwitcherLoading": "Carregando...",
+    "impersonationBanner": "Visualizando: {tenant} (modo super-admin)",
+    "impersonationReturn": "Voltar pra minha organização"
   },
   "Approvals": {
     "title": "Aprovações pendentes",

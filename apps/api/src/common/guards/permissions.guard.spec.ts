@@ -37,9 +37,11 @@ describe("PermissionsGuard", () => {
     const user: AuthenticatedUser = {
       id: "u1",
       tenantId: "t1",
+      homeTenantId: "t1",
       email: "a@b.com",
       name: "A",
       permissions: ["assessments:create", "assessments:submit", "inventory:view"],
+      isSuperAdmin: false,
     };
     expect(guard.canActivate(makeContext(user))).toBe(true);
   });
@@ -52,9 +54,11 @@ describe("PermissionsGuard", () => {
     const user: AuthenticatedUser = {
       id: "u1",
       tenantId: "t1",
+      homeTenantId: "t1",
       email: "a@b.com",
       name: "A",
       permissions: ["assessments:create"],
+      isSuperAdmin: false,
     };
     expect(() => guard.canActivate(makeContext(user))).toThrow(ForbiddenException);
   });
@@ -67,9 +71,11 @@ describe("PermissionsGuard", () => {
     const user: AuthenticatedUser = {
       id: "u1",
       tenantId: "t1",
+      homeTenantId: "t1",
       email: "a@b.com",
       name: "A",
       permissions: ["users:manage"],
+      isSuperAdmin: false,
     };
     expect(guard.canActivate(makeContext(user))).toBe(true);
   });
@@ -82,9 +88,11 @@ describe("PermissionsGuard", () => {
     const user: AuthenticatedUser = {
       id: "u1",
       tenantId: "t1",
+      homeTenantId: "t1",
       email: "a@b.com",
       name: "A",
       permissions: ["inventory:view"],
+      isSuperAdmin: false,
     };
     expect(() => guard.canActivate(makeContext(user))).toThrow(ForbiddenException);
   });
@@ -98,18 +106,22 @@ describe("PermissionsGuard", () => {
     const missingAny: AuthenticatedUser = {
       id: "u1",
       tenantId: "t1",
+      homeTenantId: "t1",
       email: "a@b.com",
       name: "A",
       permissions: ["assessments:create"],
+      isSuperAdmin: false,
     };
     expect(() => guard.canActivate(makeContext(missingAny))).toThrow(ForbiddenException);
 
     const hasBoth: AuthenticatedUser = {
       id: "u2",
       tenantId: "t1",
+      homeTenantId: "t1",
       email: "b@b.com",
       name: "B",
       permissions: ["assessments:create", "users:manage"],
+      isSuperAdmin: false,
     };
     expect(guard.canActivate(makeContext(hasBoth))).toBe(true);
   });

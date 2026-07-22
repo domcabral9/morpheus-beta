@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import {
+  Body,
   Controller,
   Post,
   Get,
@@ -16,12 +17,15 @@ import { ApiBody, ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 import { Public } from "../../common/decorators/public.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
+import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { CsrfGuard, CSRF_COOKIE_NAME } from "../../common/guards/csrf.guard";
 import { AuthService } from "./auth.service";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
 import { SamlAuthGuard } from "./guards/saml-auth.guard";
 import { LoginDto } from "./dto/login.dto";
+import { SwitchTenantDto } from "./dto/switch-tenant.dto";
 import { AccessTokenResponseDto } from "./dto/access-token-response.dto";
 import type { UserWithPermissions } from "../users/users.repository";
 
@@ -97,6 +101,24 @@ export class AuthController {
   @ApiOperation({ summary: "Dados do usuário autenticado (a partir do access token)." })
   me(@CurrentUser() user: AuthenticatedUser): AuthenticatedUser {
     return user;
+  }
+
+  // Autenticado via Bearer normal (JwtAuthGuard + PermissionsGuard, ambos
+  // globais) — diferente de refresh/logout, não é o padrão cookie-only, então
+  // não precisa de CsrfGuard. Não toca o refresh token/cookie: só reemite o
+  // access token com `tenantId` trocado (ver AuthService.switchTenant).
+  @RequirePermissions(PERMISSIONS.PLATFORM_CROSS_TENANT)
+  @Post("switch-tenant")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "Super-admin: reemite o access token visualizando outro tenant (ou volta pro de casa).",
+  })
+  async switchTenant(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: SwitchTenantDto,
+    @Req() req: Request,
+  ): Promise<AccessTokenResponseDto> {
+    return this.authService.switchTenant(user, dto.tenantId, this.requestMeta(req));
   }
 
   @Public()

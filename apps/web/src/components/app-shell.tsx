@@ -7,6 +7,7 @@ import { useRequireAuth } from "@/lib/use-require-auth";
 import { AppSidebar } from "@/components/app-sidebar";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -42,6 +43,7 @@ export function AppShell({
             <ThemeToggle label={t("themeToggleLabel")} />
           </div>
         </header>
+        <ImpersonationBanner />
         <main className="flex flex-1 flex-col px-4 py-8 sm:px-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>

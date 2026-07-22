@@ -86,7 +86,7 @@ export class AssessmentsService {
   }
 
   async findOneForUser(user: AuthenticatedUser, id: string): Promise<AssessmentDetail> {
-    const assessment = await this.getOwnedOrThrow(id);
+    const assessment = await this.getOwnedOrThrow(user.tenantId, id);
     this.assertCanView(user, assessment);
     return assessment;
   }
@@ -96,7 +96,7 @@ export class AssessmentsService {
     id: string,
     dto: UpdateAssessmentDto,
   ): Promise<AssessmentDetail> {
-    const assessment = await this.getOwnedOrThrow(id);
+    const assessment = await this.getOwnedOrThrow(user.tenantId, id);
     this.assertCanEdit(user, assessment);
 
     if (dto.areaId) {
@@ -110,7 +110,7 @@ export class AssessmentsService {
   }
 
   async getAnswers(user: AuthenticatedUser, id: string) {
-    const assessment = await this.getOwnedOrThrow(id);
+    const assessment = await this.getOwnedOrThrow(user.tenantId, id);
     this.assertCanView(user, assessment);
     return this.assessmentsRepository.findAnswers(id);
   }
@@ -120,15 +120,15 @@ export class AssessmentsService {
     id: string,
     dto: SubmitAnswersDto,
   ): Promise<AssessmentDetail> {
-    const assessment = await this.getOwnedOrThrow(id);
+    const assessment = await this.getOwnedOrThrow(user.tenantId, id);
     this.assertCanEdit(user, assessment);
 
     await this.assessmentsRepository.upsertAnswers(id, dto.answers);
-    return this.getOwnedOrThrow(id);
+    return this.getOwnedOrThrow(user.tenantId, id);
   }
 
   async submit(user: AuthenticatedUser, id: string): Promise<AssessmentDetail> {
-    const assessment = await this.getOwnedOrThrow(id);
+    const assessment = await this.getOwnedOrThrow(user.tenantId, id);
 
     if (assessment.requesterId !== user.id) {
       throw new ForbiddenException("Só quem criou a avaliação pode enviá-la para análise.");
@@ -201,16 +201,19 @@ export class AssessmentsService {
   }
 
   async getVersionHistory(user: AuthenticatedUser, id: string): Promise<VersionWithDetails[]> {
-    const assessment = await this.getOwnedOrThrow(id);
+    const assessment = await this.getOwnedOrThrow(user.tenantId, id);
     this.assertCanView(user, assessment);
     return this.assessmentsRepository.findVersionsWithDetails(id);
   }
 
   // --- Helpers ------------------------------------------------------------------
 
-  private async getOwnedOrThrow(id: string): Promise<AssessmentDetail> {
+  private async getOwnedOrThrow(tenantId: string, id: string): Promise<AssessmentDetail> {
     const assessment = await this.assessmentsRepository.findById(id);
     if (!assessment) throw new NotFoundException("Avaliação não encontrada.");
+    if (assessment.tenantId !== tenantId) {
+      throw new ForbiddenException("Avaliação de outro tenant.");
+    }
     return assessment;
   }
 
