@@ -42,8 +42,14 @@ model Tenant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  /// URL do logo exibido no cabeçalho do parecer técnico em PDF (Etapa 7).
-  /// Opcional — sem logo configurado, o cabeçalho usa só texto.
+  /// Logo exibido no cabeçalho do parecer técnico em PDF (Etapa 7) e na UI.
+  /// Opcional — sem logo configurado, o cabeçalho usa só texto. Dois formatos
+  /// possíveis nesta coluna (o prefixo decide qual): começando com "/" é um
+  /// caminho estático servido pelo Next.js (ex.: seed de demo, não passa pela
+  /// API); sem "/" é uma chave de StorageAdapter (upload real via
+  /// POST /tenants/current/logo, lida via GET /tenants/current/logo). O PDF só
+  /// embute logos do segundo tipo — não acopla o gerador de PDF (pacote da
+  /// API) ao filesystem do app Next.js.
   logoUrl String?
   /// Nome da equipe exibido como autora do parecer (ex.: "SecOps"). Opcional —
   /// sem valor configurado, usa um rótulo genérico ("Equipe de Segurança da

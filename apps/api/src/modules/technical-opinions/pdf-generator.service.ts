@@ -45,11 +45,12 @@ export class PdfGeneratorService {
   }
 
   private renderHeader(doc: PDFKit.PDFDocument, data: OpinionPdfData): void {
-    if (data.logoUrl) {
-      // Sem acesso de rede síncrono aqui de propósito — o logo, se usado,
-      // precisa já ter sido baixado para um Buffer antes de chegar neste
-      // payload. Por ora o cabeçalho funciona só com texto (logoUrl é
-      // opcional), evitando acoplar o gerador de PDF a I/O de rede.
+    const logoSize = 40;
+    if (data.logoBuffer) {
+      // Posição absoluta (mesmo padrão do QR Code no rodapé): não mexe no
+      // cursor doc.y, então o texto abaixo continua fluindo normalmente.
+      doc.image(data.logoBuffer, PAGE_MARGIN, PAGE_MARGIN, { fit: [logoSize, logoSize] });
+      doc.y = PAGE_MARGIN + logoSize + 10;
     }
 
     doc.fontSize(9).fillColor(COLORS.muted).text(data.tenantName.toUpperCase(), { align: "right" });

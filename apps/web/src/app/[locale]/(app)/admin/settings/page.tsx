@@ -19,12 +19,116 @@ import type { TenantAdmin } from "@/lib/tenant-admin-types";
 import { AdminSectionGate } from "../_components/section-gate";
 
 const settingsSchema = z.object({
-  logoUrl: z.string().optional(),
   securityTeamName: z.string().optional(),
   opinionNumberPrefix: z.string().min(1),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
+
+const ALLOWED_LOGO_TYPES = "image/png,image/jpeg";
+const MAX_LOGO_SIZE_BYTES = 2 * 1024 * 1024;
+
+function LogoUploader({ tenant, onUploaded }: { tenant: TenantAdmin; onUploaded: (tenant: TenantAdmin) => void }) {
+  const t = useTranslations("AdminSettings");
+  const api = useApi();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
+  const [uploading, setUploading] = React.useState(false);
+
+  React.useEffect(() => {
+    // Ressincroniza o preview com a fonte da verdade (tenant.logoUrl) sempre
+    // que ela mudar (upload novo, reload da página) - `tenant` é um objeto
+    // novo a cada fetch, então isto não roda a cada render, só quando o logo
+    // realmente muda.
+    if (!tenant.logoUrl) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPreviewUrl(null);
+      return;
+    }
+    // Caminho estático do Next.js (seed de demo) - renderiza direto, sem
+    // passar pela API.
+    if (tenant.logoUrl.startsWith("/")) {
+      setPreviewUrl(tenant.logoUrl);
+      return;
+    }
+    // Chave de storage real (upload) - precisa buscar os bytes via API.
+    let objectUrl: string | null = null;
+    api
+      .getBlob("/tenants/current/logo")
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        setPreviewUrl(objectUrl);
+      })
+      .catch(() => setPreviewUrl(null));
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [api, tenant.logoUrl]);
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (file.size > MAX_LOGO_SIZE_BYTES) {
+      toast.error(t("logoUploadError"));
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const updated = await api.postForm<TenantAdmin>("/tenants/current/logo", formData);
+      toast.success(t("logoUploadSuccess"));
+      onUploaded(updated);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("logoUploadError"));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Label>{t("logoLabel")}</Label>
+      <div className="flex items-center gap-4">
+        {previewUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- preview vem de blob:/caminho estático, não do otimizador de imagens do Next.
+          <img
+            src={previewUrl}
+            alt={t("logoPreviewAlt")}
+            className="size-16 rounded-md border object-contain p-1"
+          />
+        ) : (
+          <div className="flex size-16 items-center justify-center rounded-md border text-xs text-muted-foreground">
+            {t("logoNoneSet")}
+          </div>
+        )}
+        <div className="flex flex-col gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ALLOWED_LOGO_TYPES}
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploading ? t("logoUploading") : t("logoUploadButton")}
+          </Button>
+          <p className="text-xs text-muted-foreground">{t("logoHint")}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function SettingsForm({ tenant, onSaved }: { tenant: TenantAdmin; onSaved: (tenant: TenantAdmin) => void }) {
   const t = useTranslations("AdminSettings");
@@ -37,7 +141,6 @@ function SettingsForm({ tenant, onSaved }: { tenant: TenantAdmin; onSaved: (tena
   } = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      logoUrl: tenant.logoUrl ?? "",
       securityTeamName: tenant.securityTeamName ?? "",
       opinionNumberPrefix: tenant.opinionNumberPrefix,
     },
@@ -46,7 +149,6 @@ function SettingsForm({ tenant, onSaved }: { tenant: TenantAdmin; onSaved: (tena
   async function onSubmit(values: SettingsFormValues) {
     const payload = {
       ...values,
-      logoUrl: values.logoUrl || undefined,
       securityTeamName: values.securityTeamName || undefined,
     };
     try {
@@ -60,11 +162,7 @@ function SettingsForm({ tenant, onSaved }: { tenant: TenantAdmin; onSaved: (tena
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="logoUrl">{t("fieldLogoUrl")}</Label>
-        <Input id="logoUrl" {...register("logoUrl")} placeholder="https://..." />
-        <p className="text-xs text-muted-foreground">{t("fieldLogoUrlHint")}</p>
-      </div>
+      <LogoUploader tenant={tenant} onUploaded={onSaved} />
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="securityTeamName">{t("fieldSecurityTeamName")}</Label>
