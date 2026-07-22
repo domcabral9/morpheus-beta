@@ -514,7 +514,14 @@
     "saving": "Saving...",
     "save": "Save",
     "saveSuccess": "Settings updated.",
-    "saveError": "Could not save the settings."
+    "saveError": "Could not save the settings.",
+    "tabs": {
+      "general": "General",
+      "smtp": "SMTP",
+      "sso": "SSO",
+      "ai": "AI",
+      "comingSoonDescription": "This setting is still being built — it lands in a future step of the plan."
+    }
   },
   "Dashboards": {
     "title": "Dashboards",
