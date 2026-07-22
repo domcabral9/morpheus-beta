@@ -9,6 +9,26 @@ import { ListInventoryQueryDto } from "./dto/list-inventory.query.dto";
 /** Cadência padrão de revisão para itens criados automaticamente na aprovação. */
 const DEFAULT_REVIEW_CYCLE_MONTHS = 12;
 
+export type InventoryItemWithOpinion = Omit<InventoryItemDetail, "assessment"> & {
+  technicalOpinion: {
+    id: string;
+    number: string;
+    classificationLabel: string;
+    issuedAt: Date;
+  } | null;
+};
+
+/** Achata `assessment.versions[0].technicalOpinion` (forma de query, com o
+ * hop artificial de "versão mais recente") num campo único e opcional - a
+ * API não deveria expor a rota de navegação do schema, só o resultado. */
+function attachTechnicalOpinion(item: InventoryItemDetail): InventoryItemWithOpinion {
+  const { assessment, ...rest } = item;
+  return {
+    ...rest,
+    technicalOpinion: assessment?.versions[0]?.technicalOpinion ?? null,
+  };
+}
+
 export interface ApprovedAssessmentForInventory {
   id: string;
   softwareName: string;
@@ -34,16 +54,19 @@ export class InventoryService {
       page,
       pageSize,
     });
-    return { items, total, page, pageSize };
+    return { items: items.map(attachTechnicalOpinion), total, page, pageSize };
   }
 
-  async getById(user: AuthenticatedUser, id: string): Promise<InventoryItemDetail> {
+  async getById(user: AuthenticatedUser, id: string): Promise<InventoryItemWithOpinion> {
     const item = await this.getOwnedOrThrow(user.tenantId, id);
-    return item;
+    return attachTechnicalOpinion(item);
   }
 
-  create(user: AuthenticatedUser, dto: CreateInventoryItemDto): Promise<InventoryItemDetail> {
-    return this.repository.create({
+  async create(
+    user: AuthenticatedUser,
+    dto: CreateInventoryItemDto,
+  ): Promise<InventoryItemWithOpinion> {
+    const item = await this.repository.create({
       tenantId: user.tenantId,
       name: dto.name,
       vendor: dto.vendor,
@@ -60,18 +83,20 @@ export class InventoryService {
       criticality: dto.criticality,
       dataClassification: dto.dataClassification,
     });
+    return attachTechnicalOpinion(item);
   }
 
   async update(
     user: AuthenticatedUser,
     id: string,
     dto: UpdateInventoryItemDto,
-  ): Promise<InventoryItemDetail> {
+  ): Promise<InventoryItemWithOpinion> {
     await this.getOwnedOrThrow(user.tenantId, id);
-    return this.repository.update(id, {
+    const item = await this.repository.update(id, {
       ...dto,
       nextReviewDate: dto.nextReviewDate ? new Date(dto.nextReviewDate) : undefined,
     });
+    return attachTechnicalOpinion(item);
   }
 
   /**
