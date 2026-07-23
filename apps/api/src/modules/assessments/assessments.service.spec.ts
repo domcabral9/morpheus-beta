@@ -1,5 +1,5 @@
 import { Test } from "@nestjs/testing";
-import { BadRequestException, ForbiddenException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException } from "@nestjs/common";
 import { AssessmentsService } from "./assessments.service";
 import { AssessmentsRepository, AssessmentDetail } from "./assessments.repository";
 import { AreasService } from "../areas/areas.service";
@@ -64,6 +64,8 @@ describe("AssessmentsService", () => {
     countVersions: jest.Mock;
     createVersion: jest.Mock;
     findVersionsWithDetails: jest.Mock;
+    isAreaBlocked: jest.Mock;
+    findBlockedAreaIds: jest.Mock;
   };
   let areasService: { findAllActive: jest.Mock };
   let usersService: { findById: jest.Mock };
@@ -83,6 +85,8 @@ describe("AssessmentsService", () => {
       countVersions: jest.fn().mockResolvedValue(0),
       createVersion: jest.fn().mockResolvedValue({ id: "version-1" }),
       findVersionsWithDetails: jest.fn().mockResolvedValue([]),
+      isAreaBlocked: jest.fn().mockResolvedValue(false),
+      findBlockedAreaIds: jest.fn().mockResolvedValue([]),
     };
     areasService = { findAllActive: jest.fn().mockResolvedValue([{ id: "area-1" }]) };
     usersService = {
@@ -127,6 +131,51 @@ describe("AssessmentsService", () => {
       expect(repo.create).toHaveBeenCalledWith(
         expect.objectContaining({ hasRiskAnalysis: true, hasInfoSecClause: false }),
       );
+    });
+  });
+
+  describe("create (bloqueio de área por renovação vencida)", () => {
+    it("rejeita criar avaliação em área bloqueada (item EXPIRED)", async () => {
+      repo.isAreaBlocked.mockResolvedValue(true);
+
+      await expect(
+        service.create(makeUser(), {
+          softwareName: "Sistema X",
+          vendor: "Fornecedor X",
+          responsibleId: "user-requester",
+          areaId: "area-1",
+          criticality: "MEDIUM",
+          justification: "Justificativa",
+        } as never),
+      ).rejects.toThrow(ConflictException);
+      expect(repo.create).not.toHaveBeenCalled();
+    });
+
+    it("permite criar normalmente quando a área não está bloqueada", async () => {
+      repo.isAreaBlocked.mockResolvedValue(false);
+      repo.create.mockResolvedValue(makeAssessment());
+
+      await service.create(makeUser(), {
+        softwareName: "Sistema X",
+        vendor: "Fornecedor X",
+        responsibleId: "user-requester",
+        areaId: "area-1",
+        criticality: "MEDIUM",
+        justification: "Justificativa",
+      } as never);
+
+      expect(repo.create).toHaveBeenCalled();
+    });
+  });
+
+  describe("listBlockedAreas", () => {
+    it("repassa as áreas bloqueadas do tenant do usuário", async () => {
+      repo.findBlockedAreaIds.mockResolvedValue(["area-2"]);
+
+      const result = await service.listBlockedAreas(makeUser());
+
+      expect(repo.findBlockedAreaIds).toHaveBeenCalledWith("tenant-1");
+      expect(result).toEqual(["area-2"]);
     });
   });
 

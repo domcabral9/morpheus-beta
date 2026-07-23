@@ -785,7 +785,11 @@
     "selectPlaceholder": "Selecione",
     "duplicateWarningTitle": "Já existe um item de inventário com este nome nesta área",
     "duplicateWarningBody": "\"{name}\" ({vendor}) já está no inventário desta área - status: {status}, origem: {origin}. Confira o inventário antes de solicitar uma nova homologação; softwares com o mesmo nome em áreas diferentes são permitidos.",
-    "duplicateBlockedError": "Não é possível continuar - já existe um item de inventário com este nome nesta área."
+    "duplicateBlockedError": "Não é possível continuar - já existe um item de inventário com este nome nesta área.",
+    "areaBlockedOption": "{name} (bloqueada - renovação pendente)",
+    "areaBlockedDialogTitle": "Área bloqueada para novas avaliações",
+    "areaBlockedDialogBody": "Esta área está com novas submissões bloqueadas até que as pendências de renovação anual sejam resolvidas. Um Administrador pode reatribuir o solicitante da renovação pendente para destravar.",
+    "areaBlockedDialogDismiss": "Entendi"
   },
   "AssessmentDetail": {
     "back": "Voltar",

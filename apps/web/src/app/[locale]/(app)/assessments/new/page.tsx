@@ -14,6 +14,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Area, AssessmentDetail, Criticality } from "@/lib/assessment-types";
 import type { InventoryDuplicateCheckResult, InventoryDuplicateMatch } from "@/lib/inventory-types";
 
@@ -30,6 +38,8 @@ export default function NewAssessmentPage() {
   const router = useRouter();
 
   const [areas, setAreas] = React.useState<Area[] | null>(null);
+  const [blockedAreaIds, setBlockedAreaIds] = React.useState<Set<string>>(new Set());
+  const [areaBlockedDialogOpen, setAreaBlockedDialogOpen] = React.useState(false);
   const [softwareName, setSoftwareName] = React.useState("");
   const [vendor, setVendor] = React.useState("");
   const [version, setVersion] = React.useState("");
@@ -45,11 +55,13 @@ export default function NewAssessmentPage() {
 
   React.useEffect(() => {
     if (!user) return;
-    api
-      .get<Area[]>("/areas")
-      .then((result) => {
-        setAreas(result);
-        if (result.length > 0) setAreaId(result[0].id);
+    Promise.all([api.get<Area[]>("/areas"), api.get<string[]>("/assessments/blocked-areas")])
+      .then(([areaList, blockedIds]) => {
+        const blocked = new Set(blockedIds);
+        setAreas(areaList);
+        setBlockedAreaIds(blocked);
+        const firstAvailable = areaList.find((area) => !blocked.has(area.id));
+        if (firstAvailable) setAreaId(firstAvailable.id);
       })
       .catch(() => setError(t("genericError")));
   }, [user, api, t]);
@@ -113,7 +125,12 @@ export default function NewAssessmentPage() {
       });
       router.push(`/assessments/${created.id}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : t("genericError"));
+      if (err instanceof ApiError && err.code === "AREA_BLOCKED") {
+        setBlockedAreaIds((current) => new Set(current).add(areaId));
+        setAreaBlockedDialogOpen(true);
+      } else {
+        setError(err instanceof ApiError ? err.message : t("genericError"));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -180,8 +197,8 @@ export default function NewAssessmentPage() {
                   >
                     {!areas && <option value="">{t("selectPlaceholder")}</option>}
                     {areas?.map((area) => (
-                      <option key={area.id} value={area.id}>
-                        {area.name}
+                      <option key={area.id} value={area.id} disabled={blockedAreaIds.has(area.id)}>
+                        {blockedAreaIds.has(area.id) ? t("areaBlockedOption", { name: area.name }) : area.name}
                       </option>
                     ))}
                   </NativeSelect>
@@ -261,13 +278,28 @@ export default function NewAssessmentPage() {
               )}
 
               <div className="mt-2 flex justify-end gap-2">
-                <Button type="submit" disabled={submitting || !areaId || !!duplicateMatch}>
+                <Button
+                  type="submit"
+                  disabled={submitting || !areaId || !!duplicateMatch || blockedAreaIds.has(areaId)}
+                >
                   {submitting ? t("submitting") : t("submit")}
                 </Button>
               </div>
             </form>
           </CardContent>
         </Card>
+
+      <Dialog open={areaBlockedDialogOpen} onOpenChange={setAreaBlockedDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("areaBlockedDialogTitle")}</DialogTitle>
+            <DialogDescription>{t("areaBlockedDialogBody")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setAreaBlockedDialogOpen(false)}>{t("areaBlockedDialogDismiss")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

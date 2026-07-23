@@ -92,4 +92,60 @@ export class RenewalScheduler {
       this.logger.log(`Gatilho de renovação anual: ${triggeredCount} avaliação(ões) reaberta(s).`);
     }
   }
+
+  /**
+   * Job diário de vencimento de renovação (Fase 4 do plano). Roda depois de
+   * `checkRenewalTriggers` - marca `EXPIRED` os itens cujo prazo de
+   * renovação (`Assessment.renewalDueAt`) já passou sem aprovação. Não mexe
+   * em `Assessment.status` (continua `PENDING_RENEWAL`, ainda acionável pelo
+   * solicitante/reatribuído) - só o item de inventário muda, e é esse status
+   * `EXPIRED` que faz `AssessmentsService.assertAreaNotBlocked` travar novas
+   * submissões na área (sinal derivado, autolimpante quando a renovação é
+   * aprovada e o item volta pra `ACTIVE`).
+   */
+  @Cron("30 6 * * *")
+  async checkLapsedRenewals(): Promise<void> {
+    const now = new Date();
+    const items = await this.repository.findLapsedItems(now);
+
+    for (const item of items) {
+      await this.repository.markExpired(item.id);
+
+      const recipientIds = new Set([item.managerId, item.technicalResponsibleId]);
+      for (const userId of recipientIds) {
+        await this.notificationsService.notify({
+          tenantId: item.tenantId,
+          userId,
+          type: "RENEWAL_OVERDUE",
+          title: `Renovação vencida: ${item.name}`,
+          body: `O prazo de renovação de "${item.name}" (${item.vendor}) venceu sem resolução. A área está bloqueada para novas avaliações até que a renovação seja concluída.`,
+          relatedEntityType: "SoftwareInventoryItem",
+          relatedEntityId: item.id,
+        });
+      }
+
+      const adminRole = await this.repository.findAdministradorRoleId(item.tenantId);
+      if (adminRole) {
+        await this.notificationsService.notifyRole(item.tenantId, adminRole.id, {
+          type: "RENEWAL_OVERDUE",
+          title: `Renovação vencida: ${item.name}`,
+          body: `O prazo de renovação de "${item.name}" (${item.vendor}) venceu sem resolução. A área está bloqueada para novas avaliações.`,
+          relatedEntityType: "SoftwareInventoryItem",
+          relatedEntityId: item.id,
+        });
+      }
+
+      await this.auditLogService.record({
+        tenantId: item.tenantId,
+        action: "UPDATE",
+        entityType: "SoftwareInventoryItem",
+        entityId: item.id,
+        metadata: { reason: "renewal_lapsed", previousStatus: item.status },
+      });
+    }
+
+    if (items.length > 0) {
+      this.logger.log(`Vencimento de renovação: ${items.length} item(ns) marcado(s) EXPIRED, área(s) bloqueada(s).`);
+    }
+  }
 }

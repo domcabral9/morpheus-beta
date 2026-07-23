@@ -45,4 +45,26 @@ export class RenewalRepository {
       select: { id: true },
     });
   }
+
+  /**
+   * Itens ainda não `EXPIRED` cuja `Assessment` está `PENDING_RENEWAL` com o
+   * prazo (já ajustado pela janela de fechamento) vencido. Filtrar por
+   * `status != EXPIRED` mantém o job idempotente - um item já marcado não é
+   * reprocessado (nem renotificado) em execuções seguintes.
+   */
+  findLapsedItems(now: Date) {
+    return this.prisma.softwareInventoryItem.findMany({
+      where: {
+        status: { not: "EXPIRED" },
+        assessment: { status: "PENDING_RENEWAL", renewalDueAt: { lt: now } },
+      },
+    });
+  }
+
+  markExpired(itemId: string) {
+    return this.prisma.softwareInventoryItem.update({
+      where: { id: itemId },
+      data: { status: "EXPIRED" },
+    });
+  }
 }
