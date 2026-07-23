@@ -318,6 +318,55 @@ describe("AssessmentsService", () => {
     });
   });
 
+  describe("PENDING_RENEWAL (renovação anual)", () => {
+    it("permite edição/reenvio pelo solicitante original enquanto PENDING_RENEWAL", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ status: "PENDING_RENEWAL" } as never));
+      repo.update.mockResolvedValue(
+        makeAssessment({ status: "PENDING_RENEWAL", softwareName: "Novo nome" } as never),
+      );
+
+      const result = await service.update(makeUser(), "assessment-1", {
+        softwareName: "Novo nome",
+      });
+
+      expect(result.softwareName).toBe("Novo nome");
+    });
+
+    it("bloqueia edição/reenvio por um usuário diferente do solicitante original", async () => {
+      repo.findById.mockResolvedValue(
+        makeAssessment({ status: "PENDING_RENEWAL", requesterId: "outro-user" } as never),
+      );
+
+      await expect(
+        service.update(makeUser(), "assessment-1", { softwareName: "Novo nome" }),
+      ).rejects.toThrow(ForbiddenException);
+      await expect(service.submit(makeUser(), "assessment-1")).rejects.toThrow(ForbiddenException);
+    });
+
+    it("bloqueia troca de área durante um ciclo de renovação em andamento", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ status: "PENDING_RENEWAL" } as never));
+
+      await expect(
+        service.update(makeUser(), "assessment-1", { areaId: "area-2" }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it("reenvio a partir de PENDING_RENEWAL reabre o workflow com changeReason 'Renovação anual'", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ status: "PENDING_RENEWAL" } as never));
+      repo.findAnswers.mockResolvedValue([]);
+      repo.update.mockResolvedValue(makeAssessment({ status: "IN_REVIEW" } as never));
+
+      const result = await service.submit(makeUser(), "assessment-1");
+
+      expect(result.status).toBe("IN_REVIEW");
+      expect(repo.createVersion).toHaveBeenLastCalledWith(
+        expect.objectContaining({ changeReason: "Renovação anual" }),
+      );
+      expect(workflowService.startWorkflow).toHaveBeenCalledWith("tenant-1", "assessment-1");
+    });
+  });
+
   describe("getVersionHistory", () => {
     it("bloqueia quem não pode visualizar a avaliação", async () => {
       repo.findById.mockResolvedValue(makeAssessment({ requesterId: "outro-user" } as never));

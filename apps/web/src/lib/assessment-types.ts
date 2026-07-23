@@ -7,7 +7,8 @@ export type AssessmentStatus =
   | "PENDING_ADJUSTMENT"
   | "APPROVED"
   | "REJECTED"
-  | "REOPENED";
+  | "REOPENED"
+  | "PENDING_RENEWAL";
 
 export interface Area {
   id: string;

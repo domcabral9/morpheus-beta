@@ -110,6 +110,24 @@ describe("InventoryService", () => {
         expect.objectContaining({ name: "Sistema X" }),
       );
     });
+
+    it("renovação aprovada reseta nextReviewDate (+12 meses) e status ACTIVE, mesmo se o item estava EXPIRED", async () => {
+      repo.findByAssessmentId.mockResolvedValue({
+        id: "item-existente",
+        status: "EXPIRED",
+        nextReviewDate: new Date("2026-01-01"),
+      });
+
+      await service.createFromApprovedAssessment("tenant-1", approvedAssessment);
+
+      const [, updateArgs] = repo.update.mock.calls[0];
+      expect(updateArgs.status).toBe("ACTIVE");
+      const now = new Date();
+      const monthsDiff =
+        (updateArgs.nextReviewDate.getFullYear() - now.getFullYear()) * 12 +
+        (updateArgs.nextReviewDate.getMonth() - now.getMonth());
+      expect(monthsDiff).toBe(12);
+    });
   });
 
   describe("getById / update (tenant scoping)", () => {

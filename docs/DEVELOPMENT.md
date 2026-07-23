@@ -1580,3 +1580,38 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
   - Validado via Playwright: clique na caixa abre a paleta, Escape fecha, Ctrl+K abre a mesma
     instância (não uma segunda), filtro por texto ("papeis") funciona normalmente; screenshots em
     3 larguras (desktop, 900px, 390px) confirmando que não quebra layout em nenhuma.
+- **Renovação anual de homologação - Fase 1: schema + máquina de estados central** (feature grande,
+  planejada em sessão dedicada de escopo com o usuário via `AskUserQuestion`/plan mode - plano completo
+  em `C:\Users\kaosikner\.claude\plans\streamed-sleeping-newell.md`, 6 fases). Fase 1 não tem gatilho
+  automático ainda (isso é Fase 3) - só deixa a máquina de estados pronta pra quando o scheduler
+  existir.
+  - Schema: `AssessmentStatus` ganhou `PENDING_RENEWAL`; `Assessment` ganhou `renewalDueAt`/
+    `renewalCycleStartedAt` (nulos exceto durante o ciclo); `Tenant` ganhou
+    `annualClosingWindowStart`/`...End`/`...Enabled` (usados só a partir da Fase 2, mas migrados agora
+    - decisão do plano de fazer uma migration só, no início); `NotificationType` ganhou
+    `RENEWAL_PENDING`/`RENEWAL_OVERDUE`; `SoftwareInventoryItem` ganhou o índice composto
+    `[tenantId, areaId, status]` (vai sustentar a checagem de área bloqueada da Fase 4 -
+    `EXISTS(...status='EXPIRED')`, sem precisar de um campo `Area.isBlocked` novo).
+  - `EDITABLE_STATUSES` em `AssessmentsService` ganhou `PENDING_RENEWAL` - uma avaliação em renovação
+    fica editável/reenviável pelo solicitante original de novo, reusando a MESMA
+    `AssessmentWorkflowInstance` (schema já tinha um comentário dizendo que reaberturas deveriam
+    reusar a mesma instância - nunca tinha sido implementado até agora). `submit()` ganhou um terceiro
+    `changeReason` ("Renovação anual") e chama `workflowService.startWorkflow()` normalmente - **zero
+    mudança** na inbox de aprovações (`GET /workflow/inbox`), nos dialogs de decisão, ou no
+    bulk-decide, confirmado via curl (etapa nova da renovação aparece na inbox do papel responsável
+    sem nenhuma alteração nesses endpoints).
+  - `update()` bloqueia troca de `areaId` enquanto `status === "PENDING_RENEWAL"` (evita burlar o
+    bloqueio de área que a Fase 4 vai implementar, só reatribuindo a avaliação pra outra área).
+  - `InventoryService.createFromApprovedAssessment()`: o branch `if (existing)` - até agora nunca
+    exercitado em produção, já que `APPROVED`/`REJECTED` nunca eram reenviáveis - passa a também
+    resetar `nextReviewDate` (+12 meses) e `status: "ACTIVE"` na aprovação de uma renovação, mesmo que
+    o item estivesse `EXPIRED`. É a decisão #7 do plano inteira, num branch de baixo risco.
+  - Validado via testes novos (`assessments.service.spec.ts`, `inventory.service.spec.ts` - edição/
+    reenvio só pelo solicitante original, bloqueio de troca de área, reset de `nextReviewDate`/status
+    na renovação) e um fluxo manual completo via curl + SQL direto: flipou uma avaliação `APPROVED`
+    real pra `PENDING_RENEWAL`, confirmou edição/reenvio pelo dono (200), bloqueio pra outro usuário e
+    pra troca de área (403 nos dois), reenvio bem-sucedido reabrindo o workflow (versão nova `v1.1`,
+    `changeReason` "Renovação anual"), e a etapa nova aparecendo na inbox do aprovador sem nenhuma
+    mudança de código nesse endpoint - depois revertido pro estado original (dado de amostra
+    compartilhado).
+    Suite completa da API: 182/182 testes passando.

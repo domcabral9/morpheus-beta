@@ -26,7 +26,7 @@ import { SubmitAnswersDto } from "./dto/submit-answers.dto";
 import { ListAssessmentsQueryDto } from "./dto/list-assessments.query.dto";
 import type { QuestionWithOptions } from "../questionnaire/questionnaire.repository";
 
-const EDITABLE_STATUSES: AssessmentStatus[] = ["DRAFT", "PENDING_ADJUSTMENT"];
+const EDITABLE_STATUSES: AssessmentStatus[] = ["DRAFT", "PENDING_ADJUSTMENT", "PENDING_RENEWAL"];
 
 function hasPermission(user: AuthenticatedUser, key: string): boolean {
   return user.permissions.includes(key);
@@ -102,6 +102,14 @@ export class AssessmentsService {
     this.assertCanEdit(user, assessment);
 
     if (dto.areaId) {
+      // Trocar a área durante um ciclo de renovação permitiria burlar um
+      // futuro bloqueio de área (Fase 4) só reatribuindo a avaliação a uma
+      // área sem pendência.
+      if (assessment.status === "PENDING_RENEWAL") {
+        throw new ForbiddenException(
+          "Não é possível trocar a área durante um ciclo de renovação em andamento.",
+        );
+      }
       await this.assertAreaInTenant(user.tenantId, dto.areaId);
     }
     if (dto.responsibleId) {
@@ -157,7 +165,11 @@ export class AssessmentsService {
       assessmentId: id,
       versionLabel,
       changeReason:
-        assessment.status === "PENDING_ADJUSTMENT" ? "Reenvio após ajuste" : "Envio inicial",
+        assessment.status === "PENDING_RENEWAL"
+          ? "Renovação anual"
+          : assessment.status === "PENDING_ADJUSTMENT"
+            ? "Reenvio após ajuste"
+            : "Envio inicial",
       createdById: user.id,
       snapshotJson: {
         assessment: {
