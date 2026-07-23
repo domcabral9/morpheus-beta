@@ -785,7 +785,11 @@
     "selectPlaceholder": "Select",
     "duplicateWarningTitle": "An inventory item with this name already exists in this area",
     "duplicateWarningBody": "\"{name}\" ({vendor}) is already in this area's inventory - status: {status}, origin: {origin}. Check the inventory before requesting a new homologation; software with the same name in different areas is allowed.",
-    "duplicateBlockedError": "Cannot continue - an inventory item with this name already exists in this area."
+    "duplicateBlockedError": "Cannot continue - an inventory item with this name already exists in this area.",
+    "areaBlockedOption": "{name} (blocked - renewal pending)",
+    "areaBlockedDialogTitle": "Area blocked for new assessments",
+    "areaBlockedDialogBody": "This area has new submissions blocked until pending annual renewals are resolved. An Administrator can reassign the requester on the pending renewal to unblock it.",
+    "areaBlockedDialogDismiss": "Got it"
   },
   "AssessmentDetail": {
     "back": "Back",

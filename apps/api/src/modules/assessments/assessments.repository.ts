@@ -39,6 +39,26 @@ export class AssessmentsRepository {
     return this.prisma.assessment.create({ data, include: assessmentDetailInclude });
   }
 
+  // Sinal derivado e autolimpante de "área bloqueada" (decisão do plano de
+  // renovação anual, Fase 4): existe item de inventário EXPIRED na área.
+  // Resolve sozinho quando a renovação correspondente é aprovada (o item
+  // volta pra ACTIVE) - sem precisar de um campo Area.isBlocked à parte.
+  async isAreaBlocked(tenantId: string, areaId: string): Promise<boolean> {
+    const count = await this.prisma.softwareInventoryItem.count({
+      where: { tenantId, areaId, status: "EXPIRED" },
+    });
+    return count > 0;
+  }
+
+  async findBlockedAreaIds(tenantId: string): Promise<string[]> {
+    const rows = await this.prisma.softwareInventoryItem.findMany({
+      where: { tenantId, status: "EXPIRED" },
+      select: { areaId: true },
+      distinct: ["areaId"],
+    });
+    return rows.map((row) => row.areaId);
+  }
+
   findById(id: string): Promise<AssessmentDetail | null> {
     return this.prisma.assessment.findUnique({ where: { id }, include: assessmentDetailInclude });
   }

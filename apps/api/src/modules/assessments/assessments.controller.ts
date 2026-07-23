@@ -31,6 +31,12 @@ export class AssessmentsController {
     return this.assessmentsService.findAllForUser(user, query);
   }
 
+  // Precisa vir antes de `:id` - senão "blocked-areas" seria interpretado como um id.
+  @Get("blocked-areas")
+  listBlockedAreas(@CurrentUser() user: AuthenticatedUser) {
+    return this.assessmentsService.listBlockedAreas(user);
+  }
+
   @Get(":id")
   findOne(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.assessmentsService.findOneForUser(user, id);

@@ -1671,3 +1671,48 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     ("Nest application successfully started"). Sem endpoint HTTP nesta fase (é um cron job puro) - sem
     verificação manual via curl, por isso a cobertura extra nos testes unitários.
     Suite completa da API: 202/202 testes passando.
+- **Renovação anual de homologação - Fase 4: bloqueio de área + vencimento sem resolução** (mesmo
+  plano, `C:\Users\kaosikner\.claude\plans\streamed-sleeping-newell.md`). Fecha o loop: quando o prazo
+  de renovação vence sem aprovação, a área trava novas submissões até resolver.
+  - `RenewalScheduler.checkLapsedRenewals()` (novo `@Cron("30 6 * * *")`, 15min depois do gatilho de
+    renovação): marca `EXPIRED` os itens de inventário cuja `Assessment` está `PENDING_RENEWAL` com
+    `renewalDueAt` vencido (`renewal.repository.findLapsedItems()`, filtrando `status != EXPIRED` -
+    mantém o job idempotente, não reprocessa nem renotifica item já marcado). Notifica gestor +
+    responsável técnico do item e o papel "Administrador" (tipo `RENEWAL_OVERDUE`), grava `AuditLog`
+    (`action: "UPDATE"`). Não mexe em `Assessment.status` - continua `PENDING_RENEWAL`, ainda acionável
+    pelo solicitante/reatribuído.
+  - `AssessmentsRepository.isAreaBlocked()`/`findBlockedAreaIds()`: sinal derivado e autolimpante -
+    `EXISTS(SoftwareInventoryItem WHERE tenantId=X AND areaId=Y AND status='EXPIRED')`. Sem campo
+    `Area.isBlocked` novo; resolve sozinho quando a renovação é aprovada (item volta pra `ACTIVE`, ver
+    Fase 1).
+  - `AssessmentsService.create()` ganha `assertAreaNotBlocked()`, chamada antes de criar - lança
+    `ConflictException` (409) com corpo `{ message, error: "AREA_BLOCKED" }`. Corpo estruturado (não só
+    mensagem em português) pro frontend distinguir esse caso sem dar match de string -
+    `ApiError` (`apps/web/src/lib/api-client.ts`) ganhou um terceiro campo opcional `code`, populado a
+    partir de `body.error`.
+  - `GET /assessments/blocked-areas` (novo, precisa vir antes de `:id` no controller - mesmo cuidado já
+    documentado pra `check-duplicate`/`stats` no inventário) retorna as áreas bloqueadas do tenant.
+  - Frontend (`assessments/new/page.tsx`): busca `/areas` e `/assessments/blocked-areas` em paralelo no
+    mount; desabilita as opções bloqueadas no `<NativeSelect>` de área (com rótulo "(bloqueada -
+    renovação pendente)") e evita selecionar uma área bloqueada como padrão. Fallback pra tentativa
+    direta via API (ou corrida entre o fetch e uma renovação vencendo): captura `ApiError.code ===
+    "AREA_BLOCKED"` no submit e abre um `Dialog` explicando o bloqueio (popup, não toast - pedido
+    explícito do usuário) e quem pode resolver (Administrador reatribuindo o solicitante).
+  - **Nota de escopo** (já registrada no plano): `User` não tem `areaId` hoje, então não existe uma
+    noção computável de "usuários daquela área" pra um popup de sessão inteira. A abordagem acima
+    (bloqueio + modal no ponto de ação) cumpre a decisão de bloquear toda a área sem esse trabalho de
+    RBAC extra.
+  - Validado via testes novos (`assessments.service.spec.ts` - `create()` rejeita área bloqueada com
+    `ConflictException`, aceita normalmente quando não bloqueada, `listBlockedAreas()` repassa o
+    tenant certo; `renewal.scheduler.spec.ts` - `checkLapsedRenewals()`: nenhum item vencido, marca
+    `EXPIRED` + notifica gestor/responsável técnico/Administrador, dedup quando gestor e responsável
+    técnico são a mesma pessoa, ausência do papel Administrador não quebra o job) e um fluxo manual
+    completo via curl + SQL direto num item real do tenant demo: flipou pra `EXPIRED`, confirmou
+    `GET /assessments/blocked-areas` retornando a área, `POST /assessments` nessa área retornando 409
+    `AREA_BLOCKED`, `POST /assessments` numa área diferente retornando 201 normalmente (prova que o
+    bloqueio é por área, não global) - revertido o item pra `ACTIVE` e a avaliação de teste apagada ao
+    final, confirmado `GET /assessments/blocked-areas` voltando a `[]` (prova que o sinal é
+    autolimpante). Sem Playwright nesta fase (sem dependência do pacote configurada no repo) - a
+    verificação de UI (desabilitar opção no select, abrir o modal) não foi testada visualmente num
+    browser, só por revisão de código reaproveitando padrões já usados noutras telas.
+    Suite completa da API: 209/209 testes passando.

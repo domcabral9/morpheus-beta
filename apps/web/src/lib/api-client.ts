@@ -5,6 +5,9 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
+    // Código estável opcional (ex.: "AREA_BLOCKED") pra telas que precisam
+    // distinguir um erro específico sem dar match na mensagem em português.
+    public readonly code?: string,
   ) {
     super(message);
     this.name = "ApiError";
@@ -49,7 +52,7 @@ function buildRequestInit(options: FetchOptions): RequestInit {
 async function throwIfError(response: Response): Promise<void> {
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new ApiError(body.message ?? `Erro ${response.status}`, response.status);
+    throw new ApiError(body.message ?? `Erro ${response.status}`, response.status, body.error);
   }
 }
 
