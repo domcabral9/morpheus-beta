@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsIn, IsOptional, IsString, IsUrl, Matches, MinLength } from "class-validator";
+import { IsBoolean, IsIn, IsOptional, IsString, IsUrl, Matches, MinLength } from "class-validator";
 
 const CRITICALITY_VALUES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
 const SHA256_HEX_PATTERN = /^[a-fA-F0-9]{64}$/;
@@ -56,6 +56,19 @@ export class CreateAssessmentDto {
     message: "installerFileHash deve ser um SHA-256 hexadecimal válido",
   })
   installerFileHash?: string;
+
+  @ApiProperty({
+    description:
+      "O fornecedor tem ART (Análise de Risco) documentada? Declaração do solicitante - verificada manualmente pelo aprovador.",
+  })
+  @IsBoolean()
+  hasRiskAnalysis!: boolean;
+
+  @ApiProperty({
+    description: "O fornecedor tem cláusula de segurança da informação assinada?",
+  })
+  @IsBoolean()
+  hasInfoSecClause!: boolean;
 }
 
 export { CRITICALITY_VALUES };

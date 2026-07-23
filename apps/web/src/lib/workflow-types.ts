@@ -28,8 +28,11 @@ export interface InboxStepExecution {
     assessment: {
       id: string;
       softwareName: string;
+      vendor: string;
       criticality: Criticality;
       requesterId: string;
+      hasRiskAnalysis: boolean;
+      hasInfoSecClause: boolean;
     };
   };
 }

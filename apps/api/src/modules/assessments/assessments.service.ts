@@ -60,6 +60,8 @@ export class AssessmentsService {
       justification: dto.justification,
       linkedTicket: dto.linkedTicket,
       installerFileHash: dto.installerFileHash,
+      hasRiskAnalysis: dto.hasRiskAnalysis,
+      hasInfoSecClause: dto.hasInfoSecClause,
       requesterId: user.id,
       status: "DRAFT",
     });

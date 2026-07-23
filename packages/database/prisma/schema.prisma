@@ -667,6 +667,16 @@ model Assessment {
   /// nem todo software avaliado é um instalável (SaaS, por exemplo). Snapshot
   /// copiado para TechnicalOpinion.hash no momento da emissão do parecer.
   installerFileHash String?
+  /// Declaração do solicitante: o fornecedor tem ART (Análise de Risco)
+  /// documentada? Fato sobre a relação com o fornecedor, não pergunta
+  /// pontuada do questionário de risco - por isso é campo direto aqui, não
+  /// mais uma Question. A verificação de que o documento existe de verdade é
+  /// manual, feita pelo aprovador fora do sistema (ver destaque em
+  /// /approvals) - o campo só registra a declaração, não anexa prova.
+  hasRiskAnalysis  Boolean @default(false)
+  /// Mesma lógica de `hasRiskAnalysis`, mas para a cláusula de segurança da
+  /// informação assinada com o fornecedor.
+  hasInfoSecClause Boolean @default(false)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 

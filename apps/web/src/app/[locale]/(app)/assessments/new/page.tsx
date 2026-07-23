@@ -8,6 +8,7 @@ import { useApi } from "@/lib/use-api";
 import { useRouter } from "@/i18n/navigation";
 import { ApiError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +33,8 @@ export default function NewAssessmentPage() {
   const [areaId, setAreaId] = React.useState("");
   const [criticality, setCriticality] = React.useState<Criticality>("MEDIUM");
   const [justification, setJustification] = React.useState("");
+  const [hasRiskAnalysis, setHasRiskAnalysis] = React.useState(false);
+  const [hasInfoSecClause, setHasInfoSecClause] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -62,6 +65,8 @@ export default function NewAssessmentPage() {
         responsibleId: user!.id,
         criticality,
         justification,
+        hasRiskAnalysis,
+        hasInfoSecClause,
       });
       router.push(`/assessments/${created.id}`);
     } catch (err) {
@@ -152,6 +157,31 @@ export default function NewAssessmentPage() {
                     ))}
                   </NativeSelect>
                 </div>
+              </div>
+
+              <div className="flex flex-col gap-3 rounded-md border p-3">
+                <p className="text-sm font-medium">{t("vendorComplianceTitle")}</p>
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="hasRiskAnalysis"
+                    checked={hasRiskAnalysis}
+                    onCheckedChange={(checked) => setHasRiskAnalysis(checked === true)}
+                  />
+                  <Label htmlFor="hasRiskAnalysis" className="font-normal">
+                    {t("hasRiskAnalysisLabel")}
+                  </Label>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="hasInfoSecClause"
+                    checked={hasInfoSecClause}
+                    onCheckedChange={(checked) => setHasInfoSecClause(checked === true)}
+                  />
+                  <Label htmlFor="hasInfoSecClause" className="font-normal">
+                    {t("hasInfoSecClauseLabel")}
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground">{t("vendorComplianceHint")}</p>
               </div>
 
               <div className="flex flex-col gap-2">

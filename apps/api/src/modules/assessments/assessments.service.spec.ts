@@ -109,6 +109,27 @@ describe("AssessmentsService", () => {
     service = moduleRef.get(AssessmentsService);
   });
 
+  describe("create", () => {
+    it("repassa hasRiskAnalysis/hasInfoSecClause pro repository", async () => {
+      repo.create.mockResolvedValue(makeAssessment());
+
+      await service.create(makeUser(), {
+        softwareName: "Sistema X",
+        vendor: "Fornecedor X",
+        responsibleId: "user-requester",
+        areaId: "area-1",
+        criticality: "MEDIUM",
+        justification: "Justificativa",
+        hasRiskAnalysis: true,
+        hasInfoSecClause: false,
+      } as never);
+
+      expect(repo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ hasRiskAnalysis: true, hasInfoSecClause: false }),
+      );
+    });
+  });
+
   describe("findOneForUser (SoD / visibilidade)", () => {
     it("dono com view-own consegue ver a própria avaliação", async () => {
       repo.findById.mockResolvedValue(makeAssessment());
