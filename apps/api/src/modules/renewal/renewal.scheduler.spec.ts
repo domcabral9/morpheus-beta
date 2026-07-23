@@ -30,12 +30,27 @@ function makeItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function makeLapsedItem(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "item-1",
+    tenantId: "tenant-1",
+    name: "Sistema X",
+    vendor: "Fornecedor X",
+    status: "PENDING_REVIEW",
+    managerId: "manager-1",
+    technicalResponsibleId: "tech-1",
+    ...overrides,
+  };
+}
+
 describe("RenewalScheduler", () => {
   let scheduler: RenewalScheduler;
   let repo: {
     findEligibleItems: jest.Mock;
     startRenewalCycle: jest.Mock;
     findAdministradorRoleId: jest.Mock;
+    findLapsedItems: jest.Mock;
+    markExpired: jest.Mock;
   };
   let notificationsService: { notify: jest.Mock; notifyRole: jest.Mock };
   let auditLogService: { record: jest.Mock };
@@ -45,6 +60,8 @@ describe("RenewalScheduler", () => {
       findEligibleItems: jest.fn().mockResolvedValue([]),
       startRenewalCycle: jest.fn().mockResolvedValue(undefined),
       findAdministradorRoleId: jest.fn().mockResolvedValue({ id: "admin-role-1" }),
+      findLapsedItems: jest.fn().mockResolvedValue([]),
+      markExpired: jest.fn().mockResolvedValue(undefined),
     };
     notificationsService = {
       notify: jest.fn().mockResolvedValue(undefined),
@@ -146,5 +163,55 @@ describe("RenewalScheduler", () => {
     await scheduler.checkRenewalTriggers();
 
     expect(repo.startRenewalCycle).toHaveBeenCalled();
+  });
+
+  describe("checkLapsedRenewals", () => {
+    it("não faz nada quando não há itens com prazo vencido", async () => {
+      await scheduler.checkLapsedRenewals();
+      expect(repo.markExpired).not.toHaveBeenCalled();
+      expect(notificationsService.notify).not.toHaveBeenCalled();
+      expect(auditLogService.record).not.toHaveBeenCalled();
+    });
+
+    it("marca o item EXPIRED e notifica gestor, responsável técnico e o papel Administrador", async () => {
+      repo.findLapsedItems.mockResolvedValue([makeLapsedItem()]);
+
+      await scheduler.checkLapsedRenewals();
+
+      expect(repo.markExpired).toHaveBeenCalledWith("item-1");
+      expect(notificationsService.notify).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "manager-1", type: "RENEWAL_OVERDUE" }),
+      );
+      expect(notificationsService.notify).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "tech-1", type: "RENEWAL_OVERDUE" }),
+      );
+      expect(notificationsService.notifyRole).toHaveBeenCalledWith(
+        "tenant-1",
+        "admin-role-1",
+        expect.objectContaining({ type: "RENEWAL_OVERDUE" }),
+      );
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: "tenant-1", action: "UPDATE", entityType: "SoftwareInventoryItem", entityId: "item-1" }),
+      );
+    });
+
+    it("notifica só uma vez quando gestor e responsável técnico são a mesma pessoa", async () => {
+      repo.findLapsedItems.mockResolvedValue([
+        makeLapsedItem({ managerId: "same-user", technicalResponsibleId: "same-user" }),
+      ]);
+
+      await scheduler.checkLapsedRenewals();
+
+      expect(notificationsService.notify).toHaveBeenCalledTimes(1);
+    });
+
+    it("nenhum papel Administrador encontrado: ainda marca EXPIRED e notifica gestor/responsável, sem quebrar", async () => {
+      repo.findAdministradorRoleId.mockResolvedValue(null);
+      repo.findLapsedItems.mockResolvedValue([makeLapsedItem()]);
+
+      await expect(scheduler.checkLapsedRenewals()).resolves.not.toThrow();
+      expect(repo.markExpired).toHaveBeenCalledWith("item-1");
+      expect(notificationsService.notifyRole).not.toHaveBeenCalled();
+    });
   });
 });

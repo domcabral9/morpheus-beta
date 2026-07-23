@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -47,6 +48,7 @@ export class AssessmentsService {
   async create(user: AuthenticatedUser, dto: CreateAssessmentDto): Promise<AssessmentDetail> {
     await this.assertAreaInTenant(user.tenantId, dto.areaId);
     await this.assertUserInTenant(user.tenantId, dto.responsibleId);
+    await this.assertAreaNotBlocked(user.tenantId, dto.areaId);
 
     return this.assessmentsRepository.create({
       tenantId: user.tenantId,
@@ -65,6 +67,10 @@ export class AssessmentsService {
       requesterId: user.id,
       status: "DRAFT",
     });
+  }
+
+  listBlockedAreas(user: AuthenticatedUser): Promise<string[]> {
+    return this.assessmentsRepository.findBlockedAreaIds(user.tenantId);
   }
 
   async findAllForUser(user: AuthenticatedUser, query: ListAssessmentsQueryDto) {
@@ -258,6 +264,17 @@ export class AssessmentsService {
     const areas = await this.areasService.findAllActive(tenantId);
     if (!areas.some((area) => area.id === areaId)) {
       throw new BadRequestException("Área inválida para este tenant.");
+    }
+  }
+
+  private async assertAreaNotBlocked(tenantId: string, areaId: string): Promise<void> {
+    const blocked = await this.assessmentsRepository.isAreaBlocked(tenantId, areaId);
+    if (blocked) {
+      throw new ConflictException({
+        message:
+          "Esta área está com novas submissões bloqueadas até que as pendências de renovação anual sejam resolvidas. Um Administrador pode reatribuir o solicitante da renovação pendente.",
+        error: "AREA_BLOCKED",
+      });
     }
   }
 
