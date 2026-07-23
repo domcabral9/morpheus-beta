@@ -79,7 +79,16 @@
     "submit": "Confirm decision",
     "submitting": "Submitting...",
     "decisionSuccess": "Decision recorded.",
-    "decisionError": "Could not record the decision."
+    "decisionError": "Could not record the decision.",
+    "selectAll": "Select all",
+    "selectRow": "Select",
+    "bulkDecideButton": "Decide selected ({count})",
+    "bulkDialogTitle": "Decide {count} selected steps",
+    "bulkDialogSubtitle": "The same decision will be applied to every step below.",
+    "bulkSkipHint": "\"Skip step\" only works for the selected ones that are optional - the rest show up as a failure in the result.",
+    "bulkSubmit": "Apply decision to {count} steps",
+    "bulkDecisionSuccess": "{count} decisions recorded successfully.",
+    "bulkDecisionPartial": "{successCount} decisions recorded, {failureCount} failed (e.g. you requested it yourself, or it was already decided by someone else)."
   },
   "TechnicalOpinions": {
     "title": "Technical opinions",
@@ -232,12 +241,22 @@
     "back": "Back",
     "filtersTitle": "Filters",
     "filterStatusAll": "All statuses",
+    "filterAreaAll": "All areas",
+    "filterTypeAll": "All types",
+    "filterCriticalityAll": "All criticalities",
+    "filterOrigin": "Origin",
+    "filterOriginAll": "All origins",
+    "filterOriginHomologated": "Homologated",
+    "filterOriginManual": "Manual entry",
+    "filterComplianceAll": "All",
+    "clearFilters": "Clear filters",
     "columnName": "Name",
     "columnArea": "Area",
     "columnCriticality": "Criticality",
     "columnStatus": "Status",
     "columnNextReview": "Next review",
     "columnTechnicalOpinion": "Opinion",
+    "columnCompliance": "Compliance",
     "paginationPrevious": "Previous",
     "paginationNext": "Next",
     "paginationPageOf": "Page {current} of {total}",
@@ -264,6 +283,13 @@
     "fieldStatus": "Status",
     "fieldTechnicalOpinion": "Technical opinion",
     "technicalOpinionNone": "Manual entry - no homologation opinion",
+    "vendorComplianceTitle": "Vendor compliance",
+    "hasRiskAnalysisLabel": "Risk analysis (ART)",
+    "hasInfoSecClauseLabel": "Information security clause",
+    "vendorComplianceHint": "Required even for manual entries - declared by whoever registers the item.",
+    "vendorComplianceInheritedHint": "Inherited from the homologation assessment - editable only by reopening the original assessment.",
+    "yes": "Yes",
+    "no": "No",
     "documentationLinksTitle": "Documentation links",
     "documentationLinksHint": "E.g.: Jira epic, Swagger/OpenAPI, Postman collection - mostly useful for API Integration assets.",
     "addDocumentationLink": "Add link",
@@ -293,6 +319,30 @@
       "INTERNAL": "Internal",
       "CONFIDENTIAL": "Confidential",
       "RESTRICTED": "Restricted"
+    },
+    "tabs": {
+      "list": "List",
+      "overview": "Overview"
+    },
+    "dashboard": {
+      "totalItems": "Total items",
+      "overdueReviews": "Overdue reviews",
+      "overdueReviewsHint": "Active items whose review date has already passed.",
+      "dueSoonReviews": "Reviews due in the next 30 days",
+      "dueSoonReviewsHint": "Active items with a review scheduled for the next 30 days.",
+      "homologatedCount": "From homologation",
+      "byOrigin": "Origin (homologated x manual)",
+      "byStatus": "Status distribution",
+      "byCriticality": "Criticality distribution",
+      "byType": "Type distribution",
+      "byArea": "By area",
+      "byHostingProvider": "By hosting provider",
+      "vendorComplianceTitle": "Vendor compliance",
+      "originHomologated": "Homologated",
+      "originManual": "Manual entry",
+      "unknownArea": "Area not found",
+      "noHostingProvider": "Not informed",
+      "otherHostingProviders": "Other"
     }
   },
   "AdminQuestionnaire": {
@@ -750,6 +800,16 @@
     "requiredMark": "required",
     "textPlaceholder": "Type your answer",
     "loadError": "Could not load this assessment.",
-    "notFound": "Assessment not found or you don't have access to it."
+    "notFound": "Assessment not found or you don't have access to it.",
+    "workflowHistoryTitle": "Decision history",
+    "workflowHistoryDecidedBy": "Decided by {name} on {date}.",
+    "workflowStepStatuses": {
+      "PENDING": "Waiting",
+      "IN_PROGRESS": "Under review",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "ADJUSTMENT_REQUESTED": "Adjustment requested",
+      "SKIPPED": "Skipped"
+    }
   }
 }

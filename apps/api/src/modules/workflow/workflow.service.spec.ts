@@ -446,4 +446,88 @@ describe("WorkflowService", () => {
       );
     });
   });
+
+  describe("bulkDecideSteps", () => {
+    function makeExecution(overrides: Record<string, unknown> = {}) {
+      return {
+        id: "exec-1",
+        status: "IN_PROGRESS",
+        assessmentWorkflowInstanceId: "instance-1",
+        workflowStep: {
+          id: "step-1",
+          order: 1,
+          isOptional: false,
+          responsibleRoleId: "role-gestor",
+          responsibleRole: { name: "Gestor da Área" },
+        },
+        assessmentWorkflowInstance: {
+          workflowDefinitionId: "def-1",
+          assessment: {
+            id: "assessment-1",
+            tenantId: "tenant-1",
+            requesterId: "requester-1",
+            responsibleId: "responsible-1",
+            softwareName: "Sistema X",
+            vendor: "Fornecedor X",
+            version: "1.0.0",
+            url: null,
+            areaId: "area-1",
+            criticality: "MEDIUM",
+            status: "IN_REVIEW",
+          },
+        },
+        ...overrides,
+      };
+    }
+
+    it("aplica a mesma decisão a várias etapas, cada uma via decideStep", async () => {
+      repo.findStepExecutionById
+        .mockResolvedValueOnce(makeExecution({ id: "exec-1" }))
+        .mockResolvedValueOnce(makeExecution({ id: "exec-1", status: "ADJUSTMENT_REQUESTED" }))
+        .mockResolvedValueOnce(makeExecution({ id: "exec-2" }))
+        .mockResolvedValueOnce(makeExecution({ id: "exec-2", status: "ADJUSTMENT_REQUESTED" }));
+      repo.findUserRoleIds.mockResolvedValue(["role-gestor"]);
+
+      const results = await service.bulkDecideSteps(makeUser(), {
+        stepExecutionIds: ["exec-1", "exec-2"],
+        decision: "REQUEST_ADJUSTMENT",
+        comments: "Ajustar por favor.",
+      });
+
+      expect(results).toEqual([
+        { stepExecutionId: "exec-1", success: true },
+        { stepExecutionId: "exec-2", success: true },
+      ]);
+      expect(repo.updateAssessmentStatus).toHaveBeenCalledTimes(2);
+      expect(notificationsService.notify).toHaveBeenCalledTimes(2);
+    });
+
+    it("uma etapa que falha não impede as demais de serem decididas", async () => {
+      repo.findStepExecutionById
+        .mockResolvedValueOnce(
+          makeExecution({
+            id: "exec-1",
+            assessmentWorkflowInstance: {
+              workflowDefinitionId: "def-1",
+              assessment: { id: "a1", tenantId: "outro-tenant", requesterId: "r1", status: "IN_REVIEW" },
+            },
+          }),
+        )
+        .mockResolvedValueOnce(makeExecution({ id: "exec-2" }))
+        .mockResolvedValueOnce(makeExecution({ id: "exec-2", status: "ADJUSTMENT_REQUESTED" }));
+      repo.findUserRoleIds.mockResolvedValue(["role-gestor"]);
+
+      const results = await service.bulkDecideSteps(makeUser(), {
+        stepExecutionIds: ["exec-1", "exec-2"],
+        decision: "REQUEST_ADJUSTMENT",
+      });
+
+      expect(results[0]).toEqual({
+        stepExecutionId: "exec-1",
+        success: false,
+        error: expect.any(String),
+      });
+      expect(results[1]).toEqual({ stepExecutionId: "exec-2", success: true });
+    });
+  });
 });

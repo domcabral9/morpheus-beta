@@ -27,6 +27,8 @@ const approvedAssessment = {
   areaId: "area-1",
   criticality: "MEDIUM" as const,
   responsibleId: "responsible-1",
+  hasRiskAnalysis: true,
+  hasInfoSecClause: false,
 };
 
 describe("InventoryService", () => {
@@ -39,6 +41,7 @@ describe("InventoryService", () => {
     update: jest.Mock;
     setDocumentationLinks: jest.Mock;
     findAllMatching: jest.Mock;
+    getStats: jest.Mock;
     findDueForReview: jest.Mock;
   };
   let auditLogService: { record: jest.Mock };
@@ -52,6 +55,7 @@ describe("InventoryService", () => {
       update: jest.fn().mockImplementation((id, data) => Promise.resolve({ id, ...data })),
       setDocumentationLinks: jest.fn().mockResolvedValue(undefined),
       findAllMatching: jest.fn(),
+      getStats: jest.fn(),
       findDueForReview: jest.fn(),
     };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
@@ -204,6 +208,69 @@ describe("InventoryService", () => {
       await service.update(makeUser(), "item-1", { vendor: "Novo nome" } as never);
 
       expect(repo.setDocumentationLinks).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("vendorCompliance (ART/cláusula InfoSec)", () => {
+    it("create() repassa hasRiskAnalysis/hasInfoSecClause pro repository", async () => {
+      await service.create(makeUser(), {
+        name: "API X",
+        vendor: "Fornecedor X",
+        category: "Integração",
+        type: "API_INTEGRATION",
+        areaId: "area-1",
+        managerId: "user-1",
+        technicalResponsibleId: "user-1",
+        homologationDate: "2026-07-01",
+        nextReviewDate: "2027-07-01",
+        criticality: "MEDIUM",
+        dataClassification: "INTERNAL",
+        hasRiskAnalysis: true,
+        hasInfoSecClause: false,
+      } as never);
+
+      expect(repo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ hasRiskAnalysis: true, hasInfoSecClause: false }),
+        undefined,
+      );
+    });
+
+    it("update() rejeita mudar hasRiskAnalysis/hasInfoSecClause em item com assessmentId (herdado da homologação)", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", assessmentId: "assessment-1" });
+
+      await expect(
+        service.update(makeUser(), "item-1", { hasRiskAnalysis: false } as never),
+      ).rejects.toThrow(ForbiddenException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it("update() permite mudar hasRiskAnalysis/hasInfoSecClause em item de entrada manual (sem assessmentId)", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", assessmentId: null });
+
+      await service.update(makeUser(), "item-1", { hasRiskAnalysis: true } as never);
+
+      expect(repo.update).toHaveBeenCalledWith(
+        "item-1",
+        expect.objectContaining({ hasRiskAnalysis: true }),
+      );
+    });
+
+    it("update() de outros campos continua funcionando normalmente em item homologado", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", assessmentId: "assessment-1" });
+
+      await service.update(makeUser(), "item-1", { vendor: "Novo nome" } as never);
+
+      expect(repo.update).toHaveBeenCalledWith("item-1", expect.objectContaining({ vendor: "Novo nome" }));
+    });
+  });
+
+  describe("getStats", () => {
+    it("repassa tenantId e a janela de revisão pro repository", async () => {
+      repo.getStats.mockResolvedValue({ totalItems: 0 });
+
+      await service.getStats(makeUser());
+
+      expect(repo.getStats).toHaveBeenCalledWith("tenant-1", 30);
     });
   });
 

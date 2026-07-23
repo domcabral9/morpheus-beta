@@ -31,6 +31,10 @@ function attachTechnicalOpinion(item: InventoryItemDetail): InventoryItemWithOpi
   };
 }
 
+function toBoolean(value: string | undefined): boolean | undefined {
+  return value === undefined ? undefined : value === "true";
+}
+
 export interface ApprovedAssessmentForInventory {
   id: string;
   softwareName: string;
@@ -40,6 +44,8 @@ export interface ApprovedAssessmentForInventory {
   areaId: string;
   criticality: Criticality;
   responsibleId: string;
+  hasRiskAnalysis: boolean;
+  hasInfoSecClause: boolean;
 }
 
 @Injectable()
@@ -56,10 +62,22 @@ export class InventoryService {
       tenantId: user.tenantId,
       status: query.status,
       areaId: query.areaId,
+      type: query.type,
+      criticality: query.criticality,
+      origin: query.origin,
+      hasRiskAnalysis: toBoolean(query.hasRiskAnalysis),
+      hasInfoSecClause: toBoolean(query.hasInfoSecClause),
       page,
       pageSize,
     });
     return { items: items.map(attachTechnicalOpinion), total, page, pageSize };
+  }
+
+  /** Agregados pra aba "Visão geral" do módulo - sempre do tenant inteiro,
+   * sem os filtros da listagem (ver nota no repository). */
+  async getStats(user: AuthenticatedUser) {
+    const REVIEW_DUE_SOON_DAYS = 30;
+    return this.repository.getStats(user.tenantId, REVIEW_DUE_SOON_DAYS);
   }
 
   /** Todas as linhas que batem com o filtro, sem paginação - quem chama
@@ -72,6 +90,11 @@ export class InventoryService {
       tenantId: user.tenantId,
       status: query.status,
       areaId: query.areaId,
+      type: query.type,
+      criticality: query.criticality,
+      origin: query.origin,
+      hasRiskAnalysis: toBoolean(query.hasRiskAnalysis),
+      hasInfoSecClause: toBoolean(query.hasInfoSecClause),
     });
     const mapped = items.map(attachTechnicalOpinion);
 
@@ -112,6 +135,8 @@ export class InventoryService {
         nextReviewDate: new Date(dto.nextReviewDate),
         criticality: dto.criticality,
         dataClassification: dto.dataClassification,
+        hasRiskAnalysis: dto.hasRiskAnalysis,
+        hasInfoSecClause: dto.hasInfoSecClause,
       },
       dto.documentationLinks,
     );
@@ -123,7 +148,15 @@ export class InventoryService {
     id: string,
     dto: UpdateInventoryItemDto,
   ): Promise<InventoryItemWithOpinion> {
-    await this.getOwnedOrThrow(user.tenantId, id);
+    const existing = await this.getOwnedOrThrow(user.tenantId, id);
+    if (
+      existing.assessmentId &&
+      (dto.hasRiskAnalysis !== undefined || dto.hasInfoSecClause !== undefined)
+    ) {
+      throw new ForbiddenException(
+        "ART/cláusula de segurança da informação são herdados da homologação e não podem ser editados diretamente no inventário.",
+      );
+    }
     const { documentationLinks, ...scalarFields } = dto;
     const item = await this.repository.update(id, {
       ...scalarFields,
@@ -164,6 +197,8 @@ export class InventoryService {
         url: assessment.url,
         areaId: assessment.areaId,
         criticality: assessment.criticality,
+        hasRiskAnalysis: assessment.hasRiskAnalysis,
+        hasInfoSecClause: assessment.hasInfoSecClause,
       });
     }
 
@@ -183,6 +218,8 @@ export class InventoryService {
       nextReviewDate,
       criticality: assessment.criticality,
       dataClassification: "INTERNAL",
+      hasRiskAnalysis: assessment.hasRiskAnalysis,
+      hasInfoSecClause: assessment.hasInfoSecClause,
     });
   }
 
