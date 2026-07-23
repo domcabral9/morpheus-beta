@@ -209,7 +209,15 @@ export class WorkflowRepository {
         assessmentWorkflowInstance: {
           include: {
             assessment: {
-              select: { id: true, softwareName: true, criticality: true, requesterId: true },
+              select: {
+                id: true,
+                softwareName: true,
+                vendor: true,
+                criticality: true,
+                requesterId: true,
+                hasRiskAnalysis: true,
+                hasInfoSecClause: true,
+              },
             },
           },
         },

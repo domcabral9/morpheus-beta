@@ -1387,3 +1387,36 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     (`page.waitForEvent("download")` nos dois formatos, nome de arquivo sugerido, conteúdo
     baixado batendo com o filtro ativo na tela). Testes novos em `inventory.service.spec.ts`
     cobrindo `exportItems()`.
+- **ART/cláusula de segurança da informação do fornecedor** (sexto e último item do backlog pós-uso
+  processado nesta rodada - pedido original: _"Tudo que for contrato de terceiros, deve ter uma
+  opção de constar existe ART (Análise de Riscos) e também cláusula de segurança da informação
+  assinado. Faz parte do fluxo de avaliação de fornecedores."_). Escopo definido com o usuário antes
+  de implementar (backlog trazia só a ideia, sem desenho): os dois campos vivem no `Assessment`
+  (fato sobre a relação com o fornecedor, declarado na origem do fluxo, não no item de inventário
+  pós-homologação), são só declaração sim/não (sem upload de arquivo dentro do sistema - "isso pode
+  ser feito por fora"), e precisam aparecer **em destaque no painel do aprovador**, não só no
+  formulário de criação - pra que o aprovador pense "ok, ele disse que tem, agora ele precisa me
+  mostrar de alguma forma" antes de decidir.
+  - `Assessment.hasRiskAnalysis`/`hasInfoSecClause` (`Boolean @default(false)`, migration
+    `add_assessment_vendor_compliance_flags`) - fatos diretos do fornecedor, não pergunta pontuada
+    do questionário de risco (que é um subsistema à parte, orientado a score/matriz de risco) -
+    por isso viram campo direto no model, no mesmo padrão de `linkedTicket`/`installerFileHash`, e
+    não uma `Question` nova. `@default(false)` só pra migration não travar em linhas já existentes -
+    o `CreateAssessmentDto` exige os dois campos (`@IsBoolean()`, sem `@IsOptional()`), então toda
+    avaliação nova precisa declarar os dois de propósito, não fica sujeita ao default silenciosamente.
+  - `WorkflowRepository.findPendingStepsForRoles()` (a query por trás de `GET /workflow/inbox`)
+    tinha um `select` bem enxuto no `assessment` aninhado (`id`, `softwareName`, `criticality`,
+    `requesterId`) - estendido com `vendor`, `hasRiskAnalysis`, `hasInfoSecClause` pra chegar até o
+    dialog de decisão do aprovador.
+  - Frontend: dois `Checkbox` novos em "Nova avaliação", agrupados num bloco "Conformidade do
+    fornecedor" com texto de apoio. No `DecisionDialog` de `/approvals`, um bloco destacado logo
+    abaixo do `DialogHeader` (antes do formulário de decisão) mostra fabricante + os dois badges
+    (verde "Sim"/vermelho "Não") + um lembrete de que é autodeclarado. Mesmos dois badges também no
+    detalhe da avaliação (`/assessments/[id]`).
+  - Validado via curl (400 ao criar sem os dois campos, valores persistidos e devolvidos
+    corretamente) e um fluxo Playwright de ponta a ponta montado via `fetch` direto na API pra
+    contornar o questionário de 21 perguntas (criar avaliação → responder todas as perguntas →
+    submeter → aparece na fila do aprovador) seguido de navegação real no browser: seção de
+    conformidade visível no formulário, dialog de decisão mostrando "Fabricante: ...", "ART: Sim"
+    (verde), "Cláusula de segurança da informação: Não" (vermelho), e os dois campos no detalhe da
+    avaliação. Teste novo em `assessments.service.spec.ts` cobrindo `create()`.

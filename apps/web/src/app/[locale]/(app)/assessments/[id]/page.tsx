@@ -10,6 +10,7 @@ import { useApi } from "@/lib/use-api";
 import { ApiError } from "@/lib/api-client";
 import { Link } from "@/i18n/navigation";
 import { AssessmentStatusBadge } from "@/components/assessment-status-badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -163,6 +164,18 @@ export default function AssessmentDetailPage() {
                 <div className="sm:col-span-2">
                   <span className="text-muted-foreground">{t("criticality")}: </span>
                   {criticalityT(assessment.criticality)}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">{t("hasRiskAnalysis")}: </span>
+                  <Badge variant={assessment.hasRiskAnalysis ? "success" : "destructive"}>
+                    {assessment.hasRiskAnalysis ? t("yes") : t("no")}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">{t("hasInfoSecClause")}: </span>
+                  <Badge variant={assessment.hasInfoSecClause ? "success" : "destructive"}>
+                    {assessment.hasInfoSecClause ? t("yes") : t("no")}
+                  </Badge>
                 </div>
                 <div className="sm:col-span-2">
                   <span className="text-muted-foreground">{t("justification")}: </span>

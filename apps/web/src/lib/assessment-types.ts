@@ -68,6 +68,8 @@ export interface AssessmentDetail extends AssessmentSummary {
   areaId: string;
   requesterId: string;
   responsibleId: string;
+  hasRiskAnalysis: boolean;
+  hasInfoSecClause: boolean;
   versions: Array<{ id: string; versionLabel: string; createdAt: string }>;
 }
 

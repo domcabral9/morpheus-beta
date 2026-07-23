@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -86,6 +87,44 @@ export function DecisionDialog({ execution, onOpenChange, onDecided }: DecisionD
             })}
           </DialogDescription>
         </DialogHeader>
+
+        <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-3 text-sm">
+          <div>
+            <span className="text-muted-foreground">{t("vendorLabel")}: </span>
+            {execution.assessmentWorkflowInstance.assessment.vendor}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="flex items-center gap-2">
+              {t("hasRiskAnalysis")}
+              <Badge
+                variant={
+                  execution.assessmentWorkflowInstance.assessment.hasRiskAnalysis
+                    ? "success"
+                    : "destructive"
+                }
+              >
+                {execution.assessmentWorkflowInstance.assessment.hasRiskAnalysis
+                  ? t("yes")
+                  : t("no")}
+              </Badge>
+            </span>
+            <span className="flex items-center gap-2">
+              {t("hasInfoSecClause")}
+              <Badge
+                variant={
+                  execution.assessmentWorkflowInstance.assessment.hasInfoSecClause
+                    ? "success"
+                    : "destructive"
+                }
+              >
+                {execution.assessmentWorkflowInstance.assessment.hasInfoSecClause
+                  ? t("yes")
+                  : t("no")}
+              </Badge>
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">{t("vendorComplianceReminder")}</p>
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
