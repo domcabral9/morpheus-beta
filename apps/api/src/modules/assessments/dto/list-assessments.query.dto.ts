@@ -10,6 +10,7 @@ const STATUS_VALUES = [
   "APPROVED",
   "REJECTED",
   "REOPENED",
+  "PENDING_RENEWAL",
 ] as const;
 
 export class ListAssessmentsQueryDto {

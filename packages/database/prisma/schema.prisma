@@ -59,6 +59,16 @@ model Tenant {
   /// "SECOPS-SW-072026-001"). Cada tenant pode reaproveitar sua própria
   /// convenção de nomenclatura sem mudar código.
   opinionNumberPrefix String @default("SECOPS-SW")
+  /// Janela de fechamento anual (ex.: "11-01" a "12-14") - período em que
+  /// ciclos de renovação de homologação que caiam perto dela ganham prazo
+  /// estendido/antecipado (ver RenewalScheduler), evitando estourar em época
+  /// de férias/festas e sobrecarregar janeiro. "MM-DD", sem ano fixo - regra
+  /// recorrente todo ano, não uma data específica. Cada tenant liga
+  /// explicitamente (`annualClosingWindowEnabled`, nasce `false`) - sem
+  /// backfill automático que mude comportamento de tenants existentes.
+  annualClosingWindowStart   String?
+  annualClosingWindowEnd     String?
+  annualClosingWindowEnabled Boolean @default(false)
 
   users               User[]
   roles               Role[]
@@ -637,6 +647,12 @@ enum AssessmentStatus {
   APPROVED
   REJECTED
   REOPENED
+  /// Validade de 1 ano da homologação venceu (ou antecipou por causa da janela
+  /// de fechamento anual — ver RenewalScheduler) e o ciclo de renovação foi
+  /// aberto: reabre a MESMA AssessmentWorkflowInstance (não cria uma
+  /// Assessment nova), com um prazo (`renewalDueAt`) pra reenviar e ser
+  /// aprovada de novo antes que a área trave novas submissões.
+  PENDING_RENEWAL
 }
 
 model Assessment {
@@ -677,6 +693,15 @@ model Assessment {
   /// Mesma lógica de `hasRiskAnalysis`, mas para a cláusula de segurança da
   /// informação assinada com o fornecedor.
   hasInfoSecClause Boolean @default(false)
+  /// Prazo (data+hora) pra resolver um ciclo de renovação em andamento — nulo
+  /// exceto durante `status = PENDING_RENEWAL`. Já vem ajustado pela janela de
+  /// fechamento anual do tenant (ver RenewalScheduler); vencido sem aprovação,
+  /// o item de inventário vinculado vira EXPIRED e a área trava novas
+  /// submissões.
+  renewalDueAt         DateTime?
+  /// Quando o ciclo de renovação atual começou - distinto de `updatedAt`, que
+  /// muda a cada edição durante o ciclo.
+  renewalCycleStartedAt DateTime?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
@@ -887,6 +912,10 @@ model SoftwareInventoryItem {
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([tenantId, areaId])
+  /// Sinal derivado e autolimpante de "esta área está bloqueada por renovação
+  /// vencida" (EXISTS ... status='EXPIRED') - usado tanto pela checagem de
+  /// bloqueio quanto pelas queries do RenewalScheduler.
+  @@index([tenantId, areaId, status])
   @@index([nextReviewDate])
   @@map("software_inventory_items")
 }
@@ -1027,6 +1056,10 @@ enum NotificationType {
   HOMOLOGATION_EXPIRING
   NEW_COMMENT
   OPINION_ISSUED
+  /// Ciclo de renovação anual começou (ou o solicitante foi reatribuído).
+  RENEWAL_PENDING
+  /// Prazo de renovação venceu sem resolução - item virou EXPIRED, área bloqueada.
+  RENEWAL_OVERDUE
 }
 
 model Notification {

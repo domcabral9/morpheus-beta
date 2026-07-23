@@ -739,7 +739,8 @@
     "PENDING_ADJUSTMENT": "Aguardando ajustes",
     "APPROVED": "Aprovada",
     "REJECTED": "Reprovada",
-    "REOPENED": "Reaberta"
+    "REOPENED": "Reaberta",
+    "PENDING_RENEWAL": "Pendente renovação"
   },
   "Criticality": {
     "LOW": "Baixa",
