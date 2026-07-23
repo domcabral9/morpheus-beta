@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Boxes, CheckCircle2, ClipboardList, FileText, LayoutDashboard } from "lucide-react";
+import { Boxes, CheckCircle2, ClipboardList, FileText, HelpCircle, LayoutDashboard } from "lucide-react";
 
 export interface PrimaryNavItem {
   href: string;
@@ -19,6 +19,7 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
   // via cláusula `where`, não por um gate de permissão fixo — ver
   // TechnicalOpinionService.findAllForTenant().
   { href: "/technical-opinions", labelKey: "technicalOpinions", icon: FileText },
+  { href: "/faq", labelKey: "faq", icon: HelpCircle },
 ];
 
 export interface AdminNavItem {
