@@ -1615,3 +1615,23 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     mudança de código nesse endpoint - depois revertido pro estado original (dado de amostra
     compartilhado).
     Suite completa da API: 182/182 testes passando.
+- **Renovação anual de homologação - Fase 2: configurações de organização (janela de fechamento)**
+  (mesmo plano, `C:\Users\kaosikner\.claude\plans\streamed-sleeping-newell.md`). Só a tela +
+  persistência das 3 datas por tenant - nenhum scheduler ainda usa esses valores (isso é Fase 3).
+  - `UpdateTenantDto` ganhou `annualClosingWindowStart`/`...End` (`@Matches` no formato `MM-DD`,
+    regex `^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$`) e `annualClosingWindowEnabled` (`@IsBoolean`),
+    todos opcionais - reusa o `updateCurrent()`/`update()` genéricos já existentes pra
+    `securityTeamName`/`opinionNumberPrefix`, sem mudança estrutural em service/repository.
+  - Nova aba "Renovação anual" em `/admin/settings` (`RenewalWindowForm`, mesmo padrão de
+    `react-hook-form` + `zodResolver` da aba "Geral" já existente) - checkbox de habilitado (via
+    `Controller`, já que não existe componente `Switch` no design system) + dois campos `MM-DD` que
+    ficam desabilitados quando a janela está desligada. Validação client-side é condicional
+    (`superRefine`): com a janela desligada, os campos podem ficar em branco sem travar o salvamento.
+  - `TenantAdmin` (frontend) e i18n (`en`/`pt-BR`) atualizados com os 3 campos novos.
+  - Validado via `update-tenant.dto.spec.ts` (novo - `validate()`/`plainToInstance` direto no DTO:
+    aceita `MM-DD` válido, rejeita formato com ano, rejeita mês/dia fora do intervalo, aceita tudo
+    omitido, rejeita `annualClosingWindowEnabled` não-booleano) e curl manual: `PATCH /tenants/current`
+    com datas válidas retorna 200 com os valores persistidos, com `"2026-11-01"` retorna 400
+    ("annualClosingWindowStart deve estar no formato MM-DD"), revertido pro estado original
+    (`null`/`null`/`false`) via SQL direto ao final (dado de tenant compartilhado).
+    Suite completa da API: 187/187 testes passando.

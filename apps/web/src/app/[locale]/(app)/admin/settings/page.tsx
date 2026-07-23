@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { ApiError } from "@/components/auth-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { TenantAdmin } from "@/lib/tenant-admin-types";
@@ -24,6 +25,33 @@ const settingsSchema = z.object({
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
+
+const MM_DD_REGEX = /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
+// Validação condicional: as datas só precisam bater com o formato MM-DD
+// quando a janela está habilitada — desabilitada, os campos podem ficar
+// em branco sem travar o salvamento.
+const renewalWindowSchema = z
+  .object({
+    annualClosingWindowEnabled: z.boolean(),
+    annualClosingWindowStart: z.string().optional(),
+    annualClosingWindowEnd: z.string().optional(),
+  })
+  .superRefine((values, ctx) => {
+    if (!values.annualClosingWindowEnabled) return;
+    (["annualClosingWindowStart", "annualClosingWindowEnd"] as const).forEach((field) => {
+      const value = values[field];
+      if (!value || !MM_DD_REGEX.test(value)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field],
+          message: "Formato MM-DD (ex.: 11-01).",
+        });
+      }
+    });
+  });
+
+type RenewalWindowFormValues = z.infer<typeof renewalWindowSchema>;
 
 const ALLOWED_LOGO_TYPES = "image/png,image/jpeg";
 const MAX_LOGO_SIZE_BYTES = 2 * 1024 * 1024;
@@ -189,6 +217,101 @@ function SettingsForm({ tenant, onSaved }: { tenant: TenantAdmin; onSaved: (tena
   );
 }
 
+function RenewalWindowForm({ tenant, onSaved }: { tenant: TenantAdmin; onSaved: (tenant: TenantAdmin) => void }) {
+  const t = useTranslations("AdminSettings");
+  const api = useApi();
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    watch,
+    formState: { isSubmitting, isDirty, errors },
+  } = useForm<RenewalWindowFormValues>({
+    resolver: zodResolver(renewalWindowSchema),
+    defaultValues: {
+      annualClosingWindowEnabled: tenant.annualClosingWindowEnabled,
+      annualClosingWindowStart: tenant.annualClosingWindowStart ?? "",
+      annualClosingWindowEnd: tenant.annualClosingWindowEnd ?? "",
+    },
+  });
+
+  const enabled = watch("annualClosingWindowEnabled");
+
+  async function onSubmit(values: RenewalWindowFormValues) {
+    const payload = {
+      annualClosingWindowEnabled: values.annualClosingWindowEnabled,
+      annualClosingWindowStart: values.annualClosingWindowStart || undefined,
+      annualClosingWindowEnd: values.annualClosingWindowEnd || undefined,
+    };
+    try {
+      const updated = await api.patch<TenantAdmin>("/tenants/current", payload);
+      toast.success(t("saveSuccess"));
+      onSaved(updated);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("saveError"));
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+      <p className="text-sm text-muted-foreground">{t("renewalWindowDescription")}</p>
+
+      <div className="flex items-center gap-2">
+        <Controller
+          control={control}
+          name="annualClosingWindowEnabled"
+          render={({ field }) => (
+            <Checkbox
+              id="annualClosingWindowEnabled"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(checked === true)}
+            />
+          )}
+        />
+        <Label htmlFor="annualClosingWindowEnabled" className="font-normal">
+          {t("fieldRenewalWindowEnabled")}
+        </Label>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="annualClosingWindowStart">{t("fieldRenewalWindowStart")}</Label>
+        <Input
+          id="annualClosingWindowStart"
+          placeholder="MM-DD"
+          disabled={!enabled}
+          aria-invalid={!!errors.annualClosingWindowStart}
+          {...register("annualClosingWindowStart")}
+        />
+        {errors.annualClosingWindowStart && (
+          <p className="text-xs text-destructive">{errors.annualClosingWindowStart.message}</p>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="annualClosingWindowEnd">{t("fieldRenewalWindowEnd")}</Label>
+        <Input
+          id="annualClosingWindowEnd"
+          placeholder="MM-DD"
+          disabled={!enabled}
+          aria-invalid={!!errors.annualClosingWindowEnd}
+          {...register("annualClosingWindowEnd")}
+        />
+        {errors.annualClosingWindowEnd && (
+          <p className="text-xs text-destructive">{errors.annualClosingWindowEnd.message}</p>
+        )}
+        <p className="text-xs text-muted-foreground">{t("fieldRenewalWindowHint")}</p>
+      </div>
+
+      <div>
+        <Button type="submit" disabled={isSubmitting || !isDirty}>
+          {isSubmitting ? t("saving") : t("save")}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 function SettingsTabComingSoon({ titleKey }: { titleKey: "smtp" | "sso" | "ai" }) {
   const t = useTranslations("AdminSettings");
 
@@ -236,6 +359,7 @@ function SettingsContent() {
         <Tabs defaultValue="general">
           <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
             <TabsTrigger value="general">{t("tabs.general")}</TabsTrigger>
+            <TabsTrigger value="renewalWindow">{t("tabs.renewalWindow")}</TabsTrigger>
             <TabsTrigger value="smtp">{t("tabs.smtp")}</TabsTrigger>
             <TabsTrigger value="sso">{t("tabs.sso")}</TabsTrigger>
             <TabsTrigger value="ai">{t("tabs.ai")}</TabsTrigger>
@@ -248,6 +372,16 @@ function SettingsContent() {
               </CardHeader>
               <CardContent>
                 <SettingsForm tenant={tenant} onSaved={setTenant} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="renewalWindow">
+            <Card className="max-w-xl">
+              <CardHeader>
+                <CardTitle className="text-base">{t("tabs.renewalWindow")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RenewalWindowForm tenant={tenant} onSaved={setTenant} />
               </CardContent>
             </Card>
           </TabsContent>
