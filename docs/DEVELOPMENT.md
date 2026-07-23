@@ -1356,3 +1356,34 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     tipo, adicionar/remover link, criar → editar → remover um link → salvar → detalhe reflete só o
     link restante). Testes novos em `inventory.service.spec.ts` cobrindo `create()`/`update()` com
     `documentationLinks`.
+- **Exportar inventário (CSV/JSON)** (quinto item do backlog pós-uso). `GET /inventory/export`
+  reaproveita os mesmos filtros de `GET /inventory` (`status`, `areaId`) só que sem paginação -
+  devolve todas as linhas que baterem com o filtro atual da tela. PDF fica de fora de propósito
+  (o pedido do usuário incluía os três formatos, mas CSV/JSON já cobrem o caso de uso de planilha/
+  integração; um PDF de relatório teria motivação e forma diferentes, mais parecido com o parecer
+  técnico do que com uma exportação tabular - avaliar como item separado se pedido).
+  - Sem lib de terceiros pro CSV (nenhuma no repo - `csv-stringify`/`json2csv` etc. - mesmo
+    minimalismo já usado no PDF do parecer, que usa `pdfkit` direto sem wrapper): escrita manual
+    com escaping RFC 4180 (`inventory-export.util.ts`). BOM UTF-8 na frente do CSV - sem isso o
+    Excel, consumidor mais provável de um CSV em pt-BR, interpreta acentos como Latin-1 e corrompe
+    "Área", "não", etc.
+  - Rota `@Get("export")` precisou ser declarada **antes** de `@Get(":id")` no controller - senão
+    o Nest bate `:id` primeiro e tenta buscar um item cujo id é literalmente `"export"`. Resposta
+    via `@Res({passthrough:false})` + `res.set()`/`res.send()`, mesmo padrão já usado no download
+    de PDF do parecer técnico (`TechnicalOpinionController.download`) - não `StreamableFile`, since
+    o volume de um inventário de demo não justifica streaming de verdade.
+  - `InventoryService` passou a injetar `AuditLogService` diretamente (`AuditLogModule` é
+    `@Global()`, não precisou tocar em `inventory.module.ts`) para registrar o export como
+    `DOWNLOAD` no audit log (mesmo padrão manual do `getPdfForDownload` do parecer técnico - não dá
+    pra usar o decorator `@Audit()` porque a resposta sai via `@Res()` cru, fora do fluxo que o
+    interceptor de auditoria enxerga). Não existe um valor `EXPORT` no enum `AuditAction` do schema
+    - reaproveitado `DOWNLOAD` (mesma semântica de "usuário levou um arquivo pra fora do sistema")
+    em vez de abrir uma migration só por um rótulo mais específico.
+  - Frontend: dropdown "Exportar" (`DropdownMenu`) do lado de "Novo item", com as duas opções -
+    disponível pra qualquer usuário com `inventory:view` (não fica atrás de `canManage`, mesmo
+    escopo de permissão do backend). Reaproveita o `status` já selecionado nos filtros da tela.
+  - Validado via curl (headers `Content-Type`/`Content-Disposition` corretos nos dois formatos,
+    BOM presente nos bytes do CSV, filtro por `status` aplicado, 401 sem token) e Playwright
+    (`page.waitForEvent("download")` nos dois formatos, nome de arquivo sugerido, conteúdo
+    baixado batendo com o filtro ativo na tela). Testes novos em `inventory.service.spec.ts`
+    cobrindo `exportItems()`.
