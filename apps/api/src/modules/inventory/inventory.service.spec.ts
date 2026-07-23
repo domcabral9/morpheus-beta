@@ -2,6 +2,7 @@ import { Test } from "@nestjs/testing";
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import { InventoryService } from "./inventory.service";
 import { InventoryRepository } from "./inventory.repository";
+import { AuditLogService } from "../audit/audit-log.service";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
@@ -37,8 +38,10 @@ describe("InventoryService", () => {
     findMany: jest.Mock;
     update: jest.Mock;
     setDocumentationLinks: jest.Mock;
+    findAllMatching: jest.Mock;
     findDueForReview: jest.Mock;
   };
+  let auditLogService: { record: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -48,11 +51,17 @@ describe("InventoryService", () => {
       findMany: jest.fn(),
       update: jest.fn().mockImplementation((id, data) => Promise.resolve({ id, ...data })),
       setDocumentationLinks: jest.fn().mockResolvedValue(undefined),
+      findAllMatching: jest.fn(),
       findDueForReview: jest.fn(),
     };
+    auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
-      providers: [InventoryService, { provide: InventoryRepository, useValue: repo }],
+      providers: [
+        InventoryService,
+        { provide: InventoryRepository, useValue: repo },
+        { provide: AuditLogService, useValue: auditLogService },
+      ],
     }).compile();
 
     service = moduleRef.get(InventoryService);
@@ -195,6 +204,34 @@ describe("InventoryService", () => {
       await service.update(makeUser(), "item-1", { vendor: "Novo nome" } as never);
 
       expect(repo.setDocumentationLinks).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("exportItems", () => {
+    it("busca sem paginação com os mesmos filtros da listagem e registra auditoria", async () => {
+      repo.findAllMatching.mockResolvedValue([
+        { id: "item-1", tenantId: "tenant-1", assessment: null },
+        { id: "item-2", tenantId: "tenant-1", assessment: null },
+      ]);
+
+      const user = makeUser();
+      const result = await service.exportItems(user, { status: "ACTIVE", areaId: "area-1" } as never);
+
+      expect(repo.findAllMatching).toHaveBeenCalledWith({
+        tenantId: "tenant-1",
+        status: "ACTIVE",
+        areaId: "area-1",
+      });
+      expect(result).toHaveLength(2);
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId: "tenant-1",
+          userId: user.id,
+          action: "DOWNLOAD",
+          entityType: "SoftwareInventoryItem",
+          metadata: { format: "csv", count: 2 },
+        }),
+      );
     });
   });
 });
