@@ -26,6 +26,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -60,6 +62,8 @@ const itemFormSchema = z.object({
   criticality: z.enum(CRITICALITY_VALUES),
   dataClassification: z.enum(DATA_CLASSIFICATIONS),
   status: z.enum(INVENTORY_STATUSES).optional(),
+  hasRiskAnalysis: z.boolean(),
+  hasInfoSecClause: z.boolean(),
   documentationLinks: z.array(documentationLinkSchema),
 });
 
@@ -101,6 +105,8 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
         criticality: item.criticality,
         dataClassification: item.dataClassification,
         status: item.status,
+        hasRiskAnalysis: item.hasRiskAnalysis,
+        hasInfoSecClause: item.hasInfoSecClause,
         documentationLinks: item.documentationLinks.map(({ label, url }) => ({ label, url })),
       }
     : {
@@ -118,8 +124,12 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
         nextReviewDate: "",
         criticality: "MEDIUM",
         dataClassification: "INTERNAL",
+        hasRiskAnalysis: false,
+        hasInfoSecClause: false,
         documentationLinks: [],
       };
+
+  const isEditableCompliance = mode === "create" || !item?.assessmentId;
 
   const {
     register,
@@ -146,10 +156,15 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
     // histórico da homologação original, não editável depois de criado (só
     // `nextReviewDate`, o ciclo de revisão, muda com o tempo). Mandar essa
     // chave num PATCH é rejeitado pelo ValidationPipe (`forbidNonWhitelisted`).
-    const { homologationDate, ...editableValues } = values;
+    const { homologationDate, hasRiskAnalysis, hasInfoSecClause, ...editableValues } = values;
     const payload = {
       ...editableValues,
       ...(item ? {} : { homologationDate: toIsoDate(homologationDate) }),
+      // Somente leitura quando o item vem de homologação (ver comentário no
+      // schema/DTO): omitir por completo, não só "não deixar editar" - o
+      // ValidationPipe rejeita o PATCH inteiro se esses campos chegarem numa
+      // request de item com assessmentId, independente do valor enviado.
+      ...(isEditableCompliance ? { hasRiskAnalysis, hasInfoSecClause } : {}),
       nextReviewDate: toIsoDate(values.nextReviewDate),
       version: values.version || undefined,
       url: values.url || undefined,
@@ -370,6 +385,65 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
                   )}
                 />
               </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-3 rounded-md border p-3">
+            <p className="text-sm font-medium">{t("vendorComplianceTitle")}</p>
+            {isEditableCompliance ? (
+              <>
+                <Controller
+                  control={control}
+                  name="hasRiskAnalysis"
+                  render={({ field }) => (
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="hasRiskAnalysis"
+                        checked={field.value}
+                        onCheckedChange={(checked) => field.onChange(checked === true)}
+                      />
+                      <Label htmlFor="hasRiskAnalysis" className="font-normal">
+                        {t("hasRiskAnalysisLabel")}
+                      </Label>
+                    </div>
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="hasInfoSecClause"
+                  render={({ field }) => (
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="hasInfoSecClause"
+                        checked={field.value}
+                        onCheckedChange={(checked) => field.onChange(checked === true)}
+                      />
+                      <Label htmlFor="hasInfoSecClause" className="font-normal">
+                        {t("hasInfoSecClauseLabel")}
+                      </Label>
+                    </div>
+                  )}
+                />
+                <p className="text-xs text-muted-foreground">{t("vendorComplianceHint")}</p>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                  <span className="flex items-center gap-2">
+                    {t("hasRiskAnalysisLabel")}
+                    <Badge variant={item.hasRiskAnalysis ? "success" : "destructive"}>
+                      {item.hasRiskAnalysis ? t("yes") : t("no")}
+                    </Badge>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    {t("hasInfoSecClauseLabel")}
+                    <Badge variant={item.hasInfoSecClause ? "success" : "destructive"}>
+                      {item.hasInfoSecClause ? t("yes") : t("no")}
+                    </Badge>
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">{t("vendorComplianceInheritedHint")}</p>
+              </>
             )}
           </div>
 

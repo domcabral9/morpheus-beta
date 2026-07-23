@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Prisma, InventoryStatus } from "@morpheus/database";
+import { Prisma, InventoryStatus, SoftwareType, Criticality } from "@morpheus/database";
 import { PrismaService } from "../../prisma/prisma.service";
 
 const itemDetailInclude = {
@@ -36,6 +36,31 @@ export type InventoryItemDetail = Prisma.SoftwareInventoryItemGetPayload<{
 export interface DocumentationLinkInput {
   label: string;
   url: string;
+}
+
+export interface InventoryFilterParams {
+  tenantId: string;
+  status?: InventoryStatus;
+  areaId?: string;
+  type?: SoftwareType;
+  criticality?: Criticality;
+  origin?: "HOMOLOGATED" | "MANUAL";
+  hasRiskAnalysis?: boolean;
+  hasInfoSecClause?: boolean;
+}
+
+function buildWhereClause(params: InventoryFilterParams): Prisma.SoftwareInventoryItemWhereInput {
+  return {
+    tenantId: params.tenantId,
+    ...(params.status ? { status: params.status } : {}),
+    ...(params.areaId ? { areaId: params.areaId } : {}),
+    ...(params.type ? { type: params.type } : {}),
+    ...(params.criticality ? { criticality: params.criticality } : {}),
+    ...(params.origin === "HOMOLOGATED" ? { assessmentId: { not: null } } : {}),
+    ...(params.origin === "MANUAL" ? { assessmentId: null } : {}),
+    ...(params.hasRiskAnalysis !== undefined ? { hasRiskAnalysis: params.hasRiskAnalysis } : {}),
+    ...(params.hasInfoSecClause !== undefined ? { hasInfoSecClause: params.hasInfoSecClause } : {}),
+  };
 }
 
 @Injectable()
@@ -91,18 +116,10 @@ export class InventoryRepository {
     });
   }
 
-  async findMany(params: {
-    tenantId: string;
-    status?: InventoryStatus;
-    areaId?: string;
-    page: number;
-    pageSize: number;
-  }): Promise<{ items: InventoryItemDetail[]; total: number }> {
-    const where: Prisma.SoftwareInventoryItemWhereInput = {
-      tenantId: params.tenantId,
-      ...(params.status ? { status: params.status } : {}),
-      ...(params.areaId ? { areaId: params.areaId } : {}),
-    };
+  async findMany(
+    params: InventoryFilterParams & { page: number; pageSize: number },
+  ): Promise<{ items: InventoryItemDetail[]; total: number }> {
+    const where = buildWhereClause(params);
 
     const [items, total] = await Promise.all([
       this.prisma.softwareInventoryItem.findMany({
@@ -120,20 +137,81 @@ export class InventoryRepository {
 
   /** Mesmos filtros de `findMany`, sem paginação - usado pelo export
    * (CSV/JSON), que precisa de todas as linhas que batem com o filtro. */
-  findAllMatching(params: {
-    tenantId: string;
-    status?: InventoryStatus;
-    areaId?: string;
-  }): Promise<InventoryItemDetail[]> {
+  findAllMatching(params: InventoryFilterParams): Promise<InventoryItemDetail[]> {
     return this.prisma.softwareInventoryItem.findMany({
-      where: {
-        tenantId: params.tenantId,
-        ...(params.status ? { status: params.status } : {}),
-        ...(params.areaId ? { areaId: params.areaId } : {}),
-      },
+      where: buildWhereClause(params),
       include: itemDetailInclude,
       orderBy: { name: "asc" },
     });
+  }
+
+  /** Agregados pro "Visão geral" do módulo de inventário - sem filtro (a
+   * visão geral é sempre do tenant inteiro; filtros ficam só na listagem). */
+  async getStats(tenantId: string, reviewDueSoonDays: number) {
+    const now = new Date();
+    const dueSoonThreshold = new Date(now);
+    dueSoonThreshold.setDate(dueSoonThreshold.getDate() + reviewDueSoonDays);
+
+    const [
+      totalItems,
+      byStatus,
+      byCriticality,
+      byType,
+      byArea,
+      byHostingProvider,
+      homologatedCount,
+      manualCount,
+      riskAnalysisYes,
+      riskAnalysisNo,
+      infoSecClauseYes,
+      infoSecClauseNo,
+      overdueReviews,
+      dueSoonReviews,
+    ] = await Promise.all([
+      this.prisma.softwareInventoryItem.count({ where: { tenantId } }),
+      this.prisma.softwareInventoryItem.groupBy({ by: ["status"], where: { tenantId }, _count: true }),
+      this.prisma.softwareInventoryItem.groupBy({
+        by: ["criticality"],
+        where: { tenantId },
+        _count: true,
+      }),
+      this.prisma.softwareInventoryItem.groupBy({ by: ["type"], where: { tenantId }, _count: true }),
+      this.prisma.softwareInventoryItem.groupBy({ by: ["areaId"], where: { tenantId }, _count: true }),
+      this.prisma.softwareInventoryItem.groupBy({
+        by: ["hostingProvider"],
+        where: { tenantId },
+        _count: true,
+      }),
+      this.prisma.softwareInventoryItem.count({ where: { tenantId, assessmentId: { not: null } } }),
+      this.prisma.softwareInventoryItem.count({ where: { tenantId, assessmentId: null } }),
+      this.prisma.softwareInventoryItem.count({ where: { tenantId, hasRiskAnalysis: true } }),
+      this.prisma.softwareInventoryItem.count({ where: { tenantId, hasRiskAnalysis: false } }),
+      this.prisma.softwareInventoryItem.count({ where: { tenantId, hasInfoSecClause: true } }),
+      this.prisma.softwareInventoryItem.count({ where: { tenantId, hasInfoSecClause: false } }),
+      this.prisma.softwareInventoryItem.count({
+        where: { tenantId, status: "ACTIVE", nextReviewDate: { lt: now } },
+      }),
+      this.prisma.softwareInventoryItem.count({
+        where: { tenantId, status: "ACTIVE", nextReviewDate: { gte: now, lte: dueSoonThreshold } },
+      }),
+    ]);
+
+    return {
+      totalItems,
+      byStatus,
+      byCriticality,
+      byType,
+      byArea,
+      byHostingProvider,
+      homologatedCount,
+      manualCount,
+      riskAnalysisYes,
+      riskAnalysisNo,
+      infoSecClauseYes,
+      infoSecClauseNo,
+      overdueReviews,
+      dueSoonReviews,
+    };
   }
 
   update(

@@ -19,6 +19,8 @@ const CSV_COLUMNS = [
   "criticidade",
   "classificacaoDados",
   "parecerTecnico",
+  "temART",
+  "temClausulaInfoSec",
   "linksDocumentacao",
 ] as const;
 
@@ -56,6 +58,8 @@ function toRow(item: InventoryItemWithOpinion): string[] {
     item.criticality,
     item.dataClassification,
     item.technicalOpinion?.number ?? "",
+    item.hasRiskAnalysis ? "Sim" : "Não",
+    item.hasInfoSecClause ? "Sim" : "Não",
     item.documentationLinks.map((link) => `${link.label}: ${link.url}`).join(" | "),
   ];
 }

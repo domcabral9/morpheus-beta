@@ -43,6 +43,8 @@ const stepExecutionDetailInclude = {
           areaId: true,
           criticality: true,
           status: true,
+          hasRiskAnalysis: true,
+          hasInfoSecClause: true,
         },
       },
     },

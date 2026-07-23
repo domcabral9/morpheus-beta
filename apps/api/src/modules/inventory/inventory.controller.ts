@@ -24,6 +24,12 @@ export class InventoryController {
     return this.inventoryService.list(user, query);
   }
 
+  // Precisa vir antes de `:id` - senão "stats" seria interpretado como um id.
+  @Get("stats")
+  getStats(@CurrentUser() user: AuthenticatedUser) {
+    return this.inventoryService.getStats(user);
+  }
+
   // Precisa vir antes de `:id` - senão "export" seria interpretado como um id.
   @Get("export")
   async export(

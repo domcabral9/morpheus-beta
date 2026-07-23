@@ -31,6 +31,7 @@ import { UpdateWorkflowDefinitionDto } from "./dto/update-definition.dto";
 import { CreateStepDto } from "./dto/create-step.dto";
 import { UpdateStepDto } from "./dto/update-step.dto";
 import { DecideStepDto } from "./dto/decide-step.dto";
+import { BulkDecideStepsDto } from "./dto/bulk-decide-steps.dto";
 
 const DECISION_TO_STATUS: Record<DecideStepDto["decision"], WorkflowStepStatus> = {
   APPROVE: "APPROVED",
@@ -250,6 +251,30 @@ export class WorkflowService {
     return updated;
   }
 
+  /**
+   * Aprovação em massa: mesma decisão aplicada a várias etapas de uma vez.
+   * Reaproveita `decideStep()` item a item em vez de duplicar as regras
+   * (SoD, papel responsável, efeitos colaterais de aprovar/reprovar) - uma
+   * etapa que falha (ex.: SoD, já decidida por outro aprovador nesse meio
+   * tempo) não derruba as demais, só entra no resultado como falha.
+   */
+  async bulkDecideSteps(
+    user: AuthenticatedUser,
+    dto: BulkDecideStepsDto,
+  ): Promise<{ stepExecutionId: string; success: boolean; error?: string }[]> {
+    const results: { stepExecutionId: string; success: boolean; error?: string }[] = [];
+    for (const stepExecutionId of dto.stepExecutionIds) {
+      try {
+        await this.decideStep(user, stepExecutionId, { decision: dto.decision, comments: dto.comments });
+        results.push({ stepExecutionId, success: true });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Falha ao decidir esta etapa.";
+        results.push({ stepExecutionId, success: false, error: message });
+      }
+    }
+    return results;
+  }
+
   async getInstanceForUser(
     user: AuthenticatedUser,
     assessmentId: string,
@@ -409,6 +434,8 @@ export class WorkflowService {
         areaId: assessment.areaId,
         criticality: assessment.criticality,
         responsibleId: assessment.responsibleId,
+        hasRiskAnalysis: assessment.hasRiskAnalysis,
+        hasInfoSecClause: assessment.hasInfoSecClause,
       });
       await this.notificationsService.notify({
         tenantId: assessment.tenantId,
