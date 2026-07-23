@@ -3,6 +3,7 @@ import { Type } from "class-transformer";
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsIn,
   IsOptional,
@@ -92,6 +93,19 @@ export class CreateInventoryItemDto {
   @ApiProperty({ enum: DATA_CLASSIFICATIONS })
   @IsIn(DATA_CLASSIFICATIONS)
   dataClassification!: (typeof DATA_CLASSIFICATIONS)[number];
+
+  @ApiProperty({
+    description:
+      "O fornecedor tem ART (Análise de Risco) documentada? Obrigatório mesmo para entrada manual - declaração do cadastrante.",
+  })
+  @IsBoolean()
+  hasRiskAnalysis!: boolean;
+
+  @ApiProperty({
+    description: "O fornecedor tem cláusula de segurança da informação assinada?",
+  })
+  @IsBoolean()
+  hasInfoSecClause!: boolean;
 
   @ApiPropertyOptional({
     type: [DocumentationLinkDto],

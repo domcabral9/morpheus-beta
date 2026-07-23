@@ -9,6 +9,11 @@ export type DataClassification = (typeof DATA_CLASSIFICATIONS)[number];
 export const INVENTORY_STATUSES = ["ACTIVE", "PENDING_REVIEW", "EXPIRED", "DECOMMISSIONED"] as const;
 export type InventoryStatus = (typeof INVENTORY_STATUSES)[number];
 
+export const CRITICALITY_VALUES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
+
+export const INVENTORY_ORIGINS = ["HOMOLOGATED", "MANUAL"] as const;
+export type InventoryOrigin = (typeof INVENTORY_ORIGINS)[number];
+
 export interface InventoryTechnicalOpinionSummary {
   id: string;
   number: string;
@@ -36,10 +41,12 @@ export interface InventoryItemSummary {
   technicalResponsible: { id: string; name: string; email: string };
   /** Parecer da homologação que originou este item - `null` pra itens de entrada manual. */
   technicalOpinion: InventoryTechnicalOpinionSummary | null;
+  assessmentId: string | null;
+  hasRiskAnalysis: boolean;
+  hasInfoSecClause: boolean;
 }
 
 export interface InventoryItemDetail extends InventoryItemSummary {
-  assessmentId: string | null;
   version: string | null;
   url: string | null;
   hostingProvider: string | null;
@@ -73,5 +80,34 @@ export interface InventoryItemFormValues {
   criticality: Criticality;
   dataClassification: DataClassification;
   status?: InventoryStatus;
+  hasRiskAnalysis: boolean;
+  hasInfoSecClause: boolean;
   documentationLinks: { label: string; url: string }[];
+}
+
+export interface InventoryListFilters {
+  status: string;
+  areaId: string;
+  type: string;
+  criticality: string;
+  origin: string;
+  hasRiskAnalysis: string;
+  hasInfoSecClause: string;
+}
+
+export interface InventoryStats {
+  totalItems: number;
+  byStatus: { status: InventoryStatus; _count: number }[];
+  byCriticality: { criticality: Criticality; _count: number }[];
+  byType: { type: SoftwareType; _count: number }[];
+  byArea: { areaId: string; _count: number }[];
+  byHostingProvider: { hostingProvider: string | null; _count: number }[];
+  homologatedCount: number;
+  manualCount: number;
+  riskAnalysisYes: number;
+  riskAnalysisNo: number;
+  infoSecClauseYes: number;
+  infoSecClauseNo: number;
+  overdueReviews: number;
+  dueSoonReviews: number;
 }

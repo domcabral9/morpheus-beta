@@ -409,6 +409,8 @@ export class WorkflowService {
         areaId: assessment.areaId,
         criticality: assessment.criticality,
         responsibleId: assessment.responsibleId,
+        hasRiskAnalysis: assessment.hasRiskAnalysis,
+        hasInfoSecClause: assessment.hasInfoSecClause,
       });
       await this.notificationsService.notify({
         tenantId: assessment.tenantId,

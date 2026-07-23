@@ -1420,3 +1420,62 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     conformidade visível no formulário, dialog de decisão mostrando "Fabricante: ...", "ART: Sim"
     (verde), "Cláusula de segurança da informação: Não" (vermelho), e os dois campos no detalhe da
     avaliação. Teste novo em `assessments.service.spec.ts` cobrindo `create()`.
+- **Módulo de inventário de verdade** (item 1 do backlog pós-uso, o maior restante - dashboards +
+  filtros por campo/tipo, cobrindo também os ativos que nunca passaram por homologação). Escopo
+  definido com o usuário via `AskUserQuestion` antes de implementar: quais gráficos entrar (visão
+  geral por status/criticidade/tipo, homologado x manual, revisões vencidas/a vencer, por área/
+  provedor de hospedagem, cobertura de ART/cláusula) e quais filtros novos (área, tipo, criticidade,
+  origem, ART, cláusula). Isso levou a mais uma decisão de escopo: os campos `hasRiskAnalysis`/
+  `hasInfoSecClause` (Etapa "declaração de ART e cláusula InfoSec", acima) existiam só no
+  `Assessment` - itens de entrada manual não tinham como declarar isso. Confirmado com o usuário:
+  os mesmos dois campos foram replicados no `SoftwareInventoryItem` (migration nova,
+  `@default(false)`), com uma regra de negócio nova - **somente leitura quando o item vem de
+  homologação** (herdado do `Assessment` na criação via `createFromApprovedAssessment`, evita
+  divergência entre os dois registros), e **editável só em itens de entrada manual**.
+  - Backend: `InventoryService.update()` ganhou um guard - `ForbiddenException` se o payload tentar
+    mudar `hasRiskAnalysis`/`hasInfoSecClause` num item com `assessmentId` setado. `ListInventoryQueryDto`/
+    `ExportInventoryQueryDto` ganharam `type`/`criticality`/`origin` (`HOMOLOGATED`/`MANUAL`, deriva
+    de `assessmentId` null/not-null)/`hasRiskAnalysis`/`hasInfoSecClause` (`@IsBooleanString()`,
+    convertidos pra boolean no service antes de chegar no repository - evita a pegadinha de
+    `Boolean("false") === true`). `InventoryRepository` ganhou um `buildWhereClause()` compartilhado
+    entre `findMany`/`findAllMatching` (list e export usam exatamente os mesmos filtros, sem
+    duplicar a lógica de `where`) e um `getStats(tenantId, reviewDueSoonDays)` novo com 14 queries
+    em paralelo (`Promise.all` de `groupBy`/`count`) - endpoint `GET /inventory/stats`, sempre do
+    tenant inteiro (sem os filtros da listagem, é uma visão geral). `CreateInventoryItemDto` exige
+    os dois campos (sem `@IsOptional`), `createFromApprovedAssessment` (e o branch defensivo de
+    "já existe, atualiza") passam a herdar os valores do `Assessment` de origem.
+  - Frontend: `/inventory` virou `Tabs` "Lista"/"Visão geral" (`InventoryListView`/
+    `InventoryDashboardView`, extraídos como componentes próprios - o `page.tsx` ficou só o
+    cabeçalho + as duas abas). Filtros novos como `Select`s numa grade 4 colunas dentro do card
+    "Filtros" (Área/Tipo/Criticidade numa linha, Origem/ART/Cláusula na seguinte), + botão "Limpar
+    filtros" quando algum está ativo. Coluna nova "Conformidade" na tabela com dois badges compactos
+    (ART/InfoSec, verde quando `true`). `ItemFormDialog` ganhou os dois checkboxes de conformidade -
+    condicionalmente: se `mode === "edit" && item.assessmentId`, vira dois badges somente leitura
+    com texto explicando a herança, em vez de checkbox editável (e o payload de PATCH omite os dois
+    campos por completo nesse caso - mesmo cuidado já visto no `homologationDate`, o backend rejeita
+    a request inteira se os campos chegarem, não só ignora o valor).
+  - Dashboard (`InventoryDashboardView`) segue a skill de dataviz: dimensões com significado bom/ruim
+    (status do ativo, criticidade, ART/cláusula) usam os tokens de status (`--chart-good/warning/
+    serious/critical`) via um helper novo (`lib/inventory-dashboard-colors.ts`); dimensões sem
+    significado bom/ruim (origem, tipo, área, provedor de hospedagem) usam um hue categórico único
+    (`--chart-1`) sem colorir por barra - **bug real encontrado e corrigido durante o QA**: o
+    componente `HorizontalBarChart` compartilhado não tinha um `fill` de fallback no `<Bar>` quando
+    nenhum `colorFor` era passado, então essas barras caíam no `fill` herdado da cascata CSS (preto)
+    em vez de uma cor de verdade - corrigido replicando o padrão exato já usado em
+    `admin-dashboard-view.tsx` (`fill="var(--chart-1)"` direto no `<Bar>`).
+  - **Limitação de ferramental confirmada durante o QA, não um bug**: screenshots via Playwright
+    (headless *e* com janela real) não mostram as barras dos gráficos Recharts neste ambiente,
+    mesmo com espera generosa pela animação - confirmado que isso **já afeta o dashboard existente**
+    (`/dashboards`, não tocado nesta etapa) do mesmo jeito, então não é uma regressão introduzida
+    aqui. Verificação feita por inspeção estrutural do DOM em vez de captura visual: `fill`, `width`
+    e `height` de cada `<path>` de barra conferem exatamente com os dados reais devolvidos por
+    `GET /inventory/stats` (larguras proporcionais às contagens, cores semânticas corretas por
+    dimensão) nos 8 gráficos.
+  - Validado via curl (400 ao criar item manual sem os dois campos; edição de ART em item manual
+    aceita com 200; edição de ART em item homologado rejeitada com 403; filtros combinados
+    `origin`+`type`+`criticality`+`hasRiskAnalysis` retornando exatamente o subconjunto esperado) e
+    um fluxo de ponta a ponta via `fetch` (solicitante diferente do aprovador, por causa da
+    Separação de Funções - `admin` não pode aprovar a própria avaliação) confirmando que o item de
+    inventário criado automaticamente na aprovação herda `hasRiskAnalysis`/`hasInfoSecClause` do
+    `Assessment` de origem. Testes novos em `inventory.service.spec.ts` cobrindo o guard de
+    somente-leitura e `getStats()`. Suite completa da API: 175/175 testes passando.

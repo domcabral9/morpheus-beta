@@ -162,6 +162,27 @@ export default function InventoryItemPage() {
                 />
               </div>
 
+              <div className="mt-4 flex flex-col gap-2 border-t pt-4">
+                <span className="text-xs text-muted-foreground">{t("vendorComplianceTitle")}</span>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                  <span className="flex items-center gap-2">
+                    {t("hasRiskAnalysisLabel")}
+                    <Badge variant={item.hasRiskAnalysis ? "success" : "destructive"}>
+                      {item.hasRiskAnalysis ? t("yes") : t("no")}
+                    </Badge>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    {t("hasInfoSecClauseLabel")}
+                    <Badge variant={item.hasInfoSecClause ? "success" : "destructive"}>
+                      {item.hasInfoSecClause ? t("yes") : t("no")}
+                    </Badge>
+                  </span>
+                </div>
+                {item.assessmentId && (
+                  <p className="text-xs text-muted-foreground">{t("vendorComplianceInheritedHint")}</p>
+                )}
+              </div>
+
               {item.documentationLinks.length > 0 && (
                 <div className="mt-4 flex flex-col gap-1 border-t pt-4">
                   <span className="text-xs text-muted-foreground">{t("documentationLinksTitle")}</span>

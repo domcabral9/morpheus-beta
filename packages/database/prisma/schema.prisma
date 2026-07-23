@@ -868,6 +868,16 @@ model SoftwareInventoryItem {
   status                 InventoryStatus     @default(ACTIVE)
   criticality             Criticality
   dataClassification     DataClassification
+  /// Declaração de que o fornecedor tem ART (Análise de Risco) documentada -
+  /// mesmo campo/semântica de `Assessment.hasRiskAnalysis`. Para itens vindos
+  /// de homologação (`assessmentId` setado), o valor é herdado do Assessment
+  /// na criação e passa a ser somente leitura na UI (evita divergência entre
+  /// os dois registros); só itens de entrada manual (`assessmentId` nulo)
+  /// podem editar isto diretamente.
+  hasRiskAnalysis        Boolean             @default(false)
+  /// Mesma lógica de `hasRiskAnalysis`, para a cláusula de segurança da
+  /// informação assinada com o fornecedor.
+  hasInfoSecClause       Boolean             @default(false)
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
 

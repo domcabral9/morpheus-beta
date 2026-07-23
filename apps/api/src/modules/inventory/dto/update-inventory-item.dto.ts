@@ -3,6 +3,7 @@ import { Type } from "class-transformer";
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsIn,
   IsOptional,
@@ -93,6 +94,21 @@ export class UpdateInventoryItemDto {
   @IsOptional()
   @IsIn(DATA_CLASSIFICATIONS)
   dataClassification?: (typeof DATA_CLASSIFICATIONS)[number];
+
+  @ApiPropertyOptional({
+    description:
+      "Só pode ser alterado em itens de entrada manual - rejeitado com 400 se o item tiver assessmentId (valor herdado da homologação).",
+  })
+  @IsOptional()
+  @IsBoolean()
+  hasRiskAnalysis?: boolean;
+
+  @ApiPropertyOptional({
+    description: "Mesma regra de `hasRiskAnalysis`.",
+  })
+  @IsOptional()
+  @IsBoolean()
+  hasInfoSecClause?: boolean;
 
   @ApiPropertyOptional({
     type: [DocumentationLinkDto],
