@@ -57,6 +57,18 @@ export interface InventoryItemDetail extends InventoryItemSummary {
   updatedAt: string;
 }
 
+export interface InventoryDuplicateMatch {
+  id: string;
+  name: string;
+  vendor: string;
+  status: InventoryStatus;
+  origin: InventoryOrigin;
+}
+
+export interface InventoryDuplicateCheckResult {
+  duplicate: InventoryDuplicateMatch | null;
+}
+
 export interface PaginatedInventory {
   items: InventoryItemSummary[];
   total: number;

@@ -11,6 +11,7 @@ import { CreateInventoryItemDto } from "./dto/create-inventory-item.dto";
 import { UpdateInventoryItemDto } from "./dto/update-inventory-item.dto";
 import { ListInventoryQueryDto } from "./dto/list-inventory.query.dto";
 import { ExportInventoryQueryDto } from "./dto/export-inventory.query.dto";
+import { CheckDuplicateInventoryQueryDto } from "./dto/check-duplicate-inventory.query.dto";
 import { buildInventoryCsv } from "./inventory-export.util";
 
 @ApiTags("inventory")
@@ -54,6 +55,16 @@ export class InventoryController {
       "Content-Disposition": `attachment; filename="inventario-${date}.csv"`,
     });
     res.send(buildInventoryCsv(items));
+  }
+
+  // Precisa vir antes de `:id` - senão "check-duplicate" seria interpretado como um id.
+  @RequirePermissions(PERMISSIONS.INVENTORY_MANAGE)
+  @Get("check-duplicate")
+  checkDuplicate(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: CheckDuplicateInventoryQueryDto,
+  ) {
+    return this.inventoryService.checkDuplicate(user, query);
   }
 
   @Get(":id")

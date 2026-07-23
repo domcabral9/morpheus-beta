@@ -1522,3 +1522,27 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     histórico renderizando badge/autor/data/comentário por etapa). Testes novos em
     `workflow.service.spec.ts` cobrindo `bulkDecideSteps()` (sucesso em lote e falha parcial).
     Suite completa da API: 177/177 testes passando.
+- **Validação de duplicidade no cadastro manual de inventário** - item 3 do mesmo lote de feedback
+  acima ("no momento que a pessoa digitar o nome de um software, deve existir uma pesquisa ativa pra
+  saber se já foi homologado e não deixar a jornada de inserção seguir, pra evitar duplicidade").
+  Escopo confirmado com o usuário via AskUserQuestion antes de implementar: a regra vale só dentro da
+  mesma área (`areaId`), qualquer origem (homologado ou manual) - áreas diferentes podem legitimamente
+  ter o mesmo software sob contratos/administração distintos, então não bloqueia entre áreas; UX
+  combina busca ao digitar (debounced) com bloqueio duro no submit.
+  - `GET /inventory/check-duplicate?name=&areaId=` novo (rota literal antes de `:id`, mesmo cuidado
+    de ordenação já usado por `stats`/`export`), gated por `inventory:manage` (mesma permissão exigida
+    pra criar um item). Match é case-insensitive e ignora espaços nas pontas
+    (`name: { equals: name.trim(), mode: "insensitive" }` no Prisma) - sem paginação nem lista de
+    múltiplos resultados, só o primeiro match (`findFirst`) já que a regra é binária (existe ou não).
+  - Frontend (`ItemFormDialog`, só no modo `create` - editar um item já existente sempre "bateria"
+    consigo mesmo): `useWatch` em `name`/`areaId`, debounce de 400ms via `setTimeout`/`clearTimeout`
+    dentro do próprio `useEffect` de dependência, chamando o endpoint novo. Quando encontra match,
+    mostra um aviso inline (nome/fabricante/status/origem do item existente) e desabilita o botão
+    "Salvar". Guarda contra corrida entre o debounce e um submit muito rápido: `onSubmit` refaz a
+    mesma checagem de forma síncrona logo antes do POST e aborta com toast de erro se encontrar
+    duplicidade, mesmo que o aviso visual ainda não tivesse aparecido.
+  - Validado via curl (nome idêntico com case/espaços diferentes na mesma área retorna o match; nome
+    sem correspondência retorna `null`; mesmo nome em área diferente retorna `null`, confirmando que
+    a regra não vaza entre áreas; usuário sem `inventory:manage` recebe 403) e Playwright (preencher
+    área + nome de um item já existente faz o aviso aparecer e o botão "Salvar" desabilitar; trocar
+    pra uma área sem conflito limpa o aviso e reabilita o botão).

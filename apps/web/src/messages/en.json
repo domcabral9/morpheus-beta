@@ -301,6 +301,9 @@
     "createSuccess": "Item created.",
     "updateSuccess": "Item updated.",
     "saveError": "Could not save the item.",
+    "duplicateWarningTitle": "An item with this name already exists in this area",
+    "duplicateWarningBody": "\"{name}\" ({vendor}) is already registered in this area - status: {status}, origin: {origin}. Software with the same name in different areas is allowed (different contracts/administration), but not duplicates within the same area.",
+    "duplicateBlockedError": "Cannot save - an item with this name already exists in this area.",
     "types": {
       "SAAS": "SaaS",
       "ON_PREMISES": "On-premises",

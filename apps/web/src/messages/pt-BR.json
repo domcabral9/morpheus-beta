@@ -301,6 +301,9 @@
     "createSuccess": "Item criado.",
     "updateSuccess": "Item atualizado.",
     "saveError": "Não foi possível salvar o item.",
+    "duplicateWarningTitle": "Já existe um item com este nome nesta área",
+    "duplicateWarningBody": "\"{name}\" ({vendor}) já está cadastrado nesta área - status: {status}, origem: {origin}. Softwares com o mesmo nome em áreas diferentes são permitidos (contratos/administração distintos), mas não duplicidade dentro da mesma área.",
+    "duplicateBlockedError": "Não é possível salvar - já existe um item com este nome nesta área.",
     "types": {
       "SAAS": "SaaS",
       "ON_PREMISES": "On-premises",
