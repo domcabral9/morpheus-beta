@@ -66,23 +66,26 @@ export class InventoryService {
     user: AuthenticatedUser,
     dto: CreateInventoryItemDto,
   ): Promise<InventoryItemWithOpinion> {
-    const item = await this.repository.create({
-      tenantId: user.tenantId,
-      name: dto.name,
-      vendor: dto.vendor,
-      version: dto.version,
-      url: dto.url,
-      category: dto.category,
-      type: dto.type,
-      hostingProvider: dto.hostingProvider,
-      areaId: dto.areaId,
-      managerId: dto.managerId,
-      technicalResponsibleId: dto.technicalResponsibleId,
-      homologationDate: new Date(dto.homologationDate),
-      nextReviewDate: new Date(dto.nextReviewDate),
-      criticality: dto.criticality,
-      dataClassification: dto.dataClassification,
-    });
+    const item = await this.repository.create(
+      {
+        tenantId: user.tenantId,
+        name: dto.name,
+        vendor: dto.vendor,
+        version: dto.version,
+        url: dto.url,
+        category: dto.category,
+        type: dto.type,
+        hostingProvider: dto.hostingProvider,
+        areaId: dto.areaId,
+        managerId: dto.managerId,
+        technicalResponsibleId: dto.technicalResponsibleId,
+        homologationDate: new Date(dto.homologationDate),
+        nextReviewDate: new Date(dto.nextReviewDate),
+        criticality: dto.criticality,
+        dataClassification: dto.dataClassification,
+      },
+      dto.documentationLinks,
+    );
     return attachTechnicalOpinion(item);
   }
 
@@ -92,11 +95,17 @@ export class InventoryService {
     dto: UpdateInventoryItemDto,
   ): Promise<InventoryItemWithOpinion> {
     await this.getOwnedOrThrow(user.tenantId, id);
+    const { documentationLinks, ...scalarFields } = dto;
     const item = await this.repository.update(id, {
-      ...dto,
+      ...scalarFields,
       nextReviewDate: dto.nextReviewDate ? new Date(dto.nextReviewDate) : undefined,
     });
-    return attachTechnicalOpinion(item);
+    if (documentationLinks === undefined) {
+      return attachTechnicalOpinion(item);
+    }
+    await this.repository.setDocumentationLinks(id, user.tenantId, documentationLinks);
+    const refreshed = await this.repository.findById(id);
+    return attachTechnicalOpinion(refreshed ?? item);
   }
 
   /**

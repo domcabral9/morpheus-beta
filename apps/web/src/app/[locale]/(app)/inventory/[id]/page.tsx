@@ -161,6 +161,26 @@ export default function InventoryItemPage() {
                   }
                 />
               </div>
+
+              {item.documentationLinks.length > 0 && (
+                <div className="mt-4 flex flex-col gap-1 border-t pt-4">
+                  <span className="text-xs text-muted-foreground">{t("documentationLinksTitle")}</span>
+                  <ul className="flex flex-col gap-1">
+                    {item.documentationLinks.map((link) => (
+                      <li key={link.id}>
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm hover:underline"
+                        >
+                          {link.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
