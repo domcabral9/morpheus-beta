@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { Plus, Trash2 } from "lucide-react";
 
 import { useApi } from "@/lib/use-api";
 import { ApiError } from "@/components/auth-provider";
@@ -38,6 +39,11 @@ import {
 
 const CRITICALITY_VALUES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
 
+const documentationLinkSchema = z.object({
+  label: z.string().min(1),
+  url: z.string().url(),
+});
+
 const itemFormSchema = z.object({
   name: z.string().min(1),
   vendor: z.string().min(1),
@@ -54,6 +60,7 @@ const itemFormSchema = z.object({
   criticality: z.enum(CRITICALITY_VALUES),
   dataClassification: z.enum(DATA_CLASSIFICATIONS),
   status: z.enum(INVENTORY_STATUSES).optional(),
+  documentationLinks: z.array(documentationLinkSchema),
 });
 
 function toDateInputValue(iso: string): string {
@@ -94,6 +101,7 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
         criticality: item.criticality,
         dataClassification: item.dataClassification,
         status: item.status,
+        documentationLinks: item.documentationLinks.map(({ label, url }) => ({ label, url })),
       }
     : {
         name: "",
@@ -110,6 +118,7 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
         nextReviewDate: "",
         criticality: "MEDIUM",
         dataClassification: "INTERNAL",
+        documentationLinks: [],
       };
 
   const {
@@ -123,15 +132,24 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
     defaultValues,
   });
 
+  const { fields, append, remove } = useFieldArray({ control, name: "documentationLinks" });
+  const type = useWatch({ control, name: "type" });
+  const showDocumentationLinks = type === "API_INTEGRATION";
+
   React.useEffect(() => {
     if (open) reset(defaultValues);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- so precisa resetar quando o dialog abre, nao a cada render do defaultValues recem calculado
   }, [open, item, reset]);
 
   async function onSubmit(values: InventoryItemFormValues) {
+    // `homologationDate` não existe em UpdateInventoryItemDto - é um fato
+    // histórico da homologação original, não editável depois de criado (só
+    // `nextReviewDate`, o ciclo de revisão, muda com o tempo). Mandar essa
+    // chave num PATCH é rejeitado pelo ValidationPipe (`forbidNonWhitelisted`).
+    const { homologationDate, ...editableValues } = values;
     const payload = {
-      ...values,
-      homologationDate: toIsoDate(values.homologationDate),
+      ...editableValues,
+      ...(item ? {} : { homologationDate: toIsoDate(homologationDate) }),
       nextReviewDate: toIsoDate(values.nextReviewDate),
       version: values.version || undefined,
       url: values.url || undefined,
@@ -271,9 +289,13 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
               <Input
                 id="homologationDate"
                 type="date"
+                disabled={mode === "edit"}
                 {...register("homologationDate")}
                 aria-invalid={!!errors.homologationDate}
               />
+              {mode === "edit" && (
+                <p className="text-xs text-muted-foreground">{t("homologationDateImmutableHint")}</p>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="nextReviewDate">{t("fieldNextReviewDate")}</Label>
@@ -350,6 +372,54 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
               </div>
             )}
           </div>
+
+          {showDocumentationLinks && (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <Label>{t("documentationLinksTitle")}</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ label: "", url: "" })}
+                >
+                  <Plus />
+                  {t("addDocumentationLink")}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">{t("documentationLinksHint")}</p>
+
+              {fields.map((field, index) => (
+                <div key={field.id} className="grid grid-cols-[1fr_2fr_auto] items-end gap-2">
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor={`documentationLink-${index}-label`} className="text-xs">
+                      {t("documentationLinkLabel")}
+                    </Label>
+                    <Input
+                      id={`documentationLink-${index}-label`}
+                      placeholder={t("documentationLinkLabelPlaceholder")}
+                      {...register(`documentationLinks.${index}.label`)}
+                      aria-invalid={!!errors.documentationLinks?.[index]?.label}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor={`documentationLink-${index}-url`} className="text-xs">
+                      {t("documentationLinkUrl")}
+                    </Label>
+                    <Input
+                      id={`documentationLink-${index}-url`}
+                      placeholder="https://..."
+                      {...register(`documentationLinks.${index}.url`)}
+                      aria-invalid={!!errors.documentationLinks?.[index]?.url}
+                    />
+                  </div>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>

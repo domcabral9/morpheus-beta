@@ -36,6 +36,7 @@ describe("InventoryService", () => {
     findByAssessmentId: jest.Mock;
     findMany: jest.Mock;
     update: jest.Mock;
+    setDocumentationLinks: jest.Mock;
     findDueForReview: jest.Mock;
   };
 
@@ -46,6 +47,7 @@ describe("InventoryService", () => {
       findByAssessmentId: jest.fn().mockResolvedValue(null),
       findMany: jest.fn(),
       update: jest.fn().mockImplementation((id, data) => Promise.resolve({ id, ...data })),
+      setDocumentationLinks: jest.fn().mockResolvedValue(undefined),
       findDueForReview: jest.fn(),
     };
 
@@ -151,6 +153,48 @@ describe("InventoryService", () => {
       const result = await service.list(makeUser(), {});
       expect(result.items[0]!.technicalOpinion).toEqual(opinion);
       expect(result.items[1]!.technicalOpinion).toBeNull();
+    });
+  });
+
+  describe("documentationLinks", () => {
+    const links = [{ label: "Swagger", url: "https://api.example.com/swagger" }];
+
+    it("create() repassa documentationLinks pro repository como segundo argumento", async () => {
+      await service.create(makeUser(), {
+        name: "API X",
+        vendor: "Fornecedor X",
+        category: "Integração",
+        type: "API_INTEGRATION",
+        areaId: "area-1",
+        managerId: "user-1",
+        technicalResponsibleId: "user-1",
+        homologationDate: "2026-07-01",
+        nextReviewDate: "2027-07-01",
+        criticality: "MEDIUM",
+        dataClassification: "INTERNAL",
+        documentationLinks: links,
+      } as never);
+
+      expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ name: "API X" }), links);
+    });
+
+    it("update() substitui os links e refaz o fetch quando documentationLinks é enviado", async () => {
+      repo.findById
+        .mockResolvedValueOnce({ id: "item-1", tenantId: "tenant-1" }) // getOwnedOrThrow
+        .mockResolvedValueOnce({ id: "item-1", tenantId: "tenant-1", documentationLinks: links }); // refetch pós-update
+
+      const result = await service.update(makeUser(), "item-1", { documentationLinks: links } as never);
+
+      expect(repo.setDocumentationLinks).toHaveBeenCalledWith("item-1", "tenant-1", links);
+      expect(result.documentationLinks).toEqual(links);
+    });
+
+    it("update() não toca nos links quando documentationLinks não é enviado", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1" });
+
+      await service.update(makeUser(), "item-1", { vendor: "Novo nome" } as never);
+
+      expect(repo.setDocumentationLinks).not.toHaveBeenCalled();
     });
   });
 });

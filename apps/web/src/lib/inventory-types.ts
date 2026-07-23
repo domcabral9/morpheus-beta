@@ -16,6 +16,12 @@ export interface InventoryTechnicalOpinionSummary {
   issuedAt: string;
 }
 
+export interface InventoryDocumentationLink {
+  id: string;
+  label: string;
+  url: string;
+}
+
 export interface InventoryItemSummary {
   id: string;
   name: string;
@@ -39,6 +45,7 @@ export interface InventoryItemDetail extends InventoryItemSummary {
   hostingProvider: string | null;
   homologationDate: string;
   dataClassification: DataClassification;
+  documentationLinks: InventoryDocumentationLink[];
   createdAt: string;
   updatedAt: string;
 }
@@ -66,4 +73,5 @@ export interface InventoryItemFormValues {
   criticality: Criticality;
   dataClassification: DataClassification;
   status?: InventoryStatus;
+  documentationLinks: { label: string; url: string }[];
 }

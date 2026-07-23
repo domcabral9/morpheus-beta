@@ -1,9 +1,21 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsDateString, IsIn, IsOptional, IsString, MinLength } from "class-validator";
+import { Type } from "class-transformer";
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsDateString,
+  IsIn,
+  IsOptional,
+  IsString,
+  MinLength,
+  ValidateNested,
+} from "class-validator";
 import {
   SOFTWARE_TYPES,
   DATA_CLASSIFICATIONS,
   CRITICALITY_VALUES,
+  MAX_DOCUMENTATION_LINKS,
+  DocumentationLinkDto,
 } from "./create-inventory-item.dto";
 
 const INVENTORY_STATUSES = ["ACTIVE", "PENDING_REVIEW", "EXPIRED", "DECOMMISSIONED"] as const;
@@ -81,6 +93,17 @@ export class UpdateInventoryItemDto {
   @IsOptional()
   @IsIn(DATA_CLASSIFICATIONS)
   dataClassification?: (typeof DATA_CLASSIFICATIONS)[number];
+
+  @ApiPropertyOptional({
+    type: [DocumentationLinkDto],
+    description: "Substitui a lista inteira de links quando enviado (não faz merge parcial).",
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_DOCUMENTATION_LINKS)
+  @ValidateNested({ each: true })
+  @Type(() => DocumentationLinkDto)
+  documentationLinks?: DocumentationLinkDto[];
 }
 
 export { INVENTORY_STATUSES };

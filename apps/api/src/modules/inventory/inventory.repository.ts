@@ -6,6 +6,10 @@ const itemDetailInclude = {
   area: true,
   manager: { select: { id: true, name: true, email: true } },
   technicalResponsible: { select: { id: true, name: true, email: true } },
+  documentationLinks: {
+    orderBy: { createdAt: "asc" },
+    select: { id: true, label: true, url: true },
+  },
   // Parecer técnico da homologação que originou este item, quando existir -
   // itens de entrada manual (`assessmentId` nulo) nunca têm um. Pega só a
   // versão mais recente da avaliação (`take: 1`) - mesma noção de "o parecer
@@ -29,12 +33,48 @@ export type InventoryItemDetail = Prisma.SoftwareInventoryItemGetPayload<{
   include: typeof itemDetailInclude;
 }>;
 
+export interface DocumentationLinkInput {
+  label: string;
+  url: string;
+}
+
 @Injectable()
 export class InventoryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: Prisma.SoftwareInventoryItemUncheckedCreateInput): Promise<InventoryItemDetail> {
-    return this.prisma.softwareInventoryItem.create({ data, include: itemDetailInclude });
+  create(
+    data: Prisma.SoftwareInventoryItemUncheckedCreateInput,
+    documentationLinks?: DocumentationLinkInput[],
+  ): Promise<InventoryItemDetail> {
+    return this.prisma.softwareInventoryItem.create({
+      data: {
+        ...data,
+        documentationLinks: documentationLinks?.length
+          ? { create: documentationLinks.map((link) => ({ tenantId: data.tenantId, ...link })) }
+          : undefined,
+      },
+      include: itemDetailInclude,
+    });
+  }
+
+  /** Substitui a lista inteira de links do item (mesmo padrão de
+   * `RolesRepository.setPermissions`) - não há edição pontual de um link, só
+   * da lista completa a cada save do formulário. */
+  async setDocumentationLinks(
+    inventoryItemId: string,
+    tenantId: string,
+    links: DocumentationLinkInput[],
+  ): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.inventoryDocumentationLink.deleteMany({ where: { inventoryItemId } }),
+      ...(links.length
+        ? [
+            this.prisma.inventoryDocumentationLink.createMany({
+              data: links.map((link) => ({ inventoryItemId, tenantId, ...link })),
+            }),
+          ]
+        : []),
+    ]);
   }
 
   findById(id: string): Promise<InventoryItemDetail | null> {

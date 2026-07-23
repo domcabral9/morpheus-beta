@@ -1325,3 +1325,34 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
   - Validado via `build`/`typecheck`/`lint` limpos e Playwright: as 5 seções renderizam em pt-BR e
     en, o accordion abre e fecha (conteúdo visível → clique → oculto → clique → visível de novo),
     e digitar "ajuda" na busca rápida encontra e navega pra "Ajuda / FAQ".
+- **Links de documentação por item de inventário** (quarto item do backlog pós-uso - início do
+  cluster "inventário como módulo de verdade". Pedido original do usuário: "customização em caso de
+  APIs, como não é algo tão palpável" - ter onde anexar link do épico no Jira, do Swagger/OpenAPI,
+  etc). Modelo novo `InventoryDocumentationLink` (1:N com `SoftwareInventoryItem`, `label` + `url`),
+  migration `add_inventory_documentation_links`. Não restrito por `type` no schema/backend (um item
+  de qualquer tipo pode ganhar links) - só a UI esconde a seção fora de `API_INTEGRATION`, que é o
+  caso de uso motivador.
+  - Backend: `InventoryRepository.setDocumentationLinks()` substitui a lista inteira a cada save
+    (`$transaction([deleteMany, createMany])`, mesmo padrão de `RolesRepository.setPermissions`) -
+    não há edição pontual de um link. `create()` usa nested `create` do Prisma direto. DTOs novos
+    (`DocumentationLinkDto`, `IsUrl({require_protocol:true})`, `ArrayMaxSize(10)`) compartilhados
+    entre create/update.
+  - Frontend: primeiro uso de `useFieldArray` fora do editor de perguntas do questionário (mesmo
+    padrão de `QuestionCreateDialog` - `append`/`remove`/`fields.map`). Seção "Links de
+    documentação" só renderiza quando `useWatch({name:"type"}) === "API_INTEGRATION"` no formulário
+    - trocar o tipo não apaga os links já digitados (só esconde a seção), evitando perda de dado
+    por toggle acidental.
+  - **Bug pré-existente encontrado e corrigido durante QA, sem relação com esta feature**: o
+    formulário de edição de item de inventário mandava `homologationDate` em todo PATCH, mas
+    `UpdateInventoryItemDto` nunca teve esse campo (é um fato histórico da homologação original -
+    só `nextReviewDate`, o ciclo de revisão, é editável). Com `forbidNonWhitelisted: true` no
+    `ValidationPipe` global, isso rejeitava **qualquer** save do dialog de edição com 400 ("property
+    homologationDate should not exist") - achado ao testar o fluxo completo de editar/remover um
+    link via Playwright, não fazia parte do pedido original. Corrigido no frontend: o payload de
+    PATCH omite `homologationDate`; o campo agora aparece desabilitado no modo edição, com um texto
+    explicando que é imutável.
+  - Validado via curl real (create com 2 links, replace parcial, clear total, PATCH de outro campo
+    não mexe nos links, URL inválida rejeitada com 400) e Playwright (seção aparece/some conforme o
+    tipo, adicionar/remover link, criar → editar → remover um link → salvar → detalhe reflete só o
+    link restante). Testes novos em `inventory.service.spec.ts` cobrindo `create()`/`update()` com
+    `documentationLinks`.
