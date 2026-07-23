@@ -1,7 +1,8 @@
 "use client";
 
+import * as React from "react";
 import { useTranslations } from "next-intl";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -20,7 +21,9 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const t = useTranslations("Nav");
+  const paletteT = useTranslations("CommandPalette");
   const user = useRequireAuth();
+  const [paletteOpen, setPaletteOpen] = React.useState(false);
 
   if (!user) {
     return (
@@ -32,13 +35,29 @@ export function AppShell({
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <CommandPalette />
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 sm:px-6">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-1 items-center gap-2">
             <SidebarTrigger aria-label={t("toggleSidebarLabel")} />
             <Separator orientation="vertical" className="h-4" />
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              className="flex w-full max-w-64 items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm text-muted-foreground shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <Search className="size-4 shrink-0" />
+              <span className="flex-1 truncate text-left">{paletteT("title")}</span>
+              <span className="hidden items-center gap-0.5 sm:flex">
+                <kbd className="rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium">
+                  Ctrl
+                </kbd>
+                <kbd className="rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium">
+                  K
+                </kbd>
+              </span>
+            </button>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <LocaleSwitcher label={t("localeSwitcherLabel")} />
