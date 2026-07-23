@@ -739,7 +739,8 @@
     "PENDING_ADJUSTMENT": "Pending adjustment",
     "APPROVED": "Approved",
     "REJECTED": "Rejected",
-    "REOPENED": "Reopened"
+    "REOPENED": "Reopened",
+    "PENDING_RENEWAL": "Pending renewal"
   },
   "Criticality": {
     "LOW": "Low",

@@ -6,5 +6,6 @@ export const STATUS_ORDER = [
   "PENDING_ADJUSTMENT",
   "REOPENED",
   "APPROVED",
+  "PENDING_RENEWAL",
   "REJECTED",
 ] as const;

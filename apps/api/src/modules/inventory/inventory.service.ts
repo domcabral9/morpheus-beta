@@ -190,10 +190,10 @@ export class InventoryService {
    * -> WorkflowService). Categoria/tipo/classificação de dados nascem com
    * valores padrão conservadores (não tentamos inferir do questionário de
    * forma automática/frágil) - o gestor refina depois pelo CRUD
-   * (`inventory:manage`). Defensivo contra duplicidade: se já existir um
-   * item para esta avaliação (não deveria acontecer hoje, já que
-   * APPROVED/REJECTED não são reenviáveis ainda), atualiza em vez de tentar
-   * criar de novo.
+   * (`inventory:manage`). Se já existir um item pra esta avaliação, atualiza
+   * em vez de criar de novo - hoje isso só acontece na aprovação de um ciclo
+   * de renovação anual (`PENDING_RENEWAL` reabrindo a mesma Assessment), já
+   * que uma Assessment recém-criada nunca teria um item associado ainda.
    */
   async createFromApprovedAssessment(
     tenantId: string,
@@ -205,6 +205,9 @@ export class InventoryService {
     nextReviewDate.setMonth(nextReviewDate.getMonth() + DEFAULT_REVIEW_CYCLE_MONTHS);
 
     if (existing) {
+      // Renovação aprovada: reseta o ciclo exatamente como uma homologação
+      // nova - próxima revisão em +12 meses, status volta pra ACTIVE mesmo
+      // que o item estivesse EXPIRED (bloqueando a área) ou PENDING_REVIEW.
       return this.repository.update(existing.id, {
         name: assessment.softwareName,
         vendor: assessment.vendor,
@@ -214,6 +217,8 @@ export class InventoryService {
         criticality: assessment.criticality,
         hasRiskAnalysis: assessment.hasRiskAnalysis,
         hasInfoSecClause: assessment.hasInfoSecClause,
+        nextReviewDate,
+        status: "ACTIVE",
       });
     }
 
