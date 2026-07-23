@@ -70,6 +70,7 @@ model Tenant {
   workflowDefinitions WorkflowDefinition[]
   assessments         Assessment[]
   inventoryItems      SoftwareInventoryItem[]
+  documentationLinks  InventoryDocumentationLink[]
   attachments         Attachment[]
   comments            Comment[]
   auditLogs           AuditLog[]
@@ -860,13 +861,36 @@ model SoftwareInventoryItem {
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
 
-  attachments Attachment[]
+  attachments         Attachment[]
+  documentationLinks  InventoryDocumentationLink[]
 
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([tenantId, areaId])
   @@index([nextReviewDate])
   @@map("software_inventory_items")
+}
+
+/// Links externos de documentação (Jira, Swagger/OpenAPI, Postman, etc.) —
+/// pensado sobretudo para itens do tipo API_INTEGRATION, que não são tão
+/// "palpáveis" quanto um SaaS com URL de login. Não restrito por `type` no
+/// schema: um item de outro tipo também pode ganhar um link no futuro sem
+/// precisar de migration nova. Substituição completa a cada update (mesmo
+/// padrão de `RolePermission.setPermissions`) — não há necessidade de editar
+/// um link individual, só a lista inteira do item.
+model InventoryDocumentationLink {
+  id              String                @id @default(cuid())
+  tenantId        String
+  tenant          Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  inventoryItemId String
+  inventoryItem   SoftwareInventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  label           String
+  url             String
+  createdAt       DateTime              @default(now())
+
+  @@index([tenantId])
+  @@index([inventoryItemId])
+  @@map("inventory_documentation_links")
 }
 
 // =============================================================================

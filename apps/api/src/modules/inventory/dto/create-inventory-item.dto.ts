@@ -1,9 +1,34 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsDateString, IsIn, IsOptional, IsString, MinLength } from "class-validator";
+import { Type } from "class-transformer";
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsDateString,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUrl,
+  MaxLength,
+  MinLength,
+  ValidateNested,
+} from "class-validator";
 
 const SOFTWARE_TYPES = ["SAAS", "ON_PREMISES", "DESKTOP", "MOBILE", "API_INTEGRATION"] as const;
 const DATA_CLASSIFICATIONS = ["PUBLIC", "INTERNAL", "CONFIDENTIAL", "RESTRICTED"] as const;
 const CRITICALITY_VALUES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
+const MAX_DOCUMENTATION_LINKS = 10;
+
+export class DocumentationLinkDto {
+  @ApiProperty({ description: 'Ex.: "Jira", "Swagger / OpenAPI", "Postman".' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(60)
+  label!: string;
+
+  @ApiProperty()
+  @IsUrl({ require_protocol: true })
+  url!: string;
+}
 
 export class CreateInventoryItemDto {
   @ApiProperty()
@@ -67,6 +92,18 @@ export class CreateInventoryItemDto {
   @ApiProperty({ enum: DATA_CLASSIFICATIONS })
   @IsIn(DATA_CLASSIFICATIONS)
   dataClassification!: (typeof DATA_CLASSIFICATIONS)[number];
+
+  @ApiPropertyOptional({
+    type: [DocumentationLinkDto],
+    description:
+      "Links externos de documentação (Jira, Swagger/OpenAPI, etc.) - sobretudo útil para itens do tipo API_INTEGRATION.",
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_DOCUMENTATION_LINKS)
+  @ValidateNested({ each: true })
+  @Type(() => DocumentationLinkDto)
+  documentationLinks?: DocumentationLinkDto[];
 }
 
-export { SOFTWARE_TYPES, DATA_CLASSIFICATIONS, CRITICALITY_VALUES };
+export { SOFTWARE_TYPES, DATA_CLASSIFICATIONS, CRITICALITY_VALUES, MAX_DOCUMENTATION_LINKS };
