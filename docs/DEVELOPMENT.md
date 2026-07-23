@@ -1635,3 +1635,39 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     ("annualClosingWindowStart deve estar no formato MM-DD"), revertido pro estado original
     (`null`/`null`/`false`) via SQL direto ao final (dado de tenant compartilhado).
     Suite completa da API: 187/187 testes passando.
+- **Renovação anual de homologação - Fase 3: scheduler de gatilho de renovação** (mesmo plano,
+  `C:\Users\kaosikner\.claude\plans\streamed-sleeping-newell.md` - "a parte mais delicada", segundo o
+  próprio plano). Novo módulo `RenewalModule` (`apps/api/src/modules/renewal/`), autocontido via
+  `PrismaService`/`NotificationsService`/`AuditLogService` (todos globais) - não importa
+  `AssessmentsModule`/`InventoryModule`, evitando risco de circularidade no grafo de imports.
+  - `renewal-window.util.ts`: `computeRenewalTrigger()` implementa o algoritmo da janela de fechamento
+    anual derivado com o usuário via 5 exemplos numéricos (ver plano) - nunca reduz o prazo padrão de
+    30 dias corridos, só estende: se o gatilho natural (`nextReviewDate`) cai dentro da janela do
+    tenant, antecipa o gatilho pro início da janela e nunca deixa o vencimento antes do fim dela; senão,
+    se só o vencimento (gatilho + 30 dias) cai dentro da janela, estende o vencimento até o fim dela;
+    senão, nada muda. Resolve a janela (`MM-DD`, sem ano fixo) contra o ano da data sendo testada e o
+    ano anterior, cobrindo também janelas que cruzam a virada do ano (ex.: 20/dez a 10/jan) - caso não
+    coberto pelos exemplos do usuário, mas coberto defensivamente já que é um cenário plausível pra
+    exatamente o problema que a feature resolve (freeze de fim de ano).
+  - `renewal.repository.ts`: `findEligibleItems()` busca itens de inventário com `assessmentId` não
+    nulo, `status` em `ACTIVE`/`PENDING_REVIEW`, cuja `Assessment` ainda está `APPROVED` (disparo por
+    borda - uma vez reaberta, o item não é reprocessado até o ciclo se resolver); `startRenewalCycle()`
+    seta `Assessment.status = PENDING_RENEWAL` + `renewalDueAt`/`renewalCycleStartedAt`;
+    `findAdministradorRoleId()` busca o papel seedado "Administrador" do tenant (`@@unique([tenantId,
+    name])` garante que é único).
+  - `renewal.scheduler.ts`: `RenewalScheduler.checkRenewalTriggers()`, `@Cron("15 6 * * *")` - roda
+    15 minutos depois do `InventoryReviewScheduler` (6h), pra sempre ver o estado do dia já atualizado.
+    Pra cada item elegível, calcula o gatilho efetivo; se já passou, reabre a `Assessment`, notifica o
+    solicitante original (`RENEWAL_PENDING`) - ou, se ele está inativo (proxy pra "saiu da empresa"),
+    notifica o papel "Administrador" no lugar (decisão #4 do plano) - e grava `AuditLog` com
+    `action: "REOPEN"` (primeiro uso real dessa ação, antes só vestigial no enum).
+  - Validado via `renewal-window.util.spec.ts` (9 testes - os 5 exemplos numéricos do usuário
+    reproduzidos matematicamente, incluindo o caso "janela mais curta que 30 dias" que prova que a
+    regra nunca reduz o prazo padrão, mais o caso de janela cruzando a virada do ano) e
+    `renewal.scheduler.spec.ts` (6 testes - nenhum item elegível, gatilho ainda não chegou, reabertura +
+    notificação do solicitante ativo, solicitante inativo notifica o papel Administrador, nenhum papel
+    Administrador encontrado não quebra o job, janela de fechamento antecipando o gatilho antes da data
+    natural). Restart do servidor de dev confirmou o grafo de DI do `RenewalModule` resolve sem erros
+    ("Nest application successfully started"). Sem endpoint HTTP nesta fase (é um cron job puro) - sem
+    verificação manual via curl, por isso a cobertura extra nos testes unitários.
+    Suite completa da API: 202/202 testes passando.
