@@ -1712,7 +1712,15 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     `AREA_BLOCKED`, `POST /assessments` numa área diferente retornando 201 normalmente (prova que o
     bloqueio é por área, não global) - revertido o item pra `ACTIVE` e a avaliação de teste apagada ao
     final, confirmado `GET /assessments/blocked-areas` voltando a `[]` (prova que o sinal é
-    autolimpante). Sem Playwright nesta fase (sem dependência do pacote configurada no repo) - a
-    verificação de UI (desabilitar opção no select, abrir o modal) não foi testada visualmente num
-    browser, só por revisão de código reaproveitando padrões já usados noutras telas.
+    autolimpante).
+  - Verificação visual: `@playwright/test` adicionado como devDependency de `apps/web` (não havia
+    dependência de teste de browser no repo até agora) - script ad-hoc (não commitado, só usado nesta
+    sessão) logou como `usuario@morpheus.demo`, confirmou que a opção "Financeiro" aparece desabilitada
+    com o rótulo "(bloqueada - renovação pendente)" e que a página pré-seleciona a primeira área NÃO
+    bloqueada ("Jurídico") - screenshot 1. Depois simulou uma corrida real (área livre no load da
+    página, item vira `EXPIRED` entre o load e o submit) e confirmou o fallback: `POST /assessments`
+    recebe 409, o modal "Área bloqueada para novas avaliações" abre corretamente, e o `<select>` se
+    atualiza sozinho pra refletir a área recém-bloqueada - screenshot 2. Estado revertido ao final
+    (ambos os itens de inventário de volta a `ACTIVE`; nenhuma avaliação de teste foi criada, já que o
+    bloqueio impediu a criação em ambos os cenários).
     Suite completa da API: 209/209 testes passando.
