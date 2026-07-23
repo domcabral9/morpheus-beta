@@ -118,6 +118,24 @@ export class InventoryRepository {
     return { items, total };
   }
 
+  /** Mesmos filtros de `findMany`, sem paginação - usado pelo export
+   * (CSV/JSON), que precisa de todas as linhas que batem com o filtro. */
+  findAllMatching(params: {
+    tenantId: string;
+    status?: InventoryStatus;
+    areaId?: string;
+  }): Promise<InventoryItemDetail[]> {
+    return this.prisma.softwareInventoryItem.findMany({
+      where: {
+        tenantId: params.tenantId,
+        ...(params.status ? { status: params.status } : {}),
+        ...(params.areaId ? { areaId: params.areaId } : {}),
+      },
+      include: itemDetailInclude,
+      orderBy: { name: "asc" },
+    });
+  }
+
   update(
     id: string,
     data: Prisma.SoftwareInventoryItemUncheckedUpdateInput,

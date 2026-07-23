@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { Loader2, Plus } from "lucide-react";
+import { Download, Loader2, Plus } from "lucide-react";
 
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useApi } from "@/lib/use-api";
@@ -11,6 +11,12 @@ import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -49,6 +55,7 @@ export default function InventoryPage() {
   const [areas, setAreas] = React.useState<Area[]>([]);
   const [users, setUsers] = React.useState<UserOption[]>([]);
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [exporting, setExporting] = React.useState(false);
 
   const loadItems = React.useCallback(
     (targetPage: number) => {
@@ -84,6 +91,26 @@ export default function InventoryPage() {
 
   const totalPages = data ? Math.max(Math.ceil(data.total / data.pageSize), 1) : 1;
 
+  async function handleExport(format: "csv" | "json") {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (status !== ALL_STATUSES_VALUE) params.set("status", status);
+      params.set("format", format);
+      const blob = await api.getBlob(`/inventory/export?${params.toString()}`);
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = `inventario-${new Date().toISOString().slice(0, 10)}.${format}`;
+      anchor.click();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      setError(t("exportError"));
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (!user) return null;
 
   return (
@@ -94,12 +121,30 @@ export default function InventoryPage() {
             <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("title")}</h1>
             <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
-          {canManage && (
-            <Button size="sm" onClick={() => setCreateOpen(true)}>
-              <Plus />
-              {t("newButton")}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={exporting}>
+                  {exporting ? <Loader2 className="animate-spin" /> : <Download />}
+                  {t("exportButton")}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => handleExport("csv")}>
+                  {t("exportCsv")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleExport("json")}>
+                  {t("exportJson")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {canManage && (
+              <Button size="sm" onClick={() => setCreateOpen(true)}>
+                <Plus />
+                {t("newButton")}
+              </Button>
+            )}
+          </div>
         </div>
 
         <Card>

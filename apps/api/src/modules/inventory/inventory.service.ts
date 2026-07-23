@@ -1,10 +1,12 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { Criticality } from "@morpheus/database";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
+import { AuditLogService } from "../audit/audit-log.service";
 import { InventoryRepository, InventoryItemDetail } from "./inventory.repository";
 import { CreateInventoryItemDto } from "./dto/create-inventory-item.dto";
 import { UpdateInventoryItemDto } from "./dto/update-inventory-item.dto";
 import { ListInventoryQueryDto } from "./dto/list-inventory.query.dto";
+import { ExportInventoryQueryDto } from "./dto/export-inventory.query.dto";
 
 /** Cadência padrão de revisão para itens criados automaticamente na aprovação. */
 const DEFAULT_REVIEW_CYCLE_MONTHS = 12;
@@ -42,7 +44,10 @@ export interface ApprovedAssessmentForInventory {
 
 @Injectable()
 export class InventoryService {
-  constructor(private readonly repository: InventoryRepository) {}
+  constructor(
+    private readonly repository: InventoryRepository,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   async list(user: AuthenticatedUser, query: ListInventoryQueryDto) {
     const page = query.page ?? 1;
@@ -55,6 +60,30 @@ export class InventoryService {
       pageSize,
     });
     return { items: items.map(attachTechnicalOpinion), total, page, pageSize };
+  }
+
+  /** Todas as linhas que batem com o filtro, sem paginação - quem chama
+   * decide o formato de saída (CSV/JSON), aqui só monta os dados. */
+  async exportItems(
+    user: AuthenticatedUser,
+    query: ExportInventoryQueryDto,
+  ): Promise<InventoryItemWithOpinion[]> {
+    const items = await this.repository.findAllMatching({
+      tenantId: user.tenantId,
+      status: query.status,
+      areaId: query.areaId,
+    });
+    const mapped = items.map(attachTechnicalOpinion);
+
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "DOWNLOAD",
+      entityType: "SoftwareInventoryItem",
+      metadata: { format: query.format ?? "csv", count: mapped.length },
+    });
+
+    return mapped;
   }
 
   async getById(user: AuthenticatedUser, id: string): Promise<InventoryItemWithOpinion> {
