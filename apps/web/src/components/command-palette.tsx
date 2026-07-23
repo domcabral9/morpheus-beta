@@ -18,26 +18,34 @@ import { ADMIN_NAV_ITEMS, PRIMARY_NAV_ITEMS, getVisibleNavItems } from "@/lib/na
 /** Busca rápida (Cmd/Ctrl+K) sobre os itens de navegação já existentes — não é busca de
  * conteúdo (avaliações, usuários, etc.), só um atalho pra chegar mais rápido numa tela que
  * já está no menu. Índice e filtro de permissão são os mesmos de `app-sidebar.tsx`, via
- * `getVisibleNavItems`, pra nunca divergir sobre o que aparece. */
-export function CommandPalette() {
+ * `getVisibleNavItems`, pra nunca divergir sobre o que aparece.
+ *
+ * `open`/`onOpenChange` controlados de fora (`AppShell`) - existem dois jeitos de abrir a
+ * mesma paleta (atalho de teclado e a caixa visível no header), então o estado precisa viver
+ * acima dos dois pra não divergirem entre si. */
+export function CommandPalette({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const t = useTranslations("Nav");
   const adminT = useTranslations("Admin");
   const paletteT = useTranslations("CommandPalette");
   const { user } = useAuth();
   const router = useRouter();
 
-  const [open, setOpen] = React.useState(false);
-
   React.useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setOpen((current) => !current);
+        onOpenChange(!open);
       }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [open, onOpenChange]);
 
   if (!user) return null;
 
@@ -45,12 +53,12 @@ export function CommandPalette() {
   const visibleAdminItems = getVisibleNavItems(ADMIN_NAV_ITEMS, user.permissions);
 
   function go(href: string) {
-    setOpen(false);
+    onOpenChange(false);
     router.push(href);
   }
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen} title={paletteT("title")}>
+    <CommandDialog open={open} onOpenChange={onOpenChange} title={paletteT("title")}>
       <CommandInput placeholder={paletteT("placeholder")} />
       <CommandList>
         <CommandEmpty>{paletteT("noResults")}</CommandEmpty>

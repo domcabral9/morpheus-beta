@@ -1563,3 +1563,20 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     vez de 403) e Playwright com a conta de solicitante (`usuario@morpheus.demo`): aviso aparece e
     botão desabilita ao preencher um nome já existente na área Financeiro; digitar um nome novo limpa
     o aviso e reabilita o botão.
+- **Caixa de busca rápida visível no header** - o cmd-k (Etapa 3 do plano `streamed-sleeping-newell.md`)
+  já existia, mas só como atalho de teclado implícito - o usuário percebeu que precisa de um "modo
+  visual" também: "uma pequena caixa ao lado do sidebar com um icone pequeno de 'lupa', e um texto
+  transparente escrito 'Busca rápida CTRL + K'", os dois modos coexistindo.
+  - `CommandPalette` deixou de gerenciar seu próprio `open` (`useState` interno) e passou a receber
+    `open`/`onOpenChange` como props - precisava, já que agora existem dois jeitos de abrir a mesma
+    paleta (atalho de teclado e o clique na caixa visível) e os dois precisam controlar a mesma
+    instância, não duas independentes.
+  - Caixa nova em `AppShell` (não dentro do `AppSidebar`) - decisão de posicionamento: "ao lado do
+    sidebar" leu-se como o header, logo depois do `SidebarTrigger`/separador, não como mais um item
+    dentro do menu lateral. Isso também evita ter que lidar com o modo `collapsible="icon"` da
+    sidebar (a caixa fica sempre visível, independente do estado de colapso do menu). Visual: ícone
+    de lupa + texto "Busca rápida" (reaproveita `CommandPalette.title`, já existente) + par de `<kbd>`
+    "Ctrl"/"K" à direita, escondido abaixo do breakpoint `sm` pra não quebrar em mobile.
+  - Validado via Playwright: clique na caixa abre a paleta, Escape fecha, Ctrl+K abre a mesma
+    instância (não uma segunda), filtro por texto ("papeis") funciona normalmente; screenshots em
+    3 larguras (desktop, 900px, 390px) confirmando que não quebra layout em nenhuma.
