@@ -7,6 +7,7 @@ import { CreateInventoryItemDto } from "./dto/create-inventory-item.dto";
 import { UpdateInventoryItemDto } from "./dto/update-inventory-item.dto";
 import { ListInventoryQueryDto } from "./dto/list-inventory.query.dto";
 import { ExportInventoryQueryDto } from "./dto/export-inventory.query.dto";
+import { CheckDuplicateInventoryQueryDto } from "./dto/check-duplicate-inventory.query.dto";
 
 /** Cadência padrão de revisão para itens criados automaticamente na aprovação. */
 const DEFAULT_REVIEW_CYCLE_MONTHS = 12;
@@ -107,6 +108,20 @@ export class InventoryService {
     });
 
     return mapped;
+  }
+
+  /** Checagem em tempo real usada pelo formulário de "novo item" - não
+   * bloqueia nada aqui, só informa se já existe um item com esse nome na
+   * mesma área (a decisão de bloquear o submit é do frontend). */
+  async checkDuplicate(user: AuthenticatedUser, query: CheckDuplicateInventoryQueryDto) {
+    const match = await this.repository.findDuplicateByNameAndArea(
+      user.tenantId,
+      query.areaId,
+      query.name,
+    );
+    if (!match) return { duplicate: null };
+    const { assessmentId, ...rest } = match;
+    return { duplicate: { ...rest, origin: assessmentId ? ("HOMOLOGATED" as const) : ("MANUAL" as const) } };
   }
 
   async getById(user: AuthenticatedUser, id: string): Promise<InventoryItemWithOpinion> {

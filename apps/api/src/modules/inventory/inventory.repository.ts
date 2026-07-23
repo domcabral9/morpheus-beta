@@ -116,6 +116,26 @@ export class InventoryRepository {
     });
   }
 
+  /** Duplicidade = mesmo nome (case-insensitive) na mesma área, homologado
+   * ou manual - a regra não se aplica entre áreas diferentes, que podem ter
+   * contratos/administração distintos para o mesmo software. */
+  findDuplicateByNameAndArea(
+    tenantId: string,
+    areaId: string,
+    name: string,
+  ): Promise<{
+    id: string;
+    name: string;
+    vendor: string;
+    status: InventoryStatus;
+    assessmentId: string | null;
+  } | null> {
+    return this.prisma.softwareInventoryItem.findFirst({
+      where: { tenantId, areaId, name: { equals: name.trim(), mode: "insensitive" } },
+      select: { id: true, name: true, vendor: true, status: true, assessmentId: true },
+    });
+  }
+
   async findMany(
     params: InventoryFilterParams & { page: number; pageSize: number },
   ): Promise<{ items: InventoryItemDetail[]; total: number }> {
