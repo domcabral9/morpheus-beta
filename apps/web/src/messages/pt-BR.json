@@ -775,7 +775,10 @@
     "submitting": "Criando...",
     "cancel": "Cancelar",
     "genericError": "Não foi possível criar a avaliação. Verifique os dados e tente novamente.",
-    "selectPlaceholder": "Selecione"
+    "selectPlaceholder": "Selecione",
+    "duplicateWarningTitle": "Já existe um item de inventário com este nome nesta área",
+    "duplicateWarningBody": "\"{name}\" ({vendor}) já está no inventário desta área - status: {status}, origem: {origin}. Confira o inventário antes de solicitar uma nova homologação; softwares com o mesmo nome em áreas diferentes são permitidos.",
+    "duplicateBlockedError": "Não é possível continuar - já existe um item de inventário com este nome nesta área."
   },
   "AssessmentDetail": {
     "back": "Voltar",

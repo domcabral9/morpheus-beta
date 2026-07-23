@@ -58,7 +58,10 @@ export class InventoryController {
   }
 
   // Precisa vir antes de `:id` - senão "check-duplicate" seria interpretado como um id.
-  @RequirePermissions(PERMISSIONS.INVENTORY_MANAGE)
+  // Sem @RequirePermissions extra (só a herdada, `inventory:view`, do controller): usado tanto
+  // pelo cadastro manual de inventário (`inventory:manage`) quanto pela tela de solicitação de
+  // avaliação (`assessments:create`) - quem tem qualquer um dos dois também tem `inventory:view`
+  // no seed padrão, e é só uma leitura, sem efeito colateral.
   @Get("check-duplicate")
   checkDuplicate(
     @CurrentUser() user: AuthenticatedUser,

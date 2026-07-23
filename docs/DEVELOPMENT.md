@@ -1543,6 +1543,23 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     duplicidade, mesmo que o aviso visual ainda não tivesse aparecido.
   - Validado via curl (nome idêntico com case/espaços diferentes na mesma área retorna o match; nome
     sem correspondência retorna `null`; mesmo nome em área diferente retorna `null`, confirmando que
-    a regra não vaza entre áreas; usuário sem `inventory:manage` recebe 403) e Playwright (preencher
-    área + nome de um item já existente faz o aviso aparecer e o botão "Salvar" desabilitar; trocar
-    pra uma área sem conflito limpa o aviso e reabilita o botão).
+    a regra não vaza entre áreas) e Playwright (preencher área + nome de um item já existente faz o
+    aviso aparecer e o botão "Salvar" desabilitar; trocar pra uma área sem conflito limpa o aviso e
+    reabilita o botão).
+  - **Extensão pra tela de solicitação de avaliação** - perguntado ao usuário logo depois do merge
+    ("este match acontece na tela de cadastro manual ou no momento da solicitação da avaliação?"):
+    confirmado que também deveria valer em `/assessments/new`, pra evitar pedir homologação de algo
+    que já está no inventário da mesma área (homologado ou manual). Mesmo endpoint
+    (`GET /inventory/check-duplicate`) reaproveitado - mas a permissão da rota precisou ser relaxada:
+    tinha `inventory:manage` (certo pro cadastro manual, que exige essa permissão pra criar), só que
+    quem solicita uma avaliação normalmente só tem `assessments:create` + `inventory:view` (não
+    `inventory:manage`). Como a rota é só leitura e sem efeito colateral, a correção foi remover o
+    `@RequirePermissions` extra e deixar só o `inventory:view` já herdado do controller - ambos os
+    papéis (solicitante e quem gerencia inventário) têm essa permissão no seed padrão. Frontend
+    (`assessments/new/page.tsx`, formulário com `useState` puro, sem `react-hook-form`) replica o
+    mesmo padrão de debounce 400ms + aviso inline + bloqueio do botão de submit + checagem síncrona
+    final antes do POST.
+  - Validado via curl (usuário sem `inventory:manage`, só `assessments:create`, agora recebe 200 em
+    vez de 403) e Playwright com a conta de solicitante (`usuario@morpheus.demo`): aviso aparece e
+    botão desabilita ao preencher um nome já existente na área Financeiro; digitar um nome novo limpa
+    o aviso e reabilita o botão.

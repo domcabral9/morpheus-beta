@@ -775,7 +775,10 @@
     "submitting": "Creating...",
     "cancel": "Cancel",
     "genericError": "Could not create the assessment. Check your details and try again.",
-    "selectPlaceholder": "Select"
+    "selectPlaceholder": "Select",
+    "duplicateWarningTitle": "An inventory item with this name already exists in this area",
+    "duplicateWarningBody": "\"{name}\" ({vendor}) is already in this area's inventory - status: {status}, origin: {origin}. Check the inventory before requesting a new homologation; software with the same name in different areas is allowed.",
+    "duplicateBlockedError": "Cannot continue - an inventory item with this name already exists in this area."
   },
   "AssessmentDetail": {
     "back": "Back",
