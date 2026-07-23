@@ -30,6 +30,7 @@
     "inventory": "Inventory",
     "approvals": "Approvals",
     "technicalOpinions": "Technical opinions",
+    "faq": "Help / FAQ",
     "admin": "Administration",
     "toggleSidebarLabel": "Toggle sidebar",
     "localeSwitcherLabel": "Language",
@@ -102,6 +103,55 @@
     "paginationPrevious": "Previous",
     "paginationNext": "Next",
     "paginationPageOf": "Page {current} of {total}"
+  },
+  "Faq": {
+    "title": "Help / FAQ",
+    "subtitle": "Main operating points of the system, organized by topic.",
+    "sections": {
+      "assessments": {
+        "title": "Assessments",
+        "q1Question": "What is a software assessment?",
+        "q1Answer": "It's the homologation process a software goes through before it can be used in the company: a security questionnaire is answered, scored against the configured risk matrix, and moves through the approval workflow defined by the organization.",
+        "q2Question": "How do I start a new assessment?",
+        "q2Answer": "On the Assessments screen, use the new assessment button, fill in the software details and answer the questionnaire. Once submitted, it automatically enters the approval workflow.",
+        "q3Question": "What does each final classification mean (Homologado, Rejeitado, Aguardando Ajustes)?",
+        "q3Answer": "It's the outcome recorded on the technical opinion issued at the end of the workflow: \"Homologado\" clears the software for use, \"Rejeitado\" blocks it, and \"Aguardando Ajustes\" requests fixes before a new review."
+      },
+      "approvals": {
+        "title": "Approvals",
+        "q1Question": "Who approves an assessment?",
+        "q1Answer": "It depends on the workflow configured under Administration > Workflow - it usually goes through one or more approver roles in sequence, based on the calculated risk score.",
+        "q2Question": "What happens if a workflow step is rejected?",
+        "q2Answer": "The assessment receives the corresponding terminal decision and a technical opinion is generated automatically recording the outcome. The same assessment cannot be resubmitted - a new one has to be opened."
+      },
+      "inventory": {
+        "title": "Inventory",
+        "q1Question": "What is the asset inventory?",
+        "q1Answer": "It's the list of software in use across the organization - both items that came from an approved homologation (added automatically) and items entered manually.",
+        "q2Question": "Does every inventory item have a linked technical opinion?",
+        "q2Answer": "No. Only items originated from an approved homologation have a linked opinion - manually created items show \"-\" in the opinion field.",
+        "q3Question": "How do I see the technical opinion linked to an inventory item?",
+        "q3Answer": "On the item's detail screen, or in the \"Opinion\" column of the list - the link takes you straight to the opinion, already filtered on the Technical Opinions screen."
+      },
+      "technicalOpinions": {
+        "title": "Technical opinions",
+        "q1Question": "What is a technical opinion?",
+        "q1Answer": "It's the numbered PDF document generated automatically when an assessment reaches a terminal decision, including a QR code and hash for authenticity verification.",
+        "q2Question": "Who can see other people's technical opinions?",
+        "q2Answer": "Anyone with permission to view all assessments or approve assessments sees every opinion in the organization. Everyone else only sees opinions for assessments they requested themselves.",
+        "q3Question": "How do I verify that an opinion is authentic?",
+        "q3Answer": "The QR code and hash printed on the PDF point to the public verification page by opinion number, no login required."
+      },
+      "account": {
+        "title": "Account and organization",
+        "q1Question": "How do I switch organizations (tenant)?",
+        "q1Answer": "Only users with platform permission (super-admin) see the organization switcher at the top of the sidebar - everyone else is restricted to their own organization.",
+        "q2Question": "How do roles and permissions work?",
+        "q2Answer": "Each user has one or more roles, and each role groups a set of permissions (e.g. approve assessments, manage users). Roles are managed under Administration > Roles.",
+        "q3Question": "How do I change the language or theme (light/dark)?",
+        "q3Answer": "Use the controls at the bottom of the sidebar, available on every screen of the system."
+      }
+    }
   },
   "Admin": {
     "title": "Administration",

@@ -30,6 +30,7 @@
     "inventory": "Inventário",
     "approvals": "Aprovações",
     "technicalOpinions": "Pareceres técnicos",
+    "faq": "Ajuda / FAQ",
     "admin": "Administração",
     "toggleSidebarLabel": "Alternar barra lateral",
     "localeSwitcherLabel": "Idioma",
@@ -102,6 +103,55 @@
     "paginationPrevious": "Anterior",
     "paginationNext": "Próxima",
     "paginationPageOf": "Página {current} de {total}"
+  },
+  "Faq": {
+    "title": "Ajuda / FAQ",
+    "subtitle": "Principais pontos de operação do sistema, organizados por tema.",
+    "sections": {
+      "assessments": {
+        "title": "Avaliações",
+        "q1Question": "O que é uma avaliação (assessment) de software?",
+        "q1Answer": "É o processo de homologação de um software antes do uso na empresa: um questionário de segurança é respondido, pontuado conforme a matriz de risco configurada, e segue para aprovação conforme o workflow definido pela organização.",
+        "q2Question": "Como eu inicio uma nova avaliação?",
+        "q2Answer": "Na tela de Avaliações, use o botão de nova avaliação, preencha os dados do software e responda o questionário. Assim que enviado, ele entra automaticamente no fluxo de aprovação.",
+        "q3Question": "O que significa cada classificação do parecer final (Homologado, Rejeitado, Aguardando Ajustes)?",
+        "q3Answer": "É o resultado registrado no parecer técnico emitido ao final do fluxo: \"Homologado\" libera o uso do software, \"Rejeitado\" impede o uso, e \"Aguardando Ajustes\" pede correções antes de uma nova análise."
+      },
+      "approvals": {
+        "title": "Aprovações",
+        "q1Question": "Quem aprova uma avaliação?",
+        "q1Answer": "Depende do workflow configurado em Administração > Workflow — normalmente passa por um ou mais papéis de aprovador em sequência, com base na pontuação de risco calculada.",
+        "q2Question": "O que acontece se uma etapa do fluxo for rejeitada?",
+        "q2Answer": "A avaliação recebe a decisão terminal correspondente e um parecer técnico é gerado automaticamente registrando o resultado. Não é possível reenviar a mesma avaliação — é necessário abrir uma nova."
+      },
+      "inventory": {
+        "title": "Inventário",
+        "q1Question": "O que é o inventário de ativos?",
+        "q1Answer": "É a lista de softwares em uso na organização — tanto os que vieram de uma homologação aprovada (entram automaticamente) quanto os cadastrados manualmente.",
+        "q2Question": "Todo item do inventário tem parecer técnico vinculado?",
+        "q2Answer": "Não. Só os itens originados de uma homologação aprovada têm parecer vinculado — itens cadastrados manualmente mostram \"—\" no campo de parecer.",
+        "q3Question": "Como vejo o parecer técnico vinculado a um item do inventário?",
+        "q3Answer": "Na tela de detalhe do item, ou na coluna \"Parecer\" da listagem — o link leva direto para o parecer já filtrado em Pareceres Técnicos."
+      },
+      "technicalOpinions": {
+        "title": "Pareceres técnicos",
+        "q1Question": "O que é o parecer técnico?",
+        "q1Answer": "É o documento PDF numerado, gerado automaticamente quando uma avaliação chega a uma decisão terminal, com QR code e hash para verificação de autenticidade.",
+        "q2Question": "Quem pode ver os pareceres técnicos de outras pessoas?",
+        "q2Answer": "Quem tem permissão de ver todas as avaliações ou de aprovar avaliações vê todos os pareceres da organização. Os demais usuários veem apenas os pareceres das avaliações que eles mesmos solicitaram.",
+        "q3Question": "Como faço para verificar se um parecer é autêntico?",
+        "q3Answer": "O QR code e o hash impressos no PDF apontam para a verificação pública por número do parecer, sem exigir login."
+      },
+      "account": {
+        "title": "Conta e organização",
+        "q1Question": "Como troco de organização (tenant)?",
+        "q1Answer": "Apenas usuários com permissão de plataforma (super-admin) veem o seletor de organização no topo da barra lateral — os demais usuários ficam restritos à própria organização.",
+        "q2Question": "Como funcionam papéis e permissões?",
+        "q2Answer": "Cada usuário tem um ou mais papéis, e cada papel agrupa um conjunto de permissões (ex.: aprovar avaliações, gerenciar usuários). Papéis são gerenciados em Administração > Papéis.",
+        "q3Question": "Como mudo o idioma ou o tema (claro/escuro)?",
+        "q3Answer": "Use os controles no rodapé da barra lateral, disponíveis em qualquer tela do sistema."
+      }
+    }
   },
   "Admin": {
     "title": "Administração",
