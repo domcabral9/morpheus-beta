@@ -7,6 +7,7 @@ import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { WorkflowService } from "./workflow.service";
 import { DecideStepDto } from "./dto/decide-step.dto";
+import { BulkDecideStepsDto } from "./dto/bulk-decide-steps.dto";
 import { CreateWorkflowDefinitionDto } from "./dto/create-definition.dto";
 import { UpdateWorkflowDefinitionDto } from "./dto/update-definition.dto";
 import { CreateStepDto } from "./dto/create-step.dto";
@@ -37,6 +38,12 @@ export class WorkflowController {
     @Body() dto: DecideStepDto,
   ) {
     return this.workflowService.decideStep(user, stepExecutionId, dto);
+  }
+
+  @RequirePermissions(PERMISSIONS.ASSESSMENTS_APPROVE)
+  @Post("steps/bulk-decide")
+  bulkDecideSteps(@CurrentUser() user: AuthenticatedUser, @Body() dto: BulkDecideStepsDto) {
+    return this.workflowService.bulkDecideSteps(user, dto);
   }
 
   // --- Administração --------------------------------------------------------------

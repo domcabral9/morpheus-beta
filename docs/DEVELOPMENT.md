@@ -1479,3 +1479,46 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     inventário criado automaticamente na aprovação herda `hasRiskAnalysis`/`hasInfoSecClause` do
     `Assessment` de origem. Testes novos em `inventory.service.spec.ts` cobrindo o guard de
     somente-leitura e `getStats()`. Suite completa da API: 175/175 testes passando.
+- **Dados de exemplo variados no inventário** - depois de mesclar o módulo de inventário, o usuário
+  testou os filtros novos e percebeu que ART/Cláusula só retornavam resultado com "Todos"/"Não": o
+  banco de dev não tinha nenhum item com esses campos em `true` nem variedade de área. Populado via
+  API (não no `seed.ts` - decisão do usuário, "só no banco atual", não precisa ser reproduzível a
+  cada `pnpm seed`) - 7 itens manuais cobrindo as 7 áreas do tenant `demo`, tipos/criticidades/
+  provedores de hospedagem variados, e 2 avaliações completas aprovadas de ponta a ponta (fluxo real
+  de homologação, não inserção direta no banco) pra também variar a origem homologado x manual.
+- **Aprovação em massa + histórico de decisões visível** (dois pedidos feitos juntos pelo usuário
+  depois de usar o painel de aprovações reais: 2.1 "deve conter um botão de aprovação em massa,
+  podendo selecionar quais devem receber a decisão", 2.2 "onde que vai a informação de comentário da
+  decisão? Ela deve ir para os itens aprovados em algum lugar, certo?"). Escopo do item 2.1
+  confirmado com o usuário antes de implementar: uma decisão só aplicada a todos os selecionados
+  (não decisão individual por item agrupada no envio).
+  - **2.2 era uma lacuna real, não só uma pergunta** - investigado antes de responder: o comentário
+    de uma decisão (`WorkflowStepExecution.comments`) só aparecia em UM lugar do sistema, o PDF do
+    parecer técnico gerado (`PdfGeneratorService`) - nenhuma tela do app mostrava o histórico depois
+    que a etapa saía de "pendente". Descoberta relevante: `GET /workflow/assessments/:assessmentId`
+    já existia no backend (`WorkflowService.getInstanceForUser`, com autorização própria já pronta -
+    `view-all`, `approve`, ou o próprio solicitante) mas **nunca tinha um consumidor no frontend** -
+    fechar essa lacuna foi só trabalho de tela: `WorkflowHistorySection` novo
+    (`apps/web/src/app/[locale]/assessments/_components/`), embutido no detalhe da avaliação entre
+    o aviso de "não editável" e o questionário, mostrando cada etapa (nome, badge de status, quem
+    decidiu, quando, e o comentário).
+  - **2.1**: `BulkDecideStepsDto` novo (`stepExecutionIds[]`, mesma `decision`/`comments` de
+    `DecideStepDto`). `WorkflowService.bulkDecideSteps()` reaproveita `decideStep()` item a item
+    (não duplica SoD/papel responsável/efeitos colaterais de aprovar-reprovar) dentro de um
+    try/catch por item - uma etapa que falha (SoD, já decidida por outra pessoa nesse meio tempo)
+    não derruba as demais, só entra no resultado como falha (`{stepExecutionId, success, error?}[]`).
+    `POST /workflow/steps/bulk-decide` novo (sem conflito de rota com `steps/:stepExecutionId/decide`
+    - tamanhos de path diferentes, ao contrário do caso `:id` vs. literais do inventário).
+  - Frontend: checkbox por linha + "selecionar todas" no cabeçalho em `/approvals`
+    (`stopPropagation()` no `<TableCell>` do checkbox pra não abrir o dialog de decisão individual
+    ao clicar nele, já que a linha inteira também é clicável). Botão "Decidir selecionados (N)"
+    aparece só com 1+ selecionados, abre `BulkDecisionDialog` novo (mesmo formulário do dialog
+    individual, mas listando todos os itens selecionados e mostrando um toast de sucesso total ou
+    parcial no final, removendo da lista só os que tiveram sucesso).
+  - Validado via curl (3 avaliações reais aprovadas em lote, mais um id inválido de propósito pra
+    confirmar falha parcial isolada sem derrubar as demais; endpoint de histórico confirmado com
+    uma avaliação de 5 etapas todas decididas, comentários batendo) e Playwright (seleção de linhas
+    específicas sem tocar nas demais, dialog de decisão em massa, toast de sucesso, seção de
+    histórico renderizando badge/autor/data/comentário por etapa). Testes novos em
+    `workflow.service.spec.ts` cobrindo `bulkDecideSteps()` (sucesso em lote e falha parcial).
+    Suite completa da API: 177/177 testes passando.

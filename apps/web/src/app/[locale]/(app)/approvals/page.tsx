@@ -7,10 +7,13 @@ import { Loader2 } from "lucide-react";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useApi } from "@/lib/use-api";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { InboxStepExecution } from "@/lib/workflow-types";
+import type { BulkDecideResult, InboxStepExecution } from "@/lib/workflow-types";
 import { DecisionDialog } from "./_components/decision-dialog";
+import { BulkDecisionDialog } from "./_components/bulk-decision-dialog";
 
 function isOverdue(slaDueAt: string | null): boolean {
   return slaDueAt !== null && new Date(slaDueAt).getTime() < Date.now();
@@ -25,11 +28,16 @@ export default function ApprovalsPage() {
   const [items, setItems] = React.useState<InboxStepExecution[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [selected, setSelected] = React.useState<InboxStepExecution | null>(null);
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = React.useState(false);
 
   const loadInbox = React.useCallback(() => {
     api
       .get<InboxStepExecution[]>("/workflow/inbox")
-      .then(setItems)
+      .then((result) => {
+        setItems(result);
+        setSelectedIds(new Set());
+      })
       .catch(() => setError(t("loadError")));
   }, [api, t]);
 
@@ -40,6 +48,22 @@ export default function ApprovalsPage() {
 
   if (!user) return null;
 
+  function toggleSelected(id: string, checked: boolean) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll(checked: boolean) {
+    setSelectedIds(checked ? new Set(items?.map((item) => item.id) ?? []) : new Set());
+  }
+
+  const selectedExecutions = (items ?? []).filter((item) => selectedIds.has(item.id));
+  const allSelected = !!items && items.length > 0 && selectedIds.size === items.length;
+
   return (
     <>
       <div className="flex flex-1 flex-col gap-6">
@@ -49,8 +73,13 @@ export default function ApprovalsPage() {
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{t("cardTitle")}</CardTitle>
+            {selectedIds.size > 0 && (
+              <Button size="sm" onClick={() => setBulkOpen(true)}>
+                {t("bulkDecideButton", { count: selectedIds.size })}
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             {error && <p className="text-sm text-destructive">{error}</p>}
@@ -69,6 +98,13 @@ export default function ApprovalsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={allSelected}
+                        onCheckedChange={(checked) => toggleSelectAll(checked === true)}
+                        aria-label={t("selectAll")}
+                      />
+                    </TableHead>
                     <TableHead>{t("columnSoftware")}</TableHead>
                     <TableHead>{t("columnStep")}</TableHead>
                     <TableHead>{t("columnCriticality")}</TableHead>
@@ -83,6 +119,13 @@ export default function ApprovalsPage() {
                       className="cursor-pointer"
                       onClick={() => setSelected(execution)}
                     >
+                      <TableCell onClick={(event) => event.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedIds.has(execution.id)}
+                          onCheckedChange={(checked) => toggleSelected(execution.id, checked === true)}
+                          aria-label={t("selectRow")}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">
                         {execution.assessmentWorkflowInstance.assessment.softwareName}
                       </TableCell>
@@ -120,9 +163,33 @@ export default function ApprovalsPage() {
         }}
         onDecided={(executionId) => {
           setItems((current) => current?.filter((item) => item.id !== executionId) ?? current);
+          setSelectedIds((current) => {
+            const next = new Set(current);
+            next.delete(executionId);
+            return next;
+          });
           setSelected(null);
         }}
       />
+
+      {bulkOpen && (
+        <BulkDecisionDialog
+          executions={selectedExecutions}
+          onOpenChange={(open) => {
+            if (!open) setBulkOpen(false);
+          }}
+          onDecided={(results: BulkDecideResult[]) => {
+            const succeededIds = new Set(results.filter((result) => result.success).map((result) => result.stepExecutionId));
+            setItems((current) => current?.filter((item) => !succeededIds.has(item.id)) ?? current);
+            setSelectedIds((current) => {
+              const next = new Set(current);
+              succeededIds.forEach((id) => next.delete(id));
+              return next;
+            });
+            setBulkOpen(false);
+          }}
+        />
+      )}
     </>
   );
 }

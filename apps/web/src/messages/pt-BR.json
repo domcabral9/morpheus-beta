@@ -79,7 +79,16 @@
     "submit": "Confirmar decisão",
     "submitting": "Enviando...",
     "decisionSuccess": "Decisão registrada.",
-    "decisionError": "Não foi possível registrar a decisão."
+    "decisionError": "Não foi possível registrar a decisão.",
+    "selectAll": "Selecionar todas",
+    "selectRow": "Selecionar",
+    "bulkDecideButton": "Decidir selecionados ({count})",
+    "bulkDialogTitle": "Decidir {count} etapas selecionadas",
+    "bulkDialogSubtitle": "A mesma decisão será aplicada a todas as etapas abaixo.",
+    "bulkSkipHint": "\"Pular etapa\" só funciona pras selecionadas que forem opcionais - as demais aparecem como falha no resultado.",
+    "bulkSubmit": "Aplicar decisão a {count} etapas",
+    "bulkDecisionSuccess": "{count} decisões registradas com sucesso.",
+    "bulkDecisionPartial": "{successCount} decisões registradas, {failureCount} falharam (ex.: você mesmo solicitou, ou já foi decidida por outra pessoa)."
   },
   "TechnicalOpinions": {
     "title": "Pareceres técnicos",
@@ -791,6 +800,16 @@
     "requiredMark": "obrigatória",
     "textPlaceholder": "Digite sua resposta",
     "loadError": "Não foi possível carregar esta avaliação.",
-    "notFound": "Avaliação não encontrada ou você não tem acesso a ela."
+    "notFound": "Avaliação não encontrada ou você não tem acesso a ela.",
+    "workflowHistoryTitle": "Histórico de decisões",
+    "workflowHistoryDecidedBy": "Decidido por {name} em {date}.",
+    "workflowStepStatuses": {
+      "PENDING": "Aguardando",
+      "IN_PROGRESS": "Em análise",
+      "APPROVED": "Aprovada",
+      "REJECTED": "Reprovada",
+      "ADJUSTMENT_REQUESTED": "Ajuste solicitado",
+      "SKIPPED": "Pulada"
+    }
   }
 }

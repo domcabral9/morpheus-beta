@@ -19,6 +19,7 @@ import type {
   AssessmentDetail,
   QuestionCategory,
 } from "@/lib/assessment-types";
+import { WorkflowHistorySection } from "../_components/workflow-history-section";
 
 type LocalAnswer = { textValue?: string; scaleValue?: number; selectedOptionIds?: string[] };
 
@@ -189,6 +190,8 @@ export default function AssessmentDetailPage() {
                 {t("readOnlyNotice", { status: assessment.status })}
               </p>
             )}
+
+            <WorkflowHistorySection assessmentId={assessment.id} />
 
             <h2 className="text-lg font-semibold tracking-tight">{t("questionnaire")}</h2>
 
