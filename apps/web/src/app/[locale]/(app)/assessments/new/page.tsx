@@ -15,12 +15,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Area, AssessmentDetail, Criticality } from "@/lib/assessment-types";
+import type { InventoryDuplicateCheckResult, InventoryDuplicateMatch } from "@/lib/inventory-types";
 
 const CRITICALITY_OPTIONS: Criticality[] = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
+
+const DUPLICATE_CHECK_DEBOUNCE_MS = 400;
 
 export default function NewAssessmentPage() {
   const t = useTranslations("NewAssessment");
   const criticalityT = useTranslations("Criticality");
+  const inventoryT = useTranslations("Inventory");
   const user = useRequireAuth();
   const api = useApi();
   const router = useRouter();
@@ -37,6 +41,7 @@ export default function NewAssessmentPage() {
   const [hasInfoSecClause, setHasInfoSecClause] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
+  const [duplicateMatch, setDuplicateMatch] = React.useState<InventoryDuplicateMatch | null>(null);
 
   React.useEffect(() => {
     if (!user) return;
@@ -49,12 +54,50 @@ export default function NewAssessmentPage() {
       .catch(() => setError(t("genericError")));
   }, [user, api, t]);
 
+  // Mesma checagem de duplicidade da tela de cadastro manual de inventário
+  // (`ItemFormDialog`) - o pedido original era só pra lá, mas o usuário
+  // confirmou que também faz sentido aqui: evita solicitar homologação de
+  // algo que já está no inventário da mesma área (homologado ou manual).
+  React.useEffect(() => {
+    const trimmedName = softwareName.trim();
+    if (!trimmedName || !areaId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset intencional do aviso de duplicidade quando os campos que determinam o match ficam vazios; o resultado vem de uma chamada assíncrona anterior, não há como derivar isso sem efeito
+      setDuplicateMatch(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({ name: trimmedName, areaId });
+      api
+        .get<InventoryDuplicateCheckResult>(`/inventory/check-duplicate?${params.toString()}`)
+        .then((result) => setDuplicateMatch(result.duplicate))
+        .catch(() => {
+          // Falha na checagem em tempo real não deve travar a digitação -
+          // a validação final acontece de novo no submit.
+        });
+    }, DUPLICATE_CHECK_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- api muda de referência a cada render por causa do accessToken; não precisa disparar o debounce de novo por isso
+  }, [softwareName, areaId]);
+
   if (!user) return null;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
     setSubmitting(true);
+
+    const trimmedName = softwareName.trim();
+    const params = new URLSearchParams({ name: trimmedName, areaId });
+    const freshCheck = await api
+      .get<InventoryDuplicateCheckResult>(`/inventory/check-duplicate?${params.toString()}`)
+      .catch(() => ({ duplicate: null }) as InventoryDuplicateCheckResult);
+    if (freshCheck.duplicate) {
+      setDuplicateMatch(freshCheck.duplicate);
+      setError(t("duplicateBlockedError"));
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const created = await api.post<AssessmentDetail>("/assessments", {
         softwareName,
@@ -159,6 +202,23 @@ export default function NewAssessmentPage() {
                 </div>
               </div>
 
+              {duplicateMatch && (
+                <div className="rounded-md border border-destructive/50 bg-destructive/5 p-3 text-sm text-destructive">
+                  <p className="font-medium">{t("duplicateWarningTitle")}</p>
+                  <p className="mt-1">
+                    {t("duplicateWarningBody", {
+                      name: duplicateMatch.name,
+                      vendor: duplicateMatch.vendor,
+                      status: inventoryT(`statuses.${duplicateMatch.status}`),
+                      origin:
+                        duplicateMatch.origin === "HOMOLOGATED"
+                          ? inventoryT("filterOriginHomologated")
+                          : inventoryT("filterOriginManual"),
+                    })}
+                  </p>
+                </div>
+              )}
+
               <div className="flex flex-col gap-3 rounded-md border p-3">
                 <p className="text-sm font-medium">{t("vendorComplianceTitle")}</p>
                 <div className="flex items-start gap-2">
@@ -201,7 +261,7 @@ export default function NewAssessmentPage() {
               )}
 
               <div className="mt-2 flex justify-end gap-2">
-                <Button type="submit" disabled={submitting || !areaId}>
+                <Button type="submit" disabled={submitting || !areaId || !!duplicateMatch}>
                   {submitting ? t("submitting") : t("submit")}
                 </Button>
               </div>

@@ -18,6 +18,8 @@ import {
   INVENTORY_STATUSES,
   type InventoryItemDetail,
   type InventoryItemFormValues,
+  type InventoryDuplicateCheckResult,
+  type InventoryDuplicateMatch,
 } from "@/lib/inventory-types";
 import {
   Dialog,
@@ -40,6 +42,8 @@ import {
 } from "@/components/ui/select";
 
 const CRITICALITY_VALUES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
+
+const DUPLICATE_CHECK_DEBOUNCE_MS = 400;
 
 const documentationLinkSchema = z.object({
   label: z.string().min(1),
@@ -151,7 +155,50 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
     // eslint-disable-next-line react-hooks/exhaustive-deps -- so precisa resetar quando o dialog abre, nao a cada render do defaultValues recem calculado
   }, [open, item, reset]);
 
+  // Regra de duplicidade só se aplica ao cadastro de item novo - editar um
+  // item existente sempre "bateria" com ele mesmo. Escopo confirmado com o
+  // usuário: mesma área, qualquer origem (homologado ou manual); áreas
+  // diferentes podem legitimamente ter o mesmo software (contrato/gestão
+  // distintos), então não bloqueia entre áreas.
+  const name = useWatch({ control, name: "name" });
+  const areaId = useWatch({ control, name: "areaId" });
+  const [duplicateMatch, setDuplicateMatch] = React.useState<InventoryDuplicateMatch | null>(null);
+
+  React.useEffect(() => {
+    if (mode !== "create" || !open) return;
+    const trimmedName = name?.trim();
+    if (!trimmedName || !areaId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset intencional do aviso de duplicidade quando o dialog abre ou os campos que determinam o match ficam vazios; não há como derivar isso sem efeito, já que o resultado vem de uma chamada assíncrona anterior
+      setDuplicateMatch(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({ name: trimmedName, areaId });
+      api
+        .get<InventoryDuplicateCheckResult>(`/inventory/check-duplicate?${params.toString()}`)
+        .then((result) => setDuplicateMatch(result.duplicate))
+        .catch(() => {
+          // Falha na checagem em tempo real não deve travar a digitação -
+          // a validação final acontece de novo no submit.
+        });
+    }, DUPLICATE_CHECK_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- api muda de referência a cada render por causa do accessToken; não precisa disparar o debounce de novo por isso
+  }, [mode, open, name, areaId]);
+
   async function onSubmit(values: InventoryItemFormValues) {
+    if (mode === "create") {
+      const trimmedName = values.name.trim();
+      const params = new URLSearchParams({ name: trimmedName, areaId: values.areaId });
+      const freshCheck = await api
+        .get<InventoryDuplicateCheckResult>(`/inventory/check-duplicate?${params.toString()}`)
+        .catch(() => ({ duplicate: null }) as InventoryDuplicateCheckResult);
+      if (freshCheck.duplicate) {
+        setDuplicateMatch(freshCheck.duplicate);
+        toast.error(t("duplicateBlockedError"));
+        return;
+      }
+    }
     // `homologationDate` não existe em UpdateInventoryItemDto - é um fato
     // histórico da homologação original, não editável depois de criado (só
     // `nextReviewDate`, o ciclo de revisão, muda com o tempo). Mandar essa
@@ -388,6 +435,23 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
             )}
           </div>
 
+          {mode === "create" && duplicateMatch && (
+            <div className="rounded-md border border-destructive/50 bg-destructive/5 p-3 text-sm text-destructive">
+              <p className="font-medium">{t("duplicateWarningTitle")}</p>
+              <p className="mt-1">
+                {t("duplicateWarningBody", {
+                  name: duplicateMatch.name,
+                  vendor: duplicateMatch.vendor,
+                  status: t(`statuses.${duplicateMatch.status}`),
+                  origin:
+                    duplicateMatch.origin === "HOMOLOGATED"
+                      ? t("filterOriginHomologated")
+                      : t("filterOriginManual"),
+                })}
+              </p>
+            </div>
+          )}
+
           <div className="flex flex-col gap-3 rounded-md border p-3">
             <p className="text-sm font-medium">{t("vendorComplianceTitle")}</p>
             {isEditableCompliance ? (
@@ -496,7 +560,10 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
           )}
 
           <DialogFooter>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting || (mode === "create" && !!duplicateMatch)}
+            >
               {isSubmitting ? t("saving") : t("save")}
             </Button>
           </DialogFooter>

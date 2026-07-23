@@ -1522,3 +1522,44 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     histórico renderizando badge/autor/data/comentário por etapa). Testes novos em
     `workflow.service.spec.ts` cobrindo `bulkDecideSteps()` (sucesso em lote e falha parcial).
     Suite completa da API: 177/177 testes passando.
+- **Validação de duplicidade no cadastro manual de inventário** - item 3 do mesmo lote de feedback
+  acima ("no momento que a pessoa digitar o nome de um software, deve existir uma pesquisa ativa pra
+  saber se já foi homologado e não deixar a jornada de inserção seguir, pra evitar duplicidade").
+  Escopo confirmado com o usuário via AskUserQuestion antes de implementar: a regra vale só dentro da
+  mesma área (`areaId`), qualquer origem (homologado ou manual) - áreas diferentes podem legitimamente
+  ter o mesmo software sob contratos/administração distintos, então não bloqueia entre áreas; UX
+  combina busca ao digitar (debounced) com bloqueio duro no submit.
+  - `GET /inventory/check-duplicate?name=&areaId=` novo (rota literal antes de `:id`, mesmo cuidado
+    de ordenação já usado por `stats`/`export`), gated por `inventory:manage` (mesma permissão exigida
+    pra criar um item). Match é case-insensitive e ignora espaços nas pontas
+    (`name: { equals: name.trim(), mode: "insensitive" }` no Prisma) - sem paginação nem lista de
+    múltiplos resultados, só o primeiro match (`findFirst`) já que a regra é binária (existe ou não).
+  - Frontend (`ItemFormDialog`, só no modo `create` - editar um item já existente sempre "bateria"
+    consigo mesmo): `useWatch` em `name`/`areaId`, debounce de 400ms via `setTimeout`/`clearTimeout`
+    dentro do próprio `useEffect` de dependência, chamando o endpoint novo. Quando encontra match,
+    mostra um aviso inline (nome/fabricante/status/origem do item existente) e desabilita o botão
+    "Salvar". Guarda contra corrida entre o debounce e um submit muito rápido: `onSubmit` refaz a
+    mesma checagem de forma síncrona logo antes do POST e aborta com toast de erro se encontrar
+    duplicidade, mesmo que o aviso visual ainda não tivesse aparecido.
+  - Validado via curl (nome idêntico com case/espaços diferentes na mesma área retorna o match; nome
+    sem correspondência retorna `null`; mesmo nome em área diferente retorna `null`, confirmando que
+    a regra não vaza entre áreas) e Playwright (preencher área + nome de um item já existente faz o
+    aviso aparecer e o botão "Salvar" desabilitar; trocar pra uma área sem conflito limpa o aviso e
+    reabilita o botão).
+  - **Extensão pra tela de solicitação de avaliação** - perguntado ao usuário logo depois do merge
+    ("este match acontece na tela de cadastro manual ou no momento da solicitação da avaliação?"):
+    confirmado que também deveria valer em `/assessments/new`, pra evitar pedir homologação de algo
+    que já está no inventário da mesma área (homologado ou manual). Mesmo endpoint
+    (`GET /inventory/check-duplicate`) reaproveitado - mas a permissão da rota precisou ser relaxada:
+    tinha `inventory:manage` (certo pro cadastro manual, que exige essa permissão pra criar), só que
+    quem solicita uma avaliação normalmente só tem `assessments:create` + `inventory:view` (não
+    `inventory:manage`). Como a rota é só leitura e sem efeito colateral, a correção foi remover o
+    `@RequirePermissions` extra e deixar só o `inventory:view` já herdado do controller - ambos os
+    papéis (solicitante e quem gerencia inventário) têm essa permissão no seed padrão. Frontend
+    (`assessments/new/page.tsx`, formulário com `useState` puro, sem `react-hook-form`) replica o
+    mesmo padrão de debounce 400ms + aviso inline + bloqueio do botão de submit + checagem síncrona
+    final antes do POST.
+  - Validado via curl (usuário sem `inventory:manage`, só `assessments:create`, agora recebe 200 em
+    vez de 403) e Playwright com a conta de solicitante (`usuario@morpheus.demo`): aviso aparece e
+    botão desabilita ao preencher um nome já existente na área Financeiro; digitar um nome novo limpa
+    o aviso e reabilita o botão.
