@@ -15,6 +15,7 @@ import { RiskEvaluationService } from "../risk-engine/risk-evaluation.service";
 import type { RiskDimensionInput, ScorableAnswer } from "../risk-engine/risk-engine.service";
 import { WorkflowService } from "../workflow/workflow.service";
 import { AuditLogService } from "../audit/audit-log.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import {
   AssessmentsRepository,
   AssessmentDetail,
@@ -25,6 +26,7 @@ import { CreateAssessmentDto } from "./dto/create-assessment.dto";
 import { UpdateAssessmentDto } from "./dto/update-assessment.dto";
 import { SubmitAnswersDto } from "./dto/submit-answers.dto";
 import { ListAssessmentsQueryDto } from "./dto/list-assessments.query.dto";
+import { ReassignRenewalRequesterDto } from "./dto/reassign-renewal-requester.dto";
 import type { QuestionWithOptions } from "../questionnaire/questionnaire.repository";
 
 const EDITABLE_STATUSES: AssessmentStatus[] = ["DRAFT", "PENDING_ADJUSTMENT", "PENDING_RENEWAL"];
@@ -43,6 +45,7 @@ export class AssessmentsService {
     private readonly riskEvaluationService: RiskEvaluationService,
     private readonly workflowService: WorkflowService,
     private readonly auditLogService: AuditLogService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(user: AuthenticatedUser, dto: CreateAssessmentDto): Promise<AssessmentDetail> {
@@ -224,6 +227,65 @@ export class AssessmentsService {
     const assessment = await this.getOwnedOrThrow(user.tenantId, id);
     this.assertCanView(user, assessment);
     return this.assessmentsRepository.findVersionsWithDetails(id);
+  }
+
+  /**
+   * Reatribuição de solicitante durante um ciclo de renovação (Fase 5 do
+   * plano de renovação anual) - só pra cobrir o caso do solicitante original
+   * ter saído da empresa. Restrita a `PENDING_RENEWAL`: não é uma feature
+   * geral de "trocar solicitante" pra qualquer avaliação em qualquer status.
+   */
+  async reassignRenewalRequester(
+    user: AuthenticatedUser,
+    id: string,
+    dto: ReassignRenewalRequesterDto,
+  ): Promise<AssessmentDetail> {
+    const assessment = await this.getOwnedOrThrow(user.tenantId, id);
+
+    if (assessment.status !== "PENDING_RENEWAL") {
+      throw new BadRequestException(
+        `Só é possível reatribuir o solicitante durante um ciclo de renovação em andamento (status atual: "${assessment.status}").`,
+      );
+    }
+
+    const newRequester = await this.usersService.findById(dto.newRequesterId);
+    if (!newRequester || newRequester.tenantId !== user.tenantId) {
+      throw new BadRequestException("Novo solicitante inválido para este tenant.");
+    }
+    if (!newRequester.isActive) {
+      throw new BadRequestException("Novo solicitante precisa estar ativo.");
+    }
+
+    const previousRequesterId = assessment.requesterId;
+    const updated = await this.assessmentsRepository.update(id, {
+      requesterId: dto.newRequesterId,
+    });
+
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "UPDATE",
+      entityType: "Assessment",
+      entityId: id,
+      metadata: {
+        reason: "renewal_requester_reassigned",
+        previousRequesterId,
+        newRequesterId: dto.newRequesterId,
+        justification: dto.reason,
+      },
+    });
+
+    await this.notificationsService.notify({
+      tenantId: user.tenantId,
+      userId: dto.newRequesterId,
+      type: "RENEWAL_PENDING",
+      title: `Você foi designado solicitante da renovação: ${updated.softwareName}`,
+      body: `Um Administrador te atribuiu como solicitante do ciclo de renovação de "${updated.softwareName}" (${updated.vendor}). Revise e reenvie a avaliação.`,
+      relatedEntityType: "Assessment",
+      relatedEntityId: id,
+    });
+
+    return updated;
   }
 
   // --- Helpers ------------------------------------------------------------------

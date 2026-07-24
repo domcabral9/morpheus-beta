@@ -827,6 +827,16 @@
       "REJECTED": "Reprovada",
       "ADJUSTMENT_REQUESTED": "Ajuste solicitado",
       "SKIPPED": "Pulada"
-    }
+    },
+    "reassignTitle": "Reatribuir solicitante",
+    "reassignDescription": "O solicitante original ({name}) não consegue mais atuar neste ciclo de renovação (ex.: saiu da empresa). Reatribua para um novo solicitante do tenant.",
+    "reassignNewRequesterLabel": "Novo solicitante",
+    "reassignSelectPlaceholder": "Selecione",
+    "reassignReasonLabel": "Motivo (opcional)",
+    "reassignReasonPlaceholder": "ex.: solicitante original saiu da empresa",
+    "reassignSubmit": "Reatribuir",
+    "reassignSubmitting": "Reatribuindo...",
+    "reassignSuccess": "Solicitante reatribuído.",
+    "reassignError": "Não foi possível reatribuir o solicitante."
   }
 }

@@ -1724,3 +1724,37 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     (ambos os itens de inventário de volta a `ACTIVE`; nenhuma avaliação de teste foi criada, já que o
     bloqueio impediu a criação em ambos os cenários).
     Suite completa da API: 209/209 testes passando.
+- **Renovação anual de homologação - Fase 5: reatribuição de solicitante (Administrador)** (mesmo
+  plano, `C:\Users\kaosikner\.claude\plans\streamed-sleeping-newell.md`). Cobre o caso do solicitante
+  original ter saído da empresa durante um ciclo de renovação em andamento.
+  - `PATCH /assessments/:id/renewal/reassign` (novo, `ReassignRenewalRequesterDto` -
+    `{newRequesterId, reason?}`), `@RequirePermissions(PERMISSIONS.ASSESSMENTS_REOPEN)` - permissão
+    que já existe e já é seedada em todo papel "Administrador", nunca checada em lugar nenhum até
+    agora (zero mudança de seed necessária).
+  - `AssessmentsService.reassignRenewalRequester()`: valida `status === "PENDING_RENEWAL"` (400 fora
+    disso - não é uma feature geral de "trocar solicitante" pra qualquer avaliação), valida que o novo
+    solicitante pertence ao tenant e está ativo, troca `requesterId`, grava `AuditLog` (`action:
+    "UPDATE"`, metadata com solicitante anterior/novo + motivo) e notifica o novo solicitante
+    (`RENEWAL_PENDING`). Sem `@Audit()` no controller - o service já grava o log manualmente com
+    metadata rica, evitando duplicar.
+  - **Bug real encontrado e corrigido de passagem**: `EDITABLE_STATUSES` da tela de detalhe da
+    avaliação (`apps/web/.../assessments/[id]/page.tsx`) nunca tinha ganhado `PENDING_RENEWAL` na
+    Fase 1 - o backend já aceitava edição/reenvio nesse status desde então (testado via curl na
+    própria Fase 1), mas a UI mostrava a avaliação como somente-leitura pro solicitante. Sem esse
+    fix, a reatribuição desta fase não teria como se completar de verdade via UI (o novo solicitante
+    veria a mesma tela travada). Corrigido junto por ser pré-requisito direto da feature, não escopo
+    à parte.
+  - Frontend: novo `ReassignRequesterCard` (`apps/web/.../assessments/_components/`), visível só sob
+    `usePermission("assessments:reopen")` numa avaliação `PENDING_RENEWAL` - select de novo
+    solicitante (`GET /users`, excluindo o solicitante atual da lista), motivo opcional, atualiza o
+    estado da página (`onReassigned`) direto com a resposta do PATCH.
+  - Validado via testes novos em `assessments.service.spec.ts` (rejeita fora de `PENDING_RENEWAL`,
+    rejeita novo solicitante de outro tenant, rejeita novo solicitante inativo, reatribuição com
+    sucesso atualiza `requesterId`/audita/notifica) e um fluxo manual completo: via curl, flipou uma
+    avaliação `APPROVED` real pra `PENDING_RENEWAL`, reatribuiu como Administrador (200), confirmou
+    403 pra quem não tem o papel, confirmou 400 tentando reatribuir uma avaliação `APPROVED` (fora do
+    ciclo), confirmou que o solicitante antigo perde acesso de edição (403) depois da troca; via
+    Playwright (browser real), confirmou visualmente que o solicitante atual não aparece como opção
+    no select, e que a tela reflete o novo solicitante depois do sucesso (toast + descrição do card
+    atualizados). Estado revertido ao final (dado de amostra compartilhado).
+    Suite completa da API: 213/213 testes passando.
