@@ -1758,3 +1758,31 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     no select, e que a tela reflete o novo solicitante depois do sucesso (toast + descrição do card
     atualizados). Estado revertido ao final (dado de amostra compartilhado).
     Suite completa da API: 213/213 testes passando.
+- **Renovação anual de homologação - Fase 6: polimento de UI** (mesmo plano,
+  `C:\Users\kaosikner\.claude\plans\streamed-sleeping-newell.md` - última fase, opcional segundo o
+  plano original, mas priorizada pelo usuário depois de ver a Fase 5 em ação). Dois pedidos concretos:
+  filtro de status na listagem de avaliações e visibilidade do ciclo de renovação no dashboard
+  administrativo (explicitamente enquadrado como item de saúde/performance operacional do sistema,
+  não só estético).
+  - `/dashboard` ("Minhas avaliações"): novo filtro de status (`Select` com todos os 8 valores de
+    `AssessmentStatus` + "Todos os status"), reaproveitando `Status.*` (i18n já existente) pros
+    rótulos - `GET /assessments?status=X` já aceitava o parâmetro desde a Fase 1, mudança é só
+    frontend.
+  - `DashboardsRepository.countBlockedAreas()` (novo): mesmo sinal derivado de
+    `AssessmentsRepository.isAreaBlocked` (Fase 4) - conta áreas distintas com pelo menos um item
+    `EXPIRED`. `DashboardsService.getAdminDashboard()` passa a retornar `blockedAreasCount` junto do
+    resto. `pendingRenewalCount` não precisou de campo novo - já vem de dentro de
+    `assessmentsByStatus.PENDING_RENEWAL` (`countAssessmentsByStatus` já agrupa por todos os status).
+  - `AdminDashboardView`: dois `StatTile` novos - "Pendente renovação" (`warning` se > 0) e "Áreas
+    bloqueadas" (`critical` se > 0, já que bloqueio de área é uma parada mais dura que um ciclo
+    simplesmente em andamento).
+  - Validado via `dashboards.service.spec.ts` (novo mock `countBlockedAreas`, asserção de
+    `blockedAreasCount` no resultado) e verificação visual completa via Playwright (browser real):
+    filtro por "Pendente renovação" na listagem mostrou só a amostra de demonstração criada
+    anteriormente (`Contract Analyzer AI`); dashboard administrativo mostrou os dois tiles novos com
+    os valores certos (`Pendente renovação: 1`, `Áreas bloqueadas: 0`, cores âmbar/verde
+    respectivamente). `typecheck`/`build` limpos nos dois pacotes.
+    Suite completa da API: 213/213 testes passando (cobertura nova entrou como asserção extra num
+    teste já existente de `dashboards.service.spec.ts`, não um teste novo - contagem total não muda).
+
+Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão completas.

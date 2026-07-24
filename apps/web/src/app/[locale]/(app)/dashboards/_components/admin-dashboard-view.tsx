@@ -35,6 +35,7 @@ export function AdminDashboardView() {
   }
 
   const total = Object.values(data.assessmentsByStatus).reduce((sum, n) => sum + n, 0);
+  const pendingRenewalCount = data.assessmentsByStatus["PENDING_RENEWAL"] ?? 0;
   const statusChartData = STATUS_ORDER.filter((status) => data.assessmentsByStatus[status]).map(
     (status) => ({
       status,
@@ -46,7 +47,7 @@ export function AdminDashboardView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <StatTile label={t("stats.tenantTotal")} value={total} />
         <StatTile
           label={t("stats.slaBreaches")}
@@ -57,6 +58,18 @@ export function AdminDashboardView() {
         <StatTile
           label={t("stats.pendingSteps")}
           value={pendingChartData.reduce((sum, row) => sum + row.count, 0)}
+        />
+        <StatTile
+          label={t("stats.pendingRenewals")}
+          value={pendingRenewalCount}
+          status={pendingRenewalCount > 0 ? "warning" : "good"}
+          hint={pendingRenewalCount > 0 ? t("stats.pendingRenewalsHint") : undefined}
+        />
+        <StatTile
+          label={t("stats.blockedAreas")}
+          value={data.blockedAreasCount}
+          status={data.blockedAreasCount > 0 ? "critical" : "good"}
+          hint={data.blockedAreasCount > 0 ? t("stats.blockedAreasHint") : undefined}
         />
       </div>
 

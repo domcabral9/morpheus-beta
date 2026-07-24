@@ -10,25 +10,47 @@ import { Link } from "@/i18n/navigation";
 import { AssessmentStatusBadge } from "@/components/assessment-status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { PaginatedAssessments } from "@/lib/assessment-types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { AssessmentStatus, PaginatedAssessments } from "@/lib/assessment-types";
+
+const ALL_VALUE = "__all__";
+const STATUS_VALUES: AssessmentStatus[] = [
+  "DRAFT",
+  "SUBMITTED",
+  "IN_REVIEW",
+  "PENDING_ADJUSTMENT",
+  "APPROVED",
+  "REJECTED",
+  "REOPENED",
+  "PENDING_RENEWAL",
+];
 
 export default function DashboardPage() {
   const t = useTranslations("Assessments");
   const dashboardT = useTranslations("Dashboard");
   const criticalityT = useTranslations("Criticality");
+  const statusT = useTranslations("Status");
   const user = useRequireAuth();
   const api = useApi();
 
+  const [status, setStatus] = React.useState(ALL_VALUE);
   const [data, setData] = React.useState<PaginatedAssessments | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!user) return;
+    const params = status === ALL_VALUE ? "" : `?status=${status}`;
     api
-      .get<PaginatedAssessments>("/assessments")
+      .get<PaginatedAssessments>(`/assessments${params}`)
       .then(setData)
       .catch(() => setError(t("loadError")));
-  }, [user, api, t]);
+  }, [user, api, t, status]);
 
   if (!user) return null;
 
@@ -43,12 +65,27 @@ export default function DashboardPage() {
       <Card>
         <CardHeader className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>{t("title")}</CardTitle>
-          <Button asChild size="sm">
-            <Link href="/assessments/new">
-              <Plus />
-              {t("newButton")}
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_VALUE}>{t("filterStatusAll")}</SelectItem>
+                {STATUS_VALUES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {statusT(value)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button asChild size="sm">
+              <Link href="/assessments/new">
+                <Plus />
+                {t("newButton")}
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {error && <p className="text-sm text-destructive">{error}</p>}
