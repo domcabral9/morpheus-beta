@@ -41,7 +41,8 @@ export class ListInventoryQueryDto {
   hasRiskAnalysis?: string;
 
   @ApiPropertyOptional({
-    description: '"true" ou "false" - filtra por declaração de cláusula de segurança da informação.',
+    description:
+      '"true" ou "false" - filtra por declaração de cláusula de segurança da informação.',
   })
   @IsOptional()
   @IsBooleanString()

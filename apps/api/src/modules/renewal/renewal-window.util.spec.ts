@@ -13,7 +13,11 @@ function d(isoDate: string): Date {
 
 describe("computeRenewalTrigger", () => {
   it("janela desabilitada: gatilho e vencimento naturais, sem ajuste", () => {
-    const result = computeRenewalTrigger(d("2026-11-01"), { enabled: false, start: "11-01", end: "12-14" });
+    const result = computeRenewalTrigger(d("2026-11-01"), {
+      enabled: false,
+      start: "11-01",
+      end: "12-14",
+    });
     expect(result.gatilhoEfetivo).toEqual(d("2026-11-01"));
     expect(result.vencimentoEfetivo).toEqual(d("2026-12-01"));
   });

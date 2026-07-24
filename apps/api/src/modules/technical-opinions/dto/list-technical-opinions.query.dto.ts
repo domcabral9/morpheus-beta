@@ -23,7 +23,9 @@ export class ListTechnicalOpinionsQueryDto {
   @IsString()
   number?: string;
 
-  @ApiPropertyOptional({ description: "ISO 8601 — início do intervalo (inclusive), sobre issuedAt." })
+  @ApiPropertyOptional({
+    description: "ISO 8601 — início do intervalo (inclusive), sobre issuedAt.",
+  })
   @IsOptional()
   @IsDateString()
   from?: string;

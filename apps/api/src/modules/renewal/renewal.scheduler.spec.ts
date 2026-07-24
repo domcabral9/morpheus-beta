@@ -103,20 +103,34 @@ describe("RenewalScheduler", () => {
 
     expect(repo.startRenewalCycle).toHaveBeenCalledWith(
       "assessment-1",
-      expect.objectContaining({ renewalDueAt: expect.any(Date), renewalCycleStartedAt: expect.any(Date) }),
+      expect.objectContaining({
+        renewalDueAt: expect.any(Date),
+        renewalCycleStartedAt: expect.any(Date),
+      }),
     );
     expect(notificationsService.notify).toHaveBeenCalledWith(
-      expect.objectContaining({ tenantId: "tenant-1", userId: "requester-1", type: "RENEWAL_PENDING" }),
+      expect.objectContaining({
+        tenantId: "tenant-1",
+        userId: "requester-1",
+        type: "RENEWAL_PENDING",
+      }),
     );
     expect(notificationsService.notifyRole).not.toHaveBeenCalled();
     expect(auditLogService.record).toHaveBeenCalledWith(
-      expect.objectContaining({ tenantId: "tenant-1", action: "REOPEN", entityType: "Assessment", entityId: "assessment-1" }),
+      expect.objectContaining({
+        tenantId: "tenant-1",
+        action: "REOPEN",
+        entityType: "Assessment",
+        entityId: "assessment-1",
+      }),
     );
   });
 
   it("solicitante inativo: notifica o papel Administrador em vez do solicitante", async () => {
     repo.findEligibleItems.mockResolvedValue([
-      makeItem({ assessment: { id: "assessment-1", requester: { id: "requester-1", isActive: false } } }),
+      makeItem({
+        assessment: { id: "assessment-1", requester: { id: "requester-1", isActive: false } },
+      }),
     ]);
 
     await scheduler.checkRenewalTriggers();
@@ -133,7 +147,9 @@ describe("RenewalScheduler", () => {
   it("solicitante inativo e nenhum papel Administrador encontrado: não quebra, não notifica ninguém", async () => {
     repo.findAdministradorRoleId.mockResolvedValue(null);
     repo.findEligibleItems.mockResolvedValue([
-      makeItem({ assessment: { id: "assessment-1", requester: { id: "requester-1", isActive: false } } }),
+      makeItem({
+        assessment: { id: "assessment-1", requester: { id: "requester-1", isActive: false } },
+      }),
     ]);
 
     await expect(scheduler.checkRenewalTriggers()).resolves.not.toThrow();
@@ -147,7 +163,8 @@ describe("RenewalScheduler", () => {
     // dentro de uma janela de fechamento que já abriu hoje.
     const start = daysFromNow(-2);
     const end = daysFromNow(20);
-    const mmdd = (date: Date) => `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const mmdd = (date: Date) =>
+      `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
     repo.findEligibleItems.mockResolvedValue([
       makeItem({
@@ -191,7 +208,12 @@ describe("RenewalScheduler", () => {
         expect.objectContaining({ type: "RENEWAL_OVERDUE" }),
       );
       expect(auditLogService.record).toHaveBeenCalledWith(
-        expect.objectContaining({ tenantId: "tenant-1", action: "UPDATE", entityType: "SoftwareInventoryItem", entityId: "item-1" }),
+        expect.objectContaining({
+          tenantId: "tenant-1",
+          action: "UPDATE",
+          entityType: "SoftwareInventoryItem",
+          entityId: "item-1",
+        }),
       );
     });
 

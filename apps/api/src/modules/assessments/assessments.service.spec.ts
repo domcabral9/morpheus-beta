@@ -92,7 +92,9 @@ describe("AssessmentsService", () => {
     };
     areasService = { findAllActive: jest.fn().mockResolvedValue([{ id: "area-1" }]) };
     usersService = {
-      findById: jest.fn().mockResolvedValue({ id: "user-requester", tenantId: "tenant-1", isActive: true }),
+      findById: jest
+        .fn()
+        .mockResolvedValue({ id: "user-requester", tenantId: "tenant-1", isActive: true }),
     };
     questionnaireService = { getCategories: jest.fn().mockResolvedValue([]) };
     riskEvaluationService = { evaluate: jest.fn().mockResolvedValue({ id: "risk-result-1" }) };
@@ -195,7 +197,11 @@ describe("AssessmentsService", () => {
 
     it("rejeita novo solicitante de outro tenant", async () => {
       repo.findById.mockResolvedValue(makeAssessment({ status: "PENDING_RENEWAL" } as never));
-      usersService.findById.mockResolvedValue({ id: "user-2", tenantId: "outro-tenant", isActive: true });
+      usersService.findById.mockResolvedValue({
+        id: "user-2",
+        tenantId: "outro-tenant",
+        isActive: true,
+      });
 
       await expect(
         service.reassignRenewalRequester(makeUser(), "assessment-1", { newRequesterId: "user-2" }),
@@ -205,7 +211,11 @@ describe("AssessmentsService", () => {
 
     it("rejeita novo solicitante inativo", async () => {
       repo.findById.mockResolvedValue(makeAssessment({ status: "PENDING_RENEWAL" } as never));
-      usersService.findById.mockResolvedValue({ id: "user-2", tenantId: "tenant-1", isActive: false });
+      usersService.findById.mockResolvedValue({
+        id: "user-2",
+        tenantId: "tenant-1",
+        isActive: false,
+      });
 
       await expect(
         service.reassignRenewalRequester(makeUser(), "assessment-1", { newRequesterId: "user-2" }),
@@ -215,7 +225,11 @@ describe("AssessmentsService", () => {
 
     it("reatribui com sucesso: atualiza requesterId, audita e notifica o novo solicitante", async () => {
       repo.findById.mockResolvedValue(makeAssessment({ status: "PENDING_RENEWAL" } as never));
-      usersService.findById.mockResolvedValue({ id: "user-2", tenantId: "tenant-1", isActive: true });
+      usersService.findById.mockResolvedValue({
+        id: "user-2",
+        tenantId: "tenant-1",
+        isActive: true,
+      });
       repo.update.mockResolvedValue(
         makeAssessment({ status: "PENDING_RENEWAL", requesterId: "user-2" } as never),
       );
@@ -239,7 +253,11 @@ describe("AssessmentsService", () => {
         }),
       );
       expect(notificationsService.notify).toHaveBeenCalledWith(
-        expect.objectContaining({ tenantId: "tenant-1", userId: "user-2", type: "RENEWAL_PENDING" }),
+        expect.objectContaining({
+          tenantId: "tenant-1",
+          userId: "user-2",
+          type: "RENEWAL_PENDING",
+        }),
       );
       expect(result.requesterId).toBe("user-2");
     });

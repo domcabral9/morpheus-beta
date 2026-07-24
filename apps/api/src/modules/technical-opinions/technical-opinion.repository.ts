@@ -86,9 +86,7 @@ export class TechnicalOpinionRepository {
       ...(filters.issuedById ? { issuedById: filters.issuedById } : {}),
       ...(filters.classificationLabel ? { classificationLabel: filters.classificationLabel } : {}),
       ...(filters.number ? { number: { startsWith: filters.number } } : {}),
-      ...(filters.from || filters.to
-        ? { issuedAt: { gte: filters.from, lte: filters.to } }
-        : {}),
+      ...(filters.from || filters.to ? { issuedAt: { gte: filters.from, lte: filters.to } } : {}),
     };
 
     const [items, total] = await Promise.all([

@@ -37,7 +37,9 @@ export class ExportInventoryQueryDto {
   @IsBooleanString()
   hasRiskAnalysis?: string;
 
-  @ApiPropertyOptional({ description: '"true" ou "false" - filtra por declaração de cláusula InfoSec.' })
+  @ApiPropertyOptional({
+    description: '"true" ou "false" - filtra por declaração de cláusula InfoSec.',
+  })
   @IsOptional()
   @IsBooleanString()
   hasInfoSecClause?: string;

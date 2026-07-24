@@ -111,7 +111,8 @@ export class AuthController {
   @Post("switch-tenant")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: "Super-admin: reemite o access token visualizando outro tenant (ou volta pro de casa).",
+    summary:
+      "Super-admin: reemite o access token visualizando outro tenant (ou volta pro de casa).",
   })
   async switchTenant(
     @CurrentUser() user: AuthenticatedUser,
