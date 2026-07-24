@@ -827,6 +827,16 @@
       "REJECTED": "Rejected",
       "ADJUSTMENT_REQUESTED": "Adjustment requested",
       "SKIPPED": "Skipped"
-    }
+    },
+    "reassignTitle": "Reassign requester",
+    "reassignDescription": "The original requester ({name}) can no longer act on this renewal cycle (e.g. left the company). Reassign it to a new requester in the tenant.",
+    "reassignNewRequesterLabel": "New requester",
+    "reassignSelectPlaceholder": "Select",
+    "reassignReasonLabel": "Reason (optional)",
+    "reassignReasonPlaceholder": "e.g.: original requester left the company",
+    "reassignSubmit": "Reassign",
+    "reassignSubmitting": "Reassigning...",
+    "reassignSuccess": "Requester reassigned.",
+    "reassignError": "Could not reassign the requester."
   }
 }

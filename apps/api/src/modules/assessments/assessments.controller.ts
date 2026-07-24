@@ -10,6 +10,7 @@ import { CreateAssessmentDto } from "./dto/create-assessment.dto";
 import { UpdateAssessmentDto } from "./dto/update-assessment.dto";
 import { SubmitAnswersDto } from "./dto/submit-answers.dto";
 import { ListAssessmentsQueryDto } from "./dto/list-assessments.query.dto";
+import { ReassignRenewalRequesterDto } from "./dto/reassign-renewal-requester.dto";
 
 @ApiTags("assessments")
 @Controller("assessments")
@@ -51,6 +52,20 @@ export class AssessmentsController {
     @Body() dto: UpdateAssessmentDto,
   ) {
     return this.assessmentsService.update(user, id, dto);
+  }
+
+  // `assessments:reopen` já existe/já é seedada em todo papel "Administrador" - nunca era checada
+  // em lugar nenhum até agora (ver plano de renovação anual, Fase 5). Sem `@Audit()`: o service já
+  // grava o log manualmente com metadata rica (solicitante anterior/novo) - ver doc-comment do
+  // decorator sobre não duplicar.
+  @RequirePermissions(PERMISSIONS.ASSESSMENTS_REOPEN)
+  @Patch(":id/renewal/reassign")
+  reassignRenewalRequester(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") id: string,
+    @Body() dto: ReassignRenewalRequesterDto,
+  ) {
+    return this.assessmentsService.reassignRenewalRequester(user, id, dto);
   }
 
   @Get(":id/versions")
