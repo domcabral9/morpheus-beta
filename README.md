@@ -177,19 +177,19 @@ previous version).
 
 | My view | Admin |
 | --- | --- |
-| ![Dashboard - my view](./docs/screenshots/dashboard-minha-visao.png) | ![Dashboard - admin](./docs/screenshots/dashboard-administrativo.png) |
+| ![Dashboard - my view](./docs/screenshots/dashboard-minha-visao-en.png) | ![Dashboard - admin](./docs/screenshots/dashboard-administrativo-en.png) |
 
 | Executive | Leaderboard |
 | --- | --- |
-| ![Dashboard - executive](./docs/screenshots/dashboard-executivo-en.png) | ![Dashboard - leaderboard](./docs/screenshots/dashboard-placar-por-area.png) |
+| ![Dashboard - executive](./docs/screenshots/dashboard-executivo-en.png) | ![Dashboard - leaderboard](./docs/screenshots/dashboard-placar-por-area-en.png) |
 
 | Login - organization picker | Quick search (Cmd/Ctrl+K) |
 | --- | --- |
-| ![Login - organization picker](./docs/screenshots/login-organizacao.png) | ![Quick search](./docs/screenshots/busca-rapida.png) |
+| ![Login - organization picker](./docs/screenshots/login-organizacao-en.png) | ![Quick search](./docs/screenshots/busca-rapida-en.png) |
 
 | Admin - role management |
 | --- |
-| ![Admin - roles](./docs/screenshots/admin-papeis.png) |
+| ![Admin - roles](./docs/screenshots/admin-papeis-en.png) |
 
 ## Stack
 
