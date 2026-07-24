@@ -58,23 +58,13 @@ describe("SearchService", () => {
     await service.search(makeUser({ permissions: ["assessments:view-all"] }), "contract");
 
     expect(repo.searchAssessments).toHaveBeenCalledWith("tenant-1", undefined, "contract", 5);
-    expect(repo.searchTechnicalOpinions).toHaveBeenCalledWith(
-      "tenant-1",
-      undefined,
-      "contract",
-      5,
-    );
+    expect(repo.searchTechnicalOpinions).toHaveBeenCalledWith("tenant-1", undefined, "contract", 5);
   });
 
   it("com assessments:approve (sem view-all), pareceres também ficam sem escopo de requester", async () => {
     await service.search(makeUser({ permissions: ["assessments:approve"] }), "contract");
 
-    expect(repo.searchTechnicalOpinions).toHaveBeenCalledWith(
-      "tenant-1",
-      undefined,
-      "contract",
-      5,
-    );
+    expect(repo.searchTechnicalOpinions).toHaveBeenCalledWith("tenant-1", undefined, "contract", 5);
   });
 
   it("com inventory:view, busca itens de inventário", async () => {
