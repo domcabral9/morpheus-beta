@@ -12,6 +12,7 @@ export interface AdminDashboard {
   assessmentsByStatus: Record<string, number>;
   pendingByStep: Array<{ stepName: string; count: number }>;
   slaBreaches: number;
+  blockedAreasCount: number;
 }
 
 export interface ExecutiveDashboard {
