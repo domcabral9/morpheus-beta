@@ -28,6 +28,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useHasAnyManagePermission } from "@/lib/use-permission";
 import { ADMIN_NAV_ITEMS, PRIMARY_NAV_ITEMS, getVisibleNavItems, isNavItemActive } from "@/lib/nav-items";
@@ -49,10 +50,16 @@ export function AppSidebar() {
 
   const canAccessAdmin = useHasAnyManagePermission();
   const permissions = user?.permissions ?? [];
+  const { state, isMobile } = useSidebar();
 
   const visiblePrimaryItems = getVisibleNavItems(PRIMARY_NAV_ITEMS, permissions);
   const visibleAdminItems = getVisibleNavItems(ADMIN_NAV_ITEMS, permissions);
   const adminActive = isNavItemActive(pathname, "/admin");
+  // Sidebar colapsada (modo ícone) esconde SidebarMenuSub via CSS
+  // (group-data-[collapsible=icon]:hidden) — sem isso, "Administração" fica
+  // clicável mas sem nenhuma forma de alcançar os sub-itens. Nesse estado a
+  // seção vira um dropdown/flyout em vez do Collapsible inline.
+  const adminAsFlyout = !isMobile && state === "collapsed";
 
   return (
     <Sidebar collapsible="icon">
@@ -88,7 +95,29 @@ export function AppSidebar() {
               );
             })}
 
-            {canAccessAdmin && (
+            {canAccessAdmin && adminAsFlyout && (
+              <SidebarMenuItem>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton isActive={adminActive}>
+                      <ShieldIcon />
+                      <span>{t("admin")}</span>
+                    </SidebarMenuButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="right" align="start" className="min-w-48">
+                    <DropdownMenuLabel>{t("admin")}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {visibleAdminItems.map((item) => (
+                      <DropdownMenuItem key={item.href} asChild>
+                        <Link href={item.href}>{adminT(item.labelKey)}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarMenuItem>
+            )}
+
+            {canAccessAdmin && !adminAsFlyout && (
               <Collapsible defaultOpen={adminActive} className="group/collapsible">
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
