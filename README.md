@@ -18,6 +18,23 @@ empresa - uma forma de reduzir Shadow IT. Do questionário de risco à decisão 
 5. Inventário de software homologado, com ciclo de revisão periódica.
 6. Dashboards de postura de conformidade e placar de maturidade por área.
 
+## Matriz de risco (metodologia)
+
+O motor de risco segue uma abordagem clássica de avaliação - probabilidade × impacto - alinhada com
+frameworks reconhecidos como o NIST SP 800-30 (*Guide for Conducting Risk Assessments*): cada
+pergunta do questionário contribui, com peso próprio, para uma das duas dimensões (ou ambas), e o
+resultado é classificado contra faixas configuráveis pelo administrador.
+
+Nada disso é fixo em código. Por tenant, é possível parametrizar quantas faixas de probabilidade e
+de impacto existem, como elas se cruzam numa grade de decisão (heatmap), o texto de recomendação e
+a cor de cada classificação, e o score mínimo de aprovação - inclusive versionar a matriz inteira
+(ativar uma "Matriz Padrão v2" sem perder o histórico das avaliações já decididas contra a versão
+anterior).
+
+| Matriz de risco - grade de decisão | Dashboard executivo - postura de conformidade |
+| --- | --- |
+| ![Matriz de risco](./docs/screenshots/risk-matrix-config.png) | ![Postura de conformidade](./docs/screenshots/dashboard-executivo.png) |
+
 ## Controles de segurança implementados
 
 - **RBAC granular por permissão** (não só por papel), com decorators dedicados para composição
@@ -123,6 +140,23 @@ reduce Shadow IT. From risk questionnaire to final decision:
 5. Homologated software inventory, with periodic review cycle.
 6. Compliance-posture dashboards and a maturity leaderboard by area.
 
+## Risk matrix (methodology)
+
+The risk engine follows a classic likelihood × impact assessment approach, aligned with recognized
+frameworks such as NIST SP 800-30 (*Guide for Conducting Risk Assessments*): each questionnaire
+question contributes, with its own weight, to one of the two dimensions (or both), and the result
+is classified against admin-configurable bands.
+
+None of this is hardcoded. Per tenant, you can configure how many probability and impact bands
+exist, how they intersect in a decision grid (heatmap), each classification's recommendation text
+and color, and the minimum approval score - including versioning the whole matrix (activate a
+"Standard Matrix v2" without losing the history of assessments already decided against the
+previous version).
+
+| Risk matrix - decision grid | Executive dashboard - compliance posture |
+| --- | --- |
+| ![Risk matrix](./docs/screenshots/risk-matrix-config-en.png) | ![Compliance posture](./docs/screenshots/dashboard-executivo-en.png) |
+
 ## Implemented security controls
 
 - **Granular, permission-level RBAC** (not just role-level), with dedicated decorators for AND/OR
@@ -147,7 +181,7 @@ reduce Shadow IT. From risk questionnaire to final decision:
 
 | Executive | Leaderboard |
 | --- | --- |
-| ![Dashboard - executive](./docs/screenshots/dashboard-executivo.png) | ![Dashboard - leaderboard](./docs/screenshots/dashboard-placar-por-area.png) |
+| ![Dashboard - executive](./docs/screenshots/dashboard-executivo-en.png) | ![Dashboard - leaderboard](./docs/screenshots/dashboard-placar-por-area.png) |
 
 | Login - organization picker | Quick search (Cmd/Ctrl+K) |
 | --- | --- |
