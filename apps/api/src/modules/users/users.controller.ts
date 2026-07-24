@@ -27,7 +27,11 @@ import { SetUserActiveDto } from "./dto/set-user-active.dto";
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @RequireAnyPermission(PERMISSIONS.USERS_MANAGE, PERMISSIONS.INVENTORY_MANAGE, PERMISSIONS.AUDIT_VIEW)
+  @RequireAnyPermission(
+    PERMISSIONS.USERS_MANAGE,
+    PERMISSIONS.INVENTORY_MANAGE,
+    PERMISSIONS.AUDIT_VIEW,
+  )
   @Get()
   list(@CurrentUser() user: AuthenticatedUser) {
     return this.usersService.listForTenant(user.tenantId);

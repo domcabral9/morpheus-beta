@@ -145,7 +145,9 @@ export class RenewalScheduler {
     }
 
     if (items.length > 0) {
-      this.logger.log(`Vencimento de renovação: ${items.length} item(ns) marcado(s) EXPIRED, área(s) bloqueada(s).`);
+      this.logger.log(
+        `Vencimento de renovação: ${items.length} item(ns) marcado(s) EXPIRED, área(s) bloqueada(s).`,
+      );
     }
   }
 }

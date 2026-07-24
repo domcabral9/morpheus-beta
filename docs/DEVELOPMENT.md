@@ -1954,3 +1954,18 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     da 4.0.5 (senão apareceria como erro "propriedade não existe" em outro lugar). Revalidado
     localmente: `pnpm turbo run typecheck lint test build` - só o ruído de CRLF já conhecido, 213
     testes passando, build ok.
+  - **Segundo bug real pego pela mesma execução do CI** (depois do fix acima, novo push, novo run):
+    `@morpheus/api#lint` falhou no runner - dessa vez não é o ruído de CRLF, são 49 violações
+    genuínas de `prettier/prettier` (vírgula final faltando, assinatura de função não quebrada em
+    múltiplas linhas) espalhadas por 25 arquivos reais (`renewal`, `roles`, `users`, `workflow`,
+    `technical-opinions`, `inventory`, etc). Nunca detectado porque todo `lint` deste projeto,
+    sessão após sessão, sempre rodou escopado com `--filter` pro pacote tocado na hora - um `lint`
+    completo e sem filtro nunca tinha sido concluído até essa primeira execução do CI.
+  - **Correção**: `npx eslint "{src,test}/**/*.ts" --max-warnings 0 --fix` dentro de `apps/api` -
+    100% mecânico (é literalmente o que o Prettier já ia aplicar). Conferido arquivo por arquivo via
+    `git diff` que toda mudança é só quebra de linha/vírgula, nenhuma lógica ou asserção de teste
+    alterada. Revalidado de novo: `pnpm turbo run typecheck lint test build` limpo, 213 testes
+    passando.
+  - **Como aplicar daqui pra frente**: com o CI agora cobrindo o lint completo (sem `--filter`) em
+    todo PR, esse tipo de drift de formatação não deve mais se acumular silenciosamente - cada PR
+    já vai flagar sua própria violação na hora, em vez de empilhar centenas ao longo de meses.

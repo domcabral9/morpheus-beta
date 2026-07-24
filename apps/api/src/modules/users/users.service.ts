@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { RolesService } from "../roles/roles.service";
 import { UsersRepository, UserWithPermissions, UserAdminRaw } from "./users.repository";
 import { CreateUserDto } from "./dto/create-user.dto";

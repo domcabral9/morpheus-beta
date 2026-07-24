@@ -12,7 +12,9 @@ export class CreateRoleDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ description: "Permission keys a atribuir. Ignorado se replicateFromRoleId vier." })
+  @ApiPropertyOptional({
+    description: "Permission keys a atribuir. Ignorado se replicateFromRoleId vier.",
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
