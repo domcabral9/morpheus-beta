@@ -96,4 +96,15 @@ export class DashboardsRepository {
       _count: true,
     });
   }
+
+  /** Mesmo sinal derivado usado por `AssessmentsService.isAreaBlocked` (Fase 4 da renovação
+   * anual) - áreas com pelo menos um item `EXPIRED` estão bloqueadas pra novas submissões. */
+  async countBlockedAreas(tenantId: string): Promise<number> {
+    const rows = await this.prisma.softwareInventoryItem.findMany({
+      where: { tenantId, status: "EXPIRED" },
+      select: { areaId: true },
+      distinct: ["areaId"],
+    });
+    return rows.length;
+  }
 }

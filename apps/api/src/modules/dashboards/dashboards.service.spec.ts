@@ -43,6 +43,7 @@ describe("DashboardsService", () => {
     findTerminalOpinions: jest.Mock;
     findAllActiveAreas: jest.Mock;
     countSubmittedByArea: jest.Mock;
+    countBlockedAreas: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -56,6 +57,7 @@ describe("DashboardsService", () => {
       findTerminalOpinions: jest.fn(),
       findAllActiveAreas: jest.fn(),
       countSubmittedByArea: jest.fn(),
+      countBlockedAreas: jest.fn().mockResolvedValue(0),
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -92,6 +94,7 @@ describe("DashboardsService", () => {
         { id: "step-2", name: "Segurança da Informação" },
       ]);
       repo.countSlaBreaches.mockResolvedValue(1);
+      repo.countBlockedAreas.mockResolvedValue(2);
 
       const result = await service.getAdminDashboard("tenant-1");
 
@@ -100,6 +103,7 @@ describe("DashboardsService", () => {
         { stepName: "Segurança da Informação", count: 1 },
       ]);
       expect(result.slaBreaches).toBe(1);
+      expect(result.blockedAreasCount).toBe(2);
       expect(repo.findStepsByIds).toHaveBeenCalledWith(["step-1", "step-2"]);
     });
 

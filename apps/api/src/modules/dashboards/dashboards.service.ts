@@ -51,10 +51,11 @@ export class DashboardsService {
   }
 
   async getAdminDashboard(tenantId: string) {
-    const [byStatus, pendingBySteps, slaBreaches] = await Promise.all([
+    const [byStatus, pendingBySteps, slaBreaches, blockedAreasCount] = await Promise.all([
       this.repository.countAssessmentsByStatus(tenantId),
       this.repository.countPendingStepsByStep(tenantId),
       this.repository.countSlaBreaches(tenantId),
+      this.repository.countBlockedAreas(tenantId),
     ]);
 
     const stepIds = pendingBySteps.map((row) => row.workflowStepId);
@@ -68,6 +69,7 @@ export class DashboardsService {
         count: row._count,
       })),
       slaBreaches,
+      blockedAreasCount,
     };
   }
 
