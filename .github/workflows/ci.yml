@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Mesma versão do runtime usado nas imagens de produção
+      # (apps/api/Dockerfile e apps/web/Dockerfile: node:22-alpine).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Enable Corepack (pnpm via packageManager do package.json)
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Cada task abaixo já reflete exatamente o que se roda localmente antes
+      # de todo PR neste projeto (ver docs/DEVELOPMENT.md) - turbo resolve a
+      # ordem certa via dependsOn (ex.: @morpheus/database precisa buildar/
+      # gerar o Prisma Client antes de @morpheus/api tipar).
+      - name: Typecheck
+        run: pnpm turbo run typecheck
+
+      - name: Lint
+        run: pnpm turbo run lint
+
+      - name: Test
+        run: pnpm turbo run test
+
+      - name: Build
+        run: pnpm turbo run build

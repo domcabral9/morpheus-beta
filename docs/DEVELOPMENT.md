@@ -1902,3 +1902,34 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     de antes intacto.
   - `pnpm turbo run typecheck` e `lint` (`--filter=./apps/web`) passaram limpos (só warnings
     pré-existentes não relacionados, em `admin/settings/page.tsx` e `assessments/[id]/page.tsx`).
+- **CI (GitHub Actions) + Dependabot** (pedido do usuário, 2026-07-24, no âmbito de montar um ciclo de
+  SSDLC/Security by Design pro projeto). Nenhum dos dois existia até aqui - repo sem nenhum workflow
+  configurado, sem alertas de vulnerabilidade, sem atualização automática de dependência.
+  - **Dependabot alerts + automated security fixes**: ativados via API (`PUT
+    /repos/.../vulnerability-alerts` e `/automated-security-fixes`), sem precisar de nenhum arquivo -
+    são configurações de repositório, gratuitas em qualquer plano do GitHub (público ou privado).
+    Confirmado via `gh api` que ambos ficaram `enabled`.
+  - **`.github/dependabot.yml`** (atualizações de versão agendadas, distinto dos alerts acima que já
+    são imediatos): ecossistema `npm` apontando pra raiz (`/`) - cobre o monorepo pnpm inteiro
+    (`@morpheus/api`, `@morpheus/web`, `@morpheus/database`, `@morpheus/config`) de uma vez, já que o
+    Dependabot detecta `pnpm-workspace.yaml`/lockfile único automaticamente quando `directory` aponta
+    pra raiz. Mais `docker` (`apps/api`, `apps/web`, uma entrada por Dockerfile) e `github-actions`
+    (pro workflow novo abaixo). Frequência semanal (escolhida pelo usuário via `AskUserQuestion`,
+    mesmo ritmo do `morpheus-ops`), `open-pull-requests-limit: 10`, e um `group` de
+    `minor-and-patch` no ecossistema npm pra não gerar uma enxurrada de PRs individuais a cada rodada.
+  - **`.github/workflows/ci.yml`**: primeiro workflow do repo. `pull_request`/`push` em `main`, Node
+    22 (mesma versão das imagens `node:22-alpine` de produção, não a mínima `>=20` do `engines`),
+    `corepack enable` + `actions/setup-node` com `cache: pnpm` (mesmo padrão dos Dockerfiles). Quatro
+    steps espelhando exatamente a validação manual já usada em toda PR deste projeto:
+    `pnpm turbo run typecheck`/`lint`/`test`/`build` - o `test` aqui é só unitário (mockado, sem
+    Postgres), o mesmo que já roda localmente; `test:e2e` (que precisaria de um serviço Postgres no
+    runner) ficou fora de propósito, não foi pedido. Decisão confirmada via `AskUserQuestion`: montar
+    esse CI básico junto, não deixar pra depois, pra que os PRs futuros do Dependabot já cheguem
+    validados automaticamente em vez de precisarem de checagem manual local um por um.
+  - **Gotcha real durante a validação local**: rodar `pnpm turbo run lint` no monorepo inteiro (sem
+    `--filter`) acusou ~12 mil erros `Delete ␍` em todo o `apps/api` - o gotcha de CRLF/
+    `core.autocrlf` já documentado, mas dessa vez atingindo a árvore inteira, não só um arquivo.
+    Confirmado com `git diff --stat` que é 100% ruído local (nenhuma mudança real fora do
+    `tenants.repository.ts` de sempre) - e como o runner do GitHub Actions é Linux (sem conversão
+    CRLF do checkout local Windows), o CI novo não deve ver esse problema. Não corrigido (não pedido,
+    e re-normalizar a árvore inteira só pra isso seria ruído desnecessário nesta entrega).
