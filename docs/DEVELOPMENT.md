@@ -1944,3 +1944,87 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     grupos de navegação, sem resíduo de busca anterior.
   - `pnpm turbo run typecheck` (api+web) limpo; `pnpm turbo run test --filter=@morpheus/api`: 219/219
     passando (26 suites); `lint` (api+web) limpo, só warnings pré-existentes não relacionados.
+- **CI (GitHub Actions) + Dependabot** (pedido do usuário, 2026-07-24, no âmbito de montar um ciclo de
+  SSDLC/Security by Design pro projeto). Nenhum dos dois existia até aqui - repo sem nenhum workflow
+  configurado, sem alertas de vulnerabilidade, sem atualização automática de dependência.
+  - **Dependabot alerts + automated security fixes**: ativados via API (`PUT
+    /repos/.../vulnerability-alerts` e `/automated-security-fixes`), sem precisar de nenhum arquivo -
+    são configurações de repositório, gratuitas em qualquer plano do GitHub (público ou privado).
+    Confirmado via `gh api` que ambos ficaram `enabled`.
+  - **`.github/dependabot.yml`** (atualizações de versão agendadas, distinto dos alerts acima que já
+    são imediatos): ecossistema `npm` apontando pra raiz (`/`) - cobre o monorepo pnpm inteiro
+    (`@morpheus/api`, `@morpheus/web`, `@morpheus/database`, `@morpheus/config`) de uma vez, já que o
+    Dependabot detecta `pnpm-workspace.yaml`/lockfile único automaticamente quando `directory` aponta
+    pra raiz. Mais `docker` (`apps/api`, `apps/web`, uma entrada por Dockerfile) e `github-actions`
+    (pro workflow novo abaixo). Frequência semanal (escolhida pelo usuário via `AskUserQuestion`,
+    mesmo ritmo do `morpheus-ops`), `open-pull-requests-limit: 10`, e um `group` de
+    `minor-and-patch` no ecossistema npm pra não gerar uma enxurrada de PRs individuais a cada rodada.
+  - **`.github/workflows/ci.yml`**: primeiro workflow do repo. `pull_request`/`push` em `main`, Node
+    22 (mesma versão das imagens `node:22-alpine` de produção, não a mínima `>=20` do `engines`),
+    `corepack enable` + `actions/setup-node` com `cache: pnpm` (mesmo padrão dos Dockerfiles). Quatro
+    steps espelhando exatamente a validação manual já usada em toda PR deste projeto:
+    `pnpm turbo run typecheck`/`lint`/`test`/`build` - o `test` aqui é só unitário (mockado, sem
+    Postgres), o mesmo que já roda localmente; `test:e2e` (que precisaria de um serviço Postgres no
+    runner) ficou fora de propósito, não foi pedido. Decisão confirmada via `AskUserQuestion`: montar
+    esse CI básico junto, não deixar pra depois, pra que os PRs futuros do Dependabot já cheguem
+    validados automaticamente em vez de precisarem de checagem manual local um por um.
+  - **Gotcha real durante a validação local**: rodar `pnpm turbo run lint` no monorepo inteiro (sem
+    `--filter`) acusou ~12 mil erros `Delete ␍` em todo o `apps/api` - o gotcha de CRLF/
+    `core.autocrlf` já documentado, mas dessa vez atingindo a árvore inteira, não só um arquivo.
+    Confirmado com `git diff --stat` que é 100% ruído local (nenhuma mudança real fora do
+    `tenants.repository.ts` de sempre) - e como o runner do GitHub Actions é Linux (sem conversão
+    CRLF do checkout local Windows), o CI novo não deve ver esse problema. Não corrigido (não pedido,
+    e re-normalizar a árvore inteira só pra isso seria ruído desnecessário nesta entrega).
+  - **Bug real pego pela primeira execução do CI**: `@morpheus/web#typecheck` falhou no runner do
+    Actions - `zod` (`^4.4.3`) incompatível com `@hookform/resolvers@5.4.0` (última versão publicada;
+    não existe release mais nova que resolva isso) em 8 arquivos (`admin/settings`,
+    `admin/workflow/*`, `approvals/*`, `inventory/item-form-dialog`). Erro:
+    `Types of property '_zod.version.minor' are incompatible... Type '4' is not assignable to type
+    '0'` - o resolver do hookform foi tipado contra `zod@4.0.x` e nunca foi atualizado pra `zod`
+    4.1+, que muda um tipo interno de "versão" usado nesse guard de compatibilidade. **Não é falha
+    de nenhuma mudança recente** - reproduzido de forma isolada num `git worktree` separado com
+    `pnpm install --frozen-lockfile` do zero (sem nada do `node_modules` de sessões anteriores),
+    provando que já estava quebrado no `main` antes desta PR, só nunca detectado porque nunca existiu
+    uma instalação 100% fresca validada (CI não existia, e o `node_modules` local de longa duração
+    "mascarava" o problema de algum jeito).
+  - **Correção testada e aplicada**: fixado `"zod": "~4.0.5"` em `apps/web/package.json` (era
+    `"^4.4.3"`) - `4.0.5` é a última versão de patch da 4.0.x, testada isoladamente no mesmo worktree
+    até o typecheck passar 100% limpo. `~` (não `^`) de propósito: permite só patches dentro da
+    4.0.x via Dependabot, bloqueando um novo salto pra 4.1+ até o `@hookform/resolvers` publicar uma
+    versão compatível - senão o mesmo problema silenciosamente voltaria no próximo bump automático.
+    Typecheck limpo em todo o app é evidência de que nenhum código usa API do zod introduzida depois
+    da 4.0.5 (senão apareceria como erro "propriedade não existe" em outro lugar). Revalidado
+    localmente: `pnpm turbo run typecheck lint test build` - só o ruído de CRLF já conhecido, 213
+    testes passando, build ok.
+  - **Segundo bug real pego pela mesma execução do CI** (depois do fix acima, novo push, novo run):
+    `@morpheus/api#lint` falhou no runner - dessa vez não é o ruído de CRLF, são 49 violações
+    genuínas de `prettier/prettier` (vírgula final faltando, assinatura de função não quebrada em
+    múltiplas linhas) espalhadas por 25 arquivos reais (`renewal`, `roles`, `users`, `workflow`,
+    `technical-opinions`, `inventory`, etc). Nunca detectado porque todo `lint` deste projeto,
+    sessão após sessão, sempre rodou escopado com `--filter` pro pacote tocado na hora - um `lint`
+    completo e sem filtro nunca tinha sido concluído até essa primeira execução do CI.
+  - **Correção**: `npx eslint "{src,test}/**/*.ts" --max-warnings 0 --fix` dentro de `apps/api` -
+    100% mecânico (é literalmente o que o Prettier já ia aplicar). Conferido arquivo por arquivo via
+    `git diff` que toda mudança é só quebra de linha/vírgula, nenhuma lógica ou asserção de teste
+    alterada. Revalidado de novo: `pnpm turbo run typecheck lint test build` limpo, 213 testes
+    passando.
+  - **Como aplicar daqui pra frente**: com o CI agora cobrindo o lint completo (sem `--filter`) em
+    todo PR, esse tipo de drift de formatação não deve mais se acumular silenciosamente - cada PR
+    já vai flagar sua própria violação na hora, em vez de empilhar centenas ao longo de meses.
+  - **Branch protection no `main`**: com o CI finalmente verde (`validate` passando de verdade, não
+    só o workflow existindo), ativado via API
+    (`PUT /repos/.../branches/main/protection`) - `required_status_checks.contexts: ["validate"]`,
+    `enforce_admins: true` (vale até pro dono do repo, sem bypass silencioso pelo botão de merge),
+    `allow_force_pushes`/`allow_deletions: false`. De propósito **sem**
+    `required_pull_request_reviews` - esse projeto não tem um segundo revisor humano formal, a
+    confirmação de merge já é verbal (ver ritmo padrão no topo deste arquivo); exigir aprovação de
+    PR quebraria esse fluxo sem agregar nada. Antes de ativar, os dois bugs reais acima (zod pin +
+    prettier) precisaram ser corrigidos - ativar a proteção com o check vermelho teria travado
+    imediatamente toda PR aberta, incluindo as que já estavam em andamento.
+  - **Decisão combinada com o usuário sobre correções de vulnerabilidade**: em vez de mesclar PRs de
+    segurança do Dependabot assim que aparecem, tratar numa janela semanal fixa (mesmo ritmo do
+    `morpheus-ops`) - com uma válvula de escape: severidade `critical` com exploit publicamente
+    conhecido é tratada fora da janela, na hora. Não implementado em automação (é uma prática
+    combinada, não uma regra de CI) - registrar os findings de vulnerabilidade no `morpheus-ops`
+    antes de cada janela de correção também foi combinado, mas ainda não tem um processo/script
+    definido (próximo passo, se o usuário pedir).

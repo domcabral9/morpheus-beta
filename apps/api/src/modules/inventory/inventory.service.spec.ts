@@ -214,7 +214,9 @@ describe("InventoryService", () => {
         .mockResolvedValueOnce({ id: "item-1", tenantId: "tenant-1" }) // getOwnedOrThrow
         .mockResolvedValueOnce({ id: "item-1", tenantId: "tenant-1", documentationLinks: links }); // refetch pós-update
 
-      const result = await service.update(makeUser(), "item-1", { documentationLinks: links } as never);
+      const result = await service.update(makeUser(), "item-1", {
+        documentationLinks: links,
+      } as never);
 
       expect(repo.setDocumentationLinks).toHaveBeenCalledWith("item-1", "tenant-1", links);
       expect(result.documentationLinks).toEqual(links);
@@ -254,7 +256,11 @@ describe("InventoryService", () => {
     });
 
     it("update() rejeita mudar hasRiskAnalysis/hasInfoSecClause em item com assessmentId (herdado da homologação)", async () => {
-      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", assessmentId: "assessment-1" });
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        assessmentId: "assessment-1",
+      });
 
       await expect(
         service.update(makeUser(), "item-1", { hasRiskAnalysis: false } as never),
@@ -274,11 +280,18 @@ describe("InventoryService", () => {
     });
 
     it("update() de outros campos continua funcionando normalmente em item homologado", async () => {
-      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", assessmentId: "assessment-1" });
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        assessmentId: "assessment-1",
+      });
 
       await service.update(makeUser(), "item-1", { vendor: "Novo nome" } as never);
 
-      expect(repo.update).toHaveBeenCalledWith("item-1", expect.objectContaining({ vendor: "Novo nome" }));
+      expect(repo.update).toHaveBeenCalledWith(
+        "item-1",
+        expect.objectContaining({ vendor: "Novo nome" }),
+      );
     });
   });
 
@@ -300,7 +313,10 @@ describe("InventoryService", () => {
       ]);
 
       const user = makeUser();
-      const result = await service.exportItems(user, { status: "ACTIVE", areaId: "area-1" } as never);
+      const result = await service.exportItems(user, {
+        status: "ACTIVE",
+        areaId: "area-1",
+      } as never);
 
       expect(repo.findAllMatching).toHaveBeenCalledWith({
         tenantId: "tenant-1",
