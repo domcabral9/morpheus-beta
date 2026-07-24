@@ -28,7 +28,11 @@ function parseMonthDay(value: string): { month: number; day: number } {
   return { month: Number(month), day: Number(day) };
 }
 
-function resolveWindowForYear(year: number, start: string, end: string): { start: Date; end: Date } {
+function resolveWindowForYear(
+  year: number,
+  start: string,
+  end: string,
+): { start: Date; end: Date } {
   const startParts = parseMonthDay(start);
   const endParts = parseMonthDay(end);
   const windowStart = new Date(year, startParts.month - 1, startParts.day);
@@ -45,7 +49,11 @@ function resolveWindowForYear(year: number, start: string, end: string): { start
  * dentro dela, testa a instância da janela no ano de `date` e no ano
  * anterior (cobre também janelas que cruzam a virada do ano).
  */
-function findContainingWindow(date: Date, start: string, end: string): { start: Date; end: Date } | null {
+function findContainingWindow(
+  date: Date,
+  start: string,
+  end: string,
+): { start: Date; end: Date } | null {
   for (const year of [date.getFullYear() - 1, date.getFullYear()]) {
     const window = resolveWindowForYear(year, start, end);
     if (date >= window.start && date <= window.end) return window;
@@ -65,7 +73,10 @@ function findContainingWindow(date: Date, start: string, end: string): { start: 
  *   estendido até o fim da janela (evita expirar durante a janela).
  * - senão, nada muda.
  */
-export function computeRenewalTrigger(nextReviewDate: Date, window: RenewalWindowConfig): RenewalTrigger {
+export function computeRenewalTrigger(
+  nextReviewDate: Date,
+  window: RenewalWindowConfig,
+): RenewalTrigger {
   const gatilhoNatural = startOfDay(nextReviewDate);
   const vencimentoNatural = addDays(gatilhoNatural, RENEWAL_PERIOD_DAYS);
 
@@ -77,14 +88,16 @@ export function computeRenewalTrigger(nextReviewDate: Date, window: RenewalWindo
   if (gatilhoWindow) {
     return {
       gatilhoEfetivo: gatilhoWindow.start,
-      vencimentoEfetivo: vencimentoNatural > gatilhoWindow.end ? vencimentoNatural : gatilhoWindow.end,
+      vencimentoEfetivo:
+        vencimentoNatural > gatilhoWindow.end ? vencimentoNatural : gatilhoWindow.end,
     };
   }
 
   const vencimentoWindow = findContainingWindow(vencimentoNatural, window.start, window.end);
   if (vencimentoWindow) {
     return {
-      gatilhoEfetivo: gatilhoNatural < vencimentoWindow.start ? gatilhoNatural : vencimentoWindow.start,
+      gatilhoEfetivo:
+        gatilhoNatural < vencimentoWindow.start ? gatilhoNatural : vencimentoWindow.start,
       vencimentoEfetivo: vencimentoWindow.end,
     };
   }

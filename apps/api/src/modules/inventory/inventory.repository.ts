@@ -189,14 +189,26 @@ export class InventoryRepository {
       dueSoonReviews,
     ] = await Promise.all([
       this.prisma.softwareInventoryItem.count({ where: { tenantId } }),
-      this.prisma.softwareInventoryItem.groupBy({ by: ["status"], where: { tenantId }, _count: true }),
+      this.prisma.softwareInventoryItem.groupBy({
+        by: ["status"],
+        where: { tenantId },
+        _count: true,
+      }),
       this.prisma.softwareInventoryItem.groupBy({
         by: ["criticality"],
         where: { tenantId },
         _count: true,
       }),
-      this.prisma.softwareInventoryItem.groupBy({ by: ["type"], where: { tenantId }, _count: true }),
-      this.prisma.softwareInventoryItem.groupBy({ by: ["areaId"], where: { tenantId }, _count: true }),
+      this.prisma.softwareInventoryItem.groupBy({
+        by: ["type"],
+        where: { tenantId },
+        _count: true,
+      }),
+      this.prisma.softwareInventoryItem.groupBy({
+        by: ["areaId"],
+        where: { tenantId },
+        _count: true,
+      }),
       this.prisma.softwareInventoryItem.groupBy({
         by: ["hostingProvider"],
         where: { tenantId },
