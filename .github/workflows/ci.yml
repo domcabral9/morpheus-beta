@@ -14,7 +14,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Mesma versão do runtime usado nas imagens de produção
       # (apps/api/Dockerfile e apps/web/Dockerfile: node:22-alpine).
