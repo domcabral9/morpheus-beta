@@ -18,14 +18,14 @@ jobs:
 
       # Mesma versão do runtime usado nas imagens de produção
       # (apps/api/Dockerfile e apps/web/Dockerfile: node:22-alpine).
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
 
       - name: Enable Corepack (pnpm via packageManager do package.json)
         run: corepack enable
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: "pnpm"
