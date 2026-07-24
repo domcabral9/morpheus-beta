@@ -1969,3 +1969,20 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
   - **Como aplicar daqui pra frente**: com o CI agora cobrindo o lint completo (sem `--filter`) em
     todo PR, esse tipo de drift de formatação não deve mais se acumular silenciosamente - cada PR
     já vai flagar sua própria violação na hora, em vez de empilhar centenas ao longo de meses.
+  - **Branch protection no `main`**: com o CI finalmente verde (`validate` passando de verdade, não
+    só o workflow existindo), ativado via API
+    (`PUT /repos/.../branches/main/protection`) - `required_status_checks.contexts: ["validate"]`,
+    `enforce_admins: true` (vale até pro dono do repo, sem bypass silencioso pelo botão de merge),
+    `allow_force_pushes`/`allow_deletions: false`. De propósito **sem**
+    `required_pull_request_reviews` - esse projeto não tem um segundo revisor humano formal, a
+    confirmação de merge já é verbal (ver ritmo padrão no topo deste arquivo); exigir aprovação de
+    PR quebraria esse fluxo sem agregar nada. Antes de ativar, os dois bugs reais acima (zod pin +
+    prettier) precisaram ser corrigidos - ativar a proteção com o check vermelho teria travado
+    imediatamente toda PR aberta, incluindo as que já estavam em andamento.
+  - **Decisão combinada com o usuário sobre correções de vulnerabilidade**: em vez de mesclar PRs de
+    segurança do Dependabot assim que aparecem, tratar numa janela semanal fixa (mesmo ritmo do
+    `morpheus-ops`) - com uma válvula de escape: severidade `critical` com exploit publicamente
+    conhecido é tratada fora da janela, na hora. Não implementado em automação (é uma prática
+    combinada, não uma regra de CI) - registrar os findings de vulnerabilidade no `morpheus-ops`
+    antes de cada janela de correção também foi combinado, mas ainda não tem um processo/script
+    definido (próximo passo, se o usuário pedir).
