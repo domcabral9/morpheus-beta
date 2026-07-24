@@ -1902,6 +1902,48 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     de antes intacto.
   - `pnpm turbo run typecheck` e `lint` (`--filter=./apps/web`) passaram limpos (só warnings
     pré-existentes não relacionados, em `admin/settings/page.tsx` e `assessments/[id]/page.tsx`).
+- **Feat: busca de conteúdo real na "Busca rápida"** (item de backlog aberto desde a PR #47,
+  2026-07-23, retomado 2026-07-24). Até aqui o Cmd/Ctrl+K só indexava itens de navegação
+  (`PRIMARY_NAV_ITEMS`/`ADMIN_NAV_ITEMS`, filtro 100% client-side do próprio cmdk) - passou a também
+  buscar avaliações, itens de inventário e pareceres técnicos de verdade. Escopo confirmado com o
+  usuário via `AskUserQuestion` antes de implementar: casar só pelo nome do software (não
+  fornecedor/área), mais simples e cobre o caso de uso principal.
+  - **Backend**: novo módulo `apps/api/src/modules/search/` (`SearchModule`/`SearchController`
+    `GET /search?q=`/`SearchService`/`SearchRepository`) - autocontido via `PrismaService` global,
+    sem importar `AssessmentsModule`/`InventoryModule`/`TechnicalOpinionModule` (mesmo padrão do
+    `RenewalModule`: evita qualquer risco de circularidade no grafo de imports). `SearchService`
+    reaproveita EXATAMENTE a mesma regra de visibilidade de cada módulo de origem, sem nenhuma
+    permissão nova: `assessments:view-all`/`assessments:view-own` (avaliações),
+    `assessments:view-all`/`assessments:approve` (pareceres, mesma regra de
+    `TechnicalOpinionService.findAllForTenant`), `inventory:view` (inventário). Quem não tem acesso a
+    um tipo de conteúdo recebe lista vazia pra aquele grupo, não erro - a busca degrada
+    graciosamente, não trava a paleta inteira. Limite de 5 resultados por grupo. 6 testes unitários
+    novos (`search.service.spec.ts`) cobrindo cada combinação de permissão + formatação do resultado.
+  - **Frontend**: `command-palette.tsx` ganhou 3 novos `CommandGroup`s ("Avaliações", "Inventário",
+    "Pareceres técnicos"), populados via busca debounced (400ms, a partir de 2 caracteres - mesmo
+    padrão já usado na checagem de nome duplicado em `assessments/new/page.tsx`/`item-form-dialog.tsx`).
+    Cada resultado navega pro lugar certo: avaliação → `/assessments/:id`, item de inventário →
+    `/inventory/:id`, parecer → `/technical-opinions?number=...` (mesmo deep-link que já existia do
+    vínculo inventário→parecer). Itens de navegação continuam filtrando instantaneamente como antes
+    (cmdk client-side), sem nenhuma mudança - os grupos de conteúdo são só aditivos.
+  - **Gotcha de lint**: a regra `react-hooks/set-state-in-effect` (React Compiler) rejeita qualquer
+    `setState` síncrono direto no corpo de um efeito, incluindo o padrão "zera resultado quando os
+    campos ficam vazios" - resolvido de dois jeitos: (1) o reset ao fechar a paleta saiu de um
+    `useEffect` observando `open` e virou parte do próprio `handleOpenChange` (evita o anti-padrão
+    "efeito só pra derivar estado" de vez, sem precisar de eslint-disable); (2) pra sinalizar
+    "buscando" antes da resposta assíncrona chegar, não tem como fugir de um `setState` direto no
+    efeito - usado `// eslint-disable-next-line react-hooks/set-state-in-effect` com justificativa,
+    mesmo padrão já aceito no projeto em `assessments/new/page.tsx`/`item-form-dialog.tsx` pro aviso
+    de duplicidade.
+  - Validado via Playwright ao vivo (`admin@morpheus.demo`, tenant demo, query "contract"): os 3
+    grupos novos apareceram com os dados reais da amostra de demonstração (`Contract Analyzer AI` -
+    avaliação em `PENDING_RENEWAL`, item de inventário `Ativo`, parecer `SECOPS-SW-072026-004`
+    "Aguardando Ajustes"), clique em cada um navegou pro destino certo (`/assessments/:id`,
+    `/inventory/:id`, `/technical-opinions?number=...`). Confirmado também que digitar 1 caractere
+    não dispara nenhuma requisição (`search calls: 0`), e que limpar o campo volta a mostrar só os
+    grupos de navegação, sem resíduo de busca anterior.
+  - `pnpm turbo run typecheck` (api+web) limpo; `pnpm turbo run test --filter=@morpheus/api`: 219/219
+    passando (26 suites); `lint` (api+web) limpo, só warnings pré-existentes não relacionados.
 - **CI (GitHub Actions) + Dependabot** (pedido do usuário, 2026-07-24, no âmbito de montar um ciclo de
   SSDLC/Security by Design pro projeto). Nenhum dos dois existia até aqui - repo sem nenhum workflow
   configurado, sem alertas de vulnerabilidade, sem atualização automática de dependência.

@@ -43,10 +43,14 @@
   },
   "CommandPalette": {
     "title": "Busca rápida",
-    "placeholder": "Digite o nome de uma tela...",
+    "placeholder": "Buscar telas, avaliações, inventário, pareceres...",
     "noResults": "Nenhum resultado encontrado.",
     "groupPrimary": "Navegação",
-    "groupAdmin": "Administração"
+    "groupAdmin": "Administração",
+    "groupAssessments": "Avaliações",
+    "groupInventory": "Inventário",
+    "groupTechnicalOpinions": "Pareceres técnicos",
+    "searching": "Buscando..."
   },
   "Approvals": {
     "title": "Aprovações pendentes",
