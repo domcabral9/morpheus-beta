@@ -1844,3 +1844,37 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     nome acessível e não ambiguou.
   - Sem mudança de código - só `README.md` e os arquivos de screenshot (4 PT-BR atualizados + 6 EN
     novos).
+- **Investigação: barras dos gráficos "sumindo" em 3 screenshots** (usuário reportou, 2026-07-24,
+  apontando `dashboard-administrativo.png`, `dashboard-placar-por-area.png` e
+  `dashboard-placar-por-area-en.png` - as barras do recharts apareciam totalmente ausentes, só os
+  eixos/labels). Investigado a fundo com Playwright direto no app rodando (não só olhando os
+  screenshots existentes) antes de mexer em qualquer código, pra não "consertar" um bug que não
+  existisse:
+  - Confirmado que **não é um bug de aplicação**: inspecionado o DOM ao vivo (`admin@morpheus.demo`,
+    tenant demo) - os `<path>` do recharts (`.recharts-bar-rectangle path`) sempre tinham geometria
+    correta (`width`/`height` != 0), `fill` resolvendo pra cor real via `getComputedStyle` (as cores
+    vêm de `colorForOutcomeKey()` em `dashboard-colors.ts`, que retorna `var(--chart-good)` etc.,
+    variáveis CSS reais e definidas), `opacity: 1`, `visibility: visible`, e passavam em
+    `elementFromPoint()` (ou seja, são o elemento clicável no topo daquele ponto - nada as cobre).
+    Repetido em 4 trials seguidos sem nenhuma falha.
+  - Isolado o culpado: é uma peculiaridade específica do **primeiro `page.screenshot({fullPage:
+    true})` do Chromium headless logo após um `click()` de troca de aba** (Radix `Tabs`) que monta
+    um `<BarChart>` novo - o pipeline de composição às vezes não inclui o frame que pinta os `fill`
+    baseados em `var(--x)` nesse primeiro fullPage capture, mesmo com `wait`s generosos (testado até
+    2500ms) e mesmo forçando leitura de `getBoundingClientRect()`/`getComputedStyle()` antes (que
+    intuitivamente forçaria layout mas não resolveu). Reproduzido de forma 100% determinística nessa
+    sequência exata (login → `/dashboards` → click na aba → `fullPage` screenshot).
+  - **O que resolve, comprovado por teste A/B no mesmo estado de página**: tirar qualquer screenshot
+    de viewport comum (`page.screenshot()`, sem `fullPage`) IMEDIATAMENTE ANTES do `fullPage` real -
+    isso força o Chromium a flushar o pipeline de pintura, e o `fullPage` seguinte (mesmo sem esperar
+    mais nada) sai correto. Não achamos necessidade de investigar mais fundo o motivo exato dentro do
+    Chromium - o ponto prático é que é 100% contornável e não afeta usuário real (usuário nunca tira
+    um "fullPage screenshot" da própria tela; scroll/resize/mouse-move do uso normal já forçam pintura
+    o tempo todo).
+  - Screenshots regeneradas com esse contorno (script Playwright descartável, deletado depois):
+    `dashboard-administrativo.png`, `dashboard-placar-por-area.png` (pt-BR) e
+    `dashboard-placar-por-area-en.png` (en) - as 3 confirmadas visualmente com as barras aparecendo.
+  - **Como aplicar**: se aparecer de novo um screenshot de gráfico recharts "sem barra" capturado via
+    Playwright/Chromium headless, antes de suspeitar do código, tirar um screenshot descartável
+    (viewport, sem `fullPage`) logo antes do real - resolve na maioria dos casos. Sem mudança de
+    código nesta entrada - só os 3 arquivos de screenshot.
