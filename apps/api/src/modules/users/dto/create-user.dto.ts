@@ -11,7 +11,9 @@ export class CreateUserDto {
   @IsEmail()
   email!: string;
 
-  @ApiPropertyOptional({ description: "Papéis a atribuir. Ignorado se replicateRolesFromUserId vier." })
+  @ApiPropertyOptional({
+    description: "Papéis a atribuir. Ignorado se replicateRolesFromUserId vier.",
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

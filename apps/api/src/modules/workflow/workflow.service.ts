@@ -265,7 +265,10 @@ export class WorkflowService {
     const results: { stepExecutionId: string; success: boolean; error?: string }[] = [];
     for (const stepExecutionId of dto.stepExecutionIds) {
       try {
-        await this.decideStep(user, stepExecutionId, { decision: dto.decision, comments: dto.comments });
+        await this.decideStep(user, stepExecutionId, {
+          decision: dto.decision,
+          comments: dto.comments,
+        });
         results.push({ stepExecutionId, success: true });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Falha ao decidir esta etapa.";

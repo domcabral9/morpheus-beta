@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import {
   RolesRepository,
   RoleSummary,
@@ -116,7 +121,11 @@ export class RolesService {
     return this.getDetail(tenantId, id);
   }
 
-  async setPermissions(tenantId: string, id: string, permissionKeys: string[]): Promise<RoleDetail> {
+  async setPermissions(
+    tenantId: string,
+    id: string,
+    permissionKeys: string[],
+  ): Promise<RoleDetail> {
     await this.assertRoleDetailInTenant(tenantId, id);
     const permissionIds = await this.resolvePermissionIds([...new Set(permissionKeys)]);
     await this.rolesRepository.setPermissions(id, permissionIds);
