@@ -1824,3 +1824,23 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     de probabilidade/impacto e classificações (Rejeitado/Aguardando Ajustes/Homologado) configuradas
     de sessões anteriores, sem precisar criar nada novo pro print.
   - Sem mudança de código nesta entrada - só `README.md` e os 4 arquivos de screenshot.
+- **README: screenshots em inglês pras telas restantes** (pedido do usuário, 2026-07-24, logo depois
+  da entrada acima). Fecha o item de backlog "seção em inglês reusava prints em PT-BR" pras 6 telas
+  que ainda faltavam: "Minha visão"/"My view", "Administrativo"/"Admin", "Placar por
+  área"/"Area leaderboard", login com seletor de organização, busca rápida (Cmd/Ctrl+K) e
+  "Administração - papéis"/"Roles". Capturados via Playwright, logado como `admin@morpheus.demo`, um
+  passe em `pt-BR` e outro em `en`.
+  - **De quebra, também atualizados os 4 prints PT-BR** que tinham ficado desatualizados pela
+    limpeza de amostras da entrada anterior (`dashboard-minha-visao.png`, `-administrativo.png`,
+    `-placar-por-area.png`, `busca-rapida.png` mostravam avaliações/itens de teste já deletados,
+    ex. `tesste`, `Sistema Auditoria Test`) - agora refletem o estado real e limpo do tenant demo.
+  - `busca-rapida{,-en}.png` também acabou mostrando, de brinde, o filtro de status novo da Fase 6 da
+    renovação anual (`Todos os status`/`All statuses`) e o badge "Pendente renovação"/"Pending
+    renewal" na listagem - sem ter sido o objetivo da captura, mas reforça que os prints refletem o
+    estado real e atual do produto.
+  - Gotcha de seletor: `page.click('text=Busca rápida')` bateu em 2 elementos (o botão de trigger no
+    header E o `<h2 data-slot="dialog-title">` do próprio diálogo, que aparentemente fica montado no
+    DOM mesmo fechado) - trocado por `page.getByRole("button", { name: ... })`, que resolve pelo
+    nome acessível e não ambiguou.
+  - Sem mudança de código - só `README.md` e os arquivos de screenshot (4 PT-BR atualizados + 6 EN
+    novos).
