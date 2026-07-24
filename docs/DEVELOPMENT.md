@@ -1878,3 +1878,27 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     Playwright/Chromium headless, antes de suspeitar do código, tirar um screenshot descartável
     (viewport, sem `fullPage`) logo antes do real - resolve na maioria dos casos. Sem mudança de
     código nesta entrada - só os 3 arquivos de screenshot.
+- **Fix: "Administração" inacessível com a sidebar colapsada** (item de backlog aberto desde
+  2026-07-23, retomado 2026-07-24). Causa raiz: `SidebarMenuSub`/`SidebarMenuSubButton`
+  (`components/ui/sidebar.tsx`) têm `group-data-[collapsible=icon]:hidden` - com a sidebar em modo
+  ícone, o `Collapsible` de "Administração" ainda abria/fechava normalmente, mas o conteúdo
+  (`CollapsibleContent > SidebarMenuSub`) ficava sempre escondido via CSS, então clicar no ícone não
+  levava a lugar nenhum. Confirmado com Playwright antes de mexer: DOM tinha o item, só que
+  `display: none` no submenu.
+  - **Solução escolhida** (das duas opções levantadas na sessão anterior): em vez de auto-expandir a
+    sidebar inteira ao clicar, "Administração" agora vira um `DropdownMenu` (flyout) quando a sidebar
+    está colapsada e não é mobile - mesmo padrão já usado no menu do avatar no rodapé deste mesmo
+    arquivo (`DropdownMenuTrigger asChild` em cima de um `SidebarMenuButton` sem a prop `tooltip`,
+    pra não colidir com o wrapping interno de `Tooltip` que `SidebarMenuButton` já faz quando
+    `tooltip` é passado). Com a sidebar expandida (ou em mobile, onde `collapsible="icon"` não se
+    aplica - vira overlay), o comportamento de `Collapsible` inline continua exatamente igual a antes.
+  - Novo estado: `useSidebar()` (já existente em `components/ui/sidebar.tsx`, não precisou de nada
+    novo) expõe `state`/`isMobile`; `adminAsFlyout = !isMobile && state === "collapsed"` decide qual
+    dos dois blocos renderizar (`AppSidebar` em `app-sidebar.tsx`).
+  - Validado via Playwright ao vivo (`admin@morpheus.demo`): colapsou a sidebar pelo trigger,
+    confirmou visualmente o flyout com os 7 sub-itens (`Questionário`, `Matriz de risco`, `Workflow`,
+    `Auditoria`, `Usuários`, `Papéis`, `Configurações`), clicou em "Questionário" e confirmou
+    navegação real pra `/admin/questionnaire`. Sidebar expandida testada em seguida, comportamento
+    de antes intacto.
+  - `pnpm turbo run typecheck` e `lint` (`--filter=./apps/web`) passaram limpos (só warnings
+    pré-existentes não relacionados, em `admin/settings/page.tsx` e `assessments/[id]/page.tsx`).
