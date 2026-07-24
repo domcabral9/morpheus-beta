@@ -1786,3 +1786,41 @@ permissões seedadas desde a Etapa 1 que nunca tinham sido usadas por nenhum end
     teste já existente de `dashboards.service.spec.ts`, não um teste novo - contagem total não muda).
 
 Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão completas.
+- **Limpeza de dados de amostra + samples de API** (item de backlog, 2026-07-24). Removidos 4
+  avaliações e 6 itens de inventário de teste/placeholder (`E2E Test Software ...`, `Smoke Test
+  Item`, `Sistema Inventario/Auditoria/Parecer PDF Test`, `tesste`) via `DELETE` direto no Postgres
+  numa transação - o schema já cobre a cascata certa (`Assessment` → versões/respostas/instância de
+  workflow+etapas/pareceres via `onDelete: Cascade`; `SoftwareInventoryItem.assessmentId` usa
+  `onDelete: SetNull`, então itens de inventário sobrevivem independentes da avaliação de origem).
+  A pedido do usuário, também enriquecido com 2 amostras reais de `API_INTEGRATION`: adicionados
+  links de documentação (Swagger + Jira) no item `Internal Billing API` já existente, e criado um
+  item novo, `Freight Tracking API` (LogiTrack Systems, área Operações, Swagger + Postman), via
+  `POST /inventory` de verdade (não SQL direto, pra passar pela validação normal). **Gotcha**: texto
+  acentuado em PT-BR (`"Logística"`) enviado via `curl -d` neste ambiente Windows/Git Bash corrompeu
+  a codificação UTF-8 silenciosamente (armazenou `Log�stica`, mas a API respondeu 200/201 normal) -
+  corrigido via `UPDATE` direto no Postgres removendo o acento. Fica registrado como cuidado pra
+  próxima vez que precisar inserir texto acentuado via curl neste setup.
+- **README: seção de metodologia da matriz de risco (PT + EN)** (pedido do usuário, 2026-07-24,
+  explicitamente depois da renovação anual e da limpeza de amostras acima, pra ter dados
+  realistas nos prints). Nova seção `## Matriz de risco (metodologia)` / `## Risk matrix
+  (methodology)`, posicionada entre "O que o Morpheus faz"/"What Morpheus does" e "Controles de
+  segurança"/"Implemented security controls" - explica a abordagem probabilidade × impacto,
+  menciona alinhamento com NIST SP 800-30 (*Guide for Conducting Risk Assessments*) como referência
+  de mercado, e destaca que nada é fixo em código (faixas, classificações, cor, texto de
+  recomendação, score mínimo de aprovação e a matriz inteira são versionáveis por tenant, via
+  `RiskMatrixService`/`RiskEngineService` já existentes desde a Etapa 5 - nenhuma mudança de código,
+  só documentação).
+  - Screenshots novos: `risk-matrix-config.png`/`-en.png` (tela `/admin/risk-matrix/[id]`, grade de
+    decisão/heatmap completa) pareados com `dashboard-executivo.png`/`-en.png` (dashboard executivo,
+    gráfico de postura de conformidade) - capturados via Playwright (já uma devDependency real de
+    `apps/web` desde a Fase 4 da renovação anual), logado como `admin@morpheus.demo`, um passe em
+    `pt-BR` e outro em `en` (URLs com prefixo de locale, `/pt-BR/...` e `/en/...`).
+  - De quebra, resolvido o item de backlog "screenshots do README em inglês reusavam print em
+    PT-BR" **só pra tela de dashboard executivo** (não as outras telas do README) - a tabela de
+    "Screenshots" (seção em inglês) passou a referenciar `dashboard-executivo-en.png` em vez do
+    arquivo PT-BR que reusava antes. As demais telas do README continuam com esse gap, registrado
+    à parte no backlog.
+  - Config usada como referência: "Matriz Padrão" (tenant demo, ativa, versão 1) - já tinha faixas
+    de probabilidade/impacto e classificações (Rejeitado/Aguardando Ajustes/Homologado) configuradas
+    de sessões anteriores, sem precisar criar nada novo pro print.
+  - Sem mudança de código nesta entrada - só `README.md` e os 4 arquivos de screenshot.
