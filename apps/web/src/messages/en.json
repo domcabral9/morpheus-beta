@@ -43,10 +43,14 @@
   },
   "CommandPalette": {
     "title": "Quick search",
-    "placeholder": "Type a screen name...",
+    "placeholder": "Search screens, assessments, inventory, opinions...",
     "noResults": "No results found.",
     "groupPrimary": "Navigation",
-    "groupAdmin": "Administration"
+    "groupAdmin": "Administration",
+    "groupAssessments": "Assessments",
+    "groupInventory": "Inventory",
+    "groupTechnicalOpinions": "Technical opinions",
+    "searching": "Searching..."
   },
   "Approvals": {
     "title": "Pending approvals",
