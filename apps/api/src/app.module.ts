@@ -35,6 +35,7 @@ import { NotificationsModule } from "./modules/notifications/notifications.modul
 import { InventoryModule } from "./modules/inventory/inventory.module";
 import { AttachmentsModule } from "./modules/attachments/attachments.module";
 import { RenewalModule } from "./modules/renewal/renewal.module";
+import { SearchModule } from "./modules/search/search.module";
 
 const pinoHttpOptions: PinoHttpOptions = {
   genReqId: (req) => req.headers[CORRELATION_ID_HEADER] as string,
@@ -96,6 +97,7 @@ const pinoHttpOptions: PinoHttpOptions = {
     InventoryModule,
     AttachmentsModule,
     RenewalModule,
+    SearchModule,
   ],
   providers: [
     // Roda antes de tudo (ordem de registro = ordem de execução): protege
