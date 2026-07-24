@@ -8,6 +8,7 @@ import { QuestionnaireService } from "../questionnaire/questionnaire.service";
 import { RiskEvaluationService } from "../risk-engine/risk-evaluation.service";
 import { WorkflowService } from "../workflow/workflow.service";
 import { AuditLogService } from "../audit/audit-log.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
@@ -73,6 +74,7 @@ describe("AssessmentsService", () => {
   let riskEvaluationService: { evaluate: jest.Mock };
   let workflowService: { startWorkflow: jest.Mock };
   let auditLogService: { record: jest.Mock };
+  let notificationsService: { notify: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -90,12 +92,13 @@ describe("AssessmentsService", () => {
     };
     areasService = { findAllActive: jest.fn().mockResolvedValue([{ id: "area-1" }]) };
     usersService = {
-      findById: jest.fn().mockResolvedValue({ id: "user-requester", tenantId: "tenant-1" }),
+      findById: jest.fn().mockResolvedValue({ id: "user-requester", tenantId: "tenant-1", isActive: true }),
     };
     questionnaireService = { getCategories: jest.fn().mockResolvedValue([]) };
     riskEvaluationService = { evaluate: jest.fn().mockResolvedValue({ id: "risk-result-1" }) };
     workflowService = { startWorkflow: jest.fn().mockResolvedValue(undefined) };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
+    notificationsService = { notify: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -107,6 +110,7 @@ describe("AssessmentsService", () => {
         { provide: RiskEvaluationService, useValue: riskEvaluationService },
         { provide: WorkflowService, useValue: workflowService },
         { provide: AuditLogService, useValue: auditLogService },
+        { provide: NotificationsService, useValue: notificationsService },
       ],
     }).compile();
 
@@ -176,6 +180,68 @@ describe("AssessmentsService", () => {
 
       expect(repo.findBlockedAreaIds).toHaveBeenCalledWith("tenant-1");
       expect(result).toEqual(["area-2"]);
+    });
+  });
+
+  describe("reassignRenewalRequester", () => {
+    it("rejeita quando a avaliação não está em PENDING_RENEWAL", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ status: "APPROVED" } as never));
+
+      await expect(
+        service.reassignRenewalRequester(makeUser(), "assessment-1", { newRequesterId: "user-2" }),
+      ).rejects.toThrow(BadRequestException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it("rejeita novo solicitante de outro tenant", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ status: "PENDING_RENEWAL" } as never));
+      usersService.findById.mockResolvedValue({ id: "user-2", tenantId: "outro-tenant", isActive: true });
+
+      await expect(
+        service.reassignRenewalRequester(makeUser(), "assessment-1", { newRequesterId: "user-2" }),
+      ).rejects.toThrow(BadRequestException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it("rejeita novo solicitante inativo", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ status: "PENDING_RENEWAL" } as never));
+      usersService.findById.mockResolvedValue({ id: "user-2", tenantId: "tenant-1", isActive: false });
+
+      await expect(
+        service.reassignRenewalRequester(makeUser(), "assessment-1", { newRequesterId: "user-2" }),
+      ).rejects.toThrow(BadRequestException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it("reatribui com sucesso: atualiza requesterId, audita e notifica o novo solicitante", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ status: "PENDING_RENEWAL" } as never));
+      usersService.findById.mockResolvedValue({ id: "user-2", tenantId: "tenant-1", isActive: true });
+      repo.update.mockResolvedValue(
+        makeAssessment({ status: "PENDING_RENEWAL", requesterId: "user-2" } as never),
+      );
+
+      const result = await service.reassignRenewalRequester(makeUser(), "assessment-1", {
+        newRequesterId: "user-2",
+        reason: "Solicitante original saiu da empresa",
+      });
+
+      expect(repo.update).toHaveBeenCalledWith("assessment-1", { requesterId: "user-2" });
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId: "tenant-1",
+          action: "UPDATE",
+          entityType: "Assessment",
+          entityId: "assessment-1",
+          metadata: expect.objectContaining({
+            previousRequesterId: "user-requester",
+            newRequesterId: "user-2",
+          }),
+        }),
+      );
+      expect(notificationsService.notify).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: "tenant-1", userId: "user-2", type: "RENEWAL_PENDING" }),
+      );
+      expect(result.requesterId).toBe("user-2");
     });
   });
 

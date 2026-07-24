@@ -7,23 +7,28 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useApi } from "@/lib/use-api";
+import { usePermission } from "@/lib/use-permission";
 import { ApiError } from "@/lib/api-client";
 import { Link } from "@/i18n/navigation";
 import { AssessmentStatusBadge } from "@/components/assessment-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type {
   AssessmentAnswer,
   AssessmentDetail,
   QuestionCategory,
 } from "@/lib/assessment-types";
+import type { UserOption } from "@/lib/user-picker-types";
 import { WorkflowHistorySection } from "../_components/workflow-history-section";
+import { ReassignRequesterCard } from "../_components/reassign-requester-card";
 
 type LocalAnswer = { textValue?: string; scaleValue?: number; selectedOptionIds?: string[] };
 
-const EDITABLE_STATUSES = new Set(["DRAFT", "PENDING_ADJUSTMENT"]);
+const EDITABLE_STATUSES = new Set(["DRAFT", "PENDING_ADJUSTMENT", "PENDING_RENEWAL"]);
 
 export default function AssessmentDetailPage() {
   const t = useTranslations("AssessmentDetail");
@@ -31,10 +36,12 @@ export default function AssessmentDetailPage() {
   const params = useParams<{ id: string }>();
   const user = useRequireAuth();
   const api = useApi();
+  const canReassignRequester = usePermission("assessments:reopen");
 
   const [assessment, setAssessment] = React.useState<AssessmentDetail | null>(null);
   const [categories, setCategories] = React.useState<QuestionCategory[] | null>(null);
   const [answers, setAnswers] = React.useState<Record<string, LocalAnswer>>({});
+  const [tenantUsers, setTenantUsers] = React.useState<UserOption[]>([]);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
   const [actionMessage, setActionMessage] = React.useState<string | null>(null);
@@ -68,6 +75,11 @@ export default function AssessmentDetailPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load().catch((err) => setLoadError(err instanceof ApiError ? err.message : t("loadError")));
   }, [user, load, t]);
+
+  React.useEffect(() => {
+    if (!user || !canReassignRequester) return;
+    api.get<UserOption[]>("/users").then(setTenantUsers).catch(() => {});
+  }, [user, canReassignRequester, api]);
 
   if (!user) return null;
 
@@ -189,6 +201,15 @@ export default function AssessmentDetailPage() {
               <p className="rounded-md border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
                 {t("readOnlyNotice", { status: assessment.status })}
               </p>
+            )}
+
+            {canReassignRequester && assessment.status === "PENDING_RENEWAL" && (
+              <ReassignRequesterCard
+                assessmentId={assessment.id}
+                currentRequester={assessment.requester}
+                users={tenantUsers}
+                onReassigned={setAssessment}
+              />
             )}
 
             <WorkflowHistorySection assessmentId={assessment.id} />
