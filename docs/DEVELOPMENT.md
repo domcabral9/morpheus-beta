@@ -1933,3 +1933,24 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     `tenants.repository.ts` de sempre) - e como o runner do GitHub Actions é Linux (sem conversão
     CRLF do checkout local Windows), o CI novo não deve ver esse problema. Não corrigido (não pedido,
     e re-normalizar a árvore inteira só pra isso seria ruído desnecessário nesta entrega).
+  - **Bug real pego pela primeira execução do CI**: `@morpheus/web#typecheck` falhou no runner do
+    Actions - `zod` (`^4.4.3`) incompatível com `@hookform/resolvers@5.4.0` (última versão publicada;
+    não existe release mais nova que resolva isso) em 8 arquivos (`admin/settings`,
+    `admin/workflow/*`, `approvals/*`, `inventory/item-form-dialog`). Erro:
+    `Types of property '_zod.version.minor' are incompatible... Type '4' is not assignable to type
+    '0'` - o resolver do hookform foi tipado contra `zod@4.0.x` e nunca foi atualizado pra `zod`
+    4.1+, que muda um tipo interno de "versão" usado nesse guard de compatibilidade. **Não é falha
+    de nenhuma mudança recente** - reproduzido de forma isolada num `git worktree` separado com
+    `pnpm install --frozen-lockfile` do zero (sem nada do `node_modules` de sessões anteriores),
+    provando que já estava quebrado no `main` antes desta PR, só nunca detectado porque nunca existiu
+    uma instalação 100% fresca validada (CI não existia, e o `node_modules` local de longa duração
+    "mascarava" o problema de algum jeito).
+  - **Correção testada e aplicada**: fixado `"zod": "~4.0.5"` em `apps/web/package.json` (era
+    `"^4.4.3"`) - `4.0.5` é a última versão de patch da 4.0.x, testada isoladamente no mesmo worktree
+    até o typecheck passar 100% limpo. `~` (não `^`) de propósito: permite só patches dentro da
+    4.0.x via Dependabot, bloqueando um novo salto pra 4.1+ até o `@hookform/resolvers` publicar uma
+    versão compatível - senão o mesmo problema silenciosamente voltaria no próximo bump automático.
+    Typecheck limpo em todo o app é evidência de que nenhum código usa API do zod introduzida depois
+    da 4.0.5 (senão apareceria como erro "propriedade não existe" em outro lugar). Revalidado
+    localmente: `pnpm turbo run typecheck lint test build` - só o ruído de CRLF já conhecido, 213
+    testes passando, build ok.
