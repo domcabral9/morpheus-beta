@@ -509,7 +509,12 @@ describe("WorkflowService", () => {
             id: "exec-1",
             assessmentWorkflowInstance: {
               workflowDefinitionId: "def-1",
-              assessment: { id: "a1", tenantId: "outro-tenant", requesterId: "r1", status: "IN_REVIEW" },
+              assessment: {
+                id: "a1",
+                tenantId: "outro-tenant",
+                requesterId: "r1",
+                status: "IN_REVIEW",
+              },
             },
           }),
         )

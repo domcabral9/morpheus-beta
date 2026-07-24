@@ -25,7 +25,10 @@ export class RenewalRepository {
     });
   }
 
-  startRenewalCycle(assessmentId: string, data: { renewalDueAt: Date; renewalCycleStartedAt: Date }) {
+  startRenewalCycle(
+    assessmentId: string,
+    data: { renewalDueAt: Date; renewalCycleStartedAt: Date },
+  ) {
     return this.prisma.assessment.update({
       where: { id: assessmentId },
       data: {

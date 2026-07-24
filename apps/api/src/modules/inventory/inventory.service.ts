@@ -121,7 +121,9 @@ export class InventoryService {
     );
     if (!match) return { duplicate: null };
     const { assessmentId, ...rest } = match;
-    return { duplicate: { ...rest, origin: assessmentId ? ("HOMOLOGATED" as const) : ("MANUAL" as const) } };
+    return {
+      duplicate: { ...rest, origin: assessmentId ? ("HOMOLOGATED" as const) : ("MANUAL" as const) },
+    };
   }
 
   async getById(user: AuthenticatedUser, id: string): Promise<InventoryItemWithOpinion> {
