@@ -108,8 +108,10 @@ README ou de documentação escrita à mão.
 
 ## Documentação técnica completa
 
-- [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md) - histórico de decisões etapa a etapa, mantido de
-  propósito como um diário de bordo técnico (não só uma lista de features prontas): trade-offs
+- [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md) - referência enxuta: stack, estrutura, como rodar,
+  CI/proteção do `main`.
+- [`docs/CHANGELOG.md`](./docs/CHANGELOG.md) - histórico de decisões etapa a etapa/PR a PR, mantido
+  de propósito como um diário de bordo técnico (não só uma lista de features prontas): trade-offs
   considerados, bugs reais encontrados e como foram corrigidos.
 - [`docs/architecture.md`](./docs/architecture.md) - diagramas de modelo de dados e topologia de
   deploy.
@@ -230,9 +232,11 @@ depending on this README or hand-written documentation.
 
 ## Full technical documentation
 
-- [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md) - stage-by-stage decision log, deliberately kept
-  as a technical logbook (not just a feature list): trade-offs considered, real bugs found and how
-  they were fixed.
+- [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md) - lean reference: stack, structure, how to run,
+  CI/`main` branch protection.
+- [`docs/CHANGELOG.md`](./docs/CHANGELOG.md) - stage-by-stage/PR-by-PR decision log, deliberately
+  kept as a technical logbook (not just a feature list): trade-offs considered, real bugs found and
+  how they were fixed.
 - [`docs/architecture.md`](./docs/architecture.md) - data model and deployment topology diagrams.
 - [`infra/terraform/README.md`](./infra/terraform/README.md) - production deployment strategy.
 
