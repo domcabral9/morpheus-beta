@@ -9,7 +9,7 @@ import { useApi } from "@/lib/use-api";
 import { Link } from "@/i18n/navigation";
 import { AssessmentStatusBadge } from "@/components/assessment-status-badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -60,6 +60,25 @@ export default function DashboardPage() {
         <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
           {dashboardT("welcome", { name: user.name })}
         </h1>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium text-muted-foreground">
+          {dashboardT("quickActionsTitle")}
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Link href="/assessments/new">
+            <Card className="h-full transition-colors hover:border-foreground/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Plus className="size-4" />
+                  {dashboardT("newAssessmentShortcut")}
+                </CardTitle>
+                <CardDescription>{dashboardT("newAssessmentShortcutDescription")}</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+        </div>
       </div>
 
       <Card>
