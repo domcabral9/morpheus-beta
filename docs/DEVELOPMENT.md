@@ -146,6 +146,7 @@ humano fixo neste projeto; a confirmação de merge é verbal).
 Dependabot está ativo (alerts + correções de segurança automáticas + atualizações de versão
 semanais via `.github/dependabot.yml`). Prática combinada: PRs de segurança do Dependabot não são
 mesclados assim que aparecem, entram numa janela de revisão semanal - exceto severidade `critical`
-com exploit publicamente conhecido, tratada imediatamente. Detalhe completo de como isso foi
-montado (incluindo dois bugs reais que a primeira execução do CI pegou) no
+com exploit publicamente conhecido, tratada imediatamente. Processo completo (camadas de risco,
+onde fica o histórico de cada janela) em [`docs/security.md`](./security.md); detalhe de como isso
+foi montado (incluindo dois bugs reais que a primeira execução do CI pegou) no
 [`CHANGELOG.md`](./CHANGELOG.md).
