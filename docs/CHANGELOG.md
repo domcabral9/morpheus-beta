@@ -1939,3 +1939,23 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     tentou importar e o processo inteiro morreu com `MODULE_NOT_FOUND`), confirmado via `GET
     /tenants/public` retornando conexão recusada; resolvido reiniciando `pnpm dev` - sem relação com
     o código desta mudança.
+- **Rename: `/dashboard` vira "Home"** (feedback de uso real, 2026-07-26). Usuário notou a
+  confusão de nomes entre `/dashboard` (rótulo de menu "Avaliações", mas é na prática a tela que
+  abre logo após o login) e `/dashboards` (a tela de estatísticas de verdade, no plural). Escopo
+  fechado via `AskUserQuestion`: a tela vira "Home" só no nome/rótulo (menu e sidebar) - a URL
+  continua `/dashboard` (evita quebrar links/favoritos) e a lista de avaliações continua sendo o
+  conteúdo principal da tela (não tem outro lugar dedicado hoje), com uma seção nova de "Atalhos
+  rápidos" acima da tabela (por enquanto só o card "Nova avaliação" - espaço já pensado pra crescer
+  se entrarem os outros itens discutidos: resumo, notificações, notícias, saúde do ambiente restrita
+  a super-admin - nenhum desses foi implementado agora, ficou registrado como direção futura).
+  - `nav-items.ts`: item `/dashboard` trocou `labelKey: "assessments"` → `"home"` e o ícone
+    `ClipboardList` → `Home` (lucide-react) - chave "assessments" renomeada pra "home" no namespace
+    `Nav` de `pt-BR.json`/`en.json` (não sobrou órfã).
+  - `dashboard/page.tsx`: heading "Olá, {name}" mantido como está (já cumpre o papel de boas-vindas
+    pessoal) - adicionado um grid de atalhos (mesmo padrão visual da grade de cards de
+    `/admin/page.tsx`) entre o heading e a tabela de avaliações, hoje com um único card ("Nova
+    avaliação" → `/assessments/new`).
+  - **Nota de escopo não pedida agora**: o screenshot `docs/screenshots/busca-rapida{,-en}.png` no
+    README ainda mostra a sidebar com o rótulo antigo "Avaliações" - não regenerado nesta mudança
+    (só os screenshots de login foram pedidos explicitamente); sinalizar se o usuário quiser
+    atualizar também.
