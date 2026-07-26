@@ -1959,3 +1959,25 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     README ainda mostra a sidebar com o rótulo antigo "Avaliações" - não regenerado nesta mudança
     (só os screenshots de login foram pedidos explicitamente); sinalizar se o usuário quiser
     atualizar também.
+- **Nova doc: `docs/security.md` (2026-07-26)** - depois da primeira janela semanal de revisão do
+  Dependabot render de verdade (27 alertas, 13 deles todos advisories do Next.js resolvidos por um
+  único bump de patch), o usuário pediu pra formalizar o processo por escrito - mas com uma divisão
+  de responsabilidade clara entre os dois repos: o *processo* (o "como pensamos" - fluxograma,
+  camadas de risco, a janela semanal) fica documentado aqui, em `morpheus-beta`, porque é conteúdo
+  de portfólio; os *dados* de cada janela (o que foi encontrado, mesclado, adiado) ficam no
+  `morpheus-ops`, pra não colocar um arquivo de estado que muda toda semana dentro da narrativa de
+  desenvolvimento deste repo. Mesma lógica de separação já usada para o inventário de componentes.
+  - `docs/security.md`: processo completo com um fluxograma mermaid (`Dependabot detecta` →
+    `crítico+exploit? sim → imediato / não → janela semanal` → `classificação em 4 camadas de
+    risco` → `mescla ou adia` → `registra em morpheus-ops`), linkado a partir de
+    `docs/DEVELOPMENT.md` (seção "CI e proteção do `main`") e da lista de documentação do
+    `README.md`.
+  - **"Perfumaria" pedida explicitamente no `README.md`**: o usuário notou que quase ninguém que
+    visita o projeto vai cavar até `docs/`, então pediu uma versão visível direto no README - um
+    fluxograma mermaid compacto (5 nós, mais simples que o de `docs/security.md`) mais um link, logo
+    depois da lista de "Controles de segurança implementados"/"Implemented security controls" (PT e
+    EN), sem precisar clicar em nada pra ver que o processo existe.
+  - `morpheus-ops/reports/vulnerability-log.md` (novo, análogo ao `component-inventory.md` mas
+    **mantido à mão, não gerado por script** - envolve julgamento humano sobre risco, diferente de
+    um inventário objetivo de versões) ganhou sua primeira entrada real, com os dados concretos da
+    janela de 2026-07-26 (ver detalhe completo dessa janela na entrada anterior deste changelog).

@@ -52,6 +52,20 @@ anterior).
   cross-organização restrito a super-admins (permissão dedicada + trilha de auditoria própria),
   sem afetar o isolamento padrão de nenhum outro usuário.
 
+**Isso também vale para o próprio repositório**, não só para o produto: CI obrigatório, branch
+protection e uma janela semanal combinada de revisão de vulnerabilidades (Dependabot).
+
+```mermaid
+flowchart LR
+    A[Dependabot\ndetecta CVE] --> B{Crítico + exploit\npúblico conhecido?}
+    B -->|Sim| C[Corrigido\nimediatamente]
+    B -->|Não| D[Janela semanal\nde revisão]
+    D --> E[Classificado por risco\ne registrado]
+```
+
+Processo completo (camadas de risco, histórico de cada janela) em
+[`docs/security.md`](./docs/security.md).
+
 ## Telas
 
 | Minha visão | Administrativo |
@@ -115,6 +129,8 @@ README ou de documentação escrita à mão.
   considerados, bugs reais encontrados e como foram corrigidos.
 - [`docs/architecture.md`](./docs/architecture.md) - diagramas de modelo de dados e topologia de
   deploy.
+- [`docs/security.md`](./docs/security.md) - SSDLC: CI, branch protection, Dependabot e o processo
+  de revisão semanal de vulnerabilidades.
 - [`infra/terraform/README.md`](./infra/terraform/README.md) - estratégia de deploy em produção.
 
 ## Contato
@@ -174,6 +190,20 @@ previous version).
 - **Row-level multi-tenancy**, `tenantId` isolation on every query, single database - with
   cross-organization access restricted to super-admins (dedicated permission + its own audit
   trail), without affecting the default isolation of any other user.
+
+**This also applies to the repository itself**, not just the product: mandatory CI, branch
+protection, and an agreed weekly vulnerability-review window (Dependabot).
+
+```mermaid
+flowchart LR
+    A[Dependabot\ndetects a CVE] --> B{Critical + publicly\nknown exploit?}
+    B -->|Yes| C[Fixed\nimmediately]
+    B -->|No| D[Weekly review\nwindow]
+    D --> E[Classified by risk\nand logged]
+```
+
+Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/security.md)
+(Portuguese).
 
 ## Screenshots
 
@@ -238,6 +268,8 @@ depending on this README or hand-written documentation.
   kept as a technical logbook (not just a feature list): trade-offs considered, real bugs found and
   how they were fixed.
 - [`docs/architecture.md`](./docs/architecture.md) - data model and deployment topology diagrams.
+- [`docs/security.md`](./docs/security.md) - SSDLC: CI, branch protection, Dependabot, and the
+  weekly vulnerability-review process (Portuguese).
 - [`infra/terraform/README.md`](./infra/terraform/README.md) - production deployment strategy.
 
 ## Contact
