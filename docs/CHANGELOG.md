@@ -1932,4 +1932,10 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     tokens shadcn padrão (`bg-card`, `text-muted-foreground`, `text-destructive`, `border-border`,
     inputs/`Select` sem override de cor) e ganhou um `<ThemeToggle>` ao lado do `<LocaleSwitcher>` no
     header, mesmo padrão do `AppShell`. Validado com Playwright (`chromium`, screenshot claro e
-    escuro) - tema muda em tempo real, cores batem com o resto do app.
+    escuro) - tema muda em tempo real, cores batem com o resto do app. Screenshots do portfólio
+    (`docs/screenshots/login-organizacao{,-en}.png`) regeneradas para refletir o novo visual - nessa
+    regeneração a API caiu no meio do processo (mesma race condition de `nest start --watch` já
+    documentada: recompilação incremental apagou `dist/app.module.js` momentaneamente, `main.js`
+    tentou importar e o processo inteiro morreu com `MODULE_NOT_FOUND`), confirmado via `GET
+    /tenants/public` retornando conexão recusada; resolvido reiniciando `pnpm dev` - sem relação com
+    o código desta mudança.
