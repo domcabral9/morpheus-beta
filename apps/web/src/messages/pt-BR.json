@@ -18,7 +18,8 @@
     "ssoDivider": "ou",
     "ssoButton": "Entrar com SSO corporativo",
     "genericError": "Não foi possível entrar. Verifique os dados e tente novamente.",
-    "localeSwitcherLabel": "Idioma"
+    "localeSwitcherLabel": "Idioma",
+    "themeToggleLabel": "Alternar tema"
   },
   "Dashboard": {
     "welcome": "Olá, {name}"
