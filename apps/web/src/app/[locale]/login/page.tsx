@@ -8,6 +8,7 @@ import { useAuth, ApiError } from "@/components/auth-provider";
 import { useApi } from "@/lib/use-api";
 import { useRouter } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { SecurityHeroBackground } from "@/components/security-hero-background";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +16,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { TenantPublicSummary } from "@/lib/auth-types";
-
-const SELECT_DARK_CLASSNAME =
-  "border-white/15 bg-black/40 text-white focus-visible:ring-[var(--hero-accent)]/50 data-[placeholder]:text-zinc-500";
 
 export default function LoginPage() {
   const t = useTranslations("LoginPage");
@@ -69,30 +67,33 @@ export default function LoginPage() {
       <main className="flex flex-1 flex-col">
         <header className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="size-5 text-[var(--hero-accent)]" />
+            <ShieldCheck className="size-5 text-primary" />
             <span className="text-sm font-bold tracking-wide">
-              MORPHE<span className="text-[var(--hero-accent)]">US</span>
+              MORPHE<span className="text-primary">US</span>
             </span>
           </div>
-          <LocaleSwitcher label={t("localeSwitcherLabel")} />
+          <div className="flex items-center gap-2">
+            <LocaleSwitcher label={t("localeSwitcherLabel")} />
+            <ThemeToggle label={t("themeToggleLabel")} />
+          </div>
         </header>
 
         <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-12 sm:px-6">
-          <p className="text-center text-xs font-semibold tracking-[0.2em] text-zinc-500 uppercase">
+          <p className="text-center text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
             {t("tagline")}
           </p>
 
-          <Card className="w-full max-w-sm gap-7 border-white/10 bg-zinc-950/80 py-7 shadow-[0_0_60px_-15px_var(--hero-accent)] backdrop-blur-sm">
+          <Card className="w-full max-w-sm gap-7 py-7 shadow-lg backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-3xl tracking-tight">{t("title")}</CardTitle>
-              <CardDescription className="text-zinc-400">{t("subtitle")}</CardDescription>
+              <CardDescription>{t("subtitle")}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="tenantSlug">{t("tenantSlugLabel")}</Label>
                   <Select value={tenantSlug} onValueChange={setTenantSlug} disabled={!tenants}>
-                    <SelectTrigger id="tenantSlug" className={SELECT_DARK_CLASSNAME}>
+                    <SelectTrigger id="tenantSlug">
                       <SelectValue placeholder={t("tenantSelectPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -103,7 +104,7 @@ export default function LoginPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-zinc-500">{t("tenantSlugHint")}</p>
+                  <p className="text-xs text-muted-foreground">{t("tenantSlugHint")}</p>
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -116,7 +117,6 @@ export default function LoginPage() {
                     placeholder={t("emailPlaceholder")}
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    className="border-white/15 bg-black/40 focus-visible:ring-[var(--hero-accent)]/50"
                     required
                   />
                 </div>
@@ -130,35 +130,30 @@ export default function LoginPage() {
                     autoComplete="current-password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    className="border-white/15 bg-black/40 focus-visible:ring-[var(--hero-accent)]/50"
                     required
                   />
                 </div>
 
                 {error && (
-                  <p role="alert" className="text-sm text-red-400">
+                  <p role="alert" className="text-sm text-destructive">
                     {error}
                   </p>
                 )}
 
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="mt-2 border border-[var(--hero-accent)] bg-[var(--hero-accent)]/10 text-white hover:bg-[var(--hero-accent)]/20"
-                >
+                <Button type="submit" disabled={submitting} className="mt-2">
                   {submitting ? t("submitting") : t("submit")}
                 </Button>
               </form>
 
-              <div className="mt-6 flex items-center gap-3 text-xs text-zinc-500">
-                <div className="h-px flex-1 bg-white/10" />
+              <div className="mt-6 flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="h-px flex-1 bg-border" />
                 {t("ssoDivider")}
-                <div className="h-px flex-1 bg-white/10" />
+                <div className="h-px flex-1 bg-border" />
               </div>
 
               <Button
                 variant="outline"
-                className="mt-4 w-full border-white/15 bg-transparent text-white hover:bg-white/5"
+                className="mt-4 w-full"
                 onClick={() => {
                   window.location.href = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/auth/saml/login`;
                 }}

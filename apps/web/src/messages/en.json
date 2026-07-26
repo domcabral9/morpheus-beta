@@ -18,7 +18,8 @@
     "ssoDivider": "or",
     "ssoButton": "Sign in with corporate SSO",
     "genericError": "Could not sign in. Check your details and try again.",
-    "localeSwitcherLabel": "Language"
+    "localeSwitcherLabel": "Language",
+    "themeToggleLabel": "Toggle theme"
   },
   "Dashboard": {
     "welcome": "Hello, {name}"

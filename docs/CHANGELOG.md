@@ -1901,3 +1901,41 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     combinada, não uma regra de CI) - registrar os findings de vulnerabilidade no `morpheus-ops`
     antes de cada janela de correção também foi combinado, mas ainda não tem um processo/script
     definido (próximo passo, se o usuário pedir).
+- **Feedback de uso real (2026-07-26) - sessão sem expiração, tela de login fora do padrão de tema,
+  `/admin` quebrado**: usuário testou as telas após o setup de CI/SSDLC e trouxe 3 pontos.
+  - **Sessão não expirava**: o access token já vivia só 15 min (`JWT_ACCESS_EXPIRES_IN`), mas o
+    refresh token (cookie `httpOnly` `morpheus_refresh_token`) tinha `JWT_REFRESH_EXPIRES_IN=7d` -
+    como o access token nunca é persistido (só em memória, apagado a cada reload) e o front chama
+    `POST /auth/refresh` silenciosamente no boot usando esse cookie, derrubar/subir o ambiente nunca
+    forçava novo login dentro dessa janela de 7 dias. **Corrigido**: `JWT_REFRESH_EXPIRES_IN=4h` em
+    `.env`/`.env.example` - o cookie e o JWT usam o mesmo valor (`AuthController.setRefreshCookie`
+    deriva o `maxAge` dele), então a sessão inteira expira em 4h sem precisar de nenhum mecanismo
+    novo. Confirmado via `curl` no `POST /auth/login`: `Max-Age=14400`. O caminho de
+    logout-por-expiração já existia pronto (`AuthProvider` marca `unauthenticated` quando o refresh
+    falha, `useRequireAuth` redireciona pra `/login`) - não precisou de nenhuma mudança de fluxo.
+  - **`/admin/users`, `/admin/roles`, `/admin/settings` etc. voltavam 404, `/admin` sozinho
+    funcionava**: não era bug de código - os arquivos de rota existiam e o manifest do Next.js
+    (`app-paths-manifest.json`) já listava todas as sub-rotas corretamente. Causa real: cache de dev
+    do Turbopack (`apps/web/.next`) corrompido/desatualizado. **Resolvido** limpando o cache
+    (`rm -rf apps/web/.next`) e reiniciando `pnpm dev` - todas as sub-rotas voltaram a 200
+    imediatamente. Nenhuma mudança de código; guardar esse passo como primeiro diagnóstico da
+    próxima vez que uma rota existente 404ar sem motivo aparente.
+  - **Esquema de cores da tela de login não seguia o mesmo tema das telas internas**: `LoginPage` e
+    `SecurityHeroBackground` usavam cores fixas (`bg-black`, `text-white`, `zinc-*`, um acento
+    vermelho `--hero-accent: #e0263c` hardcoded) independente do alternador de tema - decisão
+    deliberada de uma sessão anterior (comentário no código: login era tratado como "vitrine",
+    diferente do uso diário). Usuário pediu para reverter isso: mesmo esquema das telas internas +
+    botão de alternar tema. **Feito**: `SecurityHeroBackground` passou a usar os tokens do tema
+    (`bg-background`/`text-foreground`/`var(--primary)` para o glow decorativo, `var(--border)` para
+    a grade de pontos) em vez de cores fixas, e o `<div className="dark ...">` que forçava dark
+    sempre foi removido. `LoginPage` trocou todas as classes `zinc-*`/`white/*`/`black/*` pelos
+    tokens shadcn padrão (`bg-card`, `text-muted-foreground`, `text-destructive`, `border-border`,
+    inputs/`Select` sem override de cor) e ganhou um `<ThemeToggle>` ao lado do `<LocaleSwitcher>` no
+    header, mesmo padrão do `AppShell`. Validado com Playwright (`chromium`, screenshot claro e
+    escuro) - tema muda em tempo real, cores batem com o resto do app. Screenshots do portfólio
+    (`docs/screenshots/login-organizacao{,-en}.png`) regeneradas para refletir o novo visual - nessa
+    regeneração a API caiu no meio do processo (mesma race condition de `nest start --watch` já
+    documentada: recompilação incremental apagou `dist/app.module.js` momentaneamente, `main.js`
+    tentou importar e o processo inteiro morreu com `MODULE_NOT_FOUND`), confirmado via `GET
+    /tenants/public` retornando conexão recusada; resolvido reiniciando `pnpm dev` - sem relação com
+    o código desta mudança.
