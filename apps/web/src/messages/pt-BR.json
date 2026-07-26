@@ -21,11 +21,14 @@
     "localeSwitcherLabel": "Idioma"
   },
   "Dashboard": {
-    "welcome": "Olá, {name}"
+    "welcome": "Olá, {name}",
+    "quickActionsTitle": "Atalhos rápidos",
+    "newAssessmentShortcut": "Nova avaliação",
+    "newAssessmentShortcutDescription": "Inicie o questionário de homologação de um novo software."
   },
   "Nav": {
     "brand": "Morpheus",
-    "assessments": "Avaliações",
+    "home": "Home",
     "dashboards": "Dashboards",
     "inventory": "Inventário",
     "approvals": "Aprovações",

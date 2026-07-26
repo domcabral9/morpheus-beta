@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Boxes, CheckCircle2, ClipboardList, FileText, HelpCircle, LayoutDashboard } from "lucide-react";
+import { Boxes, CheckCircle2, FileText, HelpCircle, Home, LayoutDashboard } from "lucide-react";
 
 export interface PrimaryNavItem {
   href: string;
@@ -11,7 +11,7 @@ export interface PrimaryNavItem {
 
 /** Itens de topo da sidebar — visíveis a todo usuário autenticado, exceto onde `permission` filtra. */
 export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
-  { href: "/dashboard", labelKey: "assessments", icon: ClipboardList },
+  { href: "/dashboard", labelKey: "home", icon: Home },
   { href: "/dashboards", labelKey: "dashboards", icon: LayoutDashboard },
   { href: "/inventory", labelKey: "inventory", icon: Boxes, permission: "inventory:view" },
   { href: "/approvals", labelKey: "approvals", icon: CheckCircle2, permission: "assessments:approve" },

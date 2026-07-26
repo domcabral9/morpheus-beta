@@ -21,11 +21,14 @@
     "localeSwitcherLabel": "Language"
   },
   "Dashboard": {
-    "welcome": "Hello, {name}"
+    "welcome": "Hello, {name}",
+    "quickActionsTitle": "Quick actions",
+    "newAssessmentShortcut": "New assessment",
+    "newAssessmentShortcutDescription": "Start the homologation questionnaire for a new software."
   },
   "Nav": {
     "brand": "Morpheus",
-    "assessments": "Assessments",
+    "home": "Home",
     "dashboards": "Dashboards",
     "inventory": "Inventory",
     "approvals": "Approvals",
