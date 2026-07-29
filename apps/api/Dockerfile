@@ -4,10 +4,12 @@
 # 1) builder: usa `turbo prune` para extrair apenas o subgrafo de pacotes de
 #    que @morpheus/api depende (evita copiar apps/web para dentro da imagem).
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-RUN corepack enable
+# A partir do Node 26, o corepack deixou de vir embutido na imagem -
+# precisa ser instalado explicitamente antes de habilitar.
+RUN npm install -g corepack@latest && corepack enable
 COPY . .
 RUN pnpm dlx turbo@^2 prune @morpheus/api --docker
 
@@ -16,10 +18,10 @@ RUN pnpm dlx turbo@^2 prune @morpheus/api --docker
 #    cacheável) e então builda o pacote de database (gera o Prisma Client)
 #    e a API.
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS installer
+FROM node:26-alpine AS installer
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
-RUN corepack enable
+RUN npm install -g corepack@latest && corepack enable
 
 COPY --from=builder /app/out/json/ .
 RUN pnpm install --frozen-lockfile
@@ -31,7 +33,7 @@ RUN pnpm --filter @morpheus/api build
 # ---------------------------------------------------------------------------
 # 3) runner: imagem final enxuta, roda como usuário não-root.
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS runner
+FROM node:26-alpine AS runner
 RUN apk add --no-cache openssl
 WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 morpheus
