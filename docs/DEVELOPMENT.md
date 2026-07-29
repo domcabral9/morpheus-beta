@@ -111,6 +111,19 @@ docker compose up --build
 >    para o proxy server-side - porque o Next.js faz *inline* de qualquer `NEXT_PUBLIC_*` em tempo
 >    de build, mesmo em código que só roda no servidor, então um valor prefixado ficaria congelado
 >    com o padrão usado no build da imagem e nunca refletiria a rede Docker em runtime.
+>
+> Validação da Camada 2 do Dependabot (bump `node:22-alpine` → `node:26-alpine`, 2026-07-28) achou
+> mais dois problemas reais, independentes entre si:
+> 3. A partir do Node 26, o `corepack` deixou de vir embutido na imagem - `RUN corepack enable`
+>    passou a falhar com `corepack: not found` (exit 127) nos três Dockerfiles (`apps/api`,
+>    `apps/web`, e o serviço `migrate`, que reusa o Dockerfile da API). Correção: instalar
+>    explicitamente antes de habilitar - `RUN npm install -g corepack@latest && corepack enable`.
+> 4. `docker-compose.yml` nunca passou `JWT_ACCESS_SECRET`/`JWT_REFRESH_SECRET`/`ENCRYPTION_KEY`
+>    para o serviço `api` (bug pré-existente, sem relação com o bump do Node - só apareceu porque
+>    essa era a primeira vez que a stack completa subia depois que esses três viraram obrigatórios
+>    em `env.validation.ts`). Sem eles o container reiniciava em loop com "Configuração de ambiente
+>    inválida". Corrigido adicionando os três (e os `_EXPIRES_IN` com default) ao bloco
+>    `environment:` do serviço `api`, interpolados do `.env` como os demais.
 
 ### Scripts úteis (raiz do monorepo)
 

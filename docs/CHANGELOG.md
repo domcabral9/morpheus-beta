@@ -1981,3 +1981,20 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     **mantido à mão, não gerado por script** - envolve julgamento humano sobre risco, diferente de
     um inventário objetivo de versões) ganhou sua primeira entrada real, com os dados concretos da
     janela de 2026-07-26 (ver detalhe completo dessa janela na entrada anterior deste changelog).
+- **Janela de revisão semanal - Camada 2 (2026-07-28)**: bump `node:22-alpine` → `node:26-alpine`
+  em `apps/api/Dockerfile` e `apps/web/Dockerfile` (PRs Dependabot #61/#62, consolidados num único
+  PR já que são a mesma mudança lógica). Validado de ponta a ponta com `docker compose up --build`
+  real (não só CI) - achou dois bugs reais, ambos documentados com detalhe em
+  `docs/DEVELOPMENT.md` (seção "3. Stack completa via Docker"):
+  1. Node 26 não vem mais com `corepack` embutido - `RUN corepack enable` passou a falhar em todos
+     os três Dockerfiles que dependem dele (`api`, `web`, e `migrate`, que reusa o da API).
+  2. `docker-compose.yml` nunca teve `JWT_ACCESS_SECRET`/`JWT_REFRESH_SECRET`/`ENCRYPTION_KEY` no
+     bloco `environment:` do serviço `api` - bug pré-existente sem relação com o Node, só apareceu
+     agora porque era a primeira vez que a stack completa subia depois desses três terem virado
+     obrigatórios em `env.validation.ts`.
+  Depois dos dois fixes, validação manual completa: login (`POST /auth/login` com o usuário demo),
+  `GET /auth/me`/`/assessments`/`/inventory` autenticados, e via Playwright o fluxo completo no
+  browser (login → Home com o atalho "Nova avaliação" → `/admin/settings`, sem 404). `pnpm turbo
+  run typecheck lint test build` rodou limpo (só o ruído de CRLF já conhecido no lint do `api`,
+  invisível no CI Linux). Log completo da janela, com os dois bugs e a decisão de tier, registrado
+  em `morpheus-ops/reports/vulnerability-log.md`.

@@ -69,6 +69,11 @@ services:
       # precisa ser o domínio público real em produção, não "localhost".
       PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3001}
       STORAGE_DIR: /app/storage
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-4h}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
     ports:
       - "${API_PORT:-3001}:3001"
     volumes:
