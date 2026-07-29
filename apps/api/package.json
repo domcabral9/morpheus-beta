@@ -33,7 +33,7 @@
     "@opentelemetry/sdk-trace-base": "^2.10.0",
     "@opentelemetry/sdk-trace-node": "^2.10.0",
     "@opentelemetry/semantic-conventions": "^1.43.0",
-    "@prisma/adapter-pg": "^7.9.0",
+    "@prisma/adapter-pg": "^7.9.1",
     "@willsoto/nestjs-prometheus": "^6.1.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
