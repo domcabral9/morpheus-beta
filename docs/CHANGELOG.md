@@ -2020,3 +2020,28 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
   Comentário técnico deixado nos PRs #66/#70/#71/#72 explicando o motivo do adiamento (não fechados
   - ficam esperando o ecossistema `typescript-eslint`/`eslint-plugin-react` alcançar essas majors).
   Log completo em `morpheus-ops/reports/vulnerability-log.md`.
+- **Janela de revisão semanal - Camada 4 (2026-07-29)**: `zod` 3→4 em `apps/api` (PR Dependabot #69).
+  Marcada desde a primeira janela como precisando de teste manual isolado, não só CI verde - mesma
+  família de risco do incidente anterior desta semana com o `zod` do `apps/web` (pin `~4.0.5` feito
+  justamente por incompatibilidade de tipos com `@hookform/resolvers`). O diff real da PR #69
+  surpreendeu: além de `apps/api` (`^3.24.1`→`^4.4.3`), também bumpa o `zod` do `apps/web`
+  (`~4.0.5`→`~4.4.3`) - o Dependabot agrupa o mesmo pacote entre workspaces quando o `dependabot.yml`
+  aponta pro root do monorepo. Os dois lados foram testados juntos.
+  - **`apps/api`**: `zod` é usado num único arquivo, `env.validation.ts` (validação de env vars no
+    boot). Sem teste automatizado existente pra esse arquivo - validação manual via script
+    descartável exercitando `validateEnv()` com 10 casos (válido, `DATABASE_URL` faltando, secrets
+    curtos, `ENCRYPTION_KEY` inválido/ausente, SAML habilitado com/sem campos obrigatórios, coerção
+    de `API_PORT`/booleans). Todos os 10 casos se comportaram identicamente - a única diferença é
+    cosmética: zod v4 mudou a mensagem padrão de campo obrigatório ausente de "Required" pra "Invalid
+    input: expected string, received undefined" nos campos sem `.refine()`/`.min()` customizado (só
+    afeta erro de boot mal configurado, nunca chega num usuário final).
+  - **`apps/web`**: `pnpm peers check` não acusou nada (diferente da tentativa anterior com `~4.0.5`)
+    - sinal de que `@hookform/resolvers@5.4.0` já suporta a faixa 4.4.x. Confirmado na prática, não só
+    por tipos: ambiente de dev completo (`docker compose -f docker-compose.dev.yml up` + `pnpm dev`)
+    e teste real via Playwright no formulário de "Novo item de inventário" (15 campos, vários
+    `zodResolver`) - submeter vazio mostra erro em todos os campos obrigatórios (bordas vermelhas:
+    Nome, Fabricante, Categoria, Área, Gestor, Responsável técnico), preencher um campo limpa o erro
+    dele individualmente na hora, sem submeter de verdade (não queria sujar o banco com item de
+    teste). `pnpm turbo run typecheck lint test build` completo limpo (219 testes do `apps/api`
+    passando, só o ruído de CRLF de sempre no lint).
+  **Válvula de escape acionada?** Não. Log completo em `morpheus-ops/reports/vulnerability-log.md`.
