@@ -1998,3 +1998,25 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
   run typecheck lint test build` rodou limpo (só o ruído de CRLF já conhecido no lint do `api`,
   invisível no CI Linux). Log completo da janela, com os dois bugs e a decisão de tier, registrado
   em `morpheus-ops/reports/vulnerability-log.md`.
+- **Janela de revisão semanal - Camada 3 (2026-07-29)**: majors de dev-tooling (TypeScript 5→7,
+  `@eslint/js`/`eslint`/`eslint-config-prettier` 9→10, `globals` 15→17, `@types/node` 20/22→26 -
+  PRs Dependabot #66-#68, #70-#72). Sem risco de runtime (tudo devDependency), mas majors quebram
+  `typecheck`/`lint` de verdade às vezes - por isso essa camada nunca é "CI verde = pode mesclar",
+  precisa rodar local. Dessa vez quebrou de verdade, em duas frentes independentes:
+  1. **TypeScript 7 (#70) quebra o typecheck do `apps/web`** - confirmado comparando com `main`
+     limpo num `git worktree` isolado (mesmo método usado para provar os dois bugs pré-existentes
+     que a primeira execução do CI pegou, ver entrada anterior deste changelog): com TS 5.9.3 o
+     typecheck passa limpo, com TS 7.0.2 aparece um erro real de duplicidade de tipos do `zod`
+     (`zod@3.25.76` de `apps/api` vs `zod@4.0.17` de `apps/web`, `ParsePayload`/`$ZodCheck`
+     incompatíveis). Bate com o aviso de peer dependency: `typescript-eslint@8.65.0` só declara
+     suporte a `>=4.8.4 <6.1.0` - a versão 7 nem era esperada. **Adiado.**
+  2. **ESLint 10 (#66/#71/#72, o trio anda junto) quebra o lint do `apps/web` de verdade, não é só
+     aviso** - `eslint-plugin-react@7.37.5` (dependência de `eslint-config-next`) crasha com
+     `TypeError: contextOrFilename.getFilename is not a function` ao tentar detectar a versão do
+     React, porque o ESLint 10 removeu `context.getFilename()` da API de regras. **Adiado.**
+  3. **`globals` 15→17 (#67) e `@types/node` 20/22→26 (#68) passaram limpos** - `pnpm turbo run
+     typecheck lint test build` completo, sem quebra nenhuma (só o ruído de CRLF de sempre no lint
+     do `api`). **Mesclados** num PR único.
+  Comentário técnico deixado nos PRs #66/#70/#71/#72 explicando o motivo do adiamento (não fechados
+  - ficam esperando o ecossistema `typescript-eslint`/`eslint-plugin-react` alcançar essas majors).
+  Log completo em `morpheus-ops/reports/vulnerability-log.md`.
