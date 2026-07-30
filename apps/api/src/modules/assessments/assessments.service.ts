@@ -16,6 +16,7 @@ import type { RiskDimensionInput, ScorableAnswer } from "../risk-engine/risk-eng
 import { WorkflowService } from "../workflow/workflow.service";
 import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { VendorsService } from "../vendors/vendors.service";
 import {
   AssessmentsRepository,
   AssessmentDetail,
@@ -46,17 +47,22 @@ export class AssessmentsService {
     private readonly workflowService: WorkflowService,
     private readonly auditLogService: AuditLogService,
     private readonly notificationsService: NotificationsService,
+    private readonly vendorsService: VendorsService,
   ) {}
 
   async create(user: AuthenticatedUser, dto: CreateAssessmentDto): Promise<AssessmentDetail> {
     await this.assertAreaInTenant(user.tenantId, dto.areaId);
     await this.assertUserInTenant(user.tenantId, dto.responsibleId);
     await this.assertAreaNotBlocked(user.tenantId, dto.areaId);
+    // `dto.vendor` é obrigatório em CreateAssessmentDto - o resultado nunca
+    // é undefined neste caminho (só quando não há vendorId nem fallback).
+    const vendorName = (await this.resolveVendorName(user.tenantId, dto.vendorId, dto.vendor))!;
 
     return this.assessmentsRepository.create({
       tenantId: user.tenantId,
       softwareName: dto.softwareName,
-      vendor: dto.vendor,
+      vendor: vendorName,
+      vendorId: dto.vendorId,
       version: dto.version,
       url: dto.url,
       responsibleId: dto.responsibleId,
@@ -124,8 +130,29 @@ export class AssessmentsService {
     if (dto.responsibleId) {
       await this.assertUserInTenant(user.tenantId, dto.responsibleId);
     }
+    if (dto.vendorId) {
+      dto.vendor = await this.resolveVendorName(user.tenantId, dto.vendorId, dto.vendor);
+    }
 
     return this.assessmentsRepository.update(id, dto);
+  }
+
+  /**
+   * Quando o analista escolhe um Vendor real no picker (decisão #3 do plano
+   * de avaliação de fornecedores), grava/atualiza também o texto livre
+   * `vendor` com `Vendor.name` — snapshot denormalizado que evita mudar todo
+   * lugar que hoje interpola `assessment.vendor` como string simples (PDF do
+   * parecer, notificações, templates do RenewalScheduler).
+   */
+  private async resolveVendorName(
+    tenantId: string,
+    vendorId: string | undefined,
+    fallbackVendor: string | undefined,
+  ): Promise<string | undefined> {
+    if (!vendorId) return fallbackVendor;
+    const vendor = await this.vendorsService.findByIdForTenant(tenantId, vendorId);
+    if (!vendor) throw new NotFoundException("Fornecedor (Vendor) não encontrado.");
+    return vendor.name;
   }
 
   async getAnswers(user: AuthenticatedUser, id: string) {

@@ -2087,3 +2087,31 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
   - Plano completo (todas as fases, decisões de escopo, algoritmo de cadência de reavaliação) em
     `C:\Users\kaosikner\.claude\plans\streamed-sleeping-newell.md` (arquivo de plano local, não
     versionado no repo).
+- **Avaliação de risco de fornecedores, Fase 2 (2026-07-30): backend `VendorsModule`.** Núcleo da
+  feature - CRUD de `Vendor`, CRUD admin do catálogo de perguntas e do tier config, e o endpoint
+  central `POST /vendors/:id/assessments/:assessmentId/complete` que calcula score/tier
+  automaticamente (sem workflow de aprovação, decisão #2 do plano).
+  - **Reaproveitou o `RiskEngineService.computeScores()` existente sem nenhuma mudança** - a função é
+    pura e já não tinha acoplamento a `Assessment`. `VendorsService.buildScorableAnswers()` espelha
+    `AssessmentsService.resolveScorableAnswers()` (SCALE usa `scaleValue` direto, escolha usa a média
+    das opções selecionadas, TEXT é ignorado), com `riskDimension` fixo em `"BOTH"` (tierização é
+    score 1D, sem split probabilidade/impacto).
+  - `vendor-tier.util.ts`/`vendor-reassessment.util.ts`: funções puras novas, testadas isoladamente
+    (mesmo estilo de `renewal-window.util.ts`) - `tierForScore()` com fallback defensivo (paralelo ao
+    `findBand` do motor de risco), `computeNextReviewDate()` implementando a regra de cadência
+    (decisão #5: base do tier × multiplicador de criticidade, clampado 3-12 meses).
+  - `Assessment` ganha o fio de integração: DTOs de create/update aceitam `vendorId?` opcional;
+    quando presente, o backend resolve o `Vendor` real (valida que pertence ao tenant) e sobrescreve
+    o texto livre `vendor` com `Vendor.name` (decisão #3 - snapshot denormalizado, evita mudar todo
+    lugar que já interpola `assessment.vendor` como string). `AssessmentsModule` importa
+    `VendorsModule` (uma via só, sem circularidade).
+  - **Testes**: 26 novos (`vendor-tier.util.spec.ts`, `vendor-reassessment.util.spec.ts`,
+    `vendors.service.spec.ts` + 2 no `assessments.service.spec.ts` pra cobrir a resolução de
+    `vendorId`), todos passando (245 no total do `apps/api`).
+  - **Validação manual completa via curl** (ambiente de dev real, não só CI): criar fornecedor →
+    responder 8 das ~28 perguntas com respostas 100% favoráveis → concluir → `totalScore: 5`,
+    `tier: 1`, `tierLabel: "Baixo risco"`, `nextReviewDueAt` exatamente 12 meses à frente (Tier
+    1 = base 12 meses × criticidade MEDIUM = ×1.0) - `Vendor` denormalizado corretamente. Confirmado
+    que tentar concluir a mesma avaliação de novo dá `422`. Confirmado que linkar um `Vendor` real
+    numa `Assessment` de software sobrescreve o texto livre digitado errado pelo nome real do
+    fornecedor. Dados de teste removidos do banco depois (convenção do projeto).
