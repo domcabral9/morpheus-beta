@@ -50,15 +50,15 @@ model Tenant {
   /// POST /tenants/current/logo, lida via GET /tenants/current/logo). O PDF só
   /// embute logos do segundo tipo — não acopla o gerador de PDF (pacote da
   /// API) ao filesystem do app Next.js.
-  logoUrl String?
+  logoUrl                    String?
   /// Nome da equipe exibido como autora do parecer (ex.: "SecOps"). Opcional —
   /// sem valor configurado, usa um rótulo genérico ("Equipe de Segurança da
   /// Informação").
-  securityTeamName String?
+  securityTeamName           String?
   /// Prefixo do número sequencial do parecer (ex.: "SECOPS-SW" produz
   /// "SECOPS-SW-072026-001"). Cada tenant pode reaproveitar sua própria
   /// convenção de nomenclatura sem mudar código.
-  opinionNumberPrefix String @default("SECOPS-SW")
+  opinionNumberPrefix        String  @default("SECOPS-SW")
   /// Janela de fechamento anual (ex.: "11-01" a "12-14") - período em que
   /// ciclos de renovação de homologação que caiam perto dela ganham prazo
   /// estendido/antecipado (ver RenewalScheduler), evitando estourar em época
@@ -70,22 +70,27 @@ model Tenant {
   annualClosingWindowEnd     String?
   annualClosingWindowEnabled Boolean @default(false)
 
-  users               User[]
-  roles               Role[]
-  areas               Area[]
-  questionCategories  QuestionCategory[]
-  questions           Question[]
-  riskMatrixConfigs   RiskMatrixConfig[]
-  recommendations     Recommendation[]
-  workflowDefinitions WorkflowDefinition[]
-  assessments         Assessment[]
-  inventoryItems      SoftwareInventoryItem[]
-  documentationLinks  InventoryDocumentationLink[]
-  attachments         Attachment[]
-  comments            Comment[]
-  auditLogs           AuditLog[]
-  notifications       Notification[]
-  technicalOpinions   TechnicalOpinion[]
+  users                    User[]
+  roles                    Role[]
+  areas                    Area[]
+  questionCategories       QuestionCategory[]
+  questions                Question[]
+  riskMatrixConfigs        RiskMatrixConfig[]
+  recommendations          Recommendation[]
+  workflowDefinitions      WorkflowDefinition[]
+  assessments              Assessment[]
+  inventoryItems           SoftwareInventoryItem[]
+  documentationLinks       InventoryDocumentationLink[]
+  attachments              Attachment[]
+  comments                 Comment[]
+  auditLogs                AuditLog[]
+  notifications            Notification[]
+  technicalOpinions        TechnicalOpinion[]
+  vendors                  Vendor[]
+  vendorQuestionCategories VendorQuestionCategory[]
+  vendorTierConfigs        VendorTierConfig[]
+  vendorAssessments        VendorAssessment[]
+  vendorQuestions          VendorQuestion[]
 
   @@map("tenants")
 }
@@ -156,20 +161,22 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  userRoles               UserRole[]
-  refreshTokens           RefreshToken[]
-  requestedAssessments    Assessment[]             @relation("AssessmentRequester")
-  responsibleAssessments  Assessment[]             @relation("AssessmentResponsible")
-  assessmentVersions      AssessmentVersion[]
-  workflowAssignments     WorkflowStepExecution[]  @relation("WorkflowStepAssignee")
-  workflowDecisions       WorkflowStepExecution[]  @relation("WorkflowStepDecidedBy")
-  technicalOpinionsIssued TechnicalOpinion[]
-  managedInventoryItems   SoftwareInventoryItem[]  @relation("InventoryManager")
-  ownedInventoryItems     SoftwareInventoryItem[]  @relation("InventoryTechnicalResponsible")
-  attachments             Attachment[]
-  comments                Comment[]
-  auditLogs               AuditLog[]
-  notifications           Notification[]
+  userRoles                  UserRole[]
+  refreshTokens              RefreshToken[]
+  requestedAssessments       Assessment[]            @relation("AssessmentRequester")
+  responsibleAssessments     Assessment[]            @relation("AssessmentResponsible")
+  assessmentVersions         AssessmentVersion[]
+  workflowAssignments        WorkflowStepExecution[] @relation("WorkflowStepAssignee")
+  workflowDecisions          WorkflowStepExecution[] @relation("WorkflowStepDecidedBy")
+  technicalOpinionsIssued    TechnicalOpinion[]
+  managedInventoryItems      SoftwareInventoryItem[] @relation("InventoryManager")
+  ownedInventoryItems        SoftwareInventoryItem[] @relation("InventoryTechnicalResponsible")
+  attachments                Attachment[]
+  comments                   Comment[]
+  auditLogs                  AuditLog[]
+  notifications              Notification[]
+  createdVendors             Vendor[]                @relation("VendorCreatedBy")
+  performedVendorAssessments VendorAssessment[]      @relation("VendorAssessmentPerformedBy")
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -192,19 +199,19 @@ model UserRole {
 /// a Etapa 3 usa isso para revogar toda a família). Sem essa tabela, JWT de
 /// refresh só poderia expirar sozinho, nunca ser invalidado antes da hora.
 model RefreshToken {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash   String    @unique
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash    String    @unique
   /// Agrupa a cadeia de tokens rotacionados a partir do mesmo login — permite
   /// revogar a família inteira de uma vez ao detectar reuso.
-  familyId    String
-  expiresAt   DateTime
-  revokedAt   DateTime?
+  familyId     String
+  expiresAt    DateTime
+  revokedAt    DateTime?
   replacedById String?
-  userAgent   String?
-  ipAddress   String?
-  createdAt   DateTime  @default(now())
+  userAgent    String?
+  ipAddress    String?
+  createdAt    DateTime  @default(now())
 
   @@index([userId])
   @@index([familyId])
@@ -279,29 +286,29 @@ model QuestionCategory {
 }
 
 model Question {
-  id            String        @id @default(cuid())
+  id            String           @id @default(cuid())
   tenantId      String
-  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   categoryId    String
   category      QuestionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   text          String
   description   String?
   /// Peso da pergunta no score final (ex.: 1.00 a 10.00).
-  weight        Decimal       @db.Decimal(5, 2)
+  weight        Decimal          @db.Decimal(5, 2)
   type          QuestionType
   riskDimension RiskDimension
-  order         Int           @default(0)
-  isActive      Boolean       @default(true)
+  order         Int              @default(0)
+  isActive      Boolean          @default(true)
   /// false para perguntas condicionais (ex.: "como o MFA está implementado?",
   /// só relevante se a pergunta anterior de MFA foi "Sim") — a validação de
   /// completude no envio da avaliação não as exige.
-  isRequired    Boolean       @default(true)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  isRequired    Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
-  options   QuestionOption[]
-  controls  QuestionControl[]
-  answers   AssessmentAnswer[]
+  options  QuestionOption[]
+  controls QuestionControl[]
+  answers  AssessmentAnswer[]
 
   @@index([tenantId])
   @@index([categoryId])
@@ -313,22 +320,22 @@ model Question {
 /// BOOLEAN à parte e mantém o motor de risco uniforme para qualquer pergunta
 /// de escolha.
 model QuestionOption {
-  id         String   @id @default(cuid())
-  questionId String
-  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  label      String
-  value      String
+  id                 String   @id @default(cuid())
+  questionId         String
+  question           Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  label              String
+  value              String
   /// Contribuição de risco desta opção (0 = sem risco, valores maiores = mais risco).
-  score      Decimal  @db.Decimal(5, 2)
-  order      Int      @default(0)
+  score              Decimal  @db.Decimal(5, 2)
+  order              Int      @default(0)
   /// Se marcada nesta opção (ex.: "Sim" em "processa dados pessoais?"), sinaliza
   /// que a avaliação envolve LGPD — usado pelo workflow (Etapa 6) para decidir
   /// se a etapa do DPO (`WorkflowStep.requiresLgpd`) entra no fluxo. Mesma ideia
   /// de gatilho parametrizável já usada em `Recommendation.triggerOptionId`, em
   /// vez de casar por texto da pergunta.
-  triggersLgpdReview Boolean @default(false)
+  triggersLgpdReview Boolean  @default(false)
 
-  answerSelections  AssessmentAnswerOption[]
+  answerSelections         AssessmentAnswerOption[]
   triggeredRecommendations Recommendation[]
 
   @@index([questionId])
@@ -364,7 +371,7 @@ model ControlFramework {
 }
 
 model Control {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   frameworkId String
   framework   ControlFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
   code        String
@@ -475,8 +482,8 @@ model RiskClassification {
   /// fato para decidir Homologado/Aguardando Ajustes/Rejeitado — mais simples
   /// e auditável do que derivar a decisão da célula da matriz 2D, que fica
   /// reservada para visualização (heatmap, Etapa 9).
-  minScore Decimal @db.Decimal(5, 2)
-  maxScore Decimal @db.Decimal(5, 2)
+  minScore           Decimal          @db.Decimal(5, 2)
+  maxScore           Decimal          @db.Decimal(5, 2)
 
   matrixCells RiskMatrixCell[]
   riskResults RiskResult[]
@@ -490,15 +497,15 @@ model RiskClassification {
 /// permite, por exemplo, que probabilidade Alta + impacto Baixo dê um
 /// resultado diferente de probabilidade Baixa + impacto Alto.
 model RiskMatrixCell {
-  id                    String              @id @default(cuid())
-  riskMatrixConfigId    String
-  riskMatrixConfig      RiskMatrixConfig    @relation(fields: [riskMatrixConfigId], references: [id], onDelete: Cascade)
-  probabilityLevelId    String
-  probabilityLevel      ProbabilityLevel    @relation(fields: [probabilityLevelId], references: [id], onDelete: Cascade)
-  impactLevelId         String
-  impactLevel           ImpactLevel         @relation(fields: [impactLevelId], references: [id], onDelete: Cascade)
-  riskClassificationId  String
-  riskClassification    RiskClassification  @relation(fields: [riskClassificationId], references: [id], onDelete: Cascade)
+  id                   String             @id @default(cuid())
+  riskMatrixConfigId   String
+  riskMatrixConfig     RiskMatrixConfig   @relation(fields: [riskMatrixConfigId], references: [id], onDelete: Cascade)
+  probabilityLevelId   String
+  probabilityLevel     ProbabilityLevel   @relation(fields: [probabilityLevelId], references: [id], onDelete: Cascade)
+  impactLevelId        String
+  impactLevel          ImpactLevel        @relation(fields: [impactLevelId], references: [id], onDelete: Cascade)
+  riskClassificationId String
+  riskClassification   RiskClassification @relation(fields: [riskClassificationId], references: [id], onDelete: Cascade)
 
   @@unique([probabilityLevelId, impactLevelId])
   @@index([riskMatrixConfigId])
@@ -510,17 +517,17 @@ model RiskMatrixCell {
 /// Parametrizável pelo admin, conforme exigido no requisito de "Recomendações
 /// Automáticas".
 model Recommendation {
-  id               String          @id @default(cuid())
-  tenantId         String
-  tenant           Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  text             String
-  isActive         Boolean         @default(true)
+  id              String          @id @default(cuid())
+  tenantId        String
+  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  text            String
+  isActive        Boolean         @default(true)
   /// Opção de resposta que dispara esta recomendação. Null = recomendação
   /// genérica, aplicável manualmente ou por classificação de risco.
-  triggerOptionId  String?
-  triggerOption    QuestionOption? @relation(fields: [triggerOptionId], references: [id], onDelete: SetNull)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  triggerOptionId String?
+  triggerOption   QuestionOption? @relation(fields: [triggerOptionId], references: [id], onDelete: SetNull)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   assessmentRecommendations AssessmentRecommendation[]
 
@@ -592,15 +599,15 @@ model WorkflowStep {
 /// Assessment — reaberturas reiniciam/avançam a mesma instância em vez de
 /// criar outra, mantendo um único histórico de decisões por avaliação.
 model AssessmentWorkflowInstance {
-  id                   String                  @id @default(cuid())
-  assessmentId         String                  @unique
-  assessment           Assessment              @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  id                   String                 @id @default(cuid())
+  assessmentId         String                 @unique
+  assessment           Assessment             @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   workflowDefinitionId String
-  workflowDefinition   WorkflowDefinition      @relation(fields: [workflowDefinitionId], references: [id])
-  currentStepOrder     Int                     @default(1)
-  status               WorkflowInstanceStatus  @default(IN_PROGRESS)
-  createdAt            DateTime                @default(now())
-  updatedAt            DateTime                @updatedAt
+  workflowDefinition   WorkflowDefinition     @relation(fields: [workflowDefinitionId], references: [id])
+  currentStepOrder     Int                    @default(1)
+  status               WorkflowInstanceStatus @default(IN_PROGRESS)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
 
   stepExecutions WorkflowStepExecution[]
 
@@ -656,61 +663,69 @@ enum AssessmentStatus {
 }
 
 model Assessment {
-  id               String            @id @default(cuid())
-  tenantId         String
-  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  softwareName     String
-  vendor           String
-  version          String?
-  url              String?
+  id                    String           @id @default(cuid())
+  tenantId              String
+  tenant                Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  softwareName          String
+  vendor                String
+  version               String?
+  url                   String?
   /// Responsável indicado pelo solicitante (pode ou não ser o próprio requester).
-  responsibleId    String
-  responsible      User              @relation("AssessmentResponsible", fields: [responsibleId], references: [id])
-  areaId           String
-  area             Area              @relation(fields: [areaId], references: [id])
-  criticality      Criticality
-  justification    String
+  responsibleId         String
+  responsible           User             @relation("AssessmentResponsible", fields: [responsibleId], references: [id])
+  areaId                String
+  area                  Area             @relation(fields: [areaId], references: [id])
+  criticality           Criticality
+  justification         String
   /// Quem criou a avaliação — nunca pode ser quem a aprova (Separação de Funções).
-  requesterId      String
-  requester        User              @relation("AssessmentRequester", fields: [requesterId], references: [id])
-  status           AssessmentStatus  @default(DRAFT)
+  requesterId           String
+  requester             User             @relation("AssessmentRequester", fields: [requesterId], references: [id])
+  status                AssessmentStatus @default(DRAFT)
   /// Referência a um ticket externo (Jira/ServiceNow/etc.) vinculado a esta
   /// avaliação. Texto livre — o sistema não integra com nenhuma ferramenta de
   /// tickets específica, só registra a referência para o parecer técnico.
-  linkedTicket     String?
+  linkedTicket          String?
   /// SHA-256 do instalador/binário do software avaliado, informado pelo
   /// solicitante (ex.: resultado de uma verificação em VirusTotal). Opcional —
   /// nem todo software avaliado é um instalável (SaaS, por exemplo). Snapshot
   /// copiado para TechnicalOpinion.hash no momento da emissão do parecer.
-  installerFileHash String?
+  installerFileHash     String?
   /// Declaração do solicitante: o fornecedor tem ART (Análise de Risco)
   /// documentada? Fato sobre a relação com o fornecedor, não pergunta
   /// pontuada do questionário de risco - por isso é campo direto aqui, não
   /// mais uma Question. A verificação de que o documento existe de verdade é
   /// manual, feita pelo aprovador fora do sistema (ver destaque em
   /// /approvals) - o campo só registra a declaração, não anexa prova.
-  hasRiskAnalysis  Boolean @default(false)
+  hasRiskAnalysis       Boolean          @default(false)
   /// Mesma lógica de `hasRiskAnalysis`, mas para a cláusula de segurança da
   /// informação assinada com o fornecedor.
-  hasInfoSecClause Boolean @default(false)
+  hasInfoSecClause      Boolean          @default(false)
   /// Prazo (data+hora) pra resolver um ciclo de renovação em andamento — nulo
   /// exceto durante `status = PENDING_RENEWAL`. Já vem ajustado pela janela de
   /// fechamento anual do tenant (ver RenewalScheduler); vencido sem aprovação,
   /// o item de inventário vinculado vira EXPIRED e a área trava novas
   /// submissões.
-  renewalDueAt         DateTime?
+  renewalDueAt          DateTime?
   /// Quando o ciclo de renovação atual começou - distinto de `updatedAt`, que
   /// muda a cada edição durante o ciclo.
   renewalCycleStartedAt DateTime?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  /// Fornecedor cadastrado vinculado a esta avaliação - opcional/nullable, não
+  /// força re-cadastro de fornecedores em avaliações antigas. Quando setado
+  /// via picker no formulário, o backend também grava/atualiza `vendor`
+  /// (texto livre acima) com Vendor.name - snapshot denormalizado que evita
+  /// mudar todo lugar que hoje interpola `assessment.vendor` como string
+  /// simples (parecer PDF, notificações, templates do RenewalScheduler).
+  vendorId              String?
+  linkedVendor          Vendor?          @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
-  answers            AssessmentAnswer[]
-  versions           AssessmentVersion[]
-  workflowInstance   AssessmentWorkflowInstance?
-  inventoryItems     SoftwareInventoryItem[]
-  attachments        Attachment[]
-  comments           Comment[]
+  answers          AssessmentAnswer[]
+  versions         AssessmentVersion[]
+  workflowInstance AssessmentWorkflowInstance?
+  inventoryItems   SoftwareInventoryItem[]
+  attachments      Attachment[]
+  comments         Comment[]
 
   @@index([tenantId])
   @@index([tenantId, status])
@@ -757,19 +772,19 @@ model AssessmentAnswerOption {
 /// nova linha (v1.0, v1.1, v2.0, ...), conforme exigido no requisito de
 /// versionamento.
 model AssessmentVersion {
-  id            String     @id @default(cuid())
-  assessmentId  String
-  assessment    Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  versionLabel  String
-  snapshotJson  Json
-  changeReason  String?
-  createdById   String
-  createdBy     User       @relation(fields: [createdById], references: [id])
-  createdAt     DateTime   @default(now())
+  id           String     @id @default(cuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  versionLabel String
+  snapshotJson Json
+  changeReason String?
+  createdById  String
+  createdBy    User       @relation(fields: [createdById], references: [id])
+  createdAt    DateTime   @default(now())
 
-  riskResult        RiskResult?
-  technicalOpinion  TechnicalOpinion?
-  recommendations   AssessmentRecommendation[]
+  riskResult       RiskResult?
+  technicalOpinion TechnicalOpinion?
+  recommendations  AssessmentRecommendation[]
 
   @@unique([assessmentId, versionLabel])
   @@index([assessmentId])
@@ -836,6 +851,243 @@ model TechnicalOpinion {
 }
 
 // =============================================================================
+// Avaliação de risco de fornecedores (Vendor) - inspirado em NIST SP 800-161
+// (Cybersecurity Supply Chain Risk Management Practices). Domínio paralelo ao
+// de Avaliação de software acima: reusa a função pura de cálculo de score
+// (RiskEngineService) mas tem seu próprio catálogo de perguntas (não reusa
+// Question - a tierização é um score agregado 1D, não uma matriz
+// probabilidade×impacto 2D) e sua própria config de classificação
+// (VendorTierConfig, não RiskMatrixConfig). Sem workflow de aprovação
+// (diferente de Assessment) - score/tier são calculados automaticamente no
+// momento em que a avaliação é concluída, preenchida por um analista interno
+// (não é um formulário público/externo).
+// =============================================================================
+
+/// Fornecedor cadastrado para avaliação de risco - existe independente de
+/// qualquer Assessment (um mesmo fornecedor pode atender várias homologações
+/// de software), e pode ser linkado a partir de uma Assessment via
+/// `Assessment.vendorId`. Campos `current*`/`lastAssessedAt`/`nextReviewDueAt`
+/// são um snapshot denormalizado da VendorAssessment COMPLETED mais recente -
+/// mesmo padrão já usado em SoftwareInventoryItem para nextReviewDate/status,
+/// evita recalcular em toda leitura da lista de fornecedores.
+model Vendor {
+  id                     String       @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name                   String
+  legalName              String?
+  taxId                  String?
+  contactName            String?
+  contactEmail           String?
+  contractReference      String?
+  notes                  String?
+  businessCriticality    Criticality?
+  isActive               Boolean      @default(true)
+  createdById            String
+  createdBy              User         @relation("VendorCreatedBy", fields: [createdById], references: [id])
+  /// Snapshot da VendorAssessment COMPLETED mais recente - null até a
+  /// primeira avaliação ser concluída.
+  currentTier            Int?
+  currentTierLabel       String?
+  currentScore           Decimal?     @db.Decimal(5, 2)
+  lastAssessedAt         DateTime?
+  /// Data-alvo da próxima reavaliação, calculada a partir do tier + criticidade
+  /// de negócio no momento da conclusão da última avaliação (ver
+  /// VendorReassessmentScheduler). Null até a primeira avaliação ser concluída.
+  nextReviewDueAt        DateTime?
+  /// Trava de idempotência do scheduler de reavaliação - setada quando a
+  /// notificação de "reavaliação vencida" é disparada, limpa na próxima vez
+  /// que uma VendorAssessment é concluída para este fornecedor. Mesmo
+  /// espírito do guard `status != EXPIRED` em SoftwareInventoryItem.
+  reassessmentNotifiedAt DateTime?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  assessments       VendorAssessment[]
+  linkedAssessments Assessment[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("vendors")
+}
+
+/// Catálogo de perguntas do questionário de avaliação de fornecedor -
+/// deliberadamente separado do catálogo de perguntas de software
+/// (QuestionCategory/Question), ver nota da seção acima.
+model VendorQuestionCategory {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questions VendorQuestion[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("vendor_question_categories")
+}
+
+model VendorQuestion {
+  id          String                 @id @default(cuid())
+  tenantId    String
+  tenant      Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    VendorQuestionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  text        String
+  description String?
+  /// Peso da pergunta no score final - mesma escala/ideia de Question.weight.
+  weight      Decimal                @db.Decimal(5, 2)
+  type        QuestionType
+  order       Int                    @default(0)
+  isActive    Boolean                @default(true)
+  isRequired  Boolean                @default(true)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  options VendorQuestionOption[]
+  answers VendorAnswer[]
+
+  @@index([tenantId])
+  @@index([categoryId])
+  @@map("vendor_questions")
+}
+
+model VendorQuestionOption {
+  id         String         @id @default(cuid())
+  questionId String
+  question   VendorQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  label      String
+  value      String
+  /// Contribuição de risco desta opção - mesma ideia de QuestionOption.score.
+  score      Decimal        @db.Decimal(5, 2)
+  order      Int            @default(0)
+
+  answerSelections VendorAnswerOption[]
+
+  @@index([questionId])
+  @@map("vendor_question_options")
+}
+
+/// Configuração de tierização de fornecedor, versionada por tenant - mesmo
+/// padrão de RiskMatrixConfig (só uma isActive por tenant), mas mais simples:
+/// um score agregado 1D mapeado em N tiers, não uma matriz probabilidade×
+/// impacto 2D.
+model VendorTierConfig {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  version   Int      @default(1)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  thresholds  VendorTierThreshold[]
+  assessments VendorAssessment[]
+
+  @@index([tenantId])
+  @@map("vendor_tier_configs")
+}
+
+/// Faixa de score que classifica um tier. `tier` é o número mostrado ao
+/// usuário (1 = melhor cenário/menos acompanhamento, número maior = pior/mais
+/// acompanhamento - inverso do score, onde valor maior = mais favorável) -
+/// nunca exibir esse número cru na UI, sempre junto com `label` (ex.: "Tier 1
+/// · Baixo risco"). `baseReassessmentMonths` é o intervalo padrão de
+/// reavaliação para fornecedores neste tier, antes do ajuste por
+/// businessCriticality (ver vendor-reassessment.util.ts).
+model VendorTierThreshold {
+  id                     String           @id @default(cuid())
+  vendorTierConfigId     String
+  vendorTierConfig       VendorTierConfig @relation(fields: [vendorTierConfigId], references: [id], onDelete: Cascade)
+  tier                   Int
+  label                  String
+  color                  String
+  minScore               Decimal          @db.Decimal(5, 2)
+  maxScore               Decimal          @db.Decimal(5, 2)
+  baseReassessmentMonths Int
+
+  @@unique([vendorTierConfigId, tier])
+  @@index([vendorTierConfigId])
+  @@map("vendor_tier_thresholds")
+}
+
+enum VendorAssessmentStatus {
+  DRAFT
+  COMPLETED
+}
+
+/// Instância do questionário de avaliação de fornecedor preenchida por um
+/// analista interno. Sem versionamento (diferente de AssessmentVersion) e sem
+/// workflow de aprovação (diferente de AssessmentWorkflowInstance) - score/tier
+/// são calculados automaticamente no momento da conclusão (`status:
+/// COMPLETED`), sem etapa de aprovação humana no meio. `status: DRAFT` existe
+/// só para permitir salvar progresso parcial num formulário de ~30 perguntas.
+model VendorAssessment {
+  id                 String                 @id @default(cuid())
+  tenantId           String
+  tenant             Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vendorId           String
+  vendor             Vendor                 @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  performedById      String
+  performedBy        User                   @relation("VendorAssessmentPerformedBy", fields: [performedById], references: [id])
+  vendorTierConfigId String
+  vendorTierConfig   VendorTierConfig       @relation(fields: [vendorTierConfigId], references: [id])
+  status             VendorAssessmentStatus @default(DRAFT)
+  /// Snapshot no momento da conclusão - editar VendorTierThreshold depois não
+  /// reclassifica avaliações antigas (mesmo raciocínio de RiskResult).
+  totalScore         Decimal?               @db.Decimal(5, 2)
+  tier               Int?
+  tierLabel          String?
+  notes              String?
+  completedAt        DateTime?
+  nextReviewDueAt    DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  answers VendorAnswer[]
+
+  @@index([tenantId, vendorId])
+  @@map("vendor_assessments")
+}
+
+/// Resposta a uma pergunta do questionário de fornecedor - espelha
+/// AssessmentAnswer exatamente, FK pra VendorAssessment em vez de Assessment.
+model VendorAnswer {
+  id                 String           @id @default(cuid())
+  vendorAssessmentId String
+  vendorAssessment   VendorAssessment @relation(fields: [vendorAssessmentId], references: [id], onDelete: Cascade)
+  vendorQuestionId   String
+  vendorQuestion     VendorQuestion   @relation(fields: [vendorQuestionId], references: [id])
+  textValue          String?
+  scaleValue         Int?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  selectedOptions VendorAnswerOption[]
+
+  @@unique([vendorAssessmentId, vendorQuestionId])
+  @@index([vendorAssessmentId])
+  @@map("vendor_answers")
+}
+
+model VendorAnswerOption {
+  id                     String               @id @default(cuid())
+  vendorAnswerId         String
+  vendorAnswer           VendorAnswer         @relation(fields: [vendorAnswerId], references: [id], onDelete: Cascade)
+  vendorQuestionOptionId String
+  vendorQuestionOption   VendorQuestionOption @relation(fields: [vendorQuestionOptionId], references: [id])
+
+  @@unique([vendorAnswerId, vendorQuestionOptionId])
+  @@map("vendor_answer_options")
+}
+
+// =============================================================================
 // Inventário de softwares
 // =============================================================================
 
@@ -865,11 +1117,11 @@ enum DataClassification {
 /// opcional para permitir, no futuro, cadastro manual de itens de inventário
 /// legado que nunca passaram pelo fluxo de homologação.
 model SoftwareInventoryItem {
-  id                     String              @id @default(cuid())
+  id                     String             @id @default(cuid())
   tenantId               String
-  tenant                 Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant                 Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assessmentId           String?
-  assessment             Assessment?         @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  assessment             Assessment?        @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
   name                   String
   vendor                 String
   version                String?
@@ -883,15 +1135,15 @@ model SoftwareInventoryItem {
   /// que é uma dimensão diferente de `type` (SaaS x On-Premises).
   hostingProvider        String?
   areaId                 String
-  area                   Area                @relation(fields: [areaId], references: [id])
+  area                   Area               @relation(fields: [areaId], references: [id])
   managerId              String
-  manager                User                @relation("InventoryManager", fields: [managerId], references: [id])
+  manager                User               @relation("InventoryManager", fields: [managerId], references: [id])
   technicalResponsibleId String
-  technicalResponsible   User                @relation("InventoryTechnicalResponsible", fields: [technicalResponsibleId], references: [id])
+  technicalResponsible   User               @relation("InventoryTechnicalResponsible", fields: [technicalResponsibleId], references: [id])
   homologationDate       DateTime
   nextReviewDate         DateTime
-  status                 InventoryStatus     @default(ACTIVE)
-  criticality             Criticality
+  status                 InventoryStatus    @default(ACTIVE)
+  criticality            Criticality
   dataClassification     DataClassification
   /// Declaração de que o fornecedor tem ART (Análise de Risco) documentada -
   /// mesmo campo/semântica de `Assessment.hasRiskAnalysis`. Para itens vindos
@@ -899,15 +1151,15 @@ model SoftwareInventoryItem {
   /// na criação e passa a ser somente leitura na UI (evita divergência entre
   /// os dois registros); só itens de entrada manual (`assessmentId` nulo)
   /// podem editar isto diretamente.
-  hasRiskAnalysis        Boolean             @default(false)
+  hasRiskAnalysis        Boolean            @default(false)
   /// Mesma lógica de `hasRiskAnalysis`, para a cláusula de segurança da
   /// informação assinada com o fornecedor.
-  hasInfoSecClause       Boolean             @default(false)
-  createdAt              DateTime            @default(now())
-  updatedAt              DateTime            @updatedAt
+  hasInfoSecClause       Boolean            @default(false)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
 
-  attachments         Attachment[]
-  documentationLinks  InventoryDocumentationLink[]
+  attachments        Attachment[]
+  documentationLinks InventoryDocumentationLink[]
 
   @@index([tenantId])
   @@index([tenantId, status])
@@ -962,20 +1214,20 @@ enum AttachmentCategory {
 /// para manter integridade referencial real no banco — mais previsível para
 /// um sistema corporativo do que um polimorfismo sem constraint.
 model Attachment {
-  id              String              @id @default(cuid())
+  id              String                 @id @default(cuid())
   tenantId        String
-  tenant          Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant          Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assessmentId    String?
-  assessment      Assessment?         @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessment      Assessment?            @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   inventoryItemId String?
   inventoryItem   SoftwareInventoryItem? @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
   category        AttachmentCategory
   fileName        String
   storageKey      String
-  version         Int                 @default(1)
+  version         Int                    @default(1)
   uploadedById    String
-  uploadedBy      User                @relation(fields: [uploadedById], references: [id])
-  uploadedAt      DateTime            @default(now())
+  uploadedBy      User                   @relation(fields: [uploadedById], references: [id])
+  uploadedAt      DateTime               @default(now())
 
   @@index([tenantId])
   @@index([assessmentId])
@@ -1060,6 +1312,8 @@ enum NotificationType {
   RENEWAL_PENDING
   /// Prazo de renovação venceu sem resolução - item virou EXPIRED, área bloqueada.
   RENEWAL_OVERDUE
+  /// Reavaliação periódica de um fornecedor venceu (ver VendorReassessmentScheduler).
+  VENDOR_REASSESSMENT_DUE
 }
 
 model Notification {
