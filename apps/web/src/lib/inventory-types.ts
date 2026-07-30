@@ -27,10 +27,19 @@ export interface InventoryDocumentationLink {
   url: string;
 }
 
+export interface InventoryLinkedVendor {
+  id: string;
+  name: string;
+  currentTier: number | null;
+  currentTierLabel: string | null;
+}
+
 export interface InventoryItemSummary {
   id: string;
   name: string;
   vendor: string;
+  vendorId: string | null;
+  linkedVendor: InventoryLinkedVendor | null;
   category: string;
   type: SoftwareType;
   status: InventoryStatus;
@@ -79,6 +88,7 @@ export interface PaginatedInventory {
 export interface InventoryItemFormValues {
   name: string;
   vendor: string;
+  vendorId?: string;
   version?: string;
   url?: string;
   category: string;

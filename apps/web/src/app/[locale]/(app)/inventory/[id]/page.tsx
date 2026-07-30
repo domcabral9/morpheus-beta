@@ -8,14 +8,18 @@ import { Loader2 } from "lucide-react";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useApi } from "@/lib/use-api";
 import { usePermission } from "@/lib/use-permission";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
+import { ApiError } from "@/components/auth-provider";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TierBadge } from "@/components/tier-badge";
 import type { Area } from "@/lib/assessment-types";
 import type { UserOption } from "@/lib/user-picker-types";
 import type { InventoryItemDetail } from "@/lib/inventory-types";
 import { ItemFormDialog } from "../_components/item-form-dialog";
+import { LinkVendorDialog } from "../_components/link-vendor-dialog";
 
 const STATUS_VARIANT: Record<string, "secondary" | "success" | "destructive" | "outline"> = {
   ACTIVE: "success",
@@ -39,13 +43,18 @@ export default function InventoryItemPage() {
   const params = useParams<{ id: string }>();
   const user = useRequireAuth();
   const api = useApi();
+  const router = useRouter();
   const canManage = usePermission("inventory:manage");
+  const canViewVendors = usePermission("vendors:view");
+  const canManageVendors = usePermission("vendors:manage");
 
   const [item, setItem] = React.useState<InventoryItemDetail | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [areas, setAreas] = React.useState<Area[]>([]);
   const [users, setUsers] = React.useState<UserOption[]>([]);
   const [editOpen, setEditOpen] = React.useState(false);
+  const [linkVendorOpen, setLinkVendorOpen] = React.useState(false);
+  const [startingArt, setStartingArt] = React.useState(false);
 
   const loadItem = React.useCallback(() => {
     return api
@@ -73,6 +82,17 @@ export default function InventoryItemPage() {
   }, [user, canManage, api]);
 
   if (!user) return null;
+
+  async function handleStartArt(vendorId: string) {
+    setStartingArt(true);
+    try {
+      const created = await api.post<{ id: string }>(`/vendors/${vendorId}/assessments`, {});
+      router.push(`/vendors/${vendorId}/assessments/${created.id}`);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("vendorArtStartError"));
+      setStartingArt(false);
+    }
+  }
 
   return (
     <>
@@ -183,6 +203,53 @@ export default function InventoryItemPage() {
                 )}
               </div>
 
+              {canViewVendors && (
+                <div className="mt-4 flex flex-col gap-2 border-t pt-4">
+                  <span className="text-xs text-muted-foreground">{t("vendorArtTitle")}</span>
+                  {!item.linkedVendor && (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-sm text-muted-foreground">{t("vendorArtNoneLinked")}</span>
+                      {canManageVendors && (
+                        <Button size="sm" variant="outline" onClick={() => setLinkVendorOpen(true)}>
+                          {t("vendorArtLinkButton")}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                  {item.linkedVendor && item.linkedVendor.currentTier === null && (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-sm">{item.linkedVendor.name}</span>
+                      <span className="text-sm text-muted-foreground">{t("vendorArtNeverAssessed")}</span>
+                      {canManageVendors && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={startingArt}
+                          onClick={() => handleStartArt(item.linkedVendor!.id)}
+                        >
+                          {startingArt ? t("vendorArtStarting") : t("vendorArtStartButton")}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                  {item.linkedVendor && item.linkedVendor.currentTier !== null && (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-sm">{item.linkedVendor.name}</span>
+                      <TierBadge
+                        tier={item.linkedVendor.currentTier}
+                        label={item.linkedVendor.currentTierLabel ?? ""}
+                      />
+                      <Link
+                        href={`/vendors/${item.linkedVendor.id}`}
+                        className="text-sm hover:underline"
+                      >
+                        {t("vendorArtViewLink")}
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {item.documentationLinks.length > 0 && (
                 <div className="mt-4 flex flex-col gap-1 border-t pt-4">
                   <span className="text-xs text-muted-foreground">{t("documentationLinksTitle")}</span>
@@ -220,6 +287,10 @@ export default function InventoryItemPage() {
             setEditOpen(false);
           }}
         />
+      )}
+
+      {item && canManageVendors && (
+        <LinkVendorDialog itemId={item.id} open={linkVendorOpen} onOpenChange={setLinkVendorOpen} />
       )}
     </>
   );
