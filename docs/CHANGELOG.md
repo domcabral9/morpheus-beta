@@ -2176,5 +2176,20 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     tierização mostra as 4 faixas → combobox encontra o fornecedor por busca e cria um novo via modal
     inline. 15/15 checks passando. Dados de teste (fornecedores criados durante a validação) removidos
     do banco depois.
+- **Avaliação de risco de fornecedores, Fase 5 (2026-07-30): `README.md` (PT-BR + EN).** Fecha o
+  plano - só documentação, sem código.
+  - Reenquadramento da abertura ("O que o Morpheus faz"): deixa de ser só "reduzir Shadow IT" e passa
+    a ser gestão de risco de segurança da informação em duas frentes complementares (software +
+    fornecedor). Shadow IT continua mencionado, mas como um efeito colateral do canal único de
+    adoção formal, não a moldura inteira do produto - e com a ressalva explícita de que o ganho é
+    tornar a adoção formal o caminho natural, não detecção ativa (o Morpheus não faz scanning de
+    rede/CASB).
+  - Novo item 7 na lista numerada de funcionalidades: avaliação de risco de fornecedores.
+  - Nova seção "Avaliação de risco de fornecedores (metodologia)" / "Vendor risk assessment
+    (methodology)", logo após "Matriz de risco (metodologia)": questionário de 28 perguntas em 4
+    categorias, preenchido por analista interno (não é formulário público), citação ao NIST SP
+    800-161 (*Cybersecurity Supply Chain Risk Management Practices*), e a lógica de Tier 1=melhor→
+    Tier 4=pior com cadência de reavaliação configurável por tier e ajustada pela criticidade do
+    fornecedor. Sem screenshot novo nessa fase.
 
 

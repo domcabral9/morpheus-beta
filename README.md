@@ -8,8 +8,8 @@ trilha de auditoria, hardening de API, observabilidade.
 
 ## O que o Morpheus faz
 
-Centraliza o processo de avaliação de risco de novos softwares contratados/adotados por uma
-empresa - uma forma de reduzir Shadow IT. Do questionário de risco à decisão final:
+Centraliza a gestão de risco de segurança da informação em duas frentes complementares: o software
+adotado pela empresa e o fornecedor por trás dele. Do questionário de risco à decisão final:
 
 1. Questionário de risco (perguntas ponderadas, vinculadas a controles de compliance).
 2. Matriz de decisão configurável (faixas de probabilidade × impacto → classificação de risco).
@@ -17,6 +17,13 @@ empresa - uma forma de reduzir Shadow IT. Do questionário de risco à decisão 
 4. Parecer técnico em PDF, com QR Code de verificação.
 5. Inventário de software homologado, com ciclo de revisão periódica.
 6. Dashboards de postura de conformidade e placar de maturidade por área.
+7. Avaliação de risco de fornecedores, com questionário inspirado no NIST SP 800-161, pontuação
+   automática e Tiers de monitoramento com cadência de reavaliação configurável.
+
+Um efeito direto disso: como toda nova contratação passa por um canal único e fica registrada num
+inventário central, o processo também fortalece a governança corporativa e reduz Shadow IT - o
+ganho vem de tornar a adoção formal o caminho natural (com dono e trilha de auditoria), não de
+detectar ativamente o que já roda às escondidas.
 
 ## Matriz de risco (metodologia)
 
@@ -34,6 +41,22 @@ anterior).
 | Matriz de risco - grade de decisão | Dashboard executivo - postura de conformidade |
 | --- | --- |
 | ![Matriz de risco](./docs/screenshots/risk-matrix-config.png) | ![Postura de conformidade](./docs/screenshots/dashboard-executivo.png) |
+
+## Avaliação de risco de fornecedores (metodologia)
+
+Além de homologar o software, um analista interno registra o fornecedor por trás dele e responde um
+questionário de 28 perguntas (dados cadastrais/contratuais, política de segurança da informação,
+gestão de vulnerabilidades e incidentes, continuidade e disponibilidade) - inspirado nas práticas de
+gestão de risco de cadeia de suprimentos do NIST SP 800-161 (*Cybersecurity Supply Chain Risk
+Management Practices*). Não é um formulário público: só quem já tem acesso ao Morpheus preenche, com
+base em contrato/documentação recebida do fornecedor.
+
+Ao concluir a avaliação, a pontuação é calculada automaticamente (mesmo motor de score do
+questionário de software) e classificada num Tier de monitoramento - Tier 1 é o melhor cenário
+(menos acompanhamento), Tier 4 o pior (acompanhamento mais próximo). Cada Tier tem um intervalo base
+de reavaliação configurável pelo administrador, ajustado pela criticidade de negócio do fornecedor
+(de fornecedores críticos, reavaliados com mais frequência, a fornecedores de baixa criticidade,
+revisados com menos frequência).
 
 ## Controles de segurança implementados
 
@@ -148,8 +171,8 @@ handling sensitive data: granular access control, audit trail, API hardening, ob
 
 ## What Morpheus does
 
-Centralizes the risk-assessment process for new software purchased/adopted by a company - a way to
-reduce Shadow IT. From risk questionnaire to final decision:
+Centralizes information-security risk management on two complementary fronts: the software adopted
+by the company and the vendor behind it. From risk questionnaire to final decision:
 
 1. Risk questionnaire (weighted questions, linked to compliance controls).
 2. Configurable decision matrix (probability × impact ranges → risk classification).
@@ -157,6 +180,13 @@ reduce Shadow IT. From risk questionnaire to final decision:
 4. Technical opinion (PDF report), with a verification QR code.
 5. Homologated software inventory, with periodic review cycle.
 6. Compliance-posture dashboards and a maturity leaderboard by area.
+7. Vendor risk assessment, with a questionnaire inspired by NIST SP 800-161, automatic scoring, and
+   monitoring Tiers with configurable reassessment cadence.
+
+A direct side effect: since every new acquisition goes through a single channel and lands in a
+central inventory, the process also strengthens corporate governance and reduces Shadow IT - the
+gain comes from making formal adoption the natural path (with an owner and an audit trail), not
+from actively detecting what's already running under the radar.
 
 ## Risk matrix (methodology)
 
@@ -174,6 +204,21 @@ previous version).
 | Risk matrix - decision grid | Executive dashboard - compliance posture |
 | --- | --- |
 | ![Risk matrix](./docs/screenshots/risk-matrix-config-en.png) | ![Compliance posture](./docs/screenshots/dashboard-executivo-en.png) |
+
+## Vendor risk assessment (methodology)
+
+Beyond homologating the software itself, an internal analyst registers the vendor behind it and
+answers a 28-question questionnaire (registration/contractual data, information security policy,
+vulnerability and incident management, continuity and availability) - inspired by the supply-chain
+risk management practices in NIST SP 800-161 (*Cybersecurity Supply Chain Risk Management
+Practices*). It's not a public form: only users who already have Morpheus access fill it in, based
+on the contract/documentation received from the vendor.
+
+Once the assessment is completed, the score is calculated automatically (the same scoring engine
+used for the software questionnaire) and classified into a monitoring Tier - Tier 1 is the best-case
+scenario (least oversight), Tier 4 the worst (closest oversight). Each Tier has an admin-configurable
+base reassessment interval, adjusted by the vendor's business criticality (critical vendors get
+reassessed more often, low-criticality vendors less often).
 
 ## Implemented security controls
 
