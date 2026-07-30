@@ -2045,3 +2045,16 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     teste). `pnpm turbo run typecheck lint test build` completo limpo (219 testes do `apps/api`
     passando, só o ruído de CRLF de sempre no lint).
   **Válvula de escape acionada?** Não. Log completo em `morpheus-ops/reports/vulnerability-log.md`.
+- **Janela de revisão semanal - continuação, PR #81 (2026-07-30)**: com as 4 camadas originais
+  fechadas, o Dependabot fechou sozinho a antiga PR agrupada `#77` (ficou obsoleta/conflitante
+  depois dos merges de ontem) e abriu uma nova, `#81`, com 22 atualizações em vez de 34 - o resto já
+  tinha sido coberto. Perfil idêntico à Camada 1 original: grupo `minor-and-patch`, só patch/minor
+  em pacotes já conhecidos (`next` 16.2.11→16.2.12, `prisma`/`@prisma/*` 7.9.0→7.9.1, família
+  `radix-ui`, `react-hook-form`, `recharts`, `turbo`, etc.), nenhum major. Cruzado com os 9 alertas
+  de segurança abertos no momento (`find-my-way`, `brace-expansion`, `js-yaml`, `postcss`,
+  `fast-uri`, `sharp`, `valibot`) - nenhum é resolvido por essa PR, são todos dependências
+  transitivas de ferramental fora do escopo desse bump, então é atualização de rotina, não correção
+  de CVE. `pnpm turbo run typecheck lint test build` limpo (219 testes, só o CRLF de sempre; lint do
+  `apps/web` trouxe 3 warnings pré-existentes, zero erros - 2 imports não usados já conhecidos mais
+  um novo aviso do React Compiler sobre `watch()` do `react-hook-form` não poder ser memoizado,
+  inofensivo). CI verde. Log em `morpheus-ops/reports/vulnerability-log.md`.
