@@ -36,6 +36,13 @@ export interface PaginatedVendors {
   pageSize: number;
 }
 
+/** Resposta de `GET /vendors/tracking` - 3 baldes pra aba "Acompanhamento". */
+export interface VendorTracking {
+  neverAssessed: VendorListItem[];
+  overdue: VendorListItem[];
+  dueSoon: VendorListItem[];
+}
+
 export interface VendorFormValues {
   name: string;
   legalName?: string;

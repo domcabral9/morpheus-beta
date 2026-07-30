@@ -2244,5 +2244,30 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     (`Contract Analyzer AI`) → "Vincular fornecedor" → busca o mesmo fornecedor → navega direto pra
     avaliação. 8/8 checks. Dados de teste removidos do banco depois (inclusive revertendo o
     `vendorId` que o script deixou vinculado no item pré-existente usado no teste).
+- **Rastreabilidade Inventory↔Vendor, Fase 3 (2026-07-30): aba "Acompanhamento" em `/vendors` +
+  amostras reais.** Fecha o pacote (Fases 1-3).
+  - `/vendors/page.tsx` ganha `Tabs` ("Fornecedores" | "Acompanhamento"). Nova
+    `vendor-tracking-view.tsx` consome `GET /vendors/tracking` (Fase 1) e mostra 3 cards: nunca
+    avaliados, reavaliação vencida e reavaliação nos próximos 30 dias - cada linha linkando pro
+    fornecedor, com `TierBadge` e data quando aplicável. É o equivalente, do lado de fornecedores, da
+    inbox `/approvals` de Assessment - mas como `VendorAssessment` não tem workflow de aprovação
+    (decisão mantida nesta sessão: tier continua automática), é uma visão de monitoramento, não uma
+    fila de decisão.
+  - **Amostras reais no tenant demo** (dado vivo via API real, não `seed.ts` - mesmo padrão já usado
+    pro histórico do projeto): 6 `Vendor` novos, cobrindo os 4 tiers + 1 nunca avaliado, vinculados a
+    itens de inventário já existentes via `PATCH /inventory/:id` (reaproveitando os nomes de
+    fornecedor em texto livre que já estavam nesses itens - Atlassian/Trello, DocuSign Inc./DocuSign,
+    Workday Inc./Workday HR, Fornecedor ERP Legado Ltda/Legacy ERP, LogiTrack Systems/Freight
+    Tracking API, Canva Pty Ltd/Canva Pro). `DocuSign Inc.` foi vinculado a dois itens (DocuSign +
+    Contract Analyzer AI), demonstrando o relacionamento N:1 de verdade. Respostas do questionário
+    calculadas por um script descartável (busca gulosa pela combinação de respostas mais próxima do
+    risco médio alvo de cada tier - o catálogo demo é todo `SINGLE_CHOICE` binário, então mirar um
+    score por "opção mais próxima de um alvo global" ficava grosseiro demais). Duas datas de
+    reavaliação (`Vendor.nextReviewDueAt`) ajustadas manualmente via SQL pra popular os baldes
+    "vencida"/"próxima" de propósito - mesmo padrão já usado antes pro exemplo de
+    `PENDING_RENEWAL` (dado de demonstração intencional, não revert).
+  - **Testes**: `pnpm --filter @morpheus/web lint/typecheck/build` verde. Validação real em
+    navegador via Playwright descartável + screenshot manual - os 3 baldes renderizam corretamente
+    com as amostras reais (4/4 checks).
 
 
