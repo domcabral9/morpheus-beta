@@ -2280,5 +2280,32 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     (metodologia)" mencionando que a ART agora também é acessível/iniciável a partir do Inventory, e
     uma nova tabela de screenshots logo abaixo - mesmo padrão da tabela já existente ali pra
     matriz de risco.
+- **Auditoria de portfólio pós-feature de fornecedores (2026-07-30).** O usuário revisou a Fase 4
+  acima com mais rigor e apontou 3 problemas reais que a fase anterior deixou passar - portfólio é
+  tratado como material de venda do projeto, não um anexo qualquer:
+  - **A entidade `Vendor` nunca teve print de verdade** (lista/detalhe com tier), em nenhum idioma -
+    a feature original (Fases 1-5) explicitamente pulou screenshots. Novos: `vendors-lista{,-en}.png`
+    e `vendors-detalhe{,-en}.png` (Atlassian, Tier 1) adicionados à galeria principal ("Telas"/
+    "Screenshots") do `README.md`, PT-BR+EN.
+  - **14 screenshots pré-existentes estavam desatualizados** - todos os que mostram a sidebar
+    (`dashboard-{minha-visao,administrativo,executivo,placar-por-area}`, `busca-rapida`,
+    `admin-papeis`, `risk-matrix-config`, PT-BR+EN) foram capturados antes do PR #86 (Fase 4 da
+    feature de fornecedores) e não tinham "Fornecedores"/"Vendors" no menu. Todos regenerados. De
+    quebra, também padronizados os 2 screenshots da Fase 4 anterior
+    (`inventory-item-art`/`vendors-acompanhamento`, que tinham viewport 1280×800 em vez do padrão
+    1280×900 do resto do repositório) e removido um rascunho de avaliação de teste ("sss") esquecido
+    no banco que estava poluindo o dashboard "Minha visão" nos prints novos.
+  - **`docs/architecture.md` estava desatualizado**: dizia "36 modelos" (hoje são 46), e os diagramas
+    ER não tinham nenhuma entidade `Vendor*` nem as FKs novas (`Assessment.vendorId`,
+    `SoftwareInventoryItem.vendorId`). Nova seção "Fornecedores e tierização" com o diagrama ER
+    completo dos 9 modelos (`Vendor`, `VendorQuestionCategory/Question/Option`,
+    `VendorTierConfig/Threshold`, `VendorAssessment`, `VendorAnswer/Option`), e as duas FKs
+    adicionadas aos diagramas de "Avaliação e workflow" e "Pós-aprovação". `docs/DEVELOPMENT.md` e
+    `docs/security.md` foram checados e confirmados como não afetados (escopo deles é setup/processo,
+    não narrativa de feature - essa vive só no `CHANGELOG.md`).
+  - **Como aplicar daqui pra frente**: qualquer mudança de UX com impacto moderado ou maior (nova
+    entidade no menu principal, nova tela, fluxo novo) exige revisar TODO o portfólio afetado antes
+    de considerar a fase terminada - não só adicionar o print da mudança em si, mas checar se ela
+    invalida prints/documentação já existentes.
 
 
