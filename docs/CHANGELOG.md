@@ -2115,3 +2115,21 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     que tentar concluir a mesma avaliação de novo dá `422`. Confirmado que linkar um `Vendor` real
     numa `Assessment` de software sobrescreve o texto livre digitado errado pelo nome real do
     fornecedor. Dados de teste removidos do banco depois (convenção do projeto).
+- **Avaliação de risco de fornecedores, Fase 3 (2026-07-30): scheduler de reavaliação.**
+  `VendorReassessmentScheduler` (`apps/api/src/modules/vendors/vendor-reassessment.scheduler.ts`),
+  registrado dentro do próprio `VendorsModule` (diferente do `RenewalModule`, que virou módulo
+  separado especificamente pra evitar circularidade com `AssessmentsModule`/`InventoryModule` - esse
+  risco não existe aqui, `VendorsModule` já é autocontido).
+  - `@Cron("45 6 * * *")`, escalonado depois dos dois jobs de renovação anual (6h15/6h30). Query
+    idempotente em `VendorsRepository.findDueForReassessment()`: fornecedores ativos já avaliados
+    (`currentTier` não nulo) com `nextReviewDueAt` vencido e `reassessmentNotifiedAt` ainda nulo -
+    trava limpa automaticamente na próxima `VendorAssessment` concluída
+    (`VendorsService.completeAssessment` já zerava esse campo desde a Fase 2).
+  - Mesmo padrão duplo de notificação do `RenewalScheduler.checkRenewalTriggers`: notifica quem
+    concluiu a última `VendorAssessment` (se ainda ativo); se inativo ou se nunca houve avaliação
+    concluída, notifica o papel "Administrador" via `notifyRole()`. Novo tipo
+    `NotificationType.VENDOR_REASSESSMENT_DUE` (já estava no schema desde a Fase 1). Grava
+    `AuditLogService.record` (`action: "UPDATE"`, `entityType: "Vendor"`) por fornecedor notificado.
+  - **Testes**: `vendor-reassessment.scheduler.spec.ts`, 6 novos casos (nenhum vencido, responsável
+    ativo, responsável inativo, nunca avaliado antes, sem papel Administrador configurado, múltiplos
+    fornecedores numa mesma execução) - todos passando (251 no total do `apps/api`).
