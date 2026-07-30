@@ -2058,3 +2058,32 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
   `apps/web` trouxe 3 warnings pré-existentes, zero erros - 2 imports não usados já conhecidos mais
   um novo aviso do React Compiler sobre `watch()` do `react-hook-form` não poder ser memoizado,
   inofensivo). CI verde. Log em `morpheus-ops/reports/vulnerability-log.md`.
+- **Nova feature (2026-07-30) - Avaliação de risco de fornecedores (Vendor), Fase 1: schema + seed.**
+  Depois de uma reunião com uma equipe de Sec GRC, o usuário pediu pra estender o Morpheus além da
+  homologação de software: avaliar formalmente o fornecedor por trás dele - questionário inspirado
+  no NIST SP 800-161 (gestão de risco de cadeia de suprimentos), score automático, classificação em
+  4 Tiers de monitoramento (Tier 1 = melhor cenário/menos acompanhamento, Tier 4 = pior/acompanhamento
+  mais próximo - inverso do score, onde valor maior = mais favorável), reavaliação periódica
+  ajustada por criticidade de negócio do fornecedor. Escopo completo derivado numa sessão de plano
+  dedicada (`AskUserQuestion` + investigação do código real) - decisões confirmadas: preenchimento
+  por analista interno (não é formulário público), sem workflow de aprovação (score/tier calculados
+  automaticamente na conclusão), e `Assessment.vendor` (texto livre) ganha um `vendorId` opcional
+  linkando um `Vendor` real, sem quebrar avaliações existentes.
+  - Schema: 9 modelos novos (`Vendor`, `VendorQuestionCategory`/`VendorQuestion`/
+    `VendorQuestionOption` - catálogo separado do de software, porque tierização é score agregado 1D,
+    não matriz probabilidade×impacto 2D -, `VendorTierConfig`/`VendorTierThreshold`,
+    `VendorAssessment`, `VendorAnswer`/`VendorAnswerOption`) + `Assessment.vendorId` nullable +
+    `NotificationType.VENDOR_REASSESSMENT_DUE` + `VendorAssessmentStatus`. Migration 100% aditiva
+    (27 `CREATE`, zero `DROP`) - confirmado via SQL que as 3 `Assessment`s existentes no banco de dev
+    ficaram com `vendorId` null e `vendor` intocado.
+  - Seed: 2 permissões novas (`vendors:view`, também concedida às roles aprovadoras;
+    `vendors:manage`), `VendorTierConfig` "Config Padrão" com os 4 thresholds (12/6/4/3 meses de
+    cadência base por tier), e um catálogo de ~28 perguntas (4 categorias: Dados
+    Cadastrais/Contratuais, PSI, Gestão de Vulnerabilidades/Incidentes, Continuidade/Disponibilidade)
+    reaproveitado por todos os tenants demo - reusa o mesmo helper `YES_NO()` e a mesma escala 0-5 de
+    risco cru por opção já usada no questionário de software (o `RiskEngineService.computeScores`
+    existente inverte pra score final onde maior = mais favorável - será reutilizado sem mudança nas
+    fases seguintes).
+  - Plano completo (todas as fases, decisões de escopo, algoritmo de cadência de reavaliação) em
+    `C:\Users\kaosikner\.claude\plans\streamed-sleeping-newell.md` (arquivo de plano local, não
+    versionado no repo).
