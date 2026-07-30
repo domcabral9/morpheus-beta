@@ -15,6 +15,14 @@ export class CreateAssessmentDto {
   @MinLength(1)
   vendor!: string;
 
+  @ApiPropertyOptional({
+    description:
+      "Fornecedor cadastrado (Vendor) vinculado a esta avaliação - opcional, o texto livre acima continua sendo a fonte de verdade exibida em toda a aplicação.",
+  })
+  @IsOptional()
+  @IsString()
+  vendorId?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

@@ -7,6 +7,10 @@ const assessmentDetailInclude = {
   responsible: { select: { id: true, name: true, email: true } },
   requester: { select: { id: true, name: true, email: true } },
   versions: { orderBy: { createdAt: "desc" } },
+  // Fornecedor cadastrado vinculado (opcional) - trazido aqui pra já deixar o
+  // tier disponível pro badge do dialog de aprovação (Fase 4 do plano de
+  // avaliação de fornecedores) sem precisar de uma chamada extra.
+  linkedVendor: true,
 } satisfies Prisma.AssessmentInclude;
 
 export type AssessmentDetail = Prisma.AssessmentGetPayload<{
