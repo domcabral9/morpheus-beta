@@ -58,6 +58,15 @@ de reavaliação configurável pelo administrador, ajustado pela criticidade de 
 (de fornecedores críticos, reavaliados com mais frequência, a fornecedores de baixa criticidade,
 revisados com menos frequência).
 
+O fornecedor por trás de um software já homologado também é rastreável: a partir do detalhe de
+qualquer item do inventário é possível ver a ART do fornecedor vinculado (ou iniciar uma, se ainda
+não existir), e a aba "Acompanhamento" em Fornecedores dá uma visão consolidada de quem nunca foi
+avaliado ou está com reavaliação vencida/próxima.
+
+| ART do fornecedor no detalhe do item | Acompanhamento de fornecedores |
+| --- | --- |
+| ![ART do fornecedor](./docs/screenshots/inventory-item-art.png) | ![Acompanhamento de fornecedores](./docs/screenshots/vendors-acompanhamento.png) |
+
 ## Controles de segurança implementados
 
 - **RBAC granular por permissão** (não só por papel), com decorators dedicados para composição
@@ -219,6 +228,15 @@ used for the software questionnaire) and classified into a monitoring Tier - Tie
 scenario (least oversight), Tier 4 the worst (closest oversight). Each Tier has an admin-configurable
 base reassessment interval, adjusted by the vendor's business criticality (critical vendors get
 reassessed more often, low-criticality vendors less often).
+
+The vendor behind an already-homologated piece of software is traceable too: from any inventory
+item's detail page you can see the linked vendor's ART (or start one, if it doesn't exist yet), and
+the "Tracking" tab under Vendors gives a consolidated view of who's never been assessed or has an
+overdue/upcoming reassessment.
+
+| Vendor ART on the item detail page | Vendor tracking |
+| --- | --- |
+| ![Vendor ART](./docs/screenshots/inventory-item-art-en.png) | ![Vendor tracking](./docs/screenshots/vendors-acompanhamento-en.png) |
 
 ## Implemented security controls
 
