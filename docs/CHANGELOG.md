@@ -2269,5 +2269,16 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
   - **Testes**: `pnpm --filter @morpheus/web lint/typecheck/build` verde. Validação real em
     navegador via Playwright descartável + screenshot manual - os 3 baldes renderizam corretamente
     com as amostras reais (4/4 checks).
+- **Rastreabilidade Inventory↔Vendor, Fase 4 (2026-07-30): portfólio.** Fecha o pacote inteiro
+  (Fases 1-4) - mudança de UX é gatilho pra atualização de portfólio, mesmo padrão da Fase 5 da
+  feature de fornecedores.
+  - Novos screenshots (PT-BR+EN, gerados via Playwright contra o ambiente demo com as amostras reais
+    da Fase 3): `inventory-item-art{,-en}.png` (card "ART do fornecedor" no detalhe de um item de
+    inventário, com `TierBadge` de verdade) e `vendors-acompanhamento{,-en}.png` (aba
+    "Acompanhamento" com os 3 baldes populados).
+  - `README.md` (PT-BR+EN): duas frases novas na seção "Avaliação de risco de fornecedores
+    (metodologia)" mencionando que a ART agora também é acessível/iniciável a partir do Inventory, e
+    uma nova tabela de screenshots logo abaixo - mesmo padrão da tabela já existente ali pra
+    matriz de risco.
 
 
