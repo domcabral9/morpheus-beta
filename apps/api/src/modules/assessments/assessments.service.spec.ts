@@ -145,7 +145,10 @@ describe("AssessmentsService", () => {
 
     it("quando vendorId é informado, resolve o nome real e sobrescreve o texto livre `vendor`", async () => {
       repo.create.mockResolvedValue(makeAssessment());
-      vendorsService.findByIdForTenant.mockResolvedValue({ id: "vendor-1", name: "Nome Real Ltda" });
+      vendorsService.findByIdForTenant.mockResolvedValue({
+        id: "vendor-1",
+        name: "Nome Real Ltda",
+      });
 
       await service.create(makeUser(), {
         softwareName: "Sistema X",

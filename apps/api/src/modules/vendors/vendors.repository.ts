@@ -51,9 +51,7 @@ export class VendorsRepository {
   ): Promise<{ items: VendorListItem[]; total: number }> {
     const where: Prisma.VendorWhereInput = {
       tenantId,
-      ...(params.search
-        ? { name: { contains: params.search, mode: "insensitive" as const } }
-        : {}),
+      ...(params.search ? { name: { contains: params.search, mode: "insensitive" as const } } : {}),
     };
 
     const [items, total] = await Promise.all([
