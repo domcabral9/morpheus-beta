@@ -12,6 +12,7 @@ import { useApi } from "@/lib/use-api";
 import { ApiError } from "@/components/auth-provider";
 import type { Area } from "@/lib/assessment-types";
 import type { UserOption } from "@/lib/user-picker-types";
+import { VendorCombobox, type VendorComboboxValue } from "@/components/vendor-combobox";
 import {
   SOFTWARE_TYPES,
   DATA_CLASSIFICATIONS,
@@ -53,6 +54,7 @@ const documentationLinkSchema = z.object({
 const itemFormSchema = z.object({
   name: z.string().min(1),
   vendor: z.string().min(1),
+  vendorId: z.string().optional(),
   version: z.string().optional(),
   url: z.string().optional(),
   category: z.string().min(1),
@@ -96,6 +98,7 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
     ? {
         name: item.name,
         vendor: item.vendor,
+        vendorId: item.vendorId ?? undefined,
         version: item.version ?? "",
         url: item.url ?? "",
         category: item.category,
@@ -116,6 +119,7 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
     : {
         name: "",
         vendor: "",
+        vendorId: undefined,
         version: "",
         url: "",
         category: "",
@@ -140,6 +144,7 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { isSubmitting, errors },
   } = useForm<InventoryItemFormValues>({
     resolver: zodResolver(itemFormSchema),
@@ -149,6 +154,22 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
   const { fields, append, remove } = useFieldArray({ control, name: "documentationLinks" });
   const type = useWatch({ control, name: "type" });
   const showDocumentationLinks = type === "API_INTEGRATION";
+
+  // Deriva o valor do combobox direto do form (via reset()) em vez de um
+  // useState paralelo - reset() já resincroniza vendor/vendorId quando o
+  // dialog abre, então não precisa de um segundo estado nem de um efeito
+  // dedicado só pra isso.
+  const watchedVendor = useWatch({ control, name: "vendor" });
+  const watchedVendorId = useWatch({ control, name: "vendorId" });
+  const vendorValue: VendorComboboxValue = {
+    vendorId: watchedVendorId,
+    vendorName: watchedVendor ?? "",
+  };
+
+  function handleVendorChange(value: VendorComboboxValue) {
+    setValue("vendor", value.vendorName, { shouldValidate: true });
+    setValue("vendorId", value.vendorId);
+  }
 
   React.useEffect(() => {
     if (open) reset(defaultValues);
@@ -244,7 +265,7 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="vendor">{t("fieldVendor")}</Label>
-              <Input id="vendor" {...register("vendor")} aria-invalid={!!errors.vendor} />
+              <VendorCombobox value={vendorValue} onChange={handleVendorChange} />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="version">{t("fieldVersion")}</Label>
