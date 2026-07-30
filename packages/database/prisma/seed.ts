@@ -54,6 +54,11 @@ const PERMISSIONS = [
   { key: "inventory:view", description: "Visualizar o inventário de softwares" },
   { key: "inventory:manage", description: "Gerenciar itens do inventário de softwares" },
   { key: "audit:view", description: "Consultar a trilha de auditoria" },
+  { key: "vendors:view", description: "Visualizar fornecedores e suas avaliações de risco" },
+  {
+    key: "vendors:manage",
+    description: "Gerenciar fornecedores, catálogo de perguntas e configuração de tiers",
+  },
   {
     key: "platform:cross-tenant",
     description: "Ler e editar dados de qualquer tenant via /auth/switch-tenant (super-admin, uso restrito)",
@@ -76,7 +81,12 @@ const USER_PERMISSION_KEYS = [
   "reports:export-own",
   "inventory:view",
 ];
-const APPROVER_PERMISSION_KEYS = ["assessments:approve", "assessments:view-all", "inventory:view"];
+const APPROVER_PERMISSION_KEYS = [
+  "assessments:approve",
+  "assessments:view-all",
+  "inventory:view",
+  "vendors:view",
+];
 
 const QUESTION_CATEGORIES = [
   "Informações Gerais",
@@ -389,6 +399,250 @@ const seedQuestions: SeedQuestion[] = [
     isRequired: false,
     options: [],
   },
+];
+
+// -----------------------------------------------------------------------------
+// Avaliação de risco de fornecedores (Vendor) — catálogo separado do
+// questionário de software acima (ver nota de decisão no schema.prisma:
+// tierização é um score agregado 1D, não uma matriz probabilidade×impacto
+// 2D, então não há riskDimension/triggersLgpdReview aqui). Perguntas
+// inspiradas nas práticas de gestão de risco de cadeia de suprimentos do
+// NIST SP 800-161 — mesma escala 0-5 de risco cru por opção (0 = sem risco,
+// 5 = risco máximo), invertida pelo RiskEngineService.computeScores (score
+// final: quanto maior, mais favorável) e reaproveitada por todos os tenants.
+// -----------------------------------------------------------------------------
+
+const VENDOR_QUESTION_CATEGORIES = [
+  "Dados Cadastrais e Contratuais",
+  "Política de Segurança da Informação",
+  "Gestão de Vulnerabilidades e Incidentes",
+  "Continuidade e Disponibilidade",
+];
+
+type SeedVendorQuestion = {
+  category: string;
+  text: string;
+  weight: number;
+  type: QuestionType;
+  options: Array<{ label: string; value: string; score: number }>;
+};
+
+const seedVendorQuestions: SeedVendorQuestion[] = [
+  // --- Dados Cadastrais e Contratuais ---------------------------------------
+  {
+    category: "Dados Cadastrais e Contratuais",
+    text: "A empresa possui CNPJ ativo e regular?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 5),
+  },
+  {
+    category: "Dados Cadastrais e Contratuais",
+    text: "Existe contrato formal vigente com cláusula de confidencialidade (NDA)?",
+    weight: 3,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 5),
+  },
+  {
+    category: "Dados Cadastrais e Contratuais",
+    text: "O contrato prevê SLA de disponibilidade definido?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 4),
+  },
+  {
+    category: "Dados Cadastrais e Contratuais",
+    text: "O contrato prevê cláusula de segurança da informação?",
+    weight: 3,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 5),
+  },
+  {
+    category: "Dados Cadastrais e Contratuais",
+    text: "O fornecedor possui seguro de responsabilidade civil/cyber?",
+    weight: 1,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 3),
+  },
+  {
+    category: "Dados Cadastrais e Contratuais",
+    text: "Há um responsável técnico/comercial nomeado para o relacionamento?",
+    weight: 1,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 2),
+  },
+  {
+    category: "Dados Cadastrais e Contratuais",
+    text: "O contrato prevê direito de auditoria pela contratante?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 4),
+  },
+  // --- Política de Segurança da Informação ----------------------------------
+  {
+    category: "Política de Segurança da Informação",
+    text: "O fornecedor possui uma Política de Segurança da Informação (PSI) formalizada?",
+    weight: 3,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 5),
+  },
+  {
+    category: "Política de Segurança da Informação",
+    text: "A PSI é revisada/atualizada ao menos anualmente?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 4),
+  },
+  {
+    category: "Política de Segurança da Informação",
+    text: "Existe programa de treinamento/conscientização de segurança para colaboradores?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 4),
+  },
+  {
+    category: "Política de Segurança da Informação",
+    text: "O fornecedor classifica os dados que trata por nível de sensibilidade?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 4),
+  },
+  {
+    category: "Política de Segurança da Informação",
+    text: "O fornecedor possui certificação de segurança reconhecida (ex.: ISO 27001)?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 3),
+  },
+  {
+    category: "Política de Segurança da Informação",
+    text: "Existe controle de acesso baseado em papéis (RBAC) para os sistemas que tratam dados da contratante?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 4),
+  },
+  {
+    category: "Política de Segurança da Informação",
+    text: "O fornecedor exige autenticação multifator (MFA) para acessos administrativos?",
+    weight: 3,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 5),
+  },
+  // --- Gestão de Vulnerabilidades e Incidentes ------------------------------
+  {
+    category: "Gestão de Vulnerabilidades e Incidentes",
+    text: "Existe um ciclo formal de gestão de vulnerabilidades (identificação, priorização, correção)?",
+    weight: 3,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 5),
+  },
+  {
+    category: "Gestão de Vulnerabilidades e Incidentes",
+    text: "O fornecedor realiza testes de penetração (pentest) periódicos?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 4),
+  },
+  {
+    category: "Gestão de Vulnerabilidades e Incidentes",
+    text: "Existe um plano de resposta a incidentes de segurança documentado?",
+    weight: 3,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 5),
+  },
+  {
+    category: "Gestão de Vulnerabilidades e Incidentes",
+    text: "O fornecedor se compromete a notificar incidentes de segurança em prazo definido (ex.: 72h)?",
+    weight: 3,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 5),
+  },
+  {
+    category: "Gestão de Vulnerabilidades e Incidentes",
+    text: "O fornecedor sofreu algum incidente de segurança relevante nos últimos 12 meses?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    // Invertido: aqui "Sim" é a resposta desfavorável.
+    options: YES_NO(4, 0),
+  },
+  {
+    category: "Gestão de Vulnerabilidades e Incidentes",
+    text: "Existe processo de gestão de patches/atualizações de segurança?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 4),
+  },
+  {
+    category: "Gestão de Vulnerabilidades e Incidentes",
+    text: "O fornecedor mantém um canal de reporte de vulnerabilidades (bug bounty/disclosure)?",
+    weight: 1,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 2),
+  },
+  // --- Continuidade e Disponibilidade ---------------------------------------
+  {
+    category: "Continuidade e Disponibilidade",
+    text: "Existe rotina de backup regular dos dados/sistemas?",
+    weight: 3,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 5),
+  },
+  {
+    category: "Continuidade e Disponibilidade",
+    text: "Os backups são testados periodicamente (teste de restauração)?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 4),
+  },
+  {
+    category: "Continuidade e Disponibilidade",
+    text: "Existe um Plano de Continuidade de Negócio (PCN/BCP) documentado?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 4),
+  },
+  {
+    category: "Continuidade e Disponibilidade",
+    text: "Existe suporte/escalonamento disponível em regime 24x7 para incidentes críticos?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 3),
+  },
+  {
+    category: "Continuidade e Disponibilidade",
+    text: "A infraestrutura possui redundância (ex.: múltiplas zonas de disponibilidade)?",
+    weight: 1,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 2),
+  },
+  {
+    category: "Continuidade e Disponibilidade",
+    text: "Existe SLA de tempo de recuperação (RTO) e ponto de recuperação (RPO) definidos?",
+    weight: 2,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 4),
+  },
+  {
+    category: "Continuidade e Disponibilidade",
+    text: "O fornecedor informa proativamente sobre manutenções programadas com antecedência?",
+    weight: 1,
+    type: "SINGLE_CHOICE",
+    options: YES_NO(0, 2),
+  },
+];
+
+// Mesma escala 0-5 do totalScore (ver RiskEngineService.computeScores) e a
+// mesma filosofia de bandas de classificationDefs acima — Tier 1 = melhor
+// cenário (score alto), Tier 4 = pior (score baixo, acompanhamento mais
+// próximo). baseReassessmentMonths é o ponto de partida da cadência de
+// reavaliação, antes do ajuste por criticidade de negócio do fornecedor (ver
+// vendor-reassessment.util.ts, Fase 2) — editável pelo admin depois via
+// /admin/vendor-tier-config, não hardcoded na prática, só no seed inicial.
+const VENDOR_TIER_THRESHOLDS = [
+  { tier: 1, label: "Baixo risco", color: "#16a34a", minScore: 4.0, maxScore: 5.0, baseReassessmentMonths: 12 },
+  { tier: 2, label: "Risco moderado", color: "#65a30d", minScore: 3.0, maxScore: 3.99, baseReassessmentMonths: 6 },
+  { tier: 3, label: "Risco elevado", color: "#ea580c", minScore: 2.0, maxScore: 2.99, baseReassessmentMonths: 4 },
+  { tier: 4, label: "Risco crítico", color: "#dc2626", minScore: 0, maxScore: 1.99, baseReassessmentMonths: 3 },
 ];
 
 // --- Biblioteca de controles (catálogo global, sem tenantId no schema) -------
@@ -1114,6 +1368,89 @@ async function seedFullTenant(params: SeedFullTenantParams) {
         isOptional: stepDef.isOptional,
         requiresLgpd: stepDef.requiresLgpd,
       },
+    });
+  }
+
+  // --- Avaliação de risco de fornecedores: catálogo de perguntas ---------------
+  const vendorCategoryByName = new Map<string, { id: string }>();
+  for (const [index, categoryName] of VENDOR_QUESTION_CATEGORIES.entries()) {
+    const category = await prisma.vendorQuestionCategory.upsert({
+      where: { tenantId_name: { tenantId: tenant.id, name: categoryName } },
+      update: {},
+      create: { tenantId: tenant.id, name: categoryName, order: index },
+    });
+    vendorCategoryByName.set(categoryName, category);
+  }
+
+  // Mesmo raciocínio do bloco de Question acima: seguro apagar/recriar para
+  // tenants novos, mas para "demo" um VendorAnswer real já existente
+  // impediria o delete (FK) — nesse caso pula o reset e reaproveita.
+  try {
+    await prisma.vendorQuestion.deleteMany({ where: { tenantId: tenant.id } });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      console.warn(
+        `[seed] Pulando reset de perguntas de fornecedor de "${slug}": já existem VendorAssessments respondidas referenciando-as.`,
+      );
+    } else {
+      throw error;
+    }
+  }
+
+  for (const [index, seedVendorQuestion] of seedVendorQuestions.entries()) {
+    const category = vendorCategoryByName.get(seedVendorQuestion.category)!;
+    const existing = await prisma.vendorQuestion.findFirst({
+      where: { tenantId: tenant.id, categoryId: category.id, text: seedVendorQuestion.text },
+    });
+    const question =
+      existing ??
+      (await prisma.vendorQuestion.create({
+        data: {
+          tenantId: tenant.id,
+          categoryId: category.id,
+          text: seedVendorQuestion.text,
+          weight: seedVendorQuestion.weight,
+          type: seedVendorQuestion.type,
+          order: index,
+        },
+      }));
+
+    for (const [optionIndex, option] of seedVendorQuestion.options.entries()) {
+      await prisma.vendorQuestionOption.upsert({
+        where: { id: `${question.id}-${optionIndex}` },
+        update: {},
+        create: {
+          id: `${question.id}-${optionIndex}`,
+          questionId: question.id,
+          label: option.label,
+          value: option.value,
+          score: option.score,
+          order: optionIndex,
+        },
+      });
+    }
+  }
+
+  // --- Avaliação de risco de fornecedores: tierização padrão -------------------
+  let vendorTierConfig = await prisma.vendorTierConfig.findFirst({
+    where: { tenantId: tenant.id, name: "Config Padrão" },
+  });
+  if (!vendorTierConfig) {
+    vendorTierConfig = await prisma.vendorTierConfig.create({
+      data: { tenantId: tenant.id, name: "Config Padrão", version: 1, isActive: true },
+    });
+  }
+  for (const threshold of VENDOR_TIER_THRESHOLDS) {
+    await prisma.vendorTierThreshold.upsert({
+      where: { vendorTierConfigId_tier: { vendorTierConfigId: vendorTierConfig.id, tier: threshold.tier } },
+      update: {
+        label: threshold.label,
+        color: threshold.color,
+        minScore: threshold.minScore,
+        maxScore: threshold.maxScore,
+        baseReassessmentMonths: threshold.baseReassessmentMonths,
+      },
+      create: { vendorTierConfigId: vendorTierConfig.id, ...threshold },
     });
   }
 
