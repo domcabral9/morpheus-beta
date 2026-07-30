@@ -903,8 +903,9 @@ model Vendor {
   createdAt              DateTime     @default(now())
   updatedAt              DateTime     @updatedAt
 
-  assessments       VendorAssessment[]
-  linkedAssessments Assessment[]
+  assessments          VendorAssessment[]
+  linkedAssessments    Assessment[]
+  linkedInventoryItems SoftwareInventoryItem[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -1124,6 +1125,12 @@ model SoftwareInventoryItem {
   assessment             Assessment?        @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
   name                   String
   vendor                 String
+  /// FK real pro fornecedor cadastrado, quando existir - `vendor` acima
+  /// continua sendo o snapshot em texto (mesmo padrão de `Assessment.vendor`/
+  /// `Assessment.vendorId`). Nullable: itens antigos e itens cujo fornecedor
+  /// nunca foi vinculado a um `Vendor` de verdade ficam null.
+  vendorId               String?
+  linkedVendor           Vendor?            @relation(fields: [vendorId], references: [id], onDelete: SetNull)
   version                String?
   url                    String?
   category               String
@@ -1164,6 +1171,7 @@ model SoftwareInventoryItem {
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([tenantId, areaId])
+  @@index([tenantId, vendorId])
   /// Sinal derivado e autolimpante de "esta área está bloqueada por renovação
   /// vencida" (EXISTS ... status='EXPIRED') - usado tanto pela checagem de
   /// bloqueio quanto pelas queries do RenewalScheduler.

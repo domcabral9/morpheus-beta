@@ -98,6 +98,7 @@ describe("VendorsService", () => {
   let service: VendorsService;
   let repo: {
     findMany: jest.Mock;
+    findForTracking: jest.Mock;
     findById: jest.Mock;
     create: jest.Mock;
     update: jest.Mock;
@@ -114,6 +115,7 @@ describe("VendorsService", () => {
   beforeEach(async () => {
     repo = {
       findMany: jest.fn(),
+      findForTracking: jest.fn(),
       findById: jest.fn(),
       create: jest
         .fn()
@@ -154,6 +156,18 @@ describe("VendorsService", () => {
     it("retorna o fornecedor quando encontrado", async () => {
       repo.findById.mockResolvedValue(VENDOR);
       await expect(service.getVendor(makeUser(), "vendor-1")).resolves.toEqual(VENDOR);
+    });
+  });
+
+  describe("getTracking", () => {
+    it("repassa tenantId e a janela de dias pro repository, devolvendo os 3 baldes", async () => {
+      const buckets = { neverAssessed: [VENDOR], overdue: [], dueSoon: [] };
+      repo.findForTracking.mockResolvedValue(buckets);
+
+      const result = await service.getTracking(makeUser());
+
+      expect(result).toEqual(buckets);
+      expect(repo.findForTracking).toHaveBeenCalledWith("tenant-1", expect.any(Date), 30);
     });
   });
 

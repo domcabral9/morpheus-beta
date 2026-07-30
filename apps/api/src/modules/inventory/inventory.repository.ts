@@ -10,6 +10,9 @@ const itemDetailInclude = {
     orderBy: { createdAt: "asc" },
     select: { id: true, label: true, url: true },
   },
+  linkedVendor: {
+    select: { id: true, name: true, currentTier: true, currentTierLabel: true },
+  },
   // Parecer técnico da homologação que originou este item, quando existir -
   // itens de entrada manual (`assessmentId` nulo) nunca têm um. Pega só a
   // versão mais recente da avaliação (`take: 1`) - mesma noção de "o parecer
