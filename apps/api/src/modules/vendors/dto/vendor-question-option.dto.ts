@@ -12,7 +12,9 @@ export class VendorQuestionOptionDto {
   @MinLength(1)
   value!: string;
 
-  @ApiProperty({ description: "Contribuição de risco desta opção (0 = sem risco, 5 = risco máximo)." })
+  @ApiProperty({
+    description: "Contribuição de risco desta opção (0 = sem risco, 5 = risco máximo).",
+  })
   @IsNumber()
   @Min(0)
   score!: number;

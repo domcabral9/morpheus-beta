@@ -32,7 +32,9 @@ export class UpsertVendorTierThresholdDto {
   @Min(0)
   maxScore!: number;
 
-  @ApiProperty({ description: "Cadência base de reavaliação, em meses, antes do ajuste por criticidade." })
+  @ApiProperty({
+    description: "Cadência base de reavaliação, em meses, antes do ajuste por criticidade.",
+  })
   @IsInt()
   @Min(1)
   baseReassessmentMonths!: number;

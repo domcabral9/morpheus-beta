@@ -1,11 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import {
-  ArrayNotEmpty,
-  IsArray,
-  IsInt,
-  IsOptional,
-  IsString,
-} from "class-validator";
+import { ArrayNotEmpty, IsArray, IsInt, IsOptional, IsString } from "class-validator";
 
 export class VendorAnswerInputDto {
   @ApiProperty()

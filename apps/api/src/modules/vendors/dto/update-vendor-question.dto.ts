@@ -1,5 +1,14 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Min, MinLength } from "class-validator";
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  MinLength,
+} from "class-validator";
 import { VENDOR_QUESTION_TYPES } from "./create-vendor-question.dto";
 
 export class UpdateVendorQuestionDto {

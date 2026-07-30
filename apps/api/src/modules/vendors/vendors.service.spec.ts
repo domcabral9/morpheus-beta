@@ -25,10 +25,42 @@ const TIER_CONFIG_ACTIVE = {
   name: "Config Padrão",
   isActive: true,
   thresholds: [
-    { id: "t1", tier: 1, label: "Baixo risco", color: "#16a34a", minScore: 4.0, maxScore: 5.0, baseReassessmentMonths: 12 },
-    { id: "t2", tier: 2, label: "Risco moderado", color: "#65a30d", minScore: 3.0, maxScore: 3.99, baseReassessmentMonths: 6 },
-    { id: "t3", tier: 3, label: "Risco elevado", color: "#ea580c", minScore: 2.0, maxScore: 2.99, baseReassessmentMonths: 4 },
-    { id: "t4", tier: 4, label: "Risco crítico", color: "#dc2626", minScore: 0, maxScore: 1.99, baseReassessmentMonths: 3 },
+    {
+      id: "t1",
+      tier: 1,
+      label: "Baixo risco",
+      color: "#16a34a",
+      minScore: 4.0,
+      maxScore: 5.0,
+      baseReassessmentMonths: 12,
+    },
+    {
+      id: "t2",
+      tier: 2,
+      label: "Risco moderado",
+      color: "#65a30d",
+      minScore: 3.0,
+      maxScore: 3.99,
+      baseReassessmentMonths: 6,
+    },
+    {
+      id: "t3",
+      tier: 3,
+      label: "Risco elevado",
+      color: "#ea580c",
+      minScore: 2.0,
+      maxScore: 2.99,
+      baseReassessmentMonths: 4,
+    },
+    {
+      id: "t4",
+      tier: 4,
+      label: "Risco crítico",
+      color: "#dc2626",
+      minScore: 0,
+      maxScore: 1.99,
+      baseReassessmentMonths: 3,
+    },
   ],
 };
 
@@ -83,7 +115,9 @@ describe("VendorsService", () => {
     repo = {
       findMany: jest.fn(),
       findById: jest.fn(),
-      create: jest.fn().mockImplementation((data) => Promise.resolve({ id: "vendor-new", ...data })),
+      create: jest
+        .fn()
+        .mockImplementation((data) => Promise.resolve({ id: "vendor-new", ...data })),
       update: jest.fn().mockImplementation((id, data) => Promise.resolve({ id, ...data })),
       findAssessmentHistory: jest.fn(),
       findActiveTierConfig: jest.fn(),
@@ -150,26 +184,26 @@ describe("VendorsService", () => {
     it("lança NotFoundException quando a avaliação não pertence ao vendor informado", async () => {
       repo.findAssessmentById.mockResolvedValue({ ...DRAFT_ASSESSMENT, vendorId: "outro-vendor" });
 
-      await expect(
-        service.completeAssessment(makeUser(), "vendor-1", "va-1"),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.completeAssessment(makeUser(), "vendor-1", "va-1")).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("lança UnprocessableEntityException se a avaliação já foi concluída", async () => {
       repo.findAssessmentById.mockResolvedValue({ ...DRAFT_ASSESSMENT, status: "COMPLETED" });
 
-      await expect(
-        service.completeAssessment(makeUser(), "vendor-1", "va-1"),
-      ).rejects.toThrow(UnprocessableEntityException);
+      await expect(service.completeAssessment(makeUser(), "vendor-1", "va-1")).rejects.toThrow(
+        UnprocessableEntityException,
+      );
     });
 
     it("lança UnprocessableEntityException se a config de tier não tem thresholds", async () => {
       repo.findAssessmentById.mockResolvedValue(DRAFT_ASSESSMENT);
       repo.findTierConfigById.mockResolvedValue({ ...TIER_CONFIG_ACTIVE, thresholds: [] });
 
-      await expect(
-        service.completeAssessment(makeUser(), "vendor-1", "va-1"),
-      ).rejects.toThrow(UnprocessableEntityException);
+      await expect(service.completeAssessment(makeUser(), "vendor-1", "va-1")).rejects.toThrow(
+        UnprocessableEntityException,
+      );
     });
 
     it("respostas 100% favoráveis (score de risco 0) classificam Tier 1 e cadência de 12 meses (MEDIUM)", async () => {
@@ -181,13 +215,22 @@ describe("VendorsService", () => {
       // Todas as respostas têm score de risco 0 -> totalScore final = 5 (RiskEngineService inverte 5 - risco).
       expect(repo.updateAssessment).toHaveBeenCalledWith(
         "va-1",
-        expect.objectContaining({ status: "COMPLETED", tier: 1, tierLabel: "Baixo risco", totalScore: 5 }),
+        expect.objectContaining({
+          status: "COMPLETED",
+          tier: 1,
+          tierLabel: "Baixo risco",
+          totalScore: 5,
+        }),
       );
       // baseReassessmentMonths do Tier 1 é 12, criticidade MEDIUM (multiplicador 1.0) -> +12 meses.
       const vendorUpdateCall = repo.update.mock.calls[0];
       expect(vendorUpdateCall[0]).toBe("vendor-1");
       expect(vendorUpdateCall[1]).toEqual(
-        expect.objectContaining({ currentTier: 1, currentTierLabel: "Baixo risco", currentScore: 5 }),
+        expect.objectContaining({
+          currentTier: 1,
+          currentTierLabel: "Baixo risco",
+          currentScore: 5,
+        }),
       );
       expect(auditLogService.record).toHaveBeenCalledWith(
         expect.objectContaining({ action: "CREATE", entityType: "VendorAssessment" }),
