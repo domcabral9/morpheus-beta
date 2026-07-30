@@ -34,6 +34,14 @@ export class UpdateInventoryItemDto {
   @MinLength(1)
   vendor?: string;
 
+  @ApiPropertyOptional({
+    description:
+      "Vendor real vinculado (opcional) - `vendor` acima continua sendo o snapshot em texto.",
+  })
+  @IsOptional()
+  @IsString()
+  vendorId?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

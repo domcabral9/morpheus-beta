@@ -40,6 +40,7 @@ export interface ApprovedAssessmentForInventory {
   id: string;
   softwareName: string;
   vendor: string;
+  vendorId: string | null;
   version: string | null;
   url: string | null;
   areaId: string;
@@ -140,6 +141,7 @@ export class InventoryService {
         tenantId: user.tenantId,
         name: dto.name,
         vendor: dto.vendor,
+        vendorId: dto.vendorId,
         version: dto.version,
         url: dto.url,
         category: dto.category,
@@ -213,6 +215,7 @@ export class InventoryService {
       return this.repository.update(existing.id, {
         name: assessment.softwareName,
         vendor: assessment.vendor,
+        vendorId: assessment.vendorId,
         version: assessment.version,
         url: assessment.url,
         areaId: assessment.areaId,
@@ -229,6 +232,7 @@ export class InventoryService {
       assessmentId: assessment.id,
       name: assessment.softwareName,
       vendor: assessment.vendor,
+      vendorId: assessment.vendorId,
       version: assessment.version,
       url: assessment.url,
       category: "Não classificado",

@@ -22,6 +22,7 @@ const approvedAssessment = {
   id: "assessment-1",
   softwareName: "Sistema X",
   vendor: "Fornecedor X",
+  vendorId: "vendor-1",
   version: "1.0.0",
   url: null,
   areaId: "area-1",
@@ -85,9 +86,19 @@ describe("InventoryService", () => {
           category: "Não classificado",
           type: "SAAS",
           dataClassification: "INTERNAL",
+          vendorId: "vendor-1",
         }),
       );
       expect(item.id).toBe("item-1");
+    });
+
+    it("propaga vendorId null quando a avaliação não tem fornecedor vinculado (texto livre)", async () => {
+      await service.createFromApprovedAssessment("tenant-1", {
+        ...approvedAssessment,
+        vendorId: null,
+      });
+
+      expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ vendorId: null }));
     });
 
     it("calcula nextReviewDate 12 meses à frente da homologação", async () => {
@@ -107,7 +118,7 @@ describe("InventoryService", () => {
       expect(repo.create).not.toHaveBeenCalled();
       expect(repo.update).toHaveBeenCalledWith(
         "item-existente",
-        expect.objectContaining({ name: "Sistema X" }),
+        expect.objectContaining({ name: "Sistema X", vendorId: "vendor-1" }),
       );
     });
 
