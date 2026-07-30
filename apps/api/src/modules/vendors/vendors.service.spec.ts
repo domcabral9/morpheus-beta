@@ -157,6 +157,29 @@ describe("VendorsService", () => {
     });
   });
 
+  describe("getAssessment", () => {
+    it("lança NotFoundException quando a avaliação não existe", async () => {
+      repo.findAssessmentById.mockResolvedValue(null);
+      await expect(service.getAssessment(makeUser(), "vendor-1", "va-1")).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it("lança NotFoundException quando a avaliação pertence a outro vendor", async () => {
+      repo.findAssessmentById.mockResolvedValue({ ...DRAFT_ASSESSMENT, vendorId: "outro-vendor" });
+      await expect(service.getAssessment(makeUser(), "vendor-1", "va-1")).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it("retorna a avaliação (DRAFT ou COMPLETED, sem restrição de status)", async () => {
+      repo.findAssessmentById.mockResolvedValue({ ...DRAFT_ASSESSMENT, status: "COMPLETED" });
+      await expect(service.getAssessment(makeUser(), "vendor-1", "va-1")).resolves.toEqual(
+        expect.objectContaining({ id: "va-1", status: "COMPLETED" }),
+      );
+    });
+  });
+
   describe("createDraftAssessment", () => {
     it("usa a config de tier ativa do tenant quando nenhuma é especificada", async () => {
       repo.findById.mockResolvedValue(VENDOR);

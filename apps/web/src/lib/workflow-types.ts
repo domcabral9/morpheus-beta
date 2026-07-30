@@ -41,6 +41,13 @@ export interface InboxStepExecution {
       requesterId: string;
       hasRiskAnalysis: boolean;
       hasInfoSecClause: boolean;
+      vendorId: string | null;
+      linkedVendor: {
+        id: string;
+        name: string;
+        currentTier: number | null;
+        currentTierLabel: string | null;
+      } | null;
     };
   };
 }

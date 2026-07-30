@@ -2,13 +2,14 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 import { useApi } from "@/lib/use-api";
+import { usePermission } from "@/lib/use-permission";
 import { ApiError } from "@/components/auth-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { TenantAdmin } from "@/lib/tenant-admin-types";
+import type { VendorTierConfig } from "@/lib/vendor-tier-config-types";
 import { AdminSectionGate } from "../_components/section-gate";
 
 const settingsSchema = z.object({
@@ -312,6 +314,158 @@ function RenewalWindowForm({ tenant, onSaved }: { tenant: TenantAdmin; onSaved: 
   );
 }
 
+const thresholdSchema = z.object({
+  id: z.string(),
+  tier: z.number(),
+  label: z.string().min(1),
+  color: z.string().min(1),
+  minScore: z.coerce.number(),
+  maxScore: z.coerce.number(),
+  baseReassessmentMonths: z.coerce.number().int().min(1),
+});
+
+const vendorTierFormSchema = z.object({ thresholds: z.array(thresholdSchema) });
+
+type VendorTierFormInput = z.input<typeof vendorTierFormSchema>;
+type VendorTierFormOutput = z.output<typeof vendorTierFormSchema>;
+
+/** Aba de tierização de fornecedores - ao contrário das outras abas, não edita
+ * `Tenant` (o `VendorTierConfig` é um recurso próprio, versionado, com seu
+ * próprio endpoint gated por `vendors:manage`) - por isso busca e salva
+ * separadamente, em vez de receber `tenant`/`onSaved` como as demais. */
+function VendorTierForm() {
+  const t = useTranslations("AdminSettings");
+  const api = useApi();
+
+  const [config, setConfig] = React.useState<VendorTierConfig | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    api
+      .get<VendorTierConfig>("/vendors/admin/tier-configs/active")
+      .then((result) => {
+        setConfig(result);
+        setError(null);
+      })
+      .catch(() => setError(t("vendorTierLoadError")));
+  }, [api, t]);
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    formState: { isSubmitting, isDirty },
+  } = useForm<VendorTierFormInput, unknown, VendorTierFormOutput>({
+    resolver: zodResolver(vendorTierFormSchema),
+    values: config
+      ? { thresholds: [...config.thresholds].sort((a, b) => a.tier - b.tier) }
+      : undefined,
+  });
+
+  const { fields } = useFieldArray({ control, name: "thresholds" });
+
+  async function onSubmit(values: VendorTierFormOutput) {
+    if (!config) return;
+    try {
+      await Promise.all(
+        values.thresholds.map((threshold) =>
+          api.post(`/vendors/admin/tier-configs/${config.id}/thresholds`, {
+            tier: threshold.tier,
+            label: threshold.label,
+            color: threshold.color,
+            minScore: threshold.minScore,
+            maxScore: threshold.maxScore,
+            baseReassessmentMonths: threshold.baseReassessmentMonths,
+          }),
+        ),
+      );
+      toast.success(t("saveSuccess"));
+      const refreshed = await api.get<VendorTierConfig>("/vendors/admin/tier-configs/active");
+      setConfig(refreshed);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("saveError"));
+    }
+  }
+
+  if (error) return <p className="text-sm text-destructive">{error}</p>;
+  if (!config) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+      <p className="text-sm text-muted-foreground">{t("vendorTierDescription")}</p>
+
+      {fields.map((field, index) => (
+        <div key={field.id} className="flex flex-col gap-3 rounded-md border p-3">
+          <span className="text-sm font-medium">{t("vendorTierTierLabel", { tier: field.tier })}</span>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor={`threshold-${index}-label`} className="text-xs">
+                {t("vendorTierFieldLabel")}
+              </Label>
+              <Input id={`threshold-${index}-label`} {...register(`thresholds.${index}.label`)} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label htmlFor={`threshold-${index}-color`} className="text-xs">
+                {t("vendorTierFieldColor")}
+              </Label>
+              <Input
+                id={`threshold-${index}-color`}
+                type="color"
+                className="h-9 p-1"
+                {...register(`thresholds.${index}.color`)}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label htmlFor={`threshold-${index}-minScore`} className="text-xs">
+                {t("vendorTierFieldMinScore")}
+              </Label>
+              <Input
+                id={`threshold-${index}-minScore`}
+                type="number"
+                step="0.01"
+                {...register(`thresholds.${index}.minScore`)}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label htmlFor={`threshold-${index}-maxScore`} className="text-xs">
+                {t("vendorTierFieldMaxScore")}
+              </Label>
+              <Input
+                id={`threshold-${index}-maxScore`}
+                type="number"
+                step="0.01"
+                {...register(`thresholds.${index}.maxScore`)}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label htmlFor={`threshold-${index}-months`} className="text-xs">
+                {t("vendorTierFieldBaseReassessmentMonths")}
+              </Label>
+              <Input
+                id={`threshold-${index}-months`}
+                type="number"
+                {...register(`thresholds.${index}.baseReassessmentMonths`)}
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+
+      <div>
+        <Button type="submit" disabled={isSubmitting || !isDirty}>
+          {isSubmitting ? t("saving") : t("save")}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 function SettingsTabComingSoon({ titleKey }: { titleKey: "smtp" | "sso" | "ai" }) {
   const t = useTranslations("AdminSettings");
 
@@ -326,6 +480,7 @@ function SettingsTabComingSoon({ titleKey }: { titleKey: "smtp" | "sso" | "ai" }
 function SettingsContent() {
   const t = useTranslations("AdminSettings");
   const api = useApi();
+  const canManageVendors = usePermission("vendors:manage");
 
   const [tenant, setTenant] = React.useState<TenantAdmin | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -360,6 +515,9 @@ function SettingsContent() {
           <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
             <TabsTrigger value="general">{t("tabs.general")}</TabsTrigger>
             <TabsTrigger value="renewalWindow">{t("tabs.renewalWindow")}</TabsTrigger>
+            {canManageVendors && (
+              <TabsTrigger value="vendorTier">{t("tabs.vendorTier")}</TabsTrigger>
+            )}
             <TabsTrigger value="smtp">{t("tabs.smtp")}</TabsTrigger>
             <TabsTrigger value="sso">{t("tabs.sso")}</TabsTrigger>
             <TabsTrigger value="ai">{t("tabs.ai")}</TabsTrigger>
@@ -385,6 +543,18 @@ function SettingsContent() {
               </CardContent>
             </Card>
           </TabsContent>
+          {canManageVendors && (
+            <TabsContent value="vendorTier">
+              <Card className="max-w-3xl">
+                <CardHeader>
+                  <CardTitle className="text-base">{t("tabs.vendorTier")}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <VendorTierForm />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
           <TabsContent value="smtp">
             <SettingsTabComingSoon titleKey="smtp" />
           </TabsContent>
