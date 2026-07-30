@@ -39,6 +39,19 @@ export type VendorAssessmentDetail = Prisma.VendorAssessmentGetPayload<{
   include: typeof vendorAssessmentDetailInclude;
 }>;
 
+const dueForReassessmentInclude = {
+  assessments: {
+    where: { status: "COMPLETED" },
+    orderBy: { completedAt: "desc" },
+    take: 1,
+    include: { performedBy: { select: { id: true, isActive: true } } },
+  },
+} satisfies Prisma.VendorInclude;
+
+export type VendorDueForReassessment = Prisma.VendorGetPayload<{
+  include: typeof dueForReassessmentInclude;
+}>;
+
 @Injectable()
 export class VendorsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -265,5 +278,46 @@ export class VendorsRepository {
         });
       }
     }
+  }
+
+  // --- Scheduler de reavaliação ---------------------------------------------------
+
+  /**
+   * Fornecedores ativos já avaliados ao menos uma vez (`currentTier` não
+   * nulo) cuja próxima revisão já venceu e ainda não foram notificados -
+   * `reassessmentNotifiedAt IS NULL` mantém o job idempotente (a trava é
+   * limpa de novo em `VendorsService.completeAssessment` na próxima
+   * avaliação concluída).
+   */
+  findDueForReassessment(now: Date): Promise<VendorDueForReassessment[]> {
+    return this.prisma.vendor.findMany({
+      where: {
+        isActive: true,
+        currentTier: { not: null },
+        nextReviewDueAt: { lte: now },
+        reassessmentNotifiedAt: null,
+      },
+      include: dueForReassessmentInclude,
+    });
+  }
+
+  markReassessmentNotified(id: string, notifiedAt: Date) {
+    return this.prisma.vendor.update({
+      where: { id },
+      data: { reassessmentNotifiedAt: notifiedAt },
+    });
+  }
+
+  // Papéis seedados (Administrador, Usuário) são únicos por tenant
+  // (`@@unique([tenantId, name])`) - mesmo proxy usado pelo RenewalRepository
+  // pra "quem pode agir quando não há um responsável ativo específico".
+  // Duplicado aqui (em vez de importar RenewalRepository) porque
+  // VendorsModule é intencionalmente autocontido, mesmo espírito de
+  // RenewalModule não depender de outros módulos de feature.
+  findAdministradorRoleId(tenantId: string) {
+    return this.prisma.role.findFirst({
+      where: { tenantId, name: "Administrador" },
+      select: { id: true },
+    });
   }
 }
