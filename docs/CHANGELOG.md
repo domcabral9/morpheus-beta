@@ -2220,5 +2220,29 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     que a tier/score continua automática (sem gate de aprovação) documentados no plano
     (`streamed-sleeping-newell.md`) - Fases 2-4 (frontend + amostras + portfólio) seguem em PRs
     separados.
+- **Rastreabilidade Inventory↔Vendor, Fase 2 (2026-07-30): frontend - formulário manual + card de
+  ART no detalhe do item.**
+  - `item-form-dialog.tsx` (cadastro/edição manual de item de inventário): campo de fornecedor em
+    texto livre vira `VendorCombobox` (mesmo componente já usado em `assessments/new`) - busca,
+    fallback de texto livre, e "+ cadastrar novo fornecedor" inline. O valor do combobox é derivado
+    direto do form (`useWatch` em `vendor`/`vendorId`) em vez de um `useState` paralelo - `reset()`
+    já resincroniza os dois campos quando o dialog abre, evitando um efeito redundante (e um lint
+    error real de `react-hooks/set-state-in-effect` que a primeira versão, com `useState` +
+    `useEffect`, disparava).
+  - `[id]/page.tsx` (detalhe do item): novo bloco "ART do fornecedor", ao lado do bloco já existente
+    de ART autodeclarada por Assessment (sem alterar aquele) - 3 estados: sem fornecedor vinculado
+    (botão "Vincular fornecedor"), fornecedor vinculado mas nunca avaliado (botão "Iniciar ART"), e
+    fornecedor com tier calculado (`TierBadge` + link pro fornecedor).
+  - **Novo `link-vendor-dialog.tsx`**: vincular fornecedor + iniciar a ART é um fluxo só (decisão
+    confirmada com o usuário) - ao selecionar/criar um Vendor no combobox, dispara em sequência
+    `PATCH /inventory/:id` (grava `vendorId`) → `POST /vendors/:id/assessments` → navega pra tela da
+    avaliação. O fallback de texto livre do combobox não faz sentido aqui (iniciar uma
+    `VendorAssessment` exige um `Vendor` real), então só mostra um aviso nesse caso.
+  - **Testes**: `pnpm --filter @morpheus/web lint/typecheck/build` verde. Validação real em
+    navegador via Playwright descartável: item manual novo com fornecedor cadastrado na hora (cadastro
+    rápido) → detalhe mostra "Iniciar ART" → navega pra avaliação; item já existente sem fornecedor
+    (`Contract Analyzer AI`) → "Vincular fornecedor" → busca o mesmo fornecedor → navega direto pra
+    avaliação. 8/8 checks. Dados de teste removidos do banco depois (inclusive revertendo o
+    `vendorId` que o script deixou vinculado no item pré-existente usado no teste).
 
 
