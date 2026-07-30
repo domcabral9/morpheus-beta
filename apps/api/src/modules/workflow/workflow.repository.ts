@@ -45,6 +45,10 @@ const stepExecutionDetailInclude = {
           status: true,
           hasRiskAnalysis: true,
           hasInfoSecClause: true,
+          vendorId: true,
+          linkedVendor: {
+            select: { id: true, name: true, currentTier: true, currentTierLabel: true },
+          },
         },
       },
     },
@@ -219,6 +223,10 @@ export class WorkflowRepository {
                 requesterId: true,
                 hasRiskAnalysis: true,
                 hasInfoSecClause: true,
+                vendorId: true,
+                linkedVendor: {
+                  select: { id: true, name: true, currentTier: true, currentTierLabel: true },
+                },
               },
             },
           },

@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { TierBadge } from "@/components/tier-badge";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,6 +61,12 @@ export function DecisionDialog({ execution, onOpenChange, onDecided }: DecisionD
   }, [execution, reset]);
 
   if (!execution) return null;
+
+  const linkedVendor = execution.assessmentWorkflowInstance.assessment.linkedVendor;
+  const vendorTier =
+    linkedVendor?.currentTier != null && linkedVendor.currentTierLabel != null
+      ? { tier: linkedVendor.currentTier, label: linkedVendor.currentTierLabel }
+      : null;
 
   async function onSubmit(values: DecisionFormValues) {
     if (!execution) return;
@@ -122,6 +129,12 @@ export function DecisionDialog({ execution, onOpenChange, onDecided }: DecisionD
                   : t("no")}
               </Badge>
             </span>
+            {vendorTier && (
+              <span className="flex items-center gap-2">
+                {t("vendorTierLabel")}
+                <TierBadge tier={vendorTier.tier} label={vendorTier.label} />
+              </span>
+            )}
           </div>
           <p className="text-xs text-muted-foreground">{t("vendorComplianceReminder")}</p>
         </div>

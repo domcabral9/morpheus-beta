@@ -1,5 +1,13 @@
 import type { LucideIcon } from "lucide-react";
-import { Boxes, CheckCircle2, FileText, HelpCircle, Home, LayoutDashboard } from "lucide-react";
+import {
+  Boxes,
+  Building2,
+  CheckCircle2,
+  FileText,
+  HelpCircle,
+  Home,
+  LayoutDashboard,
+} from "lucide-react";
 
 export interface PrimaryNavItem {
   href: string;
@@ -14,6 +22,7 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
   { href: "/dashboard", labelKey: "home", icon: Home },
   { href: "/dashboards", labelKey: "dashboards", icon: LayoutDashboard },
   { href: "/inventory", labelKey: "inventory", icon: Boxes, permission: "inventory:view" },
+  { href: "/vendors", labelKey: "vendors", icon: Building2, permission: "vendors:view" },
   { href: "/approvals", labelKey: "approvals", icon: CheckCircle2, permission: "assessments:approve" },
   // Sem `permission`: visibilidade (própria vs. todas) é resolvida no backend
   // via cláusula `where`, não por um gate de permissão fixo — ver
@@ -32,6 +41,11 @@ export interface AdminNavItem {
  * de /admin (cards). Cada seção nova (Etapas C a I do plano) entra aqui. */
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin/questionnaire", labelKey: "nav.questionnaire", permission: "questions:manage" },
+  {
+    href: "/admin/vendor-questionnaire",
+    labelKey: "nav.vendorQuestionnaire",
+    permission: "vendors:manage",
+  },
   { href: "/admin/risk-matrix", labelKey: "nav.riskMatrix", permission: "risk-matrix:manage" },
   { href: "/admin/workflow", labelKey: "nav.workflow", permission: "workflows:manage" },
   { href: "/admin/audit-logs", labelKey: "nav.auditLogs", permission: "audit:view" },

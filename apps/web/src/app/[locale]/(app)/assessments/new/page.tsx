@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { VendorCombobox, type VendorComboboxValue } from "@/components/vendor-combobox";
 import {
   Dialog,
   DialogContent,
@@ -41,7 +42,7 @@ export default function NewAssessmentPage() {
   const [blockedAreaIds, setBlockedAreaIds] = React.useState<Set<string>>(new Set());
   const [areaBlockedDialogOpen, setAreaBlockedDialogOpen] = React.useState(false);
   const [softwareName, setSoftwareName] = React.useState("");
-  const [vendor, setVendor] = React.useState("");
+  const [vendor, setVendor] = React.useState<VendorComboboxValue>({ vendorName: "" });
   const [version, setVersion] = React.useState("");
   const [url, setUrl] = React.useState("");
   const [areaId, setAreaId] = React.useState("");
@@ -113,7 +114,8 @@ export default function NewAssessmentPage() {
     try {
       const created = await api.post<AssessmentDetail>("/assessments", {
         softwareName,
-        vendor,
+        vendor: vendor.vendorName,
+        vendorId: vendor.vendorId,
         version: version || undefined,
         url: url || undefined,
         areaId,
@@ -157,12 +159,7 @@ export default function NewAssessmentPage() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="vendor">{t("vendorLabel")}</Label>
-                  <Input
-                    id="vendor"
-                    value={vendor}
-                    onChange={(event) => setVendor(event.target.value)}
-                    required
-                  />
+                  <VendorCombobox value={vendor} onChange={setVendor} />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="version">{t("versionLabel")}</Label>
@@ -280,7 +277,13 @@ export default function NewAssessmentPage() {
               <div className="mt-2 flex justify-end gap-2">
                 <Button
                   type="submit"
-                  disabled={submitting || !areaId || !!duplicateMatch || blockedAreaIds.has(areaId)}
+                  disabled={
+                    submitting ||
+                    !areaId ||
+                    !vendor.vendorName.trim() ||
+                    !!duplicateMatch ||
+                    blockedAreaIds.has(areaId)
+                  }
                 >
                   {submitting ? t("submitting") : t("submit")}
                 </Button>
