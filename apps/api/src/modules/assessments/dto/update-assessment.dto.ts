@@ -17,6 +17,13 @@ export class UpdateAssessmentDto {
   @MinLength(1)
   vendor?: string;
 
+  @ApiPropertyOptional({
+    description: "Fornecedor cadastrado (Vendor) vinculado a esta avaliação.",
+  })
+  @IsOptional()
+  @IsString()
+  vendorId?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

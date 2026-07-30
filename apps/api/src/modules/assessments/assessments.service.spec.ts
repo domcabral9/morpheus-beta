@@ -9,6 +9,7 @@ import { RiskEvaluationService } from "../risk-engine/risk-evaluation.service";
 import { WorkflowService } from "../workflow/workflow.service";
 import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { VendorsService } from "../vendors/vendors.service";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
@@ -75,6 +76,7 @@ describe("AssessmentsService", () => {
   let workflowService: { startWorkflow: jest.Mock };
   let auditLogService: { record: jest.Mock };
   let notificationsService: { notify: jest.Mock };
+  let vendorsService: { findByIdForTenant: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -101,6 +103,7 @@ describe("AssessmentsService", () => {
     workflowService = { startWorkflow: jest.fn().mockResolvedValue(undefined) };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
     notificationsService = { notify: jest.fn().mockResolvedValue(undefined) };
+    vendorsService = { findByIdForTenant: jest.fn() };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -113,6 +116,7 @@ describe("AssessmentsService", () => {
         { provide: WorkflowService, useValue: workflowService },
         { provide: AuditLogService, useValue: auditLogService },
         { provide: NotificationsService, useValue: notificationsService },
+        { provide: VendorsService, useValue: vendorsService },
       ],
     }).compile();
 
@@ -137,6 +141,50 @@ describe("AssessmentsService", () => {
       expect(repo.create).toHaveBeenCalledWith(
         expect.objectContaining({ hasRiskAnalysis: true, hasInfoSecClause: false }),
       );
+    });
+
+    it("quando vendorId é informado, resolve o nome real e sobrescreve o texto livre `vendor`", async () => {
+      repo.create.mockResolvedValue(makeAssessment());
+      vendorsService.findByIdForTenant.mockResolvedValue({
+        id: "vendor-1",
+        name: "Nome Real Ltda",
+      });
+
+      await service.create(makeUser(), {
+        softwareName: "Sistema X",
+        vendor: "digitado errado",
+        vendorId: "vendor-1",
+        responsibleId: "user-requester",
+        areaId: "area-1",
+        criticality: "MEDIUM",
+        justification: "Justificativa",
+        hasRiskAnalysis: true,
+        hasInfoSecClause: false,
+      } as never);
+
+      expect(vendorsService.findByIdForTenant).toHaveBeenCalledWith("tenant-1", "vendor-1");
+      expect(repo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ vendor: "Nome Real Ltda", vendorId: "vendor-1" }),
+      );
+    });
+
+    it("rejeita quando o vendorId informado não pertence ao tenant", async () => {
+      vendorsService.findByIdForTenant.mockResolvedValue(null);
+
+      await expect(
+        service.create(makeUser(), {
+          softwareName: "Sistema X",
+          vendor: "Fornecedor X",
+          vendorId: "vendor-de-outro-tenant",
+          responsibleId: "user-requester",
+          areaId: "area-1",
+          criticality: "MEDIUM",
+          justification: "Justificativa",
+          hasRiskAnalysis: false,
+          hasInfoSecClause: false,
+        } as never),
+      ).rejects.toThrow("Fornecedor (Vendor) não encontrado.");
+      expect(repo.create).not.toHaveBeenCalled();
     });
   });
 

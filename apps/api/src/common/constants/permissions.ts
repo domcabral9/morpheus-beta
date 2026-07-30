@@ -23,6 +23,8 @@ export const PERMISSIONS = {
   INVENTORY_VIEW: "inventory:view",
   INVENTORY_MANAGE: "inventory:manage",
   AUDIT_VIEW: "audit:view",
+  VENDORS_VIEW: "vendors:view",
+  VENDORS_MANAGE: "vendors:manage",
   /** Super-admin: ler e editar dados de qualquer tenant via /auth/switch-tenant. Uso restrito. */
   PLATFORM_CROSS_TENANT: "platform:cross-tenant",
 } as const;
