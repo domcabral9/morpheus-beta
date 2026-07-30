@@ -6,8 +6,8 @@ Diagramas de referência do schema de dados e da topologia de deploy em produç�
 
 ## Modelo de dados (ER)
 
-36 modelos no total ([`packages/database/prisma/schema.prisma`](../packages/database/prisma/schema.prisma))
-- agrupados por domínio abaixo, não num diagrama só, porque um ER de 36 entidades numa imagem só
+46 modelos no total ([`packages/database/prisma/schema.prisma`](../packages/database/prisma/schema.prisma))
+- agrupados por domínio abaixo, não num diagrama só, porque um ER de 46 entidades numa imagem só
 vira ilegível. Cada diagrama mostra os campos que importam para entender a relação (chaves e um ou
 dois campos identificadores), não o schema completo - consulte o `.prisma` para a lista exata de
 colunas/constraints.
@@ -176,6 +176,7 @@ erDiagram
     WORKFLOW_DEFINITION ||--o{ WORKFLOW_STEP : tem
     ASSESSMENT_WORKFLOW_INSTANCE ||--o{ WORKFLOW_STEP_EXECUTION : executa
     WORKFLOW_STEP ||--o{ WORKFLOW_STEP_EXECUTION : instancia
+    ASSESSMENT }o--o| VENDOR : "pode referenciar (fornecedor real, opcional)"
 
     ASSESSMENT {
         string id PK
@@ -185,6 +186,8 @@ erDiagram
         string criticality "LOW|MEDIUM|HIGH|CRITICAL"
         string status
         string installerFileHash "nullable"
+        string vendor "snapshot em texto - sempre presente"
+        string vendorId FK "nullable, aponta pro Vendor real quando vinculado"
     }
     ASSESSMENT_VERSION {
         string id PK
@@ -235,6 +238,82 @@ erDiagram
     }
 ```
 
+### Fornecedores e tierização (avaliação de risco de fornecedores)
+
+Catálogo e motor de score deliberadamente **separados** dos de software acima - a tierização de
+fornecedores é um score agregado 1D (não uma matriz probabilidade×impacto 2D), reaproveita só a
+função pura de cálculo (`RiskEngineService.computeScores`), não as tabelas. Sem workflow de
+aprovação: `VendorAssessment` calcula e fecha sozinha ao ser concluída.
+
+```mermaid
+erDiagram
+    VENDOR ||--o{ VENDOR_ASSESSMENT : avalia
+    VENDOR_QUESTION_CATEGORY ||--o{ VENDOR_QUESTION : agrupa
+    VENDOR_QUESTION ||--o{ VENDOR_QUESTION_OPTION : tem
+    VENDOR_ASSESSMENT ||--o{ VENDOR_ANSWER : recebe
+    VENDOR_ANSWER ||--o{ VENDOR_ANSWER_OPTION : seleciona
+    VENDOR_TIER_CONFIG ||--o{ VENDOR_TIER_THRESHOLD : define
+
+    VENDOR {
+        string id PK
+        string tenantId FK
+        string name
+        int currentTier "nullable - snapshot da última avaliação concluída"
+        string currentTierLabel "nullable"
+        datetime nextReviewDueAt "nullable"
+    }
+    VENDOR_QUESTION_CATEGORY {
+        string id PK
+        string tenantId FK
+        string name
+        int order
+    }
+    VENDOR_QUESTION {
+        string id PK
+        string categoryId FK
+        string type "TEXT|SCALE|SINGLE_CHOICE|MULTI_CHOICE"
+        float weight
+    }
+    VENDOR_QUESTION_OPTION {
+        string id PK
+        string vendorQuestionId FK
+        float score "0=seguro, 5=arriscado"
+    }
+    VENDOR_TIER_CONFIG {
+        string id PK
+        string tenantId FK
+        int version
+        bool isActive
+    }
+    VENDOR_TIER_THRESHOLD {
+        string id PK
+        string vendorTierConfigId FK
+        int tier "1=melhor risco .. N=pior"
+        string label
+        int baseReassessmentMonths
+    }
+    VENDOR_ASSESSMENT {
+        string id PK
+        string tenantId FK
+        string vendorId FK
+        string vendorTierConfigId FK
+        string status "DRAFT|COMPLETED"
+        float totalScore "nullable até COMPLETED"
+        int tier "nullable, snapshot no momento da conclusão"
+    }
+    VENDOR_ANSWER {
+        string id PK
+        string vendorAssessmentId FK
+        string vendorQuestionId FK
+        string textValue "nullable"
+        int scaleValue "nullable"
+    }
+    VENDOR_ANSWER_OPTION {
+        string vendorAnswerId PK,FK
+        string vendorQuestionOptionId PK,FK
+    }
+```
+
 ### Pós-aprovação, documentos e auditoria
 
 ```mermaid
@@ -244,6 +323,7 @@ erDiagram
     SOFTWARE_INVENTORY_ITEM ||--o{ ATTACHMENT : anexa
     ASSESSMENT ||--o{ COMMENT : recebe
     USER ||--o{ NOTIFICATION : recebe
+    SOFTWARE_INVENTORY_ITEM }o--o| VENDOR : "pode referenciar (fornecedor real, opcional)"
 
     SOFTWARE_INVENTORY_ITEM {
         string id PK
@@ -251,6 +331,8 @@ erDiagram
         string assessmentId FK "nullable"
         string status "ACTIVE|PENDING_REVIEW|..."
         datetime nextReviewDate
+        string vendor "snapshot em texto - sempre presente"
+        string vendorId FK "nullable, aponta pro Vendor real quando vinculado"
     }
     ATTACHMENT {
         string id PK

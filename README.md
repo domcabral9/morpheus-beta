@@ -112,6 +112,10 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | --- | --- |
 | ![Login - seleção de organização](./docs/screenshots/login-organizacao.png) | ![Busca rápida](./docs/screenshots/busca-rapida.png) |
 
+| Fornecedores - lista com tierização | Fornecedores - detalhe |
+| --- | --- |
+| ![Fornecedores - lista](./docs/screenshots/vendors-lista.png) | ![Fornecedores - detalhe](./docs/screenshots/vendors-detalhe.png) |
+
 | Administração - gestão de papéis |
 | --- |
 | ![Administração - papéis](./docs/screenshots/admin-papeis.png) |
@@ -281,6 +285,10 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | Login - organization picker | Quick search (Cmd/Ctrl+K) |
 | --- | --- |
 | ![Login - organization picker](./docs/screenshots/login-organizacao-en.png) | ![Quick search](./docs/screenshots/busca-rapida-en.png) |
+
+| Vendors - list with tiering | Vendors - detail |
+| --- | --- |
+| ![Vendors - list](./docs/screenshots/vendors-lista-en.png) | ![Vendors - detail](./docs/screenshots/vendors-detalhe-en.png) |
 
 | Admin - role management |
 | --- |
