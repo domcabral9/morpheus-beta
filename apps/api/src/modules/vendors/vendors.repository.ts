@@ -84,6 +84,44 @@ export class VendorsRepository {
     return this.prisma.vendor.findFirst({ where: { id, tenantId } });
   }
 
+  /** Tela "Acompanhamento" - 3 baldes, sem o filtro `reassessmentNotifiedAt`
+   * (esse é só pra idempotência do job de notificação, ver
+   * `findDueForReassessment` abaixo). Sempre `isActive: true`. */
+  async findForTracking(tenantId: string, now: Date, dueSoonDays: number) {
+    const dueSoonThreshold = new Date(now);
+    dueSoonThreshold.setDate(dueSoonThreshold.getDate() + dueSoonDays);
+
+    const [neverAssessed, overdue, dueSoon] = await Promise.all([
+      this.prisma.vendor.findMany({
+        where: { tenantId, isActive: true, currentTier: null },
+        include: vendorListInclude,
+        orderBy: { name: "asc" },
+      }),
+      this.prisma.vendor.findMany({
+        where: {
+          tenantId,
+          isActive: true,
+          currentTier: { not: null },
+          nextReviewDueAt: { lt: now },
+        },
+        include: vendorListInclude,
+        orderBy: { nextReviewDueAt: "asc" },
+      }),
+      this.prisma.vendor.findMany({
+        where: {
+          tenantId,
+          isActive: true,
+          currentTier: { not: null },
+          nextReviewDueAt: { gte: now, lte: dueSoonThreshold },
+        },
+        include: vendorListInclude,
+        orderBy: { nextReviewDueAt: "asc" },
+      }),
+    ]);
+
+    return { neverAssessed, overdue, dueSoon };
+  }
+
   create(data: Prisma.VendorUncheckedCreateInput) {
     return this.prisma.vendor.create({ data });
   }

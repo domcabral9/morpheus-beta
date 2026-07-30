@@ -17,6 +17,9 @@ import { UpdateVendorQuestionOptionDto } from "./dto/update-vendor-question-opti
 import { CreateVendorTierConfigDto } from "./dto/create-vendor-tier-config.dto";
 import { UpsertVendorTierThresholdDto } from "./dto/upsert-vendor-tier-threshold.dto";
 
+/** Janela de "reavaliação próxima" na tela de Acompanhamento. */
+const TRACKING_DUE_SOON_DAYS = 30;
+
 /**
  * Sem workflow de aprovação (decisão #2 do plano de avaliação de
  * fornecedores) - `completeAssessment` calcula score/tier e fecha a
@@ -52,6 +55,12 @@ export class VendorsService {
     const vendor = await this.repository.findById(user.tenantId, id);
     if (!vendor) throw new NotFoundException("Fornecedor não encontrado.");
     return vendor;
+  }
+
+  /** Tela "Acompanhamento" de fornecedores - 3 baldes, sem filtro de
+   * idempotência (diferente de `findDueForReassessment`, que é do scheduler). */
+  getTracking(user: AuthenticatedUser) {
+    return this.repository.findForTracking(user.tenantId, new Date(), TRACKING_DUE_SOON_DAYS);
   }
 
   createVendor(user: AuthenticatedUser, dto: CreateVendorDto) {

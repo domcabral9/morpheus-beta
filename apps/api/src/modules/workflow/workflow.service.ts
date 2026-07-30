@@ -432,6 +432,7 @@ export class WorkflowService {
         id: assessment.id,
         softwareName: assessment.softwareName,
         vendor: assessment.vendor,
+        vendorId: assessment.vendorId,
         version: assessment.version,
         url: assessment.url,
         areaId: assessment.areaId,

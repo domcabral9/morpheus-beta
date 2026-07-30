@@ -32,6 +32,12 @@ export class VendorsController {
     return this.vendorsService.listVendors(user, query);
   }
 
+  // Rota literal - precisa vir antes de `:id` abaixo, senão `:id` casa primeiro.
+  @Get("tracking")
+  getTracking(@CurrentUser() user: AuthenticatedUser) {
+    return this.vendorsService.getTracking(user);
+  }
+
   @Get(":id")
   get(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.vendorsService.getVendor(user, id);

@@ -2191,5 +2191,34 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     800-161 (*Cybersecurity Supply Chain Risk Management Practices*), e a lógica de Tier 1=melhor→
     Tier 4=pior com cadência de reavaliação configurável por tier e ajustada pela criticidade do
     fornecedor. Sem screenshot novo nessa fase.
+- **Rastreabilidade Inventory↔Vendor, Fase 1 (2026-07-30): backend.** Depois de validar a feature de
+  fornecedores em navegador, ficou claro um gap real: `SoftwareInventoryItem.vendor` era só uma
+  string livre (snapshot do nome) - não existia FK real pra `Vendor`, mesmo quando a `Assessment` de
+  origem já tinha um vinculado. Fase 1 fecha esse gap no backend (frontend nas próximas fases).
+  - **Schema**: `SoftwareInventoryItem.vendorId String?` + relação `linkedVendor Vendor?` (`onDelete:
+    SetNull`, mesmo padrão de `assessmentId`/`assessment`), `@@index([tenantId, vendorId])`. Migration
+    100% aditiva (`ADD COLUMN` + índice + FK, zero `DROP`).
+  - `CreateInventoryItemDto`/`UpdateInventoryItemDto` ganham `vendorId?: string` opcional -
+    `InventoryRepository.itemDetailInclude` passa a trazer `linkedVendor: {id, name, currentTier,
+    currentTierLabel}` (mesmo shape já usado em `WorkflowRepository.stepExecutionDetailInclude` pro
+    badge de tier no `decision-dialog.tsx`).
+  - `InventoryService.createFromApprovedAssessment()` (+ a interface `ApprovedAssessmentForInventory`)
+    propaga `vendorId` nos dois branches (criação e renovação/`existing`); `workflow.service.ts`
+    repassa `assessment.vendorId`, que já estava selecionado desde a Fase 4 da feature de
+    fornecedores - zero query nova.
+  - **Novo endpoint `GET /vendors/tracking`** (`VendorsRepository.findForTracking`): 3 baldes -
+    fornecedores nunca avaliados, com reavaliação vencida, e com reavaliação nos próximos 30 dias -
+    base pra aba de "Acompanhamento" da Fase 3. Diferente de `findDueForReassessment` (usado pelo
+    scheduler), não filtra por `reassessmentNotifiedAt` - é uma tela persistente, não um job de
+    notificação única. Registrado antes de `GET /vendors/:id` no controller (rota literal precisa vir
+    primeiro, senão `:id` casa antes).
+  - **Testes**: `vendors.service.spec.ts` (`getTracking`), `inventory.service.spec.ts`
+    (propagação de `vendorId`, incluindo o caso `null` de avaliação sem fornecedor vinculado) - 256
+    testes no total em `apps/api`, todos passando. `pnpm --filter @morpheus/api lint/typecheck/build`
+    verde.
+  - Escopo do pacote completo (1→2→3, confirmado com o usuário via `AskUserQuestion`) e a correção de
+    que a tier/score continua automática (sem gate de aprovação) documentados no plano
+    (`streamed-sleeping-newell.md`) - Fases 2-4 (frontend + amostras + portfólio) seguem em PRs
+    separados.
 
 
