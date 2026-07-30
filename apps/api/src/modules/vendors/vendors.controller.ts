@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
@@ -58,6 +58,15 @@ export class VendorsController {
   @Get(":id/assessments")
   history(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.vendorsService.getVendorHistory(user, id);
+  }
+
+  @Get(":id/assessments/:assessmentId")
+  getAssessment(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") vendorId: string,
+    @Param("assessmentId") assessmentId: string,
+  ) {
+    return this.vendorsService.getAssessment(user, vendorId, assessmentId);
   }
 
   @RequirePermissions(PERMISSIONS.VENDORS_MANAGE)
@@ -171,6 +180,13 @@ export class VendorsController {
     @Body() dto: UpdateVendorQuestionOptionDto,
   ) {
     return this.vendorsService.updateOption(user, id, dto);
+  }
+
+  @RequirePermissions(PERMISSIONS.VENDORS_MANAGE)
+  @Audit("DELETE", "VendorQuestionOption")
+  @Delete("admin/options/:id")
+  removeOption(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.vendorsService.removeOption(user, id);
   }
 
   // --- Administração: tierização --------------------------------------------------

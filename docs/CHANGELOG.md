@@ -2133,3 +2133,48 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
   - **Testes**: `vendor-reassessment.scheduler.spec.ts`, 6 novos casos (nenhum vencido, responsável
     ativo, responsável inativo, nunca avaliado antes, sem papel Administrador configurado, múltiplos
     fornecedores numa mesma execução) - todos passando (251 no total do `apps/api`).
+- **Avaliação de risco de fornecedores, Fase 4 (2026-07-30): frontend completo.** Primeira fase com
+  superfície visual de verdade - navegação, telas, formulário de avaliação, admin do catálogo, aba de
+  tierização em Settings e o picker de fornecedor na Assessment de software.
+  - **Pequenas adições de backend habilitantes** (junto com o frontend, não uma fase à parte):
+    `GET /vendors/:id/assessments/:assessmentId` (retomar rascunho/ver histórico sem restrição de
+    status - reaproveita `VendorsRepository.findAssessmentById`, já existente) e
+    `DELETE /vendors/admin/options/:id` (o `VendorsService.removeOption` já existia desde a Fase 2,
+    só não estava exposto no controller). `WorkflowRepository` ganhou `vendorId`/`linkedVendor`
+    (snapshot `id/name/currentTier/currentTierLabel`) nos dois selects de `assessment` usados pelo
+    inbox de aprovação, pra badge de tier chegar ao frontend sem uma chamada extra. 3 novos testes em
+    `vendors.service.spec.ts` cobrindo `getAssessment`.
+  - **Navegação**: `/vendors` (permissão `vendors:view`) em `PRIMARY_NAV_ITEMS`,
+    `/admin/vendor-questionnaire` (permissão `vendors:manage`) em `ADMIN_NAV_ITEMS`.
+  - **`/vendors`**: lista com busca (debounce) + paginação, dialog de criar/editar; **`/vendors/:id`**:
+    dados, `TierBadge` ("Tier N · Rótulo", nunca número cru - decisão #4 do plano), histórico de
+    avaliações, botão "Nova avaliação". **`/vendors/:id/assessments/:assessmentId`**: formulário de
+    ~28 perguntas agrupado por categoria (mesmo padrão Card-por-categoria de
+    `assessments/[id]/page.tsx`), salvar rascunho (`PATCH`) e concluir (`PATCH` + `POST .../complete`)
+    - uma única rota dinâmica cobre tanto "recém-criado" (a criação do rascunho acontece no clique de
+      "Nova avaliação", antes da navegação) quanto "retomar rascunho existente"/"ver concluída", sem
+      precisar de uma rota `/new` separada.
+  - **`/admin/vendor-questionnaire`**: CRUD de categoria/pergunta/opção, espelhando
+    `admin/questionnaire/` mas sem `riskDimension` (tierização é score 1D) e sem o vínculo a
+    controles de compliance (não se aplica ao catálogo de fornecedor).
+  - **Aba "Tierização de fornecedores" em `/admin/settings`**: diferente das outras abas, não edita
+    `Tenant` - busca/salva o `VendorTierConfig` ativo direto (`GET/POST /vendors/admin/tier-configs/*`),
+    só visível a quem tem `vendors:manage` (checado além do gate geral `system:configure` da página).
+  - **`VendorCombobox`** (`components/vendor-combobox.tsx`, novo `components/ui/popover.tsx` -
+    reaproveitando o pacote `radix-ui` unificado já instalado, sem dependência nova) em
+    `assessments/new/page.tsx`: busca `GET /vendors?search=`, com fallback "usar texto livre" e
+    **"+ cadastrar novo fornecedor" abrindo um modal inline** (`VendorQuickCreateDialog` - só
+    `name`+`businessCriticality`, refinamento decidido com o usuário em 2026-07-30) em vez de navegar
+    pra fora do formulário.
+  - **Badge de tier no `decision-dialog.tsx`**: aditivo, ao lado dos badges de ART/InfoSec já
+    existentes - só aparece quando a `Assessment` tem um `Vendor` vinculado com tier calculado.
+  - **Validação real em navegador** (não só typecheck/lint/build): script Playwright descartável
+    rodou o fluxo completo contra o dev environment real - criar fornecedor → responder as 28
+    perguntas com a primeira opção de cada → salvar rascunho → concluir → `Tier 1 · Baixo risco`
+    (100% favorável, confirma o mesmo comportamento do teste unitário da Fase 2) → tier refletido no
+    detalhe do fornecedor → catálogo admin carrega as 4 categorias/28 perguntas do seed → aba de
+    tierização mostra as 4 faixas → combobox encontra o fornecedor por busca e cria um novo via modal
+    inline. 15/15 checks passando. Dados de teste (fornecedores criados durante a validação) removidos
+    do banco depois.
+
+

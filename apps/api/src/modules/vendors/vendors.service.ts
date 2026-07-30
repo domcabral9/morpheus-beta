@@ -334,6 +334,15 @@ export class VendorsService {
     return updated;
   }
 
+  /** Usado pela tela de retomar rascunho/ver histórico - sem restrição de status (DRAFT ou COMPLETED). */
+  async getAssessment(user: AuthenticatedUser, vendorId: string, assessmentId: string) {
+    const assessment = await this.repository.findAssessmentById(user.tenantId, assessmentId);
+    if (!assessment || assessment.vendorId !== vendorId) {
+      throw new NotFoundException("Avaliação de fornecedor não encontrada.");
+    }
+    return assessment;
+  }
+
   // --- Auxiliares privados -----------------------------------------------------------
 
   private async assertDraftInTenant(
