@@ -6,8 +6,8 @@ Diagramas de referência do schema de dados e da topologia de deploy em produç�
 
 ## Modelo de dados (ER)
 
-46 modelos no total ([`packages/database/prisma/schema.prisma`](../packages/database/prisma/schema.prisma))
-- agrupados por domínio abaixo, não num diagrama só, porque um ER de 46 entidades numa imagem só
+47 modelos no total ([`packages/database/prisma/schema.prisma`](../packages/database/prisma/schema.prisma))
+- agrupados por domínio abaixo, não num diagrama só, porque um ER de 47 entidades numa imagem só
 vira ilegível. Cada diagrama mostra os campos que importam para entender a relação (chaves e um ou
 dois campos identificadores), não o schema completo - consulte o `.prisma` para a lista exata de
 colunas/constraints.
@@ -59,7 +59,19 @@ erDiagram
         string ipAddress "AES-256-GCM (Etapa 14)"
         string familyId "rotação + detecção de reuso"
     }
+    PLATFORM_PASSWORD_POLICY {
+        string id PK "singleton, sempre 'singleton'"
+        int minLength
+        bool requireUppercase
+        bool requireLowercase
+        bool requireDigit
+        bool requireSymbol
+    }
 ```
+
+`PLATFORM_PASSWORD_POLICY` não tem nenhuma relação no diagrama de propósito: é o único model do
+sistema, junto de `PERMISSION`, que é cross-tenant em vez de tenant-scoped - uma única linha,
+configurável só por quem tem a permissão `platform:cross-tenant`, valendo para todos os tenants.
 
 ### Questionário e biblioteca de controles
 

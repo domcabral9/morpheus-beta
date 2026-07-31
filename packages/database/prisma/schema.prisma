@@ -219,6 +219,30 @@ model RefreshToken {
 }
 
 // =============================================================================
+// Configuração de plataforma (cross-tenant)
+// =============================================================================
+
+/// Política de complexidade de senha, plataforma inteira (cross-tenant) — não
+/// existe por Tenant, ao contrário de tudo mais configurável no sistema.
+/// Singleton por id fixo ("singleton"): nunca existe um `create` genérico
+/// para este model, só `upsert` sobre esse id constante.
+model PlatformPasswordPolicy {
+  id               String   @id @default("singleton")
+  minLength        Int      @default(8)
+  requireUppercase Boolean  @default(true)
+  requireLowercase Boolean  @default(true)
+  requireDigit     Boolean  @default(true)
+  requireSymbol    Boolean  @default(true)
+  /// Só para exibição ("quem mexeu por último") — sem FK de propósito: esta
+  /// linha precisa sempre existir mesmo que o usuário citado seja excluído.
+  updatedByUserId  String?
+  updatedAt        DateTime @updatedAt
+  createdAt        DateTime @default(now())
+
+  @@map("platform_password_policies")
+}
+
+// =============================================================================
 // Área / departamento
 // =============================================================================
 

@@ -2307,5 +2307,25 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     entidade no menu principal, nova tela, fluxo novo) exige revisar TODO o portfólio afetado antes
     de considerar a fase terminada - não só adicionar o print da mudança em si, mas checar se ela
     invalida prints/documentação já existentes.
+- **Política de senha (plataforma), Fase 1 (2026-07-31): schema + seed.** Início do primeiro item do
+  backlog de "Autenticação" (registrado 2026-07-26). Investigação revelou que hoje não existe
+  nenhum fluxo de senha no produto além do seed - `CreateUserDto` não tem campo de senha, não há
+  `changePassword`/`resetPassword` em lugar nenhum da API, e a única forma de login local é a senha
+  plantada pelo seed. Uma política de complexidade sozinha não teria onde se aplicar - por isso o
+  escopo (confirmado com o usuário) inclui, nas próximas fases, o mínimo de fluxo de senha
+  necessário para validá-la de verdade, não só a tela de configuração.
+  - Novo model `PlatformPasswordPolicy` (`packages/database/prisma/schema.prisma`) - **primeiro
+    model genuinamente cross-tenant do sistema além de `Permission`**: tudo mais configurável hoje é
+    por-`Tenant`. Singleton por id fixo (`"singleton"`), nunca `create` genérico. Campos:
+    `minLength` (padrão 8) + 4 toggles independentes (`requireUppercase/Lowercase/Digit/Symbol`,
+    todos `true` por padrão). Sem expiração nem histórico/bloqueio de reuso - fora de escopo por
+    decisão explícita.
+  - Seed cria a linha singleton via `upsert` fora de `seedFullTenant()` (roda uma vez, não por
+    tenant); confirmado que `SEED_PASSWORD = "Demo@12345"` já satisfaz os defaults.
+  - `docs/architecture.md`: novo model no diagrama ER de "Tenancy e RBAC" (entidade solta, sem
+    relação - mesmo tratamento de `PERMISSION`), contagem de modelos 46→47.
+  - **Testes**: `migrate:dev` limpo, seed roda e deixa exatamente uma linha `id="singleton"`, seed
+    re-executado confirma idempotência (upsert, sem duplicata). `pnpm --filter @morpheus/database
+    build` e `pnpm --filter @morpheus/api typecheck` verdes.
 
 
