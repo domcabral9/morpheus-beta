@@ -2380,4 +2380,33 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     pra `/dashboard`) e `AdminSectionGate` (tem acesso admin mas não `platform:cross-tenant`,
     volta pra `/admin`) - usando três contas demo diferentes (`admin@morpheus.demo`,
     `usuario@morpheus.demo`, `admin@zion.morpheus.demo`) pra cobrir os três casos reais.
+- **Política de senha (plataforma), Fase 4 (2026-07-31): criação em 2 passos + reset admin +
+  autoatendimento.** Fecha o pacote inteiro (Fases 1-4) - o backend da Fase 2 tinha os endpoints,
+  esta fase é a UI que finalmente os expõe pros três fluxos reais de uso.
+  - `create-user-dialog.tsx` vira um fluxo de 2 passos dentro do mesmo `Dialog`: passo 1 é o form
+    de criação já existente (sem mudança); ao suceder, avança pro passo 2 (`set-password-form.tsx`,
+    novo componente reusável, sem `Dialog` próprio) - campo de senha + confirmação + dica das
+    regras vigentes (`GET /platform/password-policy`). "Pular por agora" fecha o dialog sem senha
+    (usuário fica SSO-only, estado já válido hoje).
+  - `set-password-form.tsx` é reusado também em `reset-password-dialog.tsx` (novo, mesmo padrão de
+    arquivo de `role-assignment-dialog.tsx`) - novo botão "Redefinir senha" por linha em
+    `admin/users/page.tsx`, ao lado de "Gerenciar papéis"/"Ativar". Mesma rota/DTO/service-method
+    da Fase 2 pros dois casos (primeira senha ou reset) - só uma UI a mais.
+  - Novo `components/change-password-dialog.tsx` (autoatendimento) + item "Trocar senha" no menu
+    do avatar (`app-sidebar.tsx`), entre o separador e "Sair" - `PATCH /auth/password`, exige senha
+    atual, sem detecção client-side de SSO-only (o 400 do backend estoura como qualquer erro de
+    formulário).
+  - Novo `lib/use-password-policy.ts` (hook) + `components/password-policy-hint.tsx` (dica
+    compacta das regras vigentes) - reusados nos três formulários de senha (criação, reset,
+    autoatendimento) a partir de um único fetch da política.
+  - **Testes**: `pnpm --filter @morpheus/web lint/typecheck/build` verdes. Validação real em
+    navegador via Playwright descartável (12 checks): criar usuário → senha fraca rejeitada com
+    mensagem específica → senha válida → login funciona; "pular por agora" deixa o usuário
+    SSO-only (login local falha de verdade); "Redefinir senha" na listagem funciona; autoatendimento
+    (senha atual errada rejeitada, senha nova fraca rejeitada, fluxo correto funciona, senha antiga
+    para de funcionar, senha nova funciona). Achado no meio do caminho (não é bug): o próprio script
+    de teste bateu no rate-limit de `/auth/login` (5/60s) por fazer muitos logins seguidos em menos
+    de um minuto - confirmado via log da API (`429`, `retry-after: 60`), não uma falha do produto;
+    reconfirmado o último caso isoladamente depois que a janela expirou. Usuários de teste
+    descartáveis criados/removidos via SQL ao final, sem deixar rastro no ambiente demo.
 

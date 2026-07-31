@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SetPasswordForm } from "./set-password-form";
 
 interface CreateUserDialogProps {
   users: UserAdmin[];
@@ -45,6 +46,10 @@ export function CreateUserDialog({
   const [sourceUserId, setSourceUserId] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
+  // 2º passo, dentro do mesmo Dialog: definir a senha inicial é uma ação
+  // desacoplada da criação (POST /users/:id/password, ver Fase 2) - aqui é
+  // só o encadeamento de UI, não uma dependência real entre os dois passos.
+  const [createdUser, setCreatedUser] = React.useState<UserAdmin | null>(null);
 
   function reset() {
     setName("");
@@ -53,6 +58,7 @@ export function CreateUserDialog({
     setSelectedRoleIds([]);
     setSourceUserId("");
     setError(null);
+    setCreatedUser(null);
   }
 
   function toggleRole(roleId: string, checked: boolean) {
@@ -75,8 +81,7 @@ export function CreateUserDialog({
       });
       toast.success(t("createSuccess"));
       onCreated(created);
-      reset();
-      onOpenChange(false);
+      setCreatedUser(created);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t("createError"));
     } finally {
@@ -94,9 +99,23 @@ export function CreateUserDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("createDialogTitle")}</DialogTitle>
+          <DialogTitle>
+            {createdUser
+              ? t("setInitialPasswordTitle", { name: createdUser.name })
+              : t("createDialogTitle")}
+          </DialogTitle>
         </DialogHeader>
 
+        {createdUser ? (
+          <SetPasswordForm
+            userId={createdUser.id}
+            allowSkip
+            onDone={() => {
+              reset();
+              onOpenChange(false);
+            }}
+          />
+        ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="new-user-name">{t("fieldName")}</Label>
@@ -180,6 +199,7 @@ export function CreateUserDialog({
             </Button>
           </div>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );

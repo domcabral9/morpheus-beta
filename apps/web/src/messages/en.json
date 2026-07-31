@@ -40,6 +40,7 @@
     "localeSwitcherLabel": "Language",
     "themeToggleLabel": "Toggle theme",
     "signOut": "Sign out",
+    "changePassword": "Change password",
     "orgSwitcher": "Organization",
     "orgSwitcherLoading": "Loading...",
     "impersonationBanner": "Viewing: {tenant} (super-admin mode)",
@@ -647,7 +648,17 @@
     "activateError": "Could not activate the user.",
     "deactivateSuccess": "User deactivated.",
     "deactivateError": "Could not deactivate the user.",
-    "cannotDeactivateSelf": "You can't deactivate your own account."
+    "cannotDeactivateSelf": "You can't deactivate your own account.",
+    "setInitialPasswordTitle": "Set an initial password for {name}",
+    "resetPasswordButton": "Reset password",
+    "resetPasswordDialogTitle": "Reset password for {name}",
+    "fieldNewPassword": "New password",
+    "fieldConfirmPassword": "Confirm password",
+    "passwordMismatch": "Passwords don't match.",
+    "skipForNow": "Skip for now",
+    "setPasswordButton": "Set password",
+    "setPasswordSuccess": "Password set.",
+    "setPasswordError": "Could not set the password."
   },
   "AdminRoles": {
     "title": "Roles",
@@ -749,6 +760,24 @@
     "save": "Save",
     "saveSuccess": "Password policy updated.",
     "saveError": "Could not save the password policy."
+  },
+  "PasswordPolicyHint": {
+    "minLength": "at least {count} characters",
+    "uppercase": "an uppercase letter",
+    "lowercase": "a lowercase letter",
+    "digit": "a digit",
+    "symbol": "a symbol"
+  },
+  "ChangePassword": {
+    "dialogTitle": "Change password",
+    "fieldCurrentPassword": "Current password",
+    "fieldNewPassword": "New password",
+    "fieldConfirmPassword": "Confirm password",
+    "passwordMismatch": "Passwords don't match.",
+    "saving": "Saving...",
+    "changeButton": "Change password",
+    "changeSuccess": "Password updated.",
+    "changeError": "Could not change the password."
   },
   "Dashboards": {
     "title": "Dashboards",
