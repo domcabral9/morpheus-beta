@@ -198,7 +198,9 @@
       "settings": "Settings",
       "settingsDescription": "Technical opinion branding and numbering.",
       "vendorQuestionnaire": "Vendor questionnaire",
-      "vendorQuestionnaireDescription": "Categories, questions, and options used in vendor risk assessment."
+      "vendorQuestionnaireDescription": "Categories, questions, and options used in vendor risk assessment.",
+      "platformPolicy": "Password policy",
+      "platformPolicyDescription": "Password complexity rules for the whole platform. Visible only to super-admins."
     }
   },
   "AuditLogs": {
@@ -730,6 +732,23 @@
     "vendorTierFieldMinScore": "Minimum score",
     "vendorTierFieldMaxScore": "Maximum score",
     "vendorTierFieldBaseReassessmentMonths": "Base cadence (months)"
+  },
+  "AdminPlatformPolicy": {
+    "title": "Password policy",
+    "subtitle": "Password complexity rules, applied to every tenant on the platform.",
+    "loadError": "Could not load the password policy.",
+    "cardTitle": "Current rules",
+    "fieldMinLength": "Minimum length",
+    "field": {
+      "requireUppercase": "Require an uppercase letter",
+      "requireLowercase": "Require a lowercase letter",
+      "requireDigit": "Require a digit",
+      "requireSymbol": "Require a symbol (non-alphanumeric character)"
+    },
+    "saving": "Saving...",
+    "save": "Save",
+    "saveSuccess": "Password policy updated.",
+    "saveError": "Could not save the password policy."
   },
   "Dashboards": {
     "title": "Dashboards",
