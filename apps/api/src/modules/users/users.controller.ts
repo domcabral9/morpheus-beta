@@ -10,12 +10,15 @@ import { UsersService } from "./users.service";
 import { AssignRoleDto } from "./dto/assign-role.dto";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { SetUserActiveDto } from "./dto/set-user-active.dto";
+import { SetUserPasswordDto } from "./dto/set-user-password.dto";
 
 /**
- * Visualização de usuários do tenant, criação, ativação/desativação, e
- * atribuição/remoção de papel. Criação não define senha local (só SSO
- * just-in-time - `UsersService.findOrProvisionBySso` - ou seed fazem isso
- * hoje); um fluxo de "definir senha" fica para um incremento futuro.
+ * Visualização de usuários do tenant, criação, ativação/desativação,
+ * atribuição/remoção de papel e definição/reset de senha local. Criação e
+ * definição de senha são ações desacopladas de propósito (`POST :id/password`
+ * é chamada como segundo passo, tanto para dar a primeira senha de um
+ * usuário novo quanto para resetar a de um já existente) — sem isso, um
+ * usuário criado aqui só entra via SSO.
  *
  * Sem `@RequirePermissions` de classe: `list()` é usado como seletor de
  * usuário em outras telas (inventário, filtro de auditoria), então tem gate
@@ -59,6 +62,19 @@ export class UsersController {
     @Body() dto: SetUserActiveDto,
   ) {
     return this.usersService.setActive(user.tenantId, user.id, id, dto.isActive);
+  }
+
+  // Sem @Audit(): a auditoria é gravada explicitamente em
+  // UsersService.setPassword porque precisa do metadata `initiatedBy`, que o
+  // AuditInterceptor não carrega.
+  @RequirePermissions(PERMISSIONS.USERS_MANAGE)
+  @Post(":id/password")
+  setPassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") id: string,
+    @Body() dto: SetUserPasswordDto,
+  ) {
+    return this.usersService.setPassword(user.tenantId, user.id, id, dto.password);
   }
 
   @RequirePermissions(PERMISSIONS.USERS_MANAGE)

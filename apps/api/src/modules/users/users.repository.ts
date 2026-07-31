@@ -96,6 +96,10 @@ export class UsersRepository {
     await this.prisma.user.update({ where: { id }, data: { isActive } });
   }
 
+  async setPasswordHash(id: string, passwordHash: string): Promise<void> {
+    await this.prisma.user.update({ where: { id }, data: { passwordHash } });
+  }
+
   // --- Administração (users:manage) --------------------------------------------
   findAllForTenant(tenantId: string): Promise<UserAdminRaw[]> {
     return this.prisma.user.findMany({
