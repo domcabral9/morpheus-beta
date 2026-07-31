@@ -198,7 +198,9 @@
       "settings": "Configurações",
       "settingsDescription": "Identidade visual e nomenclatura do parecer técnico.",
       "vendorQuestionnaire": "Questionário de fornecedores",
-      "vendorQuestionnaireDescription": "Categorias, perguntas e opções usadas na avaliação de risco de fornecedores."
+      "vendorQuestionnaireDescription": "Categorias, perguntas e opções usadas na avaliação de risco de fornecedores.",
+      "platformPolicy": "Política de senha",
+      "platformPolicyDescription": "Regras de complexidade de senha para toda a plataforma. Visível só para super-admin."
     }
   },
   "AuditLogs": {
@@ -730,6 +732,23 @@
     "vendorTierFieldMinScore": "Score mínimo",
     "vendorTierFieldMaxScore": "Score máximo",
     "vendorTierFieldBaseReassessmentMonths": "Cadência base (meses)"
+  },
+  "AdminPlatformPolicy": {
+    "title": "Política de senha",
+    "subtitle": "Regras de complexidade de senha, válidas para todos os tenants da plataforma.",
+    "loadError": "Não foi possível carregar a política de senha.",
+    "cardTitle": "Regras vigentes",
+    "fieldMinLength": "Tamanho mínimo",
+    "field": {
+      "requireUppercase": "Exigir letra maiúscula",
+      "requireLowercase": "Exigir letra minúscula",
+      "requireDigit": "Exigir dígito",
+      "requireSymbol": "Exigir símbolo (caractere não alfanumérico)"
+    },
+    "saving": "Salvando...",
+    "save": "Salvar",
+    "saveSuccess": "Política de senha atualizada.",
+    "saveError": "Não foi possível salvar a política de senha."
   },
   "Dashboards": {
     "title": "Dashboards",

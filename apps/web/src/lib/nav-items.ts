@@ -52,6 +52,11 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin/users", labelKey: "nav.users", permission: "users:manage" },
   { href: "/admin/roles", labelKey: "nav.roles", permission: "roles:manage" },
   { href: "/admin/settings", labelKey: "nav.settings", permission: "system:configure" },
+  {
+    href: "/admin/platform-policy",
+    labelKey: "nav.platformPolicy",
+    permission: "platform:cross-tenant",
+  },
 ];
 
 /** Rota ativa: match exato, ou prefixo quando `exact` é false (usado por seções com sub-rotas). */
