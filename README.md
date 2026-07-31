@@ -73,6 +73,10 @@ avaliado ou está com reavaliação vencida/próxima.
   AND/OR de permissões - `apps/api/src/common/decorators`, `common/guards`.
 - **Autenticação**: JWT de acesso curto + refresh token via cookie httpOnly, SSO via SAML
   genérico/plugável (login local convive com SSO, nunca exclusivo).
+- **Política de senha configurável, plataforma inteira**: tamanho mínimo e classes de caractere
+  exigidas (maiúscula/minúscula/dígito/símbolo) definidos por super-admin em `/admin/platform-policy`
+  e aplicados a todo tenant - autoatendimento de troca de senha e reset administrativo reusam a
+  mesma validação.
 - **Trilha de auditoria**: interceptor dedicado registra CREATE/UPDATE/DELETE/LOGIN/... com ator,
   entidade e IP, consultável em `/admin/audit-logs`.
 - **CSRF via double-submit cookie**, sanitização global de entrada, rate limiting configurável por
@@ -119,6 +123,10 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | Administração - gestão de papéis |
 | --- |
 | ![Administração - papéis](./docs/screenshots/admin-papeis.png) |
+
+| Política de senha (super-admin) | Trocar senha (autoatendimento) |
+| --- | --- |
+| ![Política de senha](./docs/screenshots/admin-platform-policy.png) | ![Trocar senha](./docs/screenshots/change-password-dialog.png) |
 
 ## Stack
 
@@ -248,6 +256,10 @@ overdue/upcoming reassessment.
   permission composition - `apps/api/src/common/decorators`, `common/guards`.
 - **Authentication**: short-lived access JWT + refresh token via httpOnly cookie, SSO via generic/
   pluggable SAML (local login coexists with SSO, never exclusive).
+- **Platform-wide, configurable password policy**: minimum length and required character classes
+  (uppercase/lowercase/digit/symbol) set by a super-admin at `/admin/platform-policy` and enforced
+  for every tenant - self-service password change and admin-triggered resets reuse the same
+  validation.
 - **Audit trail**: a dedicated interceptor logs CREATE/UPDATE/DELETE/LOGIN/... with actor, entity
   and IP, queryable at `/admin/audit-logs`.
 - **CSRF via double-submit cookie**, global input sanitization, configurable rate limiting per
@@ -293,6 +305,10 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | Admin - role management |
 | --- |
 | ![Admin - roles](./docs/screenshots/admin-papeis-en.png) |
+
+| Password policy (super-admin) | Change password (self-service) |
+| --- | --- |
+| ![Password policy](./docs/screenshots/admin-platform-policy-en.png) | ![Change password](./docs/screenshots/change-password-dialog-en.png) |
 
 ## Stack
 
