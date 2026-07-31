@@ -2327,5 +2327,33 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
   - **Testes**: `migrate:dev` limpo, seed roda e deixa exatamente uma linha `id="singleton"`, seed
     re-executado confirma idempotência (upsert, sem duplicata). `pnpm --filter @morpheus/database
     build` e `pnpm --filter @morpheus/api typecheck` verdes.
-
+- **Política de senha (plataforma), Fase 2 (2026-07-31): backend - CRUD da política + definição/
+  validação de senha.** Fecha o backend inteiro da feature de uma vez (política + os pontos de
+  aplicação viajam juntos no mesmo PR de propósito - um PR intermediário só com a política, sem
+  nada aplicando ela de verdade, não seria útil sozinho).
+  - Novo módulo enxuto `apps/api/src/modules/platform-policy/`: `password-policy.util.ts` (função
+    pura, sem banco, mesmo padrão de `vendor-tier.util.ts` - `validatePasswordAgainstPolicy`
+    retorna as mensagens das regras violadas), `password-policy.repository.ts`/`.service.ts`
+    (`getPolicy`/`updatePolicy`/`validate` - esse último é o seam único chamado por todo lugar que
+    define/troca uma senha), `password-policy.controller.ts` (`GET /platform/password-policy`
+    aberto a qualquer usuário autenticado - são as regras vigentes, não quem as definiu, e todo
+    mundo precisa lê-las antes de definir uma senha; `PATCH` restrito a `platform:cross-tenant`).
+  - `UsersModule` ganha `POST /users/:id/password` (`users:manage`) - mesma rota tanto pra dar a
+    primeira senha de um usuário recém-criado quanto pra resetar a de um já existente/trancado fora,
+    de propósito: "definir senha" fica desacoplado de "criar usuário", o que deixa uma futura virada
+    pra convite por e-mail sem precisar rearquitetar a criação. Auditoria (`AuditLogService.record`,
+    não `@Audit()`) grava `metadata: {passwordChange: true, initiatedBy: "admin"}`.
+  - `AuthController` ganha `PATCH /auth/password` (autoatendimento, sem permissão especial -
+    qualquer usuário troca a própria senha) - exige confirmar a senha atual (`bcrypt.compare`),
+    rejeita usuário SSO-only (`passwordHash` nulo) com mensagem explícita, mesmo limite de força
+    bruta do login (`@Throttle 5/60s`). Auditoria com `initiatedBy: "self"`.
+  - **Testes**: `password-policy.util.spec.ts` (10 casos, toda regra individual + combinações +
+    limite exato). Primeiro `users.service.spec.ts` do projeto (9 casos): rejeita senha fraca sem
+    chamar o repositório, rejeita usuário de outro tenant, rejeita senha atual errada, rejeita
+    usuário SSO-only, grava auditoria com o `initiatedBy` certo em cada caminho. `pnpm --filter
+    @morpheus/api lint/typecheck/test/build` verdes (273 testes, 32 suítes). Checklist manual via
+    curl contra o `demo` seedado cobrindo os 10 cenários do plano (GET aberto, PATCH 403/200,
+    `POST :id/password` fraca/válida/cross-tenant, `PATCH /auth/password` senha errada/SSO-only/
+    happy path, throttle) - todos bateram exatamente como esperado (usuários de teste descartáveis
+    criados e removidos via SQL ao final, sem deixar rastro no ambiente demo).
 

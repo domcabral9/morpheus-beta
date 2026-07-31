@@ -3,16 +3,25 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from "@nestjs/common";
+import * as bcrypt from "bcrypt";
 import { RolesService } from "../roles/roles.service";
+import { AuditLogService } from "../audit/audit-log.service";
+import { PasswordPolicyService } from "../platform-policy/password-policy.service";
+import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { UsersRepository, UserWithPermissions, UserAdminRaw } from "./users.repository";
 import { CreateUserDto } from "./dto/create-user.dto";
+
+const PASSWORD_HASH_COST = 12;
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly rolesService: RolesService,
+    private readonly passwordPolicyService: PasswordPolicyService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   findByEmail(tenantId: string, email: string): Promise<UserWithPermissions | null> {
@@ -66,10 +75,11 @@ export class UsersService {
   }
 
   /**
-   * Sem senha local aqui de propósito: como o login por senha não tem fluxo
-   * de "definir senha" implementado, um usuário criado por aqui só consegue
-   * entrar via SSO (mesmo padrão de findOrProvisionBySso) até um incremento
-   * futuro cobrir esse caso.
+   * Sem senha local aqui de propósito: criação e definição de senha são
+   * ações desacopladas (ver `setPassword`) - um usuário criado por aqui só
+   * consegue entrar via SSO até alguém chamar `POST :id/password` para ele
+   * (ou até uma futura virada para convite por e-mail, sem precisar
+   * rearquitetar esta rota).
    */
   async create(tenantId: string, dto: CreateUserDto): Promise<UserAdminRaw> {
     const email = dto.email.toLowerCase().trim();
@@ -128,6 +138,66 @@ export class UsersService {
   async removeRole(tenantId: string, userId: string, roleId: string): Promise<void> {
     await this.assertUserInTenant(tenantId, userId);
     await this.usersRepository.removeRole(userId, roleId);
+  }
+
+  /**
+   * Define/redefine a senha local de um usuário (admin agindo sobre um
+   * terceiro) - mesma rota tanto para dar a primeira senha de um usuário
+   * recém-criado quanto para resetar a de um usuário já existente/trancado
+   * fora, sem fluxo de e-mail/token (item deferido do backlog).
+   */
+  async setPassword(
+    tenantId: string,
+    actingUserId: string,
+    id: string,
+    rawPassword: string,
+  ): Promise<UserAdminRaw> {
+    await this.assertUserInTenant(tenantId, id);
+    await this.passwordPolicyService.validate(rawPassword);
+    const passwordHash = await bcrypt.hash(rawPassword, PASSWORD_HASH_COST);
+    await this.usersRepository.setPasswordHash(id, passwordHash);
+
+    await this.auditLogService.record({
+      tenantId,
+      userId: actingUserId,
+      action: "UPDATE",
+      entityType: "User",
+      entityId: id,
+      metadata: { passwordChange: true, initiatedBy: "admin" },
+    });
+
+    return this.assertUserInTenant(tenantId, id);
+  }
+
+  /** Autoatendimento - troca a própria senha, exige confirmar a atual. */
+  async changeOwnPassword(
+    actor: AuthenticatedUser,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.usersRepository.findById(actor.id);
+    if (!user) throw new NotFoundException("Usuário não encontrado.");
+    if (!user.passwordHash) {
+      throw new BadRequestException("Este usuário não tem senha local; o acesso é só via SSO.");
+    }
+
+    const matches = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!matches) {
+      throw new UnauthorizedException("Senha atual incorreta.");
+    }
+
+    await this.passwordPolicyService.validate(newPassword);
+    const passwordHash = await bcrypt.hash(newPassword, PASSWORD_HASH_COST);
+    await this.usersRepository.setPasswordHash(actor.id, passwordHash);
+
+    await this.auditLogService.record({
+      tenantId: actor.tenantId,
+      userId: actor.id,
+      action: "UPDATE",
+      entityType: "User",
+      entityId: actor.id,
+      metadata: { passwordChange: true, initiatedBy: "self" },
+    });
   }
 
   // --- Helpers de tenant scoping ------------------------------------------------
