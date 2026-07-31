@@ -15,6 +15,7 @@ import type { RoleSummary, UserAdmin } from "@/lib/users-admin-types";
 import { AdminSectionGate } from "../_components/section-gate";
 import { RoleAssignmentDialog } from "./_components/role-assignment-dialog";
 import { CreateUserDialog } from "./_components/create-user-dialog";
+import { ResetPasswordDialog } from "./_components/reset-password-dialog";
 
 function UsersAdminContent() {
   const t = useTranslations("AdminUsers");
@@ -25,6 +26,7 @@ function UsersAdminContent() {
   const [roles, setRoles] = React.useState<RoleSummary[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const [managingUser, setManagingUser] = React.useState<UserAdmin | null>(null);
+  const [resettingUser, setResettingUser] = React.useState<UserAdmin | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
   const [togglingId, setTogglingId] = React.useState<string | null>(null);
 
@@ -145,6 +147,14 @@ function UsersAdminContent() {
                           >
                             {user.isActive ? t("deactivateButton") : t("activateButton")}
                           </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setResettingUser(user)}
+                          >
+                            {t("resetPasswordButton")}
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -180,6 +190,14 @@ function UsersAdminContent() {
           setUsers((current) => (current ? [...current, created] : [created]));
         }}
       />
+
+      {resettingUser && (
+        <ResetPasswordDialog
+          user={resettingUser}
+          open={!!resettingUser}
+          onOpenChange={(open) => !open && setResettingUser(null)}
+        />
+      )}
     </div>
   );
 }
