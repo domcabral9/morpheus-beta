@@ -1498,6 +1498,13 @@ async function main() {
   const allPermissions = await prisma.permission.findMany();
   const permissionByKey = new Map(allPermissions.map((p) => [p.key, p]));
 
+  // --- Política de senha (plataforma, cross-tenant, singleton) ------------------
+  await prisma.platformPasswordPolicy.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: { id: "singleton" }, // defaults do schema já valem: minLength 8, 4 classes exigidas
+  });
+
   // --- Biblioteca de controles (catálogo global) --------------------------------
   const frameworkByCode = new Map<ControlFrameworkCode, { id: string }>();
   for (const framework of CONTROL_FRAMEWORKS) {
