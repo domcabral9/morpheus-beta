@@ -2409,4 +2409,27 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     de um minuto - confirmado via log da API (`429`, `retry-after: 60`), não uma falha do produto;
     reconfirmado o último caso isoladamente depois que a janela expirou. Usuários de teste
     descartáveis criados/removidos via SQL ao final, sem deixar rastro no ambiente demo.
-
+- **Política de senha (plataforma), Fase 5 (2026-07-31): portfólio.** Fecha o pacote inteiro
+  (Fases 1-5) - mesmo gatilho automático de sempre: nova entidade no menu principal (`admin@morpheus.demo`,
+  a conta usada em todos os screenshots, tem `platform:cross-tenant`) invalida todo print que mostra
+  a sidebar.
+  - 2 screenshots novos (PT-BR+EN): `admin-platform-policy.png` (tela de configuração, super-admin)
+    e `change-password-dialog.png` (autoatendimento, dialog aberto sobre a Home).
+  - 16 screenshots pré-existentes regenerados por mostrarem a sidebar com o item "Política de
+    senha"/"Password policy" ausente: `dashboard-{minha-visao,administrativo,executivo,
+    placar-por-area}`, `busca-rapida`, `admin-papeis`, `risk-matrix-config`, `vendors-acompanhamento`
+    (PT-BR+EN). **Achado real, não assumido**: `vendors-lista`, `vendors-detalhe` e
+    `inventory-item-art` ficaram **byte-idênticos** ao regenerar - o novo item vive dentro do
+    `Collapsible` "Administração" da sidebar, que só nasce aberto (`defaultOpen={adminActive}`) em
+    rotas `/admin/*`; nas demais páginas ele fica fechado e o item novo nunca aparece no viewport,
+    então essas 3 capturas seguem corretas sem regenerar - confirmado abrindo cada PNG, não por
+    suposição.
+  - `docs/architecture.md`: reconferido contra o schema final da feature - sem mudança, o model
+    `PlatformPasswordPolicy` não ganhou nenhum campo novo desde a Fase 1.
+  - `README.md` (PT-BR+EN): novo bullet em "Controles de segurança implementados" sobre a política
+    configurável, e nova linha de 2 colunas na galeria de screenshots.
+  - **Testes**: cada uma das 20 imagens tocadas (18 regeneradas/novas + as 2 já cobertas acima)
+    revisada visualmente uma a uma antes de commitar - confirmado que "Política de senha" aparece
+    correta e ativa nas rotas `/admin/*`, que os dados de demonstração seguem limpos (sem rastro dos
+    usuários de teste descartáveis das Fases 2/4) e que os dois screenshots novos renderizam a dica
+    de regras (`PasswordPolicyHint`) corretamente nos dois idiomas.
