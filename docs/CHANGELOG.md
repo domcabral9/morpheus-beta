@@ -2356,4 +2356,28 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     `POST :id/password` fraca/válida/cross-tenant, `PATCH /auth/password` senha errada/SSO-only/
     happy path, throttle) - todos bateram exatamente como esperado (usuários de teste descartáveis
     criados e removidos via SQL ao final, sem deixar rastro no ambiente demo).
+- **Política de senha (plataforma), Fase 3 (2026-07-31): frontend - tela de configuração
+  (super-admin).** Nova rota `/admin/platform-policy`, gated `AdminSectionGate
+  permission="platform:cross-tenant"` (primeira tela do projeto restrita a essa permissão
+  especificamente, fora `switch-tenant`) - entrada nova em `ADMIN_NAV_ITEMS`
+  (`nav-items.ts`, fonte única compartilhada pela sidebar e pelos cards de `/admin`).
+  - Formulário único (`react-hook-form` + `zod`): campo numérico `minLength` (8-128) + 4
+    checkboxes independentes, mesmo padrão de `RenewalWindowForm`/`VendorTierForm` já existentes
+    em `admin/settings/page.tsx`. `GET`/`PATCH /platform/password-policy` via `useApi()`.
+  - Novo `lib/platform-policy-types.ts` + namespace i18n `AdminPlatformPolicy` (PT-BR/EN).
+  - **Gotcha de ambiente, não de código**: as portas padrão 3000/3001 caíram numa faixa que o
+    Windows reserva dinamicamente pro Hyper-V/WSL2 (`netsh interface ipv4 show
+    excludedportrange` mostrou o bloco inteiro 2406-3305 excluído) - `EACCES` ao subir tanto a API
+    quanto a Web. Contornado rodando os dois em portas alternativas (4000/4001) fora de qualquer
+    faixa excluída; também expôs que `turbo run dev` roda em modo estrito de variáveis de
+    ambiente e descarta overrides inline de `PORT`/`API_PORT` passados na shell - resolvido
+    chamando `pnpm --filter` diretamente em cada app (bypassa o turbo), e ajustando `CORS_ORIGIN`
+    da API pra apontar pra porta nova da Web.
+  - **Testes**: `pnpm --filter @morpheus/web lint/typecheck/build` verdes. Validação real em
+    navegador via Playwright descartável (9 checks): card visível/ausente conforme a permissão,
+    form pré-preenchido, round-trip de salvar→persistir→reverter confirmado após reload, e as
+    duas camadas de gate confirmadas separadamente - `AdminLayout` (sem nenhum acesso admin, vai
+    pra `/dashboard`) e `AdminSectionGate` (tem acesso admin mas não `platform:cross-tenant`,
+    volta pra `/admin`) - usando três contas demo diferentes (`admin@morpheus.demo`,
+    `usuario@morpheus.demo`, `admin@zion.morpheus.demo`) pra cobrir os três casos reais.
 
