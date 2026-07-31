@@ -40,6 +40,7 @@
     "localeSwitcherLabel": "Idioma",
     "themeToggleLabel": "Alternar tema",
     "signOut": "Sair",
+    "changePassword": "Trocar senha",
     "orgSwitcher": "Organização",
     "orgSwitcherLoading": "Carregando...",
     "impersonationBanner": "Visualizando: {tenant} (modo super-admin)",
@@ -647,7 +648,17 @@
     "activateError": "Não foi possível ativar o usuário.",
     "deactivateSuccess": "Usuário desativado.",
     "deactivateError": "Não foi possível desativar o usuário.",
-    "cannotDeactivateSelf": "Você não pode desativar a própria conta."
+    "cannotDeactivateSelf": "Você não pode desativar a própria conta.",
+    "setInitialPasswordTitle": "Definir senha inicial de {name}",
+    "resetPasswordButton": "Redefinir senha",
+    "resetPasswordDialogTitle": "Redefinir senha de {name}",
+    "fieldNewPassword": "Nova senha",
+    "fieldConfirmPassword": "Confirmar senha",
+    "passwordMismatch": "As senhas não coincidem.",
+    "skipForNow": "Pular por agora",
+    "setPasswordButton": "Definir senha",
+    "setPasswordSuccess": "Senha definida.",
+    "setPasswordError": "Não foi possível definir a senha."
   },
   "AdminRoles": {
     "title": "Papéis",
@@ -749,6 +760,24 @@
     "save": "Salvar",
     "saveSuccess": "Política de senha atualizada.",
     "saveError": "Não foi possível salvar a política de senha."
+  },
+  "PasswordPolicyHint": {
+    "minLength": "mínimo de {count} caracteres",
+    "uppercase": "letra maiúscula",
+    "lowercase": "letra minúscula",
+    "digit": "dígito",
+    "symbol": "símbolo"
+  },
+  "ChangePassword": {
+    "dialogTitle": "Trocar senha",
+    "fieldCurrentPassword": "Senha atual",
+    "fieldNewPassword": "Nova senha",
+    "fieldConfirmPassword": "Confirmar senha",
+    "passwordMismatch": "As senhas não coincidem.",
+    "saving": "Salvando...",
+    "changeButton": "Trocar senha",
+    "changeSuccess": "Senha atualizada.",
+    "changeError": "Não foi possível trocar a senha."
   },
   "Dashboards": {
     "title": "Dashboards",
