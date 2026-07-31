@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Post,
+  Patch,
   Get,
   Req,
   Res,
@@ -28,6 +29,8 @@ import { LoginDto } from "./dto/login.dto";
 import { SwitchTenantDto } from "./dto/switch-tenant.dto";
 import { AccessTokenResponseDto } from "./dto/access-token-response.dto";
 import type { UserWithPermissions } from "../users/users.repository";
+import { UsersService } from "../users/users.service";
+import { ChangeOwnPasswordDto } from "../users/dto/change-own-password.dto";
 
 const REFRESH_COOKIE_NAME = "morpheus_refresh_token";
 const REFRESH_COOKIE_PATH = "/auth";
@@ -38,6 +41,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly usersService: UsersService,
   ) {}
 
   @Public()
@@ -101,6 +105,20 @@ export class AuthController {
   @ApiOperation({ summary: "Dados do usuário autenticado (a partir do access token)." })
   me(@CurrentUser() user: AuthenticatedUser): AuthenticatedUser {
     return user;
+  }
+
+  // Autenticado via Bearer normal (sem @RequirePermissions: qualquer usuário
+  // gerencia a própria senha) — mesmo limite de força bruta do login, já que
+  // errar `currentPassword` repetidamente é a mesma classe de risco.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Patch("password")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "Troca a própria senha (requer a senha atual)." })
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangeOwnPasswordDto,
+  ): Promise<void> {
+    await this.usersService.changeOwnPassword(user, dto.currentPassword, dto.newPassword);
   }
 
   // Autenticado via Bearer normal (JwtAuthGuard + PermissionsGuard, ambos

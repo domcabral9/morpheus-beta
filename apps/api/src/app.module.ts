@@ -37,6 +37,7 @@ import { AttachmentsModule } from "./modules/attachments/attachments.module";
 import { RenewalModule } from "./modules/renewal/renewal.module";
 import { SearchModule } from "./modules/search/search.module";
 import { VendorsModule } from "./modules/vendors/vendors.module";
+import { PasswordPolicyModule } from "./modules/platform-policy/password-policy.module";
 
 const pinoHttpOptions: PinoHttpOptions = {
   genReqId: (req) => req.headers[CORRELATION_ID_HEADER] as string,
@@ -84,6 +85,7 @@ const pinoHttpOptions: PinoHttpOptions = {
     AuditLogModule,
     NotificationsModule,
     HealthModule,
+    PasswordPolicyModule,
     UsersModule,
     RolesModule,
     TenantsModule,
