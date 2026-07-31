@@ -81,9 +81,9 @@ describe("UsersService", () => {
       passwordPolicyService.validate.mockRejectedValue(
         new BadRequestException("Mínimo de 8 caracteres."),
       );
-      await expect(
-        service.setPassword("tenant-1", "admin-1", "user-1", "abc"),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.setPassword("tenant-1", "admin-1", "user-1", "abc")).rejects.toThrow(
+        BadRequestException,
+      );
       expect(repo.setPasswordHash).not.toHaveBeenCalled();
     });
 
@@ -110,16 +110,16 @@ describe("UsersService", () => {
   describe("changeOwnPassword", () => {
     it("rejeita quando o usuário não existe", async () => {
       repo.findById.mockResolvedValue(null);
-      await expect(
-        service.changeOwnPassword(makeUser(), "atual", "Demo@12345"),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.changeOwnPassword(makeUser(), "atual", "Demo@12345")).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("rejeita usuário SSO-only (sem passwordHash)", async () => {
       repo.findById.mockResolvedValue({ ...USER_ADMIN_RAW, passwordHash: null });
-      await expect(
-        service.changeOwnPassword(makeUser(), "atual", "Demo@12345"),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.changeOwnPassword(makeUser(), "atual", "Demo@12345")).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it("rejeita senha atual incorreta", async () => {
