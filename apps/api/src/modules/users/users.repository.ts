@@ -53,6 +53,22 @@ const userAdminSelect = {
 
 export type UserAdminRaw = Prisma.UserGetPayload<{ select: typeof userAdminSelect }>;
 
+// --- Autoatendimento (perfil) — GET/PATCH /auth/profile, /auth/avatar --------------
+// `passwordHash` entra aqui só pra o service computar `hasLocalPassword` (booleano);
+// nunca sai do repository como hash cru, mesma disciplina do `userAdminSelect` acima.
+const ownProfileSelect = {
+  id: true,
+  name: true,
+  email: true,
+  avatarPath: true,
+  passwordHash: true,
+  lastLoginAt: true,
+  createdAt: true,
+  userRoles: { select: { role: { select: { name: true } } } },
+} satisfies Prisma.UserSelect;
+
+export type OwnProfileRaw = Prisma.UserGetPayload<{ select: typeof ownProfileSelect }>;
+
 @Injectable()
 export class UsersRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -123,5 +139,18 @@ export class UsersRepository {
 
   async removeRole(userId: string, roleId: string): Promise<void> {
     await this.prisma.userRole.deleteMany({ where: { userId, roleId } });
+  }
+
+  // --- Autoatendimento (perfil) --------------------------------------------------
+  findOwnProfile(id: string): Promise<OwnProfileRaw | null> {
+    return this.prisma.user.findUnique({ where: { id }, select: ownProfileSelect });
+  }
+
+  async updateName(id: string, name: string): Promise<void> {
+    await this.prisma.user.update({ where: { id }, data: { name } });
+  }
+
+  async setAvatarPath(id: string, avatarPath: string): Promise<void> {
+    await this.prisma.user.update({ where: { id }, data: { avatarPath } });
   }
 }

@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import {
+  BadRequestException,
   Body,
   Controller,
   Post,
@@ -9,9 +10,12 @@ import {
   Res,
   UnauthorizedException,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   HttpCode,
   HttpStatus,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { ConfigService } from "@nestjs/config";
 import { Throttle } from "@nestjs/throttler";
 import { ApiBody, ApiOperation, ApiTags } from "@nestjs/swagger";
@@ -31,9 +35,12 @@ import { AccessTokenResponseDto } from "./dto/access-token-response.dto";
 import type { UserWithPermissions } from "../users/users.repository";
 import { UsersService } from "../users/users.service";
 import { ChangeOwnPasswordDto } from "../users/dto/change-own-password.dto";
+import { UpdateOwnProfileDto } from "../users/dto/update-own-profile.dto";
 
 const REFRESH_COOKIE_NAME = "morpheus_refresh_token";
 const REFRESH_COOKIE_PATH = "/auth";
+const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024; // 2MB — mesmo limite do logo do tenant
+const ALLOWED_AVATAR_MIME_TYPES = new Set(["image/png", "image/jpeg"]);
 
 @ApiTags("auth")
 @Controller("auth")
@@ -119,6 +126,59 @@ export class AuthController {
     @Body() dto: ChangeOwnPasswordDto,
   ): Promise<void> {
     await this.usersService.changeOwnPassword(user, dto.currentPassword, dto.newPassword);
+  }
+
+  // Sem @RequirePermissions (qualquer autenticado age só sobre si mesmo, via
+  // @CurrentUser() - nenhuma das 4 rotas abaixo aceita id de terceiro por
+  // path/query/body) e sem @Throttle dedicado (não é alvo de força bruta como
+  // senha/login - mesmo tratamento de POST/GET /tenants/current/logo, que
+  // segue o mesmo padrão de upload sendo espelhado aqui).
+  @Get("profile")
+  @ApiOperation({
+    summary: "Perfil completo do usuário autenticado (lido do banco, não do token).",
+  })
+  getProfile(@CurrentUser() user: AuthenticatedUser) {
+    return this.usersService.getOwnProfile(user);
+  }
+
+  @Patch("profile")
+  @ApiOperation({ summary: "Atualiza o próprio nome (email não é editável aqui)." })
+  updateProfile(@CurrentUser() user: AuthenticatedUser, @Body() dto: UpdateOwnProfileDto) {
+    return this.usersService.updateOwnProfile(user, dto.name);
+  }
+
+  @Post("avatar")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      limits: { fileSize: MAX_AVATAR_SIZE_BYTES },
+      fileFilter: (_req, file, callback) => {
+        callback(null, ALLOWED_AVATAR_MIME_TYPES.has(file.mimetype));
+      },
+    }),
+  )
+  @ApiOperation({ summary: "Envia/substitui a própria foto de perfil." })
+  uploadAvatar(@CurrentUser() user: AuthenticatedUser, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException(
+        "Nenhum arquivo enviado, ou o tipo/tamanho do arquivo não é permitido (só PNG/JPEG até 2MB).",
+      );
+    }
+    return this.usersService.uploadOwnAvatar(user, file);
+  }
+
+  @Get("avatar")
+  @ApiOperation({ summary: "Foto de perfil do usuário autenticado." })
+  async getAvatar(
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: false }) res: Response,
+  ): Promise<void> {
+    const { buffer, contentType } = await this.usersService.getOwnAvatar(user);
+    res.set({
+      "Content-Type": contentType,
+      "Content-Disposition": "inline",
+      "Content-Length": String(buffer.length),
+    });
+    res.send(buffer);
   }
 
   // Autenticado via Bearer normal (JwtAuthGuard + PermissionsGuard, ambos
