@@ -2546,3 +2546,25 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     educacional/portfólio solo.
   - **Nenhuma mudança de código nesta fase** - fase 100% de verificação, sem achado que justificasse
     correção.
+- **Tela de perfil / autoatendimento, Fase 4 (2026-08-01): portfólio.** Fecha o pacote inteiro
+  (Fases 1-4, backlog "Autenticação" item 3).
+  - 2 screenshots novos (PT-BR+EN): `profile.png`/`profile-en.png`, tela `/profile` inteira com os
+    3 cards visíveis (identidade, avatar, senha).
+  - `change-password-dialog.png`/`-en.png` **removidos** (não regenerados) - esse fluxo (dialog
+    direto no menu do avatar) não existe mais de verdade; manter os prints antigos representaria uma
+    tela que não corresponde ao app atual. Confirmado via `grep` antes de remover: nenhum outro
+    `.md` do projeto referenciava esses arquivos além do próprio `README.md` (que foi atualizado) e
+    do `CHANGELOG.md` (histórico, intocado de propósito - não se reescreve o passado).
+  - `README.md` (PT-BR+EN): célula da tabela de screenshots que apontava pro dialog antigo trocada
+    por "Meu perfil"/"My profile" apontando pros 2 prints novos. Nenhuma outra seção do README
+    menciona senha/perfil, sem mais mudança de texto necessária.
+  - **Achado real, não assumido**: o item de nav "Meu perfil" vive só no menu do avatar (dropdown),
+    não na sidebar/cmd-k - então, ao contrário do precedente de outras fases (novo item de nav
+    invalidando todo screenshot que mostra a sidebar), **nenhum outro screenshot precisou ser
+    regenerado** nesta fase. Confirmado abrindo os 2 prints novos lado a lado com os já existentes
+    (mesmas dimensões 1280x900, mesmo estilo visual).
+  - **Testes**: os 2 screenshots novos revisados visualmente um a um (não só capturados e commitados
+    às cegas) - confirmado que os 3 cards renderizam certo nos dois idiomas, que a lista de papéis
+    aparece (nomes de papel vêm do seed, ficam em português nas duas telas - comportamento correto,
+    não é bug de i18n), e que as duas tabelas do README continuam alinhadas depois da troca de
+    célula.
