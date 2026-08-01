@@ -2517,3 +2517,32 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     há usuário SSO-only logável no seed pra testar a interação de verdade em navegador (registrado
     aqui, não deixado implícito). Dado de teste (nome/avatar do `admin@morpheus.demo`) revertido via
     SQL ao final.
+- **Tela de perfil / autoatendimento, Fase 3 (2026-08-01): revisão de segurança (OWASP Top 10).**
+  Pedido explícito do usuário, motivado pela preocupação com IDOR à medida que o número de endpoints
+  do projeto cresce - fase nova no ritmo do projeto, não fazia parte do plano original. Duas frentes:
+  - **Automatizada**: skill `/security-review` sobre o diff acumulado das Fases 1-2 (4 rotas novas em
+    `AuthController`, `UsersService`, `UsersRepository`, `User.avatarPath`, rota `/profile`). Nenhuma
+    vulnerabilidade de alta confiança encontrada. Verificado por leitura de código: as 4 rotas travam
+    toda operação em `@CurrentUser().id` (JWT verificado), sem nenhum parâmetro de id de terceiro por
+    path/query/body (A01); `ValidationPipe({whitelist, forbidNonWhitelisted, transform})` global
+    (`main.ts`) rejeita campos extras no DTO em vez de ignorar silenciosamente (A03); chave de storage
+    do avatar (`user-avatars/${actor.id}/avatar.${extensão}`) monta a partir só do JWT + um dicionário
+    fixo de extensão, sem vetor de path traversal (A04); headers de resposta e mensagens de erro do
+    `GET /auth/avatar` não vazam path interno/stack trace (A05).
+  - **Manual (checklist específico das 4 rotas)**: a maior parte já tinha sido exercida ao vivo na
+    própria Fase 1, não só lida no código - reconfirmado aqui, não redigido do zero: 2 tokens
+    diferentes (`admin@morpheus.demo`/`usuario@morpheus.demo`) confirmando isolamento cross-user
+    (A01); `PATCH /auth/profile` com campo extra não declarado (`isSuperAdmin`) rejeitado com 400
+    (A03); arquivo >2MB rejeitado com 413, MIME forjado (`.gif` como `image/gif`) rejeitado com 400
+    antes de qualquer gravação no storage (A04).
+  - **Achado real, mas fora do escopo pra corrigir agora**: MIME-type do upload de avatar é confiado
+    do client (`file.mimetype`, sem checagem de magic bytes) - mas isso **espelha exatamente** o
+    padrão já em produção do upload de logo do tenant (`tenants.controller.ts`/`tenants.service.ts`),
+    não é uma regressão introduzida por esta feature, e não há vetor concreto de um usuário afetar a
+    sessão/dados de outro por essa via (o arquivo servido de volta só é visível ao próprio usuário,
+    com `Content-Type` sempre fixado pelo servidor via extensão, nunca sniffado do conteúdo).
+    Registrado como risco preexistente aceito, não bloqueia esta feature - candidato a
+    hardening futuro (verificação de magic bytes) se algum dia isso deixar de ser um projeto
+    educacional/portfólio solo.
+  - **Nenhuma mudança de código nesta fase** - fase 100% de verificação, sem achado que justificasse
+    correção.
