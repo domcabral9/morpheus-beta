@@ -124,9 +124,9 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | --- |
 | ![Administração - papéis](./docs/screenshots/admin-papeis.png) |
 
-| Política de senha (super-admin) | Trocar senha (autoatendimento) |
+| Política de senha (super-admin) | Meu perfil (autoatendimento) |
 | --- | --- |
-| ![Política de senha](./docs/screenshots/admin-platform-policy.png) | ![Trocar senha](./docs/screenshots/change-password-dialog.png) |
+| ![Política de senha](./docs/screenshots/admin-platform-policy.png) | ![Meu perfil](./docs/screenshots/profile.png) |
 
 ## Stack
 
@@ -306,9 +306,9 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | --- |
 | ![Admin - roles](./docs/screenshots/admin-papeis-en.png) |
 
-| Password policy (super-admin) | Change password (self-service) |
+| Password policy (super-admin) | My profile (self-service) |
 | --- | --- |
-| ![Password policy](./docs/screenshots/admin-platform-policy-en.png) | ![Change password](./docs/screenshots/change-password-dialog-en.png) |
+| ![Password policy](./docs/screenshots/admin-platform-policy-en.png) | ![My profile](./docs/screenshots/profile-en.png) |
 
 ## Stack
 
