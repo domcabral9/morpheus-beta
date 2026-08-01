@@ -2433,3 +2433,27 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     correta e ativa nas rotas `/admin/*`, que os dados de demonstração seguem limpos (sem rastro dos
     usuários de teste descartáveis das Fases 2/4) e que os dois screenshots novos renderizam a dica
     de regras (`PasswordPolicyHint`) corretamente nos dois idiomas.
+
+## 2026-08-01
+
+- **"Perfumaria" de PR - labels e milestones (processo, sem mudança de código).** Backlog aberto em
+  2026-07-31 depois que o usuário notou campos nativos do GitHub (Reviewers/Assignees/Labels/
+  Milestone) vazios navegando pelas PRs mescladas. Escopo confirmado via `AskUserQuestion`:
+  aplicação retroativa nas 85 PRs já mescladas, labels **e** milestones.
+  - 3 labels novas criadas (`chore`, `style`, `build`), completando a taxonomia que espelha os
+    prefixos de commit convencional usados no repo (`feat`→`enhancement`, `fix`→`bug`,
+    `docs`→`documentation` já existiam como label padrão do GitHub). Aplicadas em todas as 85 PRs -
+    nas 24 anteriores à adoção do prefixo de commit (`feat:`/`docs:`/etc., PRs #1-#24), o tipo foi
+    inferido pelo conteúdo real da PR (quase todas `enhancement`, exceto a #24, puramente visual,
+    marcada `style`).
+  - 12 milestones criados retroativamente, um por arco de feature já entregue (ex.: "Renovação
+    anual de homologação", "Avaliação de risco de fornecedores", "Política de senha (plataforma)"),
+    cobrindo as 85 PRs sem sobra. Documentado em [`DEVELOPMENT.md`](./DEVELOPMENT.md#labels-e-milestones-de-pr).
+  - **Gotcha real encontrado**: `gh pr edit --milestone "<nome>"` só resolve milestones **abertos**
+    por título - como os 12 foram criados já `closed` (features todas concluídas), a primeira
+    tentativa falhou nas 85 PRs com `'<nome>' not found`, embora as labels do mesmo comando tivessem
+    sido aplicadas normalmente. Contornado usando `gh api -X PATCH repos/.../issues/:number -f
+    milestone=<número>` diretamente, que aceita milestone fechado sem problema.
+  - Reviewers formais ficaram de fora por decisão já registrada (projeto solo, confirmação de merge
+    é verbal - ver seção de CI em `DEVELOPMENT.md`); self-assign como `assignee` já vinha sendo
+    aplicado desde que o item entrou no backlog.
