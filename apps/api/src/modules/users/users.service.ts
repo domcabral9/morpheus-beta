@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -9,11 +10,33 @@ import * as bcrypt from "bcrypt";
 import { RolesService } from "../roles/roles.service";
 import { AuditLogService } from "../audit/audit-log.service";
 import { PasswordPolicyService } from "../platform-policy/password-policy.service";
+import { STORAGE_ADAPTER, StorageAdapter } from "../storage/storage.interface";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { UsersRepository, UserWithPermissions, UserAdminRaw } from "./users.repository";
 import { CreateUserDto } from "./dto/create-user.dto";
 
 const PASSWORD_HASH_COST = 12;
+
+const AVATAR_MIME_TO_EXTENSION: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+};
+
+export interface OwnProfile {
+  id: string;
+  name: string;
+  email: string;
+  hasAvatar: boolean;
+  hasLocalPassword: boolean;
+  roles: string[];
+  lastLoginAt: Date | null;
+  createdAt: Date;
+}
+
+export interface OwnAvatar {
+  buffer: Buffer;
+  contentType: string;
+}
 
 @Injectable()
 export class UsersService {
@@ -22,6 +45,7 @@ export class UsersService {
     private readonly rolesService: RolesService,
     private readonly passwordPolicyService: PasswordPolicyService,
     private readonly auditLogService: AuditLogService,
+    @Inject(STORAGE_ADAPTER) private readonly storage: StorageAdapter,
   ) {}
 
   findByEmail(tenantId: string, email: string): Promise<UserWithPermissions | null> {
@@ -198,6 +222,84 @@ export class UsersService {
       entityId: actor.id,
       metadata: { passwordChange: true, initiatedBy: "self" },
     });
+  }
+
+  // --- Autoatendimento (perfil) --------------------------------------------------
+  async getOwnProfile(actor: AuthenticatedUser): Promise<OwnProfile> {
+    return this.mapOwnProfile(await this.findOwnProfileOrThrow(actor.id));
+  }
+
+  /** Autoatendimento - só o nome é editável aqui; email é a chave de login
+   * (única por tenant) e fica de fora de propósito, sem fluxo de verificação. */
+  async updateOwnProfile(actor: AuthenticatedUser, name: string): Promise<OwnProfile> {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      throw new BadRequestException("Nome não pode ser vazio.");
+    }
+    await this.usersRepository.updateName(actor.id, trimmed);
+
+    await this.auditLogService.record({
+      tenantId: actor.tenantId,
+      userId: actor.id,
+      action: "UPDATE",
+      entityType: "User",
+      entityId: actor.id,
+      metadata: { field: "name", initiatedBy: "self" },
+    });
+
+    return this.getOwnProfile(actor);
+  }
+
+  async uploadOwnAvatar(actor: AuthenticatedUser, file: Express.Multer.File): Promise<OwnProfile> {
+    const extension = AVATAR_MIME_TO_EXTENSION[file.mimetype];
+    if (!extension) {
+      throw new BadRequestException("Formato de imagem não suportado. Envie PNG ou JPEG.");
+    }
+    const key = `user-avatars/${actor.id}/avatar.${extension}`;
+    await this.storage.save(key, file.buffer);
+    await this.usersRepository.setAvatarPath(actor.id, key);
+
+    await this.auditLogService.record({
+      tenantId: actor.tenantId,
+      userId: actor.id,
+      action: "UPDATE",
+      entityType: "User",
+      entityId: actor.id,
+      metadata: { field: "avatar", initiatedBy: "self" },
+    });
+
+    return this.getOwnProfile(actor);
+  }
+
+  async getOwnAvatar(actor: AuthenticatedUser): Promise<OwnAvatar> {
+    const profile = await this.findOwnProfileOrThrow(actor.id);
+    if (!profile.avatarPath) {
+      throw new NotFoundException("Você ainda não enviou uma foto de perfil.");
+    }
+    const extension = profile.avatarPath.split(".").pop();
+    const contentType = extension === "jpg" ? "image/jpeg" : "image/png";
+    const buffer = await this.storage.read(profile.avatarPath);
+    return { buffer, contentType };
+  }
+
+  private async findOwnProfileOrThrow(id: string) {
+    const profile = await this.usersRepository.findOwnProfile(id);
+    if (!profile) throw new NotFoundException("Usuário não encontrado.");
+    return profile;
+  }
+
+  private mapOwnProfile(raw: Awaited<ReturnType<UsersRepository["findOwnProfile"]>>): OwnProfile {
+    if (!raw) throw new NotFoundException("Usuário não encontrado.");
+    return {
+      id: raw.id,
+      name: raw.name,
+      email: raw.email,
+      hasAvatar: raw.avatarPath !== null,
+      hasLocalPassword: raw.passwordHash !== null,
+      roles: raw.userRoles.map((link) => link.role.name),
+      lastLoginAt: raw.lastLoginAt,
+      createdAt: raw.createdAt,
+    };
   }
 
   // --- Helpers de tenant scoping ------------------------------------------------

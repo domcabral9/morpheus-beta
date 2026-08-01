@@ -2457,3 +2457,34 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
   - Reviewers formais ficaram de fora por decisão já registrada (projeto solo, confirmação de merge
     é verbal - ver seção de CI em `DEVELOPMENT.md`); self-assign como `assignee` já vinha sendo
     aplicado desde que o item entrou no backlog.
+- **Tela de perfil / autoatendimento, Fase 1 (2026-08-01): schema + API.** Terceiro item do backlog
+  "Autenticação" (aberto 2026-07-26), priorizado depois da política de senha (item 2, DONE) - ordem
+  confirmada com o usuário via `AskUserQuestion`: perfil primeiro, porque o próximo item (2FA) vai
+  precisar de um lugar pra morar. Escopo desta fase: nome + avatar/foto editáveis; email fica só
+  leitura (é a chave de login, `@@unique([tenantId, email])`).
+  - `User.avatarPath String?` (novo, chave de storage, mesmo padrão de `Tenant.logoUrl`), migration
+    aditiva `add_user_avatar_path`.
+  - `UsersModule` importa `StorageModule` (não é `@Global()` - mesmo que `TenantsModule` já fazia).
+    `UsersRepository` ganha um `select` dedicado (`ownProfileSelect`, nunca vaza `passwordHash` cru,
+    mesma disciplina do `userAdminSelect` de admin) + `findOwnProfile`/`updateName`/`setAvatarPath`.
+  - `UsersService`: `getOwnProfile`/`updateOwnProfile`/`uploadOwnAvatar`/`getOwnAvatar`, espelhando
+    exatamente o padrão já usado pro logo do tenant (`TenantsService.uploadLogo`/`getLogo`) e pra
+    senha própria (`changeOwnPassword`) - mutações gravam `AuditLogService.record()` explícito
+    (`metadata: {field: "name"|"avatar", initiatedBy: "self"}`), já que o `@Audit()` decorator não
+    carrega esse metadata dependente de runtime.
+  - 4 rotas novas em `AuthController` (não em `UsersController` - mesma fronteira já estabelecida
+    pra `/auth/password`: `AuthController` = ações sobre a própria conta, `UsersController` = admin
+    gerenciando terceiros): `GET/PATCH /auth/profile`, `POST/GET /auth/avatar` (limite 2MB, só
+    PNG/JPEG, mesmo `FileInterceptor` do upload de logo). Nenhuma com `@RequirePermissions` (age só
+    sobre `@CurrentUser()`, nunca aceita id de terceiro) nem `@Throttle` dedicado (não é alvo de
+    força bruta).
+  - **Decisão explícita, não feita nesta fase**: `avatarPath`/`hasAvatar` não entram no payload do
+    JWT - o avatar só aparece na tela de perfil (Fase 2), a sidebar continua com iniciais por
+    enquanto. Tocar o formato do token é escopo maior que o pedido original.
+  - **Testes**: 9 casos novos em `users.service.spec.ts` (mapeamento sem vazar hash, nome
+    vazio/trimado, MIME inválido sem tocar o storage, chave de avatar correta, 404 sem avatar).
+    Validação manual via curl contra o `demo` seedado, incluindo checagem cross-user explícita (2
+    tokens diferentes, confirmado que cada um só enxerga o próprio perfil/avatar - acaba sendo o
+    primeiro pedaço da Fase 3 de segurança já verificado cedo) e rejeição de campo extra no DTO
+    (`forbidNonWhitelisted`), arquivo >2MB (413) e MIME forjado (400). Dado de teste (nome/avatar do
+    `admin@morpheus.demo`) revertido via SQL ao final, sem deixar rastro no ambiente demo.
