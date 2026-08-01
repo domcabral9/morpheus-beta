@@ -2488,3 +2488,32 @@ Com a Fase 6, as 6 fases do plano de renovação anual de homologação estão c
     primeiro pedaço da Fase 3 de segurança já verificado cedo) e rejeição de campo extra no DTO
     (`forbidNonWhitelisted`), arquivo >2MB (413) e MIME forjado (400). Dado de teste (nome/avatar do
     `admin@morpheus.demo`) revertido via SQL ao final, sem deixar rastro no ambiente demo.
+- **Tela de perfil / autoatendimento, Fase 2 (2026-08-01): frontend.** Consome os endpoints da
+  Fase 1. Nova rota `/profile` (dentro do grupo `(app)`, ganha o shell/sidebar de graça) - não entra
+  em `nav-items.ts`/cmd-k de propósito (pessoal, não organizacional), só o menu do avatar leva até
+  ela.
+  - `AuthProvider` ganha `refreshUser()` (chama `POST /auth/refresh` + recarrega o usuário) - a
+    tela de perfil chama isso depois de salvar o nome, pra sidebar refletir na mesma sessão em vez
+    de ficar "stale" até o próximo login (mesma convenção hoje aceita pra mudança de papel/permissão,
+    mas ruim pra uma auto-edição).
+  - Form de troca de senha extraído de `change-password-dialog.tsx` pra um novo
+    `change-password-form.tsx` sem `Dialog` próprio (`onSuccess?` no lugar de `onOpenChange(false)`)
+    - `ChangePasswordDialog` vira um wrapper fino em torno dele, mantido no repo mesmo sem nenhum
+    import ativo depois desta fase.
+  - `app-sidebar.tsx`: item "Trocar senha" do menu do avatar removido; novo item "Meu perfil" leva
+    pra `/profile` via `Link` (não abre mais dialog direto).
+  - 3 cards na página: `IdentityCard` (nome editável + email/papéis/último acesso/membro desde só
+    leitura), `AvatarCard` (espelha o `LogoUploader` do tenant quase 1:1, preview via
+    `GET /auth/avatar`), `PasswordCard` (`ChangePasswordForm` reaproveitado; se
+    `hasLocalPassword === false`, mostra aviso de SSO-only em vez do form - o dialog antigo não
+    tratava esse caso, virava um 400 cru).
+  - **Testes**: `pnpm --filter @morpheus/web lint/typecheck/build` verdes. Validação real em
+    navegador via Playwright descartável (13 checks, PT-BR): item antigo sumiu/novo item existe,
+    navegação, os 3 cards renderizam, editar nome + salvar atualiza a sidebar sem reload (confirma
+    `refreshUser`), upload de avatar válido + preview aparece, troca de senha ida-e-volta pela nova
+    seção (sem deixar a conta demo com senha diferente da original). Checagem separada em EN (4
+    checks) confirmando as 3 seções e nenhuma chave de i18n crua vazando pra tela. Caminho SSO-only
+    verificado só por leitura de código + o teste de API da Fase 1 (`hasLocalPassword: false`) - não
+    há usuário SSO-only logável no seed pra testar a interação de verdade em navegador (registrado
+    aqui, não deixado implícito). Dado de teste (nome/avatar do `admin@morpheus.demo`) revertido via
+    SQL ao final.
