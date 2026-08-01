@@ -163,3 +163,13 @@ com exploit publicamente conhecido, tratada imediatamente. Processo completo (ca
 onde fica o histórico de cada janela) em [`docs/security.md`](./security.md); detalhe de como isso
 foi montado (incluindo dois bugs reais que a primeira execução do CI pegou) no
 [`CHANGELOG.md`](./CHANGELOG.md).
+
+## Labels e milestones de PR
+
+Toda PR ganha uma label espelhando o prefixo de commit convencional usado no título
+(`feat`→`enhancement`, `fix`→`bug`, `docs`→`documentation`, `chore`→`chore`, `style`→`style`,
+`build`→`build`; PRs do Dependabot já chegam com `dependencies` + a label do ecossistema aplicadas
+automaticamente) e é auto-atribuída ao autor. Milestones agrupam PRs por arco de feature entregue
+(ex.: "Renovação anual de homologação", "Avaliação de risco de fornecedores") - aplicado
+retroativamente às 85 PRs mescladas até 2026-07-31, 12 milestones no total. Reviewers formais não se
+aplicam (ver seção de CI acima - confirmação de merge é verbal, sem segundo revisor humano fixo).
