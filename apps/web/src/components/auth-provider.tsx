@@ -13,6 +13,7 @@ interface AuthContextValue {
   login: (params: { tenantSlug: string; email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   switchTenant: (tenantId: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
@@ -52,6 +53,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [accessToken, loadUser],
   );
+
+  // Reemite o access token a partir do refresh token já existente (mesmo
+  // endpoint usado na restauração de sessão no mount, abaixo) - chamado pela
+  // tela de perfil depois de salvar o nome, pra refletir na sidebar/`useAuth()`
+  // sem esperar o próximo login (que já é como papéis/permissões mudam hoje).
+  const refreshUser = React.useCallback(async () => {
+    const tokens = await apiFetch<AccessTokenResponse>("/auth/refresh", { method: "POST" });
+    await loadUser(tokens.accessToken);
+  }, [loadUser]);
 
   React.useEffect(() => {
     // Restaura a sessão ao carregar a página: o access token vive só em
@@ -101,8 +111,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = React.useMemo(
-    () => ({ user, accessToken, status, login, logout, switchTenant }),
-    [user, accessToken, status, login, logout, switchTenant],
+    () => ({ user, accessToken, status, login, logout, switchTenant, refreshUser }),
+    [user, accessToken, status, login, logout, switchTenant, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
