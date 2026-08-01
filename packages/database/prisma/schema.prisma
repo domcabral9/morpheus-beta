@@ -152,6 +152,9 @@ model User {
   tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name         String
   email        String
+  /// Chave de storage do avatar (StorageAdapter, mesmo padrão de Tenant.logoUrl).
+  /// Null quando o usuário nunca enviou uma foto de perfil.
+  avatarPath   String?
   /// Login local (dev / usuários sem SSO). Null quando o acesso é só via SAML.
   passwordHash String?
   /// NameID retornado pelo Identity Provider SAML.

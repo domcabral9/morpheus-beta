@@ -23,6 +23,7 @@ const baseUser: UserWithPermissions = {
   tenantId: "tenant-1",
   name: "Ana Exemplo",
   email: "ana@example.com",
+  avatarPath: null,
   passwordHash: null,
   ssoSubject: null,
   isActive: true,
