@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { ChevronRight, ShieldIcon } from "lucide-react";
 
 import { useAuth } from "@/components/auth-provider";
-import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -53,7 +52,6 @@ export function AppSidebar() {
   const canAccessAdmin = useHasAnyManagePermission();
   const permissions = user?.permissions ?? [];
   const { state, isMobile } = useSidebar();
-  const [changePasswordOpen, setChangePasswordOpen] = React.useState(false);
 
   const visiblePrimaryItems = getVisibleNavItems(PRIMARY_NAV_ITEMS, permissions);
   const visibleAdminItems = getVisibleNavItems(ADMIN_NAV_ITEMS, permissions);
@@ -170,8 +168,8 @@ export function AppSidebar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setChangePasswordOpen(true)}>
-                  {t("changePassword")}
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">{t("profile")}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -188,7 +186,6 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
-      <ChangePasswordDialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen} />
     </Sidebar>
   );
 }
