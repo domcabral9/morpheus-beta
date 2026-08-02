@@ -10,6 +10,7 @@ import * as bcrypt from "bcrypt";
 import { RolesService } from "../roles/roles.service";
 import { AuditLogService } from "../audit/audit-log.service";
 import { PasswordPolicyService } from "../platform-policy/password-policy.service";
+import { TwoFactorPolicyService } from "../platform-policy/two-factor-policy.service";
 import { STORAGE_ADAPTER, StorageAdapter } from "../storage/storage.interface";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { UsersRepository, UserWithPermissions, UserAdminRaw } from "./users.repository";
@@ -29,6 +30,7 @@ export interface OwnProfile {
   hasAvatar: boolean;
   hasLocalPassword: boolean;
   hasTwoFactorEnabled: boolean;
+  twoFactorEnforced: boolean;
   roles: string[];
   lastLoginAt: Date | null;
   createdAt: Date;
@@ -45,6 +47,7 @@ export class UsersService {
     private readonly usersRepository: UsersRepository,
     private readonly rolesService: RolesService,
     private readonly passwordPolicyService: PasswordPolicyService,
+    private readonly twoFactorPolicyService: TwoFactorPolicyService,
     private readonly auditLogService: AuditLogService,
     @Inject(STORAGE_ADAPTER) private readonly storage: StorageAdapter,
   ) {}
@@ -227,7 +230,11 @@ export class UsersService {
 
   // --- Autoatendimento (perfil) --------------------------------------------------
   async getOwnProfile(actor: AuthenticatedUser): Promise<OwnProfile> {
-    return this.mapOwnProfile(await this.findOwnProfileOrThrow(actor.id));
+    const [raw, twoFactorPolicy] = await Promise.all([
+      this.findOwnProfileOrThrow(actor.id),
+      this.twoFactorPolicyService.getPolicy(),
+    ]);
+    return this.mapOwnProfile(raw, twoFactorPolicy.enforced);
   }
 
   /** Autoatendimento - só o nome é editável aqui; email é a chave de login
@@ -289,7 +296,10 @@ export class UsersService {
     return profile;
   }
 
-  private mapOwnProfile(raw: Awaited<ReturnType<UsersRepository["findOwnProfile"]>>): OwnProfile {
+  private mapOwnProfile(
+    raw: Awaited<ReturnType<UsersRepository["findOwnProfile"]>>,
+    twoFactorEnforced: boolean,
+  ): OwnProfile {
     if (!raw) throw new NotFoundException("Usuário não encontrado.");
     return {
       id: raw.id,
@@ -298,6 +308,7 @@ export class UsersService {
       hasAvatar: raw.avatarPath !== null,
       hasLocalPassword: raw.passwordHash !== null,
       hasTwoFactorEnabled: raw.totpEnabled,
+      twoFactorEnforced,
       roles: raw.userRoles.map((link) => link.role.name),
       lastLoginAt: raw.lastLoginAt,
       createdAt: raw.createdAt,
