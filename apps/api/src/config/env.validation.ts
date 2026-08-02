@@ -26,6 +26,11 @@ const envSchema = z
     JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
     JWT_REFRESH_SECRET: z.string().min(16, "JWT_REFRESH_SECRET deve ter ao menos 16 caracteres"),
     JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
+    // Secret próprio (nunca o mesmo de access/refresh) para o token de
+    // escopo limitado emitido entre "senha correta" e "código 2FA validado"
+    // — ver AuthService.issuePreAuthChallenge / PreAuthGuard.
+    JWT_PREAUTH_SECRET: z.string().min(16, "JWT_PREAUTH_SECRET deve ter ao menos 16 caracteres"),
+    JWT_PREAUTH_EXPIRES_IN: z.string().default("5m"),
 
     SAML_ENABLED: booleanFromEnv(false),
     SAML_ENTRY_POINT: z.string().optional(),
