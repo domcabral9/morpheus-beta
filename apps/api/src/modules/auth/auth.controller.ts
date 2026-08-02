@@ -36,6 +36,9 @@ import type { UserWithPermissions } from "../users/users.repository";
 import { UsersService } from "../users/users.service";
 import { ChangeOwnPasswordDto } from "../users/dto/change-own-password.dto";
 import { UpdateOwnProfileDto } from "../users/dto/update-own-profile.dto";
+import { TwoFactorService } from "../two-factor/two-factor.service";
+import { EnableTwoFactorDto } from "../two-factor/dto/enable-two-factor.dto";
+import { TwoFactorReauthDto } from "../two-factor/dto/two-factor-reauth.dto";
 
 const REFRESH_COOKIE_NAME = "morpheus_refresh_token";
 const REFRESH_COOKIE_PATH = "/auth";
@@ -49,6 +52,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
+    private readonly twoFactorService: TwoFactorService,
   ) {}
 
   @Public()
@@ -179,6 +183,41 @@ export class AuthController {
       "Content-Length": String(buffer.length),
     });
     res.send(buffer);
+  }
+
+  // 4 rotas de 2FA (autoatendimento) - mesmo padrão de /auth/profile e
+  // /auth/avatar: Bearer normal, sem @RequirePermissions (age só sobre
+  // @CurrentUser()), @Throttle nas que aceitam um código adivinhável (mesmo
+  // limite de /auth/password e do login).
+  @Post("2fa/setup")
+  @ApiOperation({ summary: "Inicia o enrollment de 2FA: gera secret + QR code (ainda não ativa)." })
+  beginTwoFactorSetup(@CurrentUser() user: AuthenticatedUser) {
+    return this.twoFactorService.beginSetup(user);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post("2fa/enable")
+  @ApiOperation({ summary: "Confirma o enrollment com um código válido e ativa o 2FA." })
+  enableTwoFactor(@CurrentUser() user: AuthenticatedUser, @Body() dto: EnableTwoFactorDto) {
+    return this.twoFactorService.confirmSetup(user, dto.code);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Patch("2fa/disable")
+  @ApiOperation({ summary: "Desativa o 2FA (requer a senha atual)." })
+  async disableTwoFactor(@CurrentUser() user: AuthenticatedUser, @Body() dto: TwoFactorReauthDto) {
+    await this.twoFactorService.disable(user, dto.currentPassword);
+    return this.usersService.getOwnProfile(user);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post("2fa/backup-codes/regenerate")
+  @ApiOperation({ summary: "Gera um novo lote de códigos de backup (requer a senha atual)." })
+  regenerateTwoFactorBackupCodes(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: TwoFactorReauthDto,
+  ) {
+    return this.twoFactorService.regenerateBackupCodes(user, dto.currentPassword);
   }
 
   // Autenticado via Bearer normal (JwtAuthGuard + PermissionsGuard, ambos

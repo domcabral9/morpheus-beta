@@ -62,6 +62,7 @@ const ownProfileSelect = {
   email: true,
   avatarPath: true,
   passwordHash: true,
+  totpEnabled: true,
   lastLoginAt: true,
   createdAt: true,
   userRoles: { select: { role: { select: { name: true } } } },
