@@ -10,7 +10,11 @@ import type { AuthenticatedUser } from "../../common/interfaces/authenticated-us
 import { AuditLogService } from "../audit/audit-log.service";
 import { UsersService } from "../users/users.service";
 import type { UserWithPermissions } from "../users/users.repository";
-import type { AccessTokenPayload, RefreshTokenPayload } from "./interfaces/jwt-payload.interface";
+import type {
+  AccessTokenPayload,
+  RefreshTokenPayload,
+  PreAuthTokenPayload,
+} from "./interfaces/jwt-payload.interface";
 
 export interface RequestMeta {
   userAgent?: string;
@@ -20,6 +24,11 @@ export interface RequestMeta {
 export interface TokenPair {
   accessToken: string;
   refreshToken: string;
+  expiresIn: string;
+}
+
+export interface PreAuthChallenge {
+  preAuthToken: string;
   expiresIn: string;
 }
 
@@ -33,6 +42,8 @@ export class AuthService {
   private readonly accessExpiresIn: string;
   private readonly refreshSecret: string;
   private readonly refreshExpiresIn: string;
+  private readonly preAuthSecret: string;
+  private readonly preAuthExpiresIn: string;
 
   constructor(
     private readonly jwtService: JwtService,
@@ -46,6 +57,8 @@ export class AuthService {
     this.accessExpiresIn = this.configService.getOrThrow<string>("JWT_ACCESS_EXPIRES_IN");
     this.refreshSecret = this.configService.getOrThrow<string>("JWT_REFRESH_SECRET");
     this.refreshExpiresIn = this.configService.getOrThrow<string>("JWT_REFRESH_EXPIRES_IN");
+    this.preAuthSecret = this.configService.getOrThrow<string>("JWT_PREAUTH_SECRET");
+    this.preAuthExpiresIn = this.configService.getOrThrow<string>("JWT_PREAUTH_EXPIRES_IN");
   }
 
   /**
@@ -96,6 +109,26 @@ export class AuthService {
     });
 
     return tokens;
+  }
+
+  /**
+   * "Senha correta, 2FA pendente" - assina um token de escopo limitado
+   * (secret/vida próprios, sem `permissions`) em vez de tokens de sessão de
+   * verdade. Sem gravação no banco, sem AuditLogService.record: o login só é
+   * considerado concluído (e auditado como LOGIN) quando `login()` roda de
+   * fato, depois do código verificado em POST /auth/2fa/verify-login.
+   */
+  issuePreAuthChallenge(user: UserWithPermissions): PreAuthChallenge {
+    const payload: PreAuthTokenPayload = {
+      sub: user.id,
+      tenantId: user.tenantId,
+      typ: "2fa_pending",
+    };
+    const preAuthToken = this.jwtService.sign(payload, {
+      secret: this.preAuthSecret,
+      expiresIn: this.preAuthExpiresIn as JwtSignOptions["expiresIn"],
+    });
+    return { preAuthToken, expiresIn: this.preAuthExpiresIn };
   }
 
   async refresh(rawToken: string, meta: RequestMeta): Promise<TokenPair> {

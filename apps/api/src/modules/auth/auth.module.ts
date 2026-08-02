@@ -7,12 +7,13 @@ import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { LocalStrategy } from "./strategies/local.strategy";
 import { JwtStrategy } from "./strategies/jwt.strategy";
+import { PreAuthStrategy } from "./strategies/preauth.strategy";
 import { SamlStrategy } from "./strategies/saml.strategy";
 
 @Module({
   imports: [PassportModule, JwtModule.register({}), UsersModule, TwoFactorModule],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, SamlStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, PreAuthStrategy, SamlStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
