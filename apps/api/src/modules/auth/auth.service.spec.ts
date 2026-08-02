@@ -15,6 +15,8 @@ const CONFIG_VALUES: Record<string, string> = {
   JWT_ACCESS_EXPIRES_IN: "15m",
   JWT_REFRESH_SECRET: "test-refresh-secret-0123456789",
   JWT_REFRESH_EXPIRES_IN: "7d",
+  JWT_PREAUTH_SECRET: "test-preauth-secret-0123456789",
+  JWT_PREAUTH_EXPIRES_IN: "5m",
   ENCRYPTION_KEY: "2CJIB+zn5Gu5HfqYYlyTMFeEnzaTwfg+Ta5TLf8WoMk=",
 };
 
@@ -135,6 +137,32 @@ describe("AuthService", () => {
       const createArgs = prisma.refreshToken.create.mock.calls[0][0];
       expect(createArgs.data.ipAddress).not.toBe("203.0.113.10");
       expect(createArgs.data.ipAddress).toEqual(expect.any(String));
+    });
+  });
+
+  describe("issuePreAuthChallenge", () => {
+    it("assina um pre-auth token com o secret próprio, sem tocar o banco", () => {
+      const challenge = authService.issuePreAuthChallenge(baseUser);
+      expect(challenge.preAuthToken).toEqual(expect.any(String));
+      expect(challenge.expiresIn).toBe("5m");
+      expect(prisma.refreshToken.create).not.toHaveBeenCalled();
+      expect(auditLogService.record).not.toHaveBeenCalled();
+
+      const decoded = new JwtService().decode<{ sub: string; tenantId: string; typ: string }>(
+        challenge.preAuthToken,
+      );
+      expect(decoded).toEqual(
+        expect.objectContaining({ sub: "user-1", tenantId: "tenant-1", typ: "2fa_pending" }),
+      );
+    });
+
+    it("o pre-auth token não verifica contra o secret de access token", () => {
+      const challenge = authService.issuePreAuthChallenge(baseUser);
+      expect(() =>
+        new JwtService().verify(challenge.preAuthToken, {
+          secret: CONFIG_VALUES.JWT_ACCESS_SECRET,
+        }),
+      ).toThrow();
     });
   });
 
