@@ -26,12 +26,17 @@ import { RequirePermissions } from "../../common/decorators/require-permissions.
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { CsrfGuard, CSRF_COOKIE_NAME } from "../../common/guards/csrf.guard";
+import { CurrentPreAuthUser } from "../../common/decorators/current-preauth-user.decorator";
+import type { PendingTwoFactorUser } from "../../common/interfaces/pending-two-factor-user.interface";
 import { AuthService } from "./auth.service";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
+import { PreAuthGuard } from "./guards/preauth.guard";
 import { SamlAuthGuard } from "./guards/saml-auth.guard";
 import { LoginDto } from "./dto/login.dto";
 import { SwitchTenantDto } from "./dto/switch-tenant.dto";
 import { AccessTokenResponseDto } from "./dto/access-token-response.dto";
+import { TwoFactorChallengeResponseDto } from "./dto/two-factor-challenge-response.dto";
+import { VerifyTwoFactorLoginDto } from "./dto/verify-two-factor-login.dto";
 import type { UserWithPermissions } from "../users/users.repository";
 import { UsersService } from "../users/users.service";
 import { ChangeOwnPasswordDto } from "../users/dto/change-own-password.dto";
@@ -66,11 +71,54 @@ export class AuthController {
   async login(
     @Req() req: Request & { user: UserWithPermissions },
     @Res({ passthrough: true }) res: Response,
-  ): Promise<AccessTokenResponseDto> {
+  ): Promise<AccessTokenResponseDto | TwoFactorChallengeResponseDto> {
+    if (req.user.totpEnabled) {
+      // Senha correta, mas 2FA pendente - nenhuma sessão é aberta ainda
+      // (sem cookies), o login só completa de fato em /auth/2fa/verify-login.
+      const challenge = this.authService.issuePreAuthChallenge(req.user);
+      return { twoFactorRequired: true, ...challenge };
+    }
+
     const tokens = await this.authService.login(req.user, this.requestMeta(req));
     this.setRefreshCookie(res, tokens.refreshToken);
     this.setCsrfCookie(res);
-    return { accessToken: tokens.accessToken, expiresIn: tokens.expiresIn };
+    return {
+      twoFactorRequired: false,
+      accessToken: tokens.accessToken,
+      expiresIn: tokens.expiresIn,
+    };
+  }
+
+  @Public()
+  // Segundo passo do login quando totpEnabled - guardado pelo pre-auth token
+  // de vida curta (nunca o access token normal, secret diferente), não pelo
+  // JwtAuthGuard global. Mesmo limite de força bruta do login/senha.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @UseGuards(PreAuthGuard)
+  @Post("2fa/verify-login")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Segundo passo do login: valida o código 2FA e emite a sessão." })
+  async verifyTwoFactorLogin(
+    @CurrentPreAuthUser() pending: PendingTwoFactorUser,
+    @Body() dto: VerifyTwoFactorLoginDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AccessTokenResponseDto> {
+    const user = await this.usersService.findById(pending.id);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException("Usuário inválido ou inativo.");
+    }
+
+    await this.twoFactorService.verifyLoginCode(user, dto.code);
+
+    const tokens = await this.authService.login(user, this.requestMeta(req));
+    this.setRefreshCookie(res, tokens.refreshToken);
+    this.setCsrfCookie(res);
+    return {
+      twoFactorRequired: false,
+      accessToken: tokens.accessToken,
+      expiresIn: tokens.expiresIn,
+    };
   }
 
   @Public()
@@ -247,6 +295,10 @@ export class AuthController {
     // O guard já redireciona para o entryPoint do IdP; nada a fazer aqui.
   }
 
+  // Sem gate de 2FA aqui de propósito: TOTP é uma camada só sobre login
+  // local por senha; um usuário SSO-only nunca tem totpEnabled=true
+  // (TwoFactorService.beginSetup já rejeita SSO-only no enrollment), então
+  // esse branch nunca se aplicaria neste fluxo mesmo se fosse checado.
   @Public()
   @UseGuards(SamlAuthGuard)
   @Post("saml/callback")
