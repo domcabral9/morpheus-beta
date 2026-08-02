@@ -28,6 +28,7 @@ export interface OwnProfile {
   email: string;
   hasAvatar: boolean;
   hasLocalPassword: boolean;
+  hasTwoFactorEnabled: boolean;
   roles: string[];
   lastLoginAt: Date | null;
   createdAt: Date;
@@ -296,6 +297,7 @@ export class UsersService {
       email: raw.email,
       hasAvatar: raw.avatarPath !== null,
       hasLocalPassword: raw.passwordHash !== null,
+      hasTwoFactorEnabled: raw.totpEnabled,
       roles: raw.userRoles.map((link) => link.role.name),
       lastLoginAt: raw.lastLoginAt,
       createdAt: raw.createdAt,
