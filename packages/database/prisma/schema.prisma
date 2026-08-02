@@ -147,22 +147,30 @@ model RolePermission {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  tenantId     String
-  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name         String
-  email        String
+  id                String    @id @default(cuid())
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name              String
+  email             String
   /// Chave de storage do avatar (StorageAdapter, mesmo padrão de Tenant.logoUrl).
   /// Null quando o usuário nunca enviou uma foto de perfil.
-  avatarPath   String?
+  avatarPath        String?
   /// Login local (dev / usuários sem SSO). Null quando o acesso é só via SAML.
-  passwordHash String?
+  passwordHash      String?
   /// NameID retornado pelo Identity Provider SAML.
-  ssoSubject   String?
-  isActive     Boolean   @default(true)
-  lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  ssoSubject        String?
+  /// Secret TOTP ativo, criptografado (CryptoService/AES-256-GCM — nunca em claro,
+  /// nunca hash, porque o servidor precisa lê-lo de volta a cada verificação).
+  /// Null enquanto totpEnabled for false.
+  totpSecret        String?
+  /// Secret gerado por POST /auth/2fa/setup, ainda não confirmado por um código
+  /// válido — nunca promovido a totpSecret sem POST /auth/2fa/enable ter sucesso.
+  totpPendingSecret String?
+  totpEnabled       Boolean   @default(false)
+  isActive          Boolean   @default(true)
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   userRoles                  UserRole[]
   refreshTokens              RefreshToken[]
@@ -180,6 +188,7 @@ model User {
   notifications              Notification[]
   createdVendors             Vendor[]                @relation("VendorCreatedBy")
   performedVendorAssessments VendorAssessment[]      @relation("VendorAssessmentPerformedBy")
+  twoFactorBackupCodes       TwoFactorBackupCode[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -221,6 +230,21 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+/// Códigos de recuperação de 2FA — 10 por usuário, gerados só na confirmação do
+/// enrollment ou em regeneração explícita. Hash individual (bcrypt), uso único
+/// (usedAt marcado no consumo) — nunca lidos em claro depois de gerados.
+model TwoFactorBackupCode {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("two_factor_backup_codes")
+}
+
 // =============================================================================
 // Configuração de plataforma (cross-tenant)
 // =============================================================================
@@ -243,6 +267,19 @@ model PlatformPasswordPolicy {
   createdAt        DateTime @default(now())
 
   @@map("platform_password_policies")
+}
+
+/// Exige (ou não) 2FA de todo usuário local, plataforma inteira — mesmo padrão
+/// singleton de PlatformPasswordPolicy. Nesta primeira entrega é um nudge: não
+/// bloqueia login, só sinaliza em GET /auth/profile (ver plano/CHANGELOG).
+model PlatformTwoFactorPolicy {
+  id              String   @id @default("singleton")
+  enforced        Boolean  @default(false)
+  updatedByUserId String?
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  @@map("platform_two_factor_policies")
 }
 
 // =============================================================================

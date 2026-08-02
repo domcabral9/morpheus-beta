@@ -6,7 +6,7 @@ Diagramas de referência do schema de dados e da topologia de deploy em produç�
 
 ## Modelo de dados (ER)
 
-47 modelos no total ([`packages/database/prisma/schema.prisma`](../packages/database/prisma/schema.prisma))
+49 modelos no total ([`packages/database/prisma/schema.prisma`](../packages/database/prisma/schema.prisma))
 - agrupados por domínio abaixo, não num diagrama só, porque um ER de 47 entidades numa imagem só
 vira ilegível. Cada diagrama mostra os campos que importam para entender a relação (chaves e um ou
 dois campos identificadores), não o schema completo - consulte o `.prisma` para a lista exata de
@@ -24,6 +24,7 @@ erDiagram
     USER ||--o{ USER_ROLE : possui
     ROLE ||--o{ USER_ROLE : "atribuído a"
     USER ||--o{ REFRESH_TOKEN : gera
+    USER ||--o{ TWO_FACTOR_BACKUP_CODE : gera
 
     TENANT {
         string id PK
@@ -51,6 +52,8 @@ erDiagram
         string email
         string passwordHash "nullable, SSO-only não tem"
         string ssoSubject "nullable"
+        string totpSecret "nullable, AES-256-GCM (CryptoService)"
+        bool totpEnabled
     }
     REFRESH_TOKEN {
         string id PK
@@ -58,6 +61,12 @@ erDiagram
         string tokenHash "SHA-256, nunca o token cru"
         string ipAddress "AES-256-GCM (Etapa 14)"
         string familyId "rotação + detecção de reuso"
+    }
+    TWO_FACTOR_BACKUP_CODE {
+        string id PK
+        string userId FK
+        string codeHash "bcrypt, uso único"
+        datetime usedAt "nullable"
     }
     PLATFORM_PASSWORD_POLICY {
         string id PK "singleton, sempre 'singleton'"
@@ -67,11 +76,16 @@ erDiagram
         bool requireDigit
         bool requireSymbol
     }
+    PLATFORM_TWO_FACTOR_POLICY {
+        string id PK "singleton, sempre 'singleton'"
+        bool enforced "nudge, não bloqueia login (ver CHANGELOG)"
+    }
 ```
 
-`PLATFORM_PASSWORD_POLICY` não tem nenhuma relação no diagrama de propósito: é o único model do
-sistema, junto de `PERMISSION`, que é cross-tenant em vez de tenant-scoped - uma única linha,
-configurável só por quem tem a permissão `platform:cross-tenant`, valendo para todos os tenants.
+`PLATFORM_PASSWORD_POLICY` e `PLATFORM_TWO_FACTOR_POLICY` não têm nenhuma relação no diagrama de
+propósito: são, junto de `PERMISSION`, os únicos models do sistema que são cross-tenant em vez de
+tenant-scoped - uma única linha cada, configuráveis só por quem tem a permissão
+`platform:cross-tenant`, valendo para todos os tenants.
 
 ### Questionário e biblioteca de controles
 
