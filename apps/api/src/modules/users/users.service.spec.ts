@@ -10,6 +10,7 @@ import { UsersService } from "./users.service";
 import { UsersRepository } from "./users.repository";
 import { RolesService } from "../roles/roles.service";
 import { PasswordPolicyService } from "../platform-policy/password-policy.service";
+import { TwoFactorPolicyService } from "../platform-policy/two-factor-policy.service";
 import { AuditLogService } from "../audit/audit-log.service";
 import { STORAGE_ADAPTER } from "../storage/storage.interface";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
@@ -61,6 +62,7 @@ describe("UsersService", () => {
     setAvatarPath: jest.Mock;
   };
   let passwordPolicyService: { validate: jest.Mock };
+  let twoFactorPolicyService: { getPolicy: jest.Mock };
   let auditLogService: { record: jest.Mock };
   let storage: { save: jest.Mock; read: jest.Mock };
 
@@ -74,6 +76,7 @@ describe("UsersService", () => {
       setAvatarPath: jest.fn().mockResolvedValue(undefined),
     };
     passwordPolicyService = { validate: jest.fn().mockResolvedValue(undefined) };
+    twoFactorPolicyService = { getPolicy: jest.fn().mockResolvedValue({ enforced: false }) };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
     storage = { save: jest.fn().mockResolvedValue(undefined), read: jest.fn() };
 
@@ -83,6 +86,7 @@ describe("UsersService", () => {
         { provide: UsersRepository, useValue: repo },
         { provide: RolesService, useValue: {} },
         { provide: PasswordPolicyService, useValue: passwordPolicyService },
+        { provide: TwoFactorPolicyService, useValue: twoFactorPolicyService },
         { provide: AuditLogService, useValue: auditLogService },
         { provide: STORAGE_ADAPTER, useValue: storage },
       ],
@@ -190,6 +194,7 @@ describe("UsersService", () => {
         hasAvatar: true,
         hasLocalPassword: true,
         hasTwoFactorEnabled: false,
+        twoFactorEnforced: false,
         roles: ["Analista"],
         lastLoginAt: null,
         createdAt: OWN_PROFILE_RAW.createdAt,
