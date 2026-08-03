@@ -109,7 +109,36 @@
     "bulkSubmit": "Apply decision to {count} steps",
     "bulkDecisionSuccess": "{count} decisions recorded successfully.",
     "bulkDecisionPartial": "{successCount} decisions recorded, {failureCount} failed (e.g. you requested it yourself, or it was already decided by someone else).",
-    "vendorTierLabel": "Vendor tier"
+    "vendorTierLabel": "Vendor tier",
+    "tabs": {
+      "assessments": "Assessments",
+      "inventory": "Inventory items"
+    },
+    "inventoryTab": {
+      "cardTitle": "Inventory items awaiting approval",
+      "empty": "No inventory items awaiting approval right now.",
+      "loadError": "Could not load the inventory approval queue.",
+      "columnName": "Name",
+      "columnVendor": "Vendor",
+      "columnArea": "Area",
+      "columnCriticality": "Criticality",
+      "columnRequester": "Requester",
+      "columnSubmittedAt": "Submitted at",
+      "columnAction": "Action",
+      "decideAction": "Decide",
+      "dialogSubtitle": "Vendor {vendor} - {criticality} criticality - requested by {requester}.",
+      "decisionLabel": "Decision",
+      "decisions": {
+        "APPROVE": "Approve",
+        "REJECT": "Reject"
+      },
+      "notesLabel": "Notes (required when rejecting)",
+      "notesRequiredForReject": "Enter the reason for rejection.",
+      "submit": "Confirm decision",
+      "submitting": "Submitting...",
+      "decisionSuccess": "Decision recorded.",
+      "decisionError": "Could not record the decision."
+    }
   },
   "TechnicalOpinions": {
     "title": "Technical opinions",
@@ -336,9 +365,16 @@
     "documentationLinkUrl": "URL",
     "saving": "Saving...",
     "save": "Save",
-    "createSuccess": "Item created.",
+    "createSuccess": "Item sent for approval.",
     "updateSuccess": "Item updated.",
     "saveError": "Could not save the item.",
+    "statusApprovalFlowHint": "This status can only be changed through the approval flow (\"Inventory items\" tab under Approvals).",
+    "pendingApprovalHint": "This item was sent for approval and is not yet active in the inventory.",
+    "rejectionReasonTitle": "Rejection reason",
+    "resubmitButton": "Resubmit for approval",
+    "resubmitting": "Resubmitting...",
+    "resubmitSuccess": "Item resubmitted for approval.",
+    "resubmitError": "Could not resubmit the item.",
     "duplicateWarningTitle": "An item with this name already exists in this area",
     "duplicateWarningBody": "\"{name}\" ({vendor}) is already registered in this area - status: {status}, origin: {origin}. Software with the same name in different areas is allowed (different contracts/administration), but not duplicates within the same area.",
     "duplicateBlockedError": "Cannot save - an item with this name already exists in this area.",
@@ -352,6 +388,8 @@
     "statuses": {
       "ACTIVE": "Active",
       "PENDING_REVIEW": "Pending review",
+      "PENDING_APPROVAL": "Pending approval",
+      "REJECTED": "Rejected",
       "EXPIRED": "Expired",
       "DECOMMISSIONED": "Decommissioned"
     },

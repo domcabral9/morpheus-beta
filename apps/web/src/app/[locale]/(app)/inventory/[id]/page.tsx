@@ -21,9 +21,11 @@ import type { InventoryItemDetail } from "@/lib/inventory-types";
 import { ItemFormDialog } from "../_components/item-form-dialog";
 import { LinkVendorDialog } from "../_components/link-vendor-dialog";
 
-const STATUS_VARIANT: Record<string, "secondary" | "success" | "destructive" | "outline"> = {
+const STATUS_VARIANT: Record<string, "secondary" | "success" | "destructive" | "outline" | "warning"> = {
   ACTIVE: "success",
   PENDING_REVIEW: "secondary",
+  PENDING_APPROVAL: "warning",
+  REJECTED: "destructive",
   EXPIRED: "destructive",
   DECOMMISSIONED: "outline",
 };
@@ -55,6 +57,7 @@ export default function InventoryItemPage() {
   const [editOpen, setEditOpen] = React.useState(false);
   const [linkVendorOpen, setLinkVendorOpen] = React.useState(false);
   const [startingArt, setStartingArt] = React.useState(false);
+  const [resubmitting, setResubmitting] = React.useState(false);
 
   const loadItem = React.useCallback(() => {
     return api
@@ -94,6 +97,19 @@ export default function InventoryItemPage() {
     }
   }
 
+  async function handleResubmit() {
+    setResubmitting(true);
+    try {
+      const updated = await api.post<InventoryItemDetail>(`/inventory/${params.id}/resubmit`, {});
+      setItem(updated);
+      toast.success(t("resubmitSuccess"));
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("resubmitError"));
+    } finally {
+      setResubmitting(false);
+    }
+  }
+
   return (
     <>
       <div className="flex flex-1 flex-col gap-6">
@@ -126,6 +142,30 @@ export default function InventoryItemPage() {
               </div>
             </CardHeader>
             <CardContent>
+              {item.status === "PENDING_APPROVAL" && (
+                <div className="mb-4 rounded-md border border-chart-warning/50 bg-chart-warning/10 p-3 text-sm">
+                  {t("pendingApprovalHint")}
+                </div>
+              )}
+
+              {item.status === "REJECTED" && (
+                <div className="mb-4 flex flex-col gap-2 rounded-md border border-destructive/50 bg-destructive/5 p-3 text-sm">
+                  <p className="font-medium text-destructive">{t("rejectionReasonTitle")}</p>
+                  <p>{item.approvalRequest?.decisionNotes}</p>
+                  {item.createdById === user.id && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-fit"
+                      disabled={resubmitting}
+                      onClick={handleResubmit}
+                    >
+                      {resubmitting ? t("resubmitting") : t("resubmitButton")}
+                    </Button>
+                  )}
+                </div>
+              )}
+
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <Field label={t("fieldVersion")} value={item.version ?? "—"} />
                 <Field

@@ -37,9 +37,11 @@ import { ItemFormDialog } from "./item-form-dialog";
 const PAGE_SIZE = 20;
 const ALL_VALUE = "__all__";
 
-const STATUS_VARIANT: Record<string, "secondary" | "success" | "destructive" | "outline"> = {
+const STATUS_VARIANT: Record<string, "secondary" | "success" | "destructive" | "outline" | "warning"> = {
   ACTIVE: "success",
   PENDING_REVIEW: "secondary",
+  PENDING_APPROVAL: "warning",
+  REJECTED: "destructive",
   EXPIRED: "destructive",
   DECOMMISSIONED: "outline",
 };
