@@ -80,6 +80,7 @@ model Tenant {
   workflowDefinitions      WorkflowDefinition[]
   assessments              Assessment[]
   inventoryItems           SoftwareInventoryItem[]
+  inventoryApprovalRequests InventoryApprovalRequest[]
   documentationLinks       InventoryDocumentationLink[]
   attachments              Attachment[]
   comments                 Comment[]
@@ -182,6 +183,9 @@ model User {
   technicalOpinionsIssued    TechnicalOpinion[]
   managedInventoryItems      SoftwareInventoryItem[] @relation("InventoryManager")
   ownedInventoryItems        SoftwareInventoryItem[] @relation("InventoryTechnicalResponsible")
+  createdInventoryItems      SoftwareInventoryItem[] @relation("InventoryCreatedBy")
+  inventoryApprovalRequestsSubmitted InventoryApprovalRequest[] @relation("InventoryApprovalRequester")
+  inventoryApprovalRequestsDecided   InventoryApprovalRequest[] @relation("InventoryApprovalDecidedBy")
   attachments                Attachment[]
   comments                   Comment[]
   auditLogs                  AuditLog[]
@@ -1167,8 +1171,22 @@ enum SoftwareType {
 enum InventoryStatus {
   ACTIVE
   PENDING_REVIEW
+  /// Item de entrada manual (POST /inventory) aguardando decisão do fluxo de
+  /// aprovação dedicado (`InventoryApprovalRequest`) — não conta como ativo/
+  /// homologado. Itens vindos de Assessment aprovada nunca passam por este
+  /// status (já foram revisados no workflow de homologação).
+  PENDING_APPROVAL
+  /// Reprovado pelo fluxo de aprovação de item manual — editável e
+  /// reenviável só pelo criador original (ver InventoryApprovalRequest).
+  REJECTED
   EXPIRED
   DECOMMISSIONED
+}
+
+enum InventoryApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum DataClassification {
@@ -1178,15 +1196,24 @@ enum DataClassification {
   RESTRICTED
 }
 
-/// Criado automaticamente quando uma Assessment é aprovada. `assessmentId` é
-/// opcional para permitir, no futuro, cadastro manual de itens de inventário
-/// legado que nunca passaram pelo fluxo de homologação.
+/// Criado automaticamente quando uma Assessment é aprovada (`assessmentId`
+/// setado), ou via cadastro manual direto (`POST /inventory`, `assessmentId`
+/// nulo) — este último passa pelo gate de `InventoryApprovalRequest` antes de
+/// virar `ACTIVE` (ver enum `InventoryStatus`). Itens manuais cadastrados
+/// antes desta feature existir foram mantidos `ACTIVE` sem aprovação
+/// retroativa (`createdById` nulo neles) — só itens novos passam pelo gate.
 model SoftwareInventoryItem {
   id                     String             @id @default(cuid())
   tenantId               String
   tenant                 Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assessmentId           String?
   assessment             Assessment?        @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  /// Quem submeteu via cadastro manual (POST /inventory) — nulo para itens
+  /// vindos de Assessment aprovada e para itens manuais legados anteriores a
+  /// esta feature. Não confundir com `managerId`/`technicalResponsibleId`
+  /// (donos de negócio do ativo, não quem o cadastrou).
+  createdById            String?
+  createdBy              User?              @relation("InventoryCreatedBy", fields: [createdById], references: [id])
   name                   String
   vendor                 String
   /// FK real pro fornecedor cadastrado, quando existir - `vendor` acima
@@ -1231,6 +1258,7 @@ model SoftwareInventoryItem {
 
   attachments        Attachment[]
   documentationLinks InventoryDocumentationLink[]
+  approvalRequest    InventoryApprovalRequest?
 
   @@index([tenantId])
   @@index([tenantId, status])
@@ -1242,6 +1270,36 @@ model SoftwareInventoryItem {
   @@index([tenantId, areaId, status])
   @@index([nextReviewDate])
   @@map("software_inventory_items")
+}
+
+/// Aprovação humana dedicada a itens de inventário criados manualmente
+/// (POST /inventory, fora da homologação via Assessment) — mecanismo
+/// separado e enxuto, não uma generalização de AssessmentWorkflowInstance/
+/// WorkflowStepExecution (reusar o motor de workflow exigiria torná-lo
+/// polimórfico, invasivo demais pra um passo único fixo). Uma linha por item
+/// (`inventoryItemId` único) reaproveitada e resetada a cada ciclo
+/// reprovação->reenvio — o histórico de decisões vive em AuditLog
+/// (entityType "InventoryApprovalRequest"), esta linha só reflete o estado
+/// vigente.
+model InventoryApprovalRequest {
+  id              String                   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  inventoryItemId String                   @unique
+  inventoryItem   SoftwareInventoryItem    @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  requesterId     String
+  requester       User                     @relation("InventoryApprovalRequester", fields: [requesterId], references: [id])
+  status          InventoryApprovalStatus  @default(PENDING)
+  decidedById     String?
+  decidedBy       User?                    @relation("InventoryApprovalDecidedBy", fields: [decidedById], references: [id])
+  decidedAt       DateTime?
+  decisionNotes   String?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@map("inventory_approval_requests")
 }
 
 /// Links externos de documentação (Jira, Swagger/OpenAPI, Postman, etc.) —
@@ -1386,6 +1444,10 @@ enum NotificationType {
   RENEWAL_OVERDUE
   /// Reavaliação periódica de um fornecedor venceu (ver VendorReassessmentScheduler).
   VENDOR_REASSESSMENT_DUE
+  /// Item de inventário manual enviado (ou reenviado) para o fluxo de
+  /// aprovação dedicado — notifica quem tem `assessments:approve`. Desfechos
+  /// (aprovado/reprovado) reaproveitam APPROVAL/REJECTION acima.
+  INVENTORY_APPROVAL_REQUESTED
 }
 
 model Notification {

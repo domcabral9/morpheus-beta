@@ -12,9 +12,9 @@ uma linha do que aconteceu.
 
 ## 2026
 
-- [**Agosto**](./changelog/2026-08.md) — "Perfumaria" de PR (labels/milestones retroativos nas 85 PRs
-  já mescladas) e tela de perfil de autoatendimento (Fases 1-4: backend, frontend, revisão de
-  segurança OWASP Top 10, portfólio).
+- [**Agosto**](./changelog/2026-08.md) — "Perfumaria" de PR, tela de perfil de autoatendimento, 2FA
+  via TOTP (RFC 6238, com um bypass de SSO real encontrado e corrigido na revisão de segurança), e
+  início do fluxo de aprovação para itens de inventário manuais (item mais antigo do backlog).
 - [**Julho**](./changelog/2026-07.md) — Construção inicial do produto (roteiro técnico Etapas 1-16 +
   plano pós-roteiro Etapas A-I), multi-tenancy e administração avançada, backlog pós-uso, renovação
   anual de homologação, avaliação de risco de fornecedores, vínculo Inventory↔Vendor, SSDLC/CI, e
