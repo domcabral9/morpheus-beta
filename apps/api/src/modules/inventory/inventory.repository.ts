@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Prisma, InventoryStatus, SoftwareType, Criticality } from "@morpheus/database";
 import { PrismaService } from "../../prisma/prisma.service";
 
-const itemDetailInclude = {
+export const itemDetailInclude = {
   area: true,
   manager: { select: { id: true, name: true, email: true } },
   technicalResponsible: { select: { id: true, name: true, email: true } },
@@ -12,6 +12,19 @@ const itemDetailInclude = {
   },
   linkedVendor: {
     select: { id: true, name: true, currentTier: true, currentTierLabel: true },
+  },
+  // Estado do gate de aprovação de cadastro manual (Fase 2 do fluxo de
+  // aprovação) - null pra itens vindos de Assessment aprovada e pra itens
+  // manuais legados anteriores a esta feature (grandfathering).
+  approvalRequest: {
+    select: {
+      id: true,
+      status: true,
+      requesterId: true,
+      requester: { select: { id: true, name: true, email: true } },
+      decisionNotes: true,
+      decidedAt: true,
+    },
   },
   // Parecer técnico da homologação que originou este item, quando existir -
   // itens de entrada manual (`assessmentId` nulo) nunca têm um. Pega só a
@@ -82,6 +95,35 @@ export class InventoryRepository {
           : undefined,
       },
       include: itemDetailInclude,
+    });
+  }
+
+  /** Cria o item já em `PENDING_APPROVAL` junto com sua
+   * `InventoryApprovalRequest` (1:1), atomicamente — evita um item órfão sem
+   * linha de aprovação se a segunda inserção falhar. Usado só pelo caminho
+   * de cadastro manual (`POST /inventory`); `createFromApprovedAssessment`
+   * continua usando `create()` acima, sem gate. */
+  async createWithApprovalRequest(
+    data: Prisma.SoftwareInventoryItemUncheckedCreateInput,
+    requesterId: string,
+    documentationLinks?: DocumentationLinkInput[],
+  ): Promise<InventoryItemDetail> {
+    return this.prisma.$transaction(async (tx) => {
+      const item = await tx.softwareInventoryItem.create({
+        data: {
+          ...data,
+          documentationLinks: documentationLinks?.length
+            ? { create: documentationLinks.map((link) => ({ tenantId: data.tenantId, ...link })) }
+            : undefined,
+        },
+      });
+      await tx.inventoryApprovalRequest.create({
+        data: { tenantId: data.tenantId, inventoryItemId: item.id, requesterId },
+      });
+      return tx.softwareInventoryItem.findUniqueOrThrow({
+        where: { id: item.id },
+        include: itemDetailInclude,
+      });
     });
   }
 

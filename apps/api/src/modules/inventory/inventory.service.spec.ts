@@ -1,8 +1,12 @@
 import { Test } from "@nestjs/testing";
-import { ForbiddenException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { InventoryService } from "./inventory.service";
 import { InventoryRepository } from "./inventory.repository";
+import { InventoryApprovalRepository } from "./inventory-approval.repository";
 import { AuditLogService } from "../audit/audit-log.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
+import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
@@ -36,6 +40,7 @@ describe("InventoryService", () => {
   let service: InventoryService;
   let repo: {
     create: jest.Mock;
+    createWithApprovalRequest: jest.Mock;
     findById: jest.Mock;
     findByAssessmentId: jest.Mock;
     findMany: jest.Mock;
@@ -45,11 +50,21 @@ describe("InventoryService", () => {
     getStats: jest.Mock;
     findDueForReview: jest.Mock;
   };
+  let approvalRepo: {
+    findByItemId: jest.Mock;
+    markDecided: jest.Mock;
+    resetForResubmit: jest.Mock;
+    findPendingItems: jest.Mock;
+  };
   let auditLogService: { record: jest.Mock };
+  let notificationsService: { notify: jest.Mock; notifyPermissionHolders: jest.Mock };
 
   beforeEach(async () => {
     repo = {
       create: jest.fn().mockImplementation((data) => Promise.resolve({ id: "item-1", ...data })),
+      createWithApprovalRequest: jest
+        .fn()
+        .mockImplementation((data) => Promise.resolve({ id: "item-1", ...data })),
       findById: jest.fn(),
       findByAssessmentId: jest.fn().mockResolvedValue(null),
       findMany: jest.fn(),
@@ -59,13 +74,26 @@ describe("InventoryService", () => {
       getStats: jest.fn(),
       findDueForReview: jest.fn(),
     };
+    approvalRepo = {
+      findByItemId: jest.fn(),
+      markDecided: jest.fn().mockResolvedValue(undefined),
+      resetForResubmit: jest.fn().mockResolvedValue(undefined),
+      findPendingItems: jest.fn(),
+    };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
+    notificationsService = {
+      notify: jest.fn().mockResolvedValue(undefined),
+      notifyPermissionHolders: jest.fn().mockResolvedValue(undefined),
+    };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
         InventoryService,
         { provide: InventoryRepository, useValue: repo },
+        { provide: InventoryApprovalRepository, useValue: approvalRepo },
         { provide: AuditLogService, useValue: auditLogService },
+        { provide: NotificationsService, useValue: notificationsService },
+        SeparationOfDutiesService,
       ],
     }).compile();
 
@@ -217,7 +245,11 @@ describe("InventoryService", () => {
         documentationLinks: links,
       } as never);
 
-      expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ name: "API X" }), links);
+      expect(repo.createWithApprovalRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "API X" }),
+        "user-1",
+        links,
+      );
     });
 
     it("update() substitui os links e refaz o fetch quando documentationLinks é enviado", async () => {
@@ -260,8 +292,9 @@ describe("InventoryService", () => {
         hasInfoSecClause: false,
       } as never);
 
-      expect(repo.create).toHaveBeenCalledWith(
+      expect(repo.createWithApprovalRequest).toHaveBeenCalledWith(
         expect.objectContaining({ hasRiskAnalysis: true, hasInfoSecClause: false }),
+        "user-1",
         undefined,
       );
     });
@@ -343,6 +376,210 @@ describe("InventoryService", () => {
           entityType: "SoftwareInventoryItem",
           metadata: { format: "csv", count: 2 },
         }),
+      );
+    });
+  });
+
+  const validCreateDto = {
+    name: "API X",
+    vendor: "Fornecedor X",
+    category: "Integração",
+    type: "API_INTEGRATION",
+    areaId: "area-1",
+    managerId: "user-1",
+    technicalResponsibleId: "user-1",
+    homologationDate: "2026-07-01",
+    nextReviewDate: "2027-07-01",
+    criticality: "MEDIUM",
+    dataClassification: "INTERNAL",
+    hasRiskAnalysis: true,
+    hasInfoSecClause: false,
+  };
+
+  describe("create - gate de aprovação manual", () => {
+    it("força status PENDING_APPROVAL e createdById, nunca aceita status do DTO", async () => {
+      await service.create(makeUser(), validCreateDto as never);
+
+      expect(repo.createWithApprovalRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "PENDING_APPROVAL", createdById: "user-1" }),
+        "user-1",
+        undefined,
+      );
+    });
+
+    it("grava audit SUBMIT e notifica todos com assessments:approve", async () => {
+      await service.create(makeUser(), validCreateDto as never);
+
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "SUBMIT", entityType: "InventoryApprovalRequest" }),
+      );
+      expect(notificationsService.notifyPermissionHolders).toHaveBeenCalledWith(
+        "tenant-1",
+        PERMISSIONS.ASSESSMENTS_APPROVE,
+        expect.objectContaining({ type: "INVENTORY_APPROVAL_REQUESTED" }),
+      );
+    });
+  });
+
+  describe("update - bypass de status fechado", () => {
+    it("rejeita dto.status quando o item está PENDING_APPROVAL", async () => {
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        status: "PENDING_APPROVAL",
+      });
+
+      await expect(
+        service.update(makeUser(), "item-1", { status: "ACTIVE" } as never),
+      ).rejects.toThrow(BadRequestException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it("rejeita dto.status quando o item está REJECTED", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", status: "REJECTED" });
+
+      await expect(
+        service.update(makeUser(), "item-1", { status: "ACTIVE" } as never),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it("rejeita setar PENDING_APPROVAL/REJECTED à mão em item ACTIVE (nunca atribuível fora do fluxo)", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", status: "ACTIVE" });
+
+      await expect(
+        service.update(makeUser(), "item-1", { status: "PENDING_APPROVAL" } as never),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.update(makeUser(), "item-1", { status: "REJECTED" } as never),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe("approve/reject", () => {
+    it("rejeita item que não está PENDING_APPROVAL", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", status: "ACTIVE" });
+
+      await expect(service.approve(makeUser(), "item-1", {})).rejects.toThrow(BadRequestException);
+      await expect(service.reject(makeUser(), "item-1", { notes: "motivo" })).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it("bloqueia auto-aprovação: criador não pode aprovar a própria submissão", async () => {
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        status: "PENDING_APPROVAL",
+      });
+      approvalRepo.findByItemId.mockResolvedValue({ id: "req-1", requesterId: "user-1" });
+
+      await expect(service.approve(makeUser({ id: "user-1" }), "item-1", {})).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(approvalRepo.markDecided).not.toHaveBeenCalled();
+    });
+
+    it("bloqueia auto-reprovação da mesma forma", async () => {
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        status: "PENDING_APPROVAL",
+      });
+      approvalRepo.findByItemId.mockResolvedValue({ id: "req-1", requesterId: "user-1" });
+
+      await expect(
+        service.reject(makeUser({ id: "user-1" }), "item-1", { notes: "motivo" }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it("aprova: marca a request decidida, ativa o item, audita e notifica o criador", async () => {
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        status: "PENDING_APPROVAL",
+        name: "API X",
+      });
+      approvalRepo.findByItemId.mockResolvedValue({ id: "req-1", requesterId: "user-2" });
+
+      await service.approve(makeUser({ id: "user-1" }), "item-1", { notes: "ok" });
+
+      expect(approvalRepo.markDecided).toHaveBeenCalledWith("req-1", {
+        status: "APPROVED",
+        decidedById: "user-1",
+        decisionNotes: "ok",
+      });
+      expect(repo.update).toHaveBeenCalledWith("item-1", { status: "ACTIVE" });
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "APPROVE", entityType: "InventoryApprovalRequest" }),
+      );
+      expect(notificationsService.notify).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "user-2", type: "APPROVAL" }),
+      );
+    });
+
+    it("reprova: marca REJECTED, atualiza o item, audita e notifica o criador com o motivo", async () => {
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        status: "PENDING_APPROVAL",
+        name: "API X",
+      });
+      approvalRepo.findByItemId.mockResolvedValue({ id: "req-1", requesterId: "user-2" });
+
+      await service.reject(makeUser({ id: "user-1" }), "item-1", {
+        notes: "Fornecedor sem contrato vigente",
+      });
+
+      expect(approvalRepo.markDecided).toHaveBeenCalledWith("req-1", {
+        status: "REJECTED",
+        decidedById: "user-1",
+        decisionNotes: "Fornecedor sem contrato vigente",
+      });
+      expect(repo.update).toHaveBeenCalledWith("item-1", { status: "REJECTED" });
+      expect(notificationsService.notify).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "user-2",
+          type: "REJECTION",
+          body: expect.stringContaining("Fornecedor sem contrato vigente"),
+        }),
+      );
+    });
+  });
+
+  describe("resubmit", () => {
+    it("rejeita item que não está REJECTED", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", status: "ACTIVE" });
+
+      await expect(service.resubmit(makeUser(), "item-1")).rejects.toThrow(BadRequestException);
+    });
+
+    it("rejeita não-criador tentando reenviar item alheio", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", status: "REJECTED" });
+      approvalRepo.findByItemId.mockResolvedValue({ id: "req-1", requesterId: "user-2" });
+
+      await expect(service.resubmit(makeUser({ id: "user-1" }), "item-1")).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(approvalRepo.resetForResubmit).not.toHaveBeenCalled();
+    });
+
+    it("permite ao criador reenviar: reseta a request e volta o item pra PENDING_APPROVAL", async () => {
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        status: "REJECTED",
+        name: "API X",
+      });
+      approvalRepo.findByItemId.mockResolvedValue({ id: "req-1", requesterId: "user-1" });
+
+      await service.resubmit(makeUser({ id: "user-1" }), "item-1");
+
+      expect(approvalRepo.resetForResubmit).toHaveBeenCalledWith("req-1");
+      expect(repo.update).toHaveBeenCalledWith("item-1", { status: "PENDING_APPROVAL" });
+      expect(notificationsService.notifyPermissionHolders).toHaveBeenCalledWith(
+        "tenant-1",
+        PERMISSIONS.ASSESSMENTS_APPROVE,
+        expect.objectContaining({ type: "INVENTORY_APPROVAL_REQUESTED" }),
       );
     });
   });
