@@ -73,6 +73,11 @@ avaliado ou está com reavaliação vencida/próxima.
   AND/OR de permissões - `apps/api/src/common/decorators`, `common/guards`.
 - **Autenticação**: JWT de acesso curto + refresh token via cookie httpOnly, SSO via SAML
   genérico/plugável (login local convive com SSO, nunca exclusivo).
+- **2FA via TOTP (RFC 6238)**, autoatendimento completo (QR code, códigos de backup de uso único,
+  desativação/regeneração com reautenticação) - implementação própria sobre `node:crypto`, sem
+  dependência de terceiros. Toggle de recomendação por plataforma inteira, e revisão de segurança
+  dedicada encontrou e corrigiu um bypass real (login via SSO ignorava o segundo fator) antes de ir
+  ao ar.
 - **Política de senha configurável, plataforma inteira**: tamanho mínimo e classes de caractere
   exigidas (maiúscula/minúscula/dígito/símbolo) definidos por super-admin em `/admin/platform-policy`
   e aplicados a todo tenant - autoatendimento de troca de senha e reset administrativo reusam a
@@ -124,9 +129,17 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | --- |
 | ![Administração - papéis](./docs/screenshots/admin-papeis.png) |
 
-| Política de senha (super-admin) | Meu perfil (autoatendimento) |
+| Meu perfil (autoatendimento) | Ativando o 2FA |
 | --- | --- |
-| ![Política de senha](./docs/screenshots/admin-platform-policy.png) | ![Meu perfil](./docs/screenshots/profile.png) |
+| ![Meu perfil](./docs/screenshots/profile.png) | ![Ativando o 2FA](./docs/screenshots/profile-2fa-setup.png) |
+
+| Códigos de backup do 2FA | Login - código de verificação |
+| --- | --- |
+| ![Códigos de backup do 2FA](./docs/screenshots/profile-2fa-backup-codes.png) | ![Login - código de verificação](./docs/screenshots/login-2fa.png) |
+
+| Políticas de plataforma (super-admin) |
+| --- |
+| ![Políticas de plataforma](./docs/screenshots/admin-platform-policy.png) |
 
 ## Stack
 
@@ -135,7 +148,7 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | Backend         | Node.js, TypeScript, NestJS 11                                          |
 | Frontend        | Next.js 16 (App Router), React 19, TailwindCSS 4, shadcn/ui              |
 | Banco de dados  | PostgreSQL 16, Prisma ORM 7                                              |
-| Autenticação    | JWT + Refresh Token, SSO via SAML genérico/plugável                     |
+| Autenticação    | JWT + Refresh Token, SSO via SAML genérico/plugável, 2FA (TOTP)         |
 | Observabilidade | Logs estruturados (pino), Correlation ID, métricas Prometheus, OpenTelemetry |
 | Containerização | Docker, Docker Compose                                                   |
 | IaC             | Terraform (deploy AWS documentado - nunca aplicado contra conta real)   |
@@ -256,6 +269,10 @@ overdue/upcoming reassessment.
   permission composition - `apps/api/src/common/decorators`, `common/guards`.
 - **Authentication**: short-lived access JWT + refresh token via httpOnly cookie, SSO via generic/
   pluggable SAML (local login coexists with SSO, never exclusive).
+- **2FA via TOTP (RFC 6238)**, full self-service (QR code, single-use backup codes, disable/regenerate
+  with reauthentication) - own implementation on top of `node:crypto`, no third-party dependency.
+  Platform-wide recommendation toggle, and a dedicated security review found and fixed a real bypass
+  (SSO login skipped the second factor) before it shipped.
 - **Platform-wide, configurable password policy**: minimum length and required character classes
   (uppercase/lowercase/digit/symbol) set by a super-admin at `/admin/platform-policy` and enforced
   for every tenant - self-service password change and admin-triggered resets reuse the same
@@ -306,9 +323,17 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | --- |
 | ![Admin - roles](./docs/screenshots/admin-papeis-en.png) |
 
-| Password policy (super-admin) | My profile (self-service) |
+| My profile (self-service) | Setting up 2FA |
 | --- | --- |
-| ![Password policy](./docs/screenshots/admin-platform-policy-en.png) | ![My profile](./docs/screenshots/profile-en.png) |
+| ![My profile](./docs/screenshots/profile-en.png) | ![Setting up 2FA](./docs/screenshots/profile-2fa-setup-en.png) |
+
+| 2FA backup codes | Login - verification code |
+| --- | --- |
+| ![2FA backup codes](./docs/screenshots/profile-2fa-backup-codes-en.png) | ![Login - verification code](./docs/screenshots/login-2fa-en.png) |
+
+| Platform policies (super-admin) |
+| --- |
+| ![Platform policies](./docs/screenshots/admin-platform-policy-en.png) |
 
 ## Stack
 
@@ -317,7 +342,7 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | Backend          | Node.js, TypeScript, NestJS 11                                             |
 | Frontend         | Next.js 16 (App Router), React 19, TailwindCSS 4, shadcn/ui                 |
 | Database         | PostgreSQL 16, Prisma ORM 7                                                 |
-| Authentication   | JWT + Refresh Token, generic/pluggable SAML SSO                            |
+| Authentication   | JWT + Refresh Token, generic/pluggable SAML SSO, 2FA (TOTP)                |
 | Observability    | Structured logs (pino), Correlation ID, Prometheus metrics, OpenTelemetry   |
 | Containerization | Docker, Docker Compose                                                     |
 | IaC              | Terraform (AWS deploy documented - never applied against a real account)   |
