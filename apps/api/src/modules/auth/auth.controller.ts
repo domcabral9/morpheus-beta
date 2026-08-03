@@ -295,10 +295,15 @@ export class AuthController {
     // O guard já redireciona para o entryPoint do IdP; nada a fazer aqui.
   }
 
-  // Sem gate de 2FA aqui de propósito: TOTP é uma camada só sobre login
-  // local por senha; um usuário SSO-only nunca tem totpEnabled=true
-  // (TwoFactorService.beginSetup já rejeita SSO-only no enrollment), então
-  // esse branch nunca se aplicaria neste fluxo mesmo se fosse checado.
+  // Achado da revisão de segurança da Fase 7 do 2FA (ver CHANGELOG): a
+  // suposição original aqui ("SSO-only nunca tem totpEnabled=true") estava
+  // errada — `findOrProvisionBySso` casa por e-mail quando não há
+  // `ssoSubject` prévio, então uma conta com senha local + 2FA habilitado é
+  // resolvida normalmente por aqui, e o login completaria sem pedir o
+  // segundo fator. Bloqueado explicitamente: contas com 2FA habilitado não
+  // completam login via SSO (precisam usar login local + código). Fechar
+  // esse bypass sem construir um fluxo de continuação de 2FA para SSO (fora
+  // de escopo desta fase) é a correção mínima e suficiente.
   @Public()
   @UseGuards(SamlAuthGuard)
   @Post("saml/callback")
@@ -307,6 +312,13 @@ export class AuthController {
     @Req() req: Request & { user: UserWithPermissions },
     @Res() res: Response,
   ): Promise<void> {
+    const webOrigin = this.configService.get<string>("CORS_ORIGIN", "http://localhost:3000");
+
+    if (req.user.totpEnabled) {
+      res.redirect(`${webOrigin}/login?ssoError=totp_required`);
+      return;
+    }
+
     const tokens = await this.authService.login(req.user, this.requestMeta(req));
     this.setRefreshCookie(res, tokens.refreshToken);
     this.setCsrfCookie(res);
@@ -316,7 +328,6 @@ export class AuthController {
     // para o app React ler. Redireciona para uma página da Web que chama
     // POST /auth/refresh (o cookie httpOnly já foi setado acima) para obter
     // o primeiro access token pelo mesmo caminho de qualquer refresh normal.
-    const webOrigin = this.configService.get<string>("CORS_ORIGIN", "http://localhost:3000");
     res.redirect(`${webOrigin}/auth/sso-callback`);
   }
 
