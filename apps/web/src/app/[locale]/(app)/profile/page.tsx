@@ -15,7 +15,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { OwnProfile } from "@/lib/profile-types";
+import type { TwoFactorSetup, TwoFactorEnrollmentResult } from "@/lib/two-factor-types";
 
 const identitySchema = z.object({ name: z.string().min(1) });
 type IdentityFormValues = z.infer<typeof identitySchema>;
@@ -223,6 +225,267 @@ function PasswordCard({ profile }: { profile: OwnProfile }) {
   );
 }
 
+type TwoFactorStep =
+  | "idle"
+  | "enroll-setup"
+  | "enroll-backup-codes"
+  | "disable-reauth"
+  | "regenerate-reauth"
+  | "regenerate-backup-codes";
+
+function TwoFactorCard({
+  profile,
+  onProfileChange,
+}: {
+  profile: OwnProfile;
+  onProfileChange: (profile: OwnProfile) => void;
+}) {
+  const t = useTranslations("Profile");
+  const api = useApi();
+
+  const [step, setStep] = React.useState<TwoFactorStep>("idle");
+  const [setup, setSetup] = React.useState<TwoFactorSetup | null>(null);
+  const [code, setCode] = React.useState("");
+  const [currentPassword, setCurrentPassword] = React.useState("");
+  const [backupCodes, setBackupCodes] = React.useState<string[]>([]);
+  const [submitting, setSubmitting] = React.useState(false);
+
+  function resetToIdle() {
+    setStep("idle");
+    setSetup(null);
+    setCode("");
+    setCurrentPassword("");
+    setBackupCodes([]);
+  }
+
+  async function handleStartEnroll() {
+    setSubmitting(true);
+    try {
+      const result = await api.post<TwoFactorSetup>("/auth/2fa/setup");
+      setSetup(result);
+      setStep("enroll-setup");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("twoFactorGenericError"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleConfirmEnroll(event: React.FormEvent) {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      const result = await api.post<TwoFactorEnrollmentResult>("/auth/2fa/enable", { code });
+      setBackupCodes(result.backupCodes);
+      setStep("enroll-backup-codes");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("twoFactorGenericError"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function handleFinishEnroll() {
+    onProfileChange({ ...profile, hasTwoFactorEnabled: true });
+    toast.success(t("twoFactorEnableSuccess"));
+    resetToIdle();
+  }
+
+  async function handleConfirmDisable(event: React.FormEvent) {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      const updated = await api.patch<OwnProfile>("/auth/2fa/disable", { currentPassword });
+      onProfileChange(updated);
+      toast.success(t("twoFactorDisableSuccess"));
+      resetToIdle();
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("twoFactorGenericError"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleConfirmRegenerate(event: React.FormEvent) {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      const result = await api.post<TwoFactorEnrollmentResult>(
+        "/auth/2fa/backup-codes/regenerate",
+        { currentPassword },
+      );
+      setBackupCodes(result.backupCodes);
+      setStep("regenerate-backup-codes");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("twoFactorGenericError"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function handleFinishRegenerate() {
+    toast.success(t("twoFactorRegenerateSuccess"));
+    resetToIdle();
+  }
+
+  async function handleCopySecret() {
+    if (!setup) return;
+    await navigator.clipboard.writeText(setup.secretBase32);
+    toast.success(t("twoFactorSecretCopied"));
+  }
+
+  return (
+    <Card className="max-w-xl">
+      <CardHeader>
+        <CardTitle className="text-base">{t("twoFactorCardTitle")}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {profile.twoFactorEnforced && !profile.hasTwoFactorEnabled && step === "idle" && (
+          <p className="rounded-md border border-chart-warning/50 bg-chart-warning/10 px-3 py-2 text-sm">
+            {t("twoFactorEnforcedNotice")}
+          </p>
+        )}
+
+        {step === "idle" && (
+          <>
+            <div>
+              {profile.hasTwoFactorEnabled ? (
+                <Badge variant="success">{t("twoFactorEnabledBadge")}</Badge>
+              ) : (
+                <Badge variant="outline">{t("twoFactorDisabledBadge")}</Badge>
+              )}
+            </div>
+            {profile.hasTwoFactorEnabled ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setStep("disable-reauth")}
+                >
+                  {t("twoFactorDisableButton")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setStep("regenerate-reauth")}
+                >
+                  {t("twoFactorRegenerateButton")}
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <Button type="button" size="sm" disabled={submitting} onClick={handleStartEnroll}>
+                  {submitting ? t("twoFactorStarting") : t("twoFactorEnableButton")}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+
+        {step === "enroll-setup" && setup && (
+          <form onSubmit={handleConfirmEnroll} className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">{t("twoFactorSetupSubtitle")}</p>
+            {/* eslint-disable-next-line @next/next/no-img-element -- QR vem de data URL gerado pelo backend, não do otimizador de imagens do Next. */}
+            <img
+              src={setup.qrCodeDataUrl}
+              alt={t("twoFactorQrAlt")}
+              className="size-40 self-center rounded border"
+            />
+            <div className="flex flex-col gap-2">
+              <Label>{t("twoFactorSecretLabel")}</Label>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 truncate rounded border bg-muted px-2 py-1 text-xs">
+                  {setup.secretBase32}
+                </code>
+                <Button type="button" variant="outline" size="sm" onClick={handleCopySecret}>
+                  {t("twoFactorCopyButton")}
+                </Button>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="twoFactorCode">{t("twoFactorCodeLabel")}</Label>
+              <Input
+                id="twoFactorCode"
+                value={code}
+                onChange={(event) => setCode(event.target.value)}
+                placeholder={t("twoFactorCodePlaceholder")}
+                autoComplete="one-time-code"
+                required
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" disabled={submitting}>
+                {submitting ? t("twoFactorConfirming") : t("twoFactorConfirmButton")}
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={resetToIdle}>
+                {t("twoFactorCancelButton")}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {(step === "enroll-backup-codes" || step === "regenerate-backup-codes") && (
+          <div className="flex flex-col gap-4">
+            <p className="text-sm font-medium text-destructive">{t("twoFactorBackupCodesWarning")}</p>
+            <ul className="grid grid-cols-2 gap-2 rounded-md border bg-muted p-3 font-mono text-sm">
+              {backupCodes.map((backupCode) => (
+                <li key={backupCode}>{backupCode}</li>
+              ))}
+            </ul>
+            <div>
+              <Button
+                type="button"
+                size="sm"
+                onClick={step === "enroll-backup-codes" ? handleFinishEnroll : handleFinishRegenerate}
+              >
+                {t("twoFactorBackupCodesSavedButton")}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {(step === "disable-reauth" || step === "regenerate-reauth") && (
+          <form
+            onSubmit={step === "disable-reauth" ? handleConfirmDisable : handleConfirmRegenerate}
+            className="flex flex-col gap-4"
+          >
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="twoFactorReauthPassword">{t("twoFactorReauthPasswordLabel")}</Label>
+              <Input
+                id="twoFactorReauthPassword"
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                required
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="submit"
+                size="sm"
+                variant={step === "disable-reauth" ? "destructive" : "default"}
+                disabled={submitting}
+              >
+                {submitting
+                  ? t("twoFactorConfirming")
+                  : step === "disable-reauth"
+                    ? t("twoFactorDisableButton")
+                    : t("twoFactorRegenerateButton")}
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={resetToIdle}>
+                {t("twoFactorCancelButton")}
+              </Button>
+            </div>
+          </form>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function ProfileContent() {
   const t = useTranslations("Profile");
   const api = useApi();
@@ -260,6 +523,7 @@ function ProfileContent() {
           <IdentityCard profile={profile} onSaved={setProfile} />
           <AvatarCard profile={profile} onUploaded={setProfile} />
           <PasswordCard profile={profile} />
+          <TwoFactorCard profile={profile} onProfileChange={setProfile} />
         </div>
       )}
     </div>

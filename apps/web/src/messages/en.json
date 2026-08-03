@@ -209,8 +209,8 @@
       "settingsDescription": "Technical opinion branding and numbering.",
       "vendorQuestionnaire": "Vendor questionnaire",
       "vendorQuestionnaireDescription": "Categories, questions, and options used in vendor risk assessment.",
-      "platformPolicy": "Password policy",
-      "platformPolicyDescription": "Password complexity rules for the whole platform. Visible only to super-admins."
+      "platformPolicy": "Platform policies",
+      "platformPolicyDescription": "Password rules and 2FA enforcement for the whole platform. Visible only to super-admins."
     }
   },
   "AuditLogs": {
@@ -754,10 +754,10 @@
     "vendorTierFieldBaseReassessmentMonths": "Base cadence (months)"
   },
   "AdminPlatformPolicy": {
-    "title": "Password policy",
-    "subtitle": "Password complexity rules, applied to every tenant on the platform.",
-    "loadError": "Could not load the password policy.",
-    "cardTitle": "Current rules",
+    "title": "Platform policies",
+    "subtitle": "Password rules and 2FA enforcement, applied to every tenant on the platform.",
+    "loadError": "Could not load the platform policies.",
+    "cardTitle": "Current password rules",
     "fieldMinLength": "Minimum length",
     "field": {
       "requireUppercase": "Require an uppercase letter",
@@ -767,8 +767,11 @@
     },
     "saving": "Saving...",
     "save": "Save",
-    "saveSuccess": "Password policy updated.",
-    "saveError": "Could not save the password policy."
+    "saveSuccess": "Policy updated.",
+    "saveError": "Could not save the policy.",
+    "twoFactorCardTitle": "2FA enforcement",
+    "twoFactorFieldEnforced": "Recommend 2FA to every user",
+    "twoFactorEnforcedHint": "Does not block login — flags it on the profile page for anyone who hasn't set up 2FA yet."
   },
   "PasswordPolicyHint": {
     "minLength": "at least {count} characters",
@@ -811,7 +814,32 @@
     "avatarUploadSuccess": "Profile photo updated.",
     "avatarUploadError": "Could not upload the photo (PNG/JPEG only, up to 2MB).",
     "avatarHint": "PNG or JPEG, up to 2MB.",
-    "ssoOnlyNotice": "This user only signs in via corporate SSO — there is no local password to change."
+    "ssoOnlyNotice": "This user only signs in via corporate SSO — there is no local password to change.",
+    "twoFactorCardTitle": "Two-factor authentication (2FA)",
+    "twoFactorEnforcedNotice": "Your organization recommends enabling 2FA.",
+    "twoFactorEnabledBadge": "Enabled",
+    "twoFactorDisabledBadge": "Disabled",
+    "twoFactorEnableButton": "Enable 2FA",
+    "twoFactorStarting": "Generating...",
+    "twoFactorDisableButton": "Disable",
+    "twoFactorRegenerateButton": "Generate new backup codes",
+    "twoFactorSetupSubtitle": "Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.) or enter the code manually, then confirm with a generated code.",
+    "twoFactorQrAlt": "2FA setup QR code",
+    "twoFactorSecretLabel": "Manual code",
+    "twoFactorCopyButton": "Copy",
+    "twoFactorSecretCopied": "Code copied.",
+    "twoFactorCodeLabel": "6-digit code",
+    "twoFactorCodePlaceholder": "000000",
+    "twoFactorConfirmButton": "Confirm",
+    "twoFactorConfirming": "Confirming...",
+    "twoFactorCancelButton": "Cancel",
+    "twoFactorBackupCodesWarning": "Save these codes now — they won't appear again. Each one works only once, as an alternative to your authenticator app.",
+    "twoFactorBackupCodesSavedButton": "I've saved them",
+    "twoFactorReauthPasswordLabel": "Current password",
+    "twoFactorGenericError": "Could not complete the action. Please try again.",
+    "twoFactorEnableSuccess": "2FA enabled.",
+    "twoFactorDisableSuccess": "2FA disabled.",
+    "twoFactorRegenerateSuccess": "New backup codes generated."
   },
   "Dashboards": {
     "title": "Dashboards",
