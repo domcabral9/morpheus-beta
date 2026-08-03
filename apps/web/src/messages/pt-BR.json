@@ -109,7 +109,36 @@
     "bulkSubmit": "Aplicar decisão a {count} etapas",
     "bulkDecisionSuccess": "{count} decisões registradas com sucesso.",
     "bulkDecisionPartial": "{successCount} decisões registradas, {failureCount} falharam (ex.: você mesmo solicitou, ou já foi decidida por outra pessoa).",
-    "vendorTierLabel": "Tier do fornecedor"
+    "vendorTierLabel": "Tier do fornecedor",
+    "tabs": {
+      "assessments": "Avaliações",
+      "inventory": "Itens de inventário"
+    },
+    "inventoryTab": {
+      "cardTitle": "Itens de inventário aguardando aprovação",
+      "empty": "Nenhum item de inventário aguardando aprovação no momento.",
+      "loadError": "Não foi possível carregar a fila de aprovação de inventário.",
+      "columnName": "Nome",
+      "columnVendor": "Fabricante",
+      "columnArea": "Área",
+      "columnCriticality": "Criticidade",
+      "columnRequester": "Solicitante",
+      "columnSubmittedAt": "Enviado em",
+      "columnAction": "Ação",
+      "decideAction": "Decidir",
+      "dialogSubtitle": "Fabricante {vendor} — criticidade {criticality} — solicitado por {requester}.",
+      "decisionLabel": "Decisão",
+      "decisions": {
+        "APPROVE": "Aprovar",
+        "REJECT": "Reprovar"
+      },
+      "notesLabel": "Notas (obrigatório ao reprovar)",
+      "notesRequiredForReject": "Informe o motivo da reprovação.",
+      "submit": "Confirmar decisão",
+      "submitting": "Enviando...",
+      "decisionSuccess": "Decisão registrada.",
+      "decisionError": "Não foi possível registrar a decisão."
+    }
   },
   "TechnicalOpinions": {
     "title": "Pareceres técnicos",
@@ -336,9 +365,16 @@
     "documentationLinkUrl": "URL",
     "saving": "Salvando...",
     "save": "Salvar",
-    "createSuccess": "Item criado.",
+    "createSuccess": "Item enviado para aprovação.",
     "updateSuccess": "Item atualizado.",
     "saveError": "Não foi possível salvar o item.",
+    "statusApprovalFlowHint": "Este status só pode ser alterado pelo fluxo de aprovação (aba \"Itens de inventário\" em Aprovações).",
+    "pendingApprovalHint": "Este item foi enviado para aprovação e ainda não está ativo no inventário.",
+    "rejectionReasonTitle": "Motivo da reprovação",
+    "resubmitButton": "Reenviar para aprovação",
+    "resubmitting": "Reenviando...",
+    "resubmitSuccess": "Item reenviado para aprovação.",
+    "resubmitError": "Não foi possível reenviar o item.",
     "duplicateWarningTitle": "Já existe um item com este nome nesta área",
     "duplicateWarningBody": "\"{name}\" ({vendor}) já está cadastrado nesta área - status: {status}, origem: {origin}. Softwares com o mesmo nome em áreas diferentes são permitidos (contratos/administração distintos), mas não duplicidade dentro da mesma área.",
     "duplicateBlockedError": "Não é possível salvar - já existe um item com este nome nesta área.",
@@ -352,6 +388,8 @@
     "statuses": {
       "ACTIVE": "Ativo",
       "PENDING_REVIEW": "Aguardando revisão",
+      "PENDING_APPROVAL": "Aguardando aprovação",
+      "REJECTED": "Reprovado",
       "EXPIRED": "Expirado",
       "DECOMMISSIONED": "Descontinuado"
     },

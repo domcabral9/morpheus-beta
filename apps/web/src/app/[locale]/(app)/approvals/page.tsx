@@ -11,9 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { BulkDecideResult, InboxStepExecution } from "@/lib/workflow-types";
 import { DecisionDialog } from "./_components/decision-dialog";
 import { BulkDecisionDialog } from "./_components/bulk-decision-dialog";
+import { InventoryApprovalsView } from "./_components/inventory-approvals-view";
 
 function isOverdue(slaDueAt: string | null): boolean {
   return slaDueAt !== null && new Date(slaDueAt).getTime() < Date.now();
@@ -72,88 +74,103 @@ export default function ApprovalsPage() {
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{t("cardTitle")}</CardTitle>
-            {selectedIds.size > 0 && (
-              <Button size="sm" onClick={() => setBulkOpen(true)}>
-                {t("bulkDecideButton", { count: selectedIds.size })}
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+        <Tabs defaultValue="assessments">
+          <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
+            <TabsTrigger value="assessments">{t("tabs.assessments")}</TabsTrigger>
+            <TabsTrigger value="inventory">{t("tabs.inventory")}</TabsTrigger>
+          </TabsList>
 
-            {!error && !items && (
-              <div className="flex justify-center py-8">
-                <Loader2 className="animate-spin text-muted-foreground" />
-              </div>
-            )}
+          <TabsContent value="assessments">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>{t("cardTitle")}</CardTitle>
+                {selectedIds.size > 0 && (
+                  <Button size="sm" onClick={() => setBulkOpen(true)}>
+                    {t("bulkDecideButton", { count: selectedIds.size })}
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent>
+                {error && <p className="text-sm text-destructive">{error}</p>}
 
-            {items && items.length === 0 && (
-              <p className="text-sm text-muted-foreground">{t("empty")}</p>
-            )}
+                {!error && !items && (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="animate-spin text-muted-foreground" />
+                  </div>
+                )}
 
-            {items && items.length > 0 && (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10">
-                      <Checkbox
-                        checked={allSelected}
-                        onCheckedChange={(checked) => toggleSelectAll(checked === true)}
-                        aria-label={t("selectAll")}
-                      />
-                    </TableHead>
-                    <TableHead>{t("columnSoftware")}</TableHead>
-                    <TableHead>{t("columnStep")}</TableHead>
-                    <TableHead>{t("columnCriticality")}</TableHead>
-                    <TableHead>{t("columnSla")}</TableHead>
-                    <TableHead className="sr-only">{t("columnAction")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((execution) => (
-                    <TableRow
-                      key={execution.id}
-                      className="cursor-pointer"
-                      onClick={() => setSelected(execution)}
-                    >
-                      <TableCell onClick={(event) => event.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedIds.has(execution.id)}
-                          onCheckedChange={(checked) => toggleSelected(execution.id, checked === true)}
-                          aria-label={t("selectRow")}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {execution.assessmentWorkflowInstance.assessment.softwareName}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {execution.workflowStep.name}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {criticalityT(execution.assessmentWorkflowInstance.assessment.criticality)}
-                      </TableCell>
-                      <TableCell>
-                        {execution.slaDueAt ? (
-                          <Badge variant={isOverdue(execution.slaDueAt) ? "destructive" : "outline"}>
-                            {new Date(execution.slaDueAt).toLocaleDateString()}
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right text-sm text-primary">
-                        {t("decideAction")}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                {items && items.length === 0 && (
+                  <p className="text-sm text-muted-foreground">{t("empty")}</p>
+                )}
+
+                {items && items.length > 0 && (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-10">
+                          <Checkbox
+                            checked={allSelected}
+                            onCheckedChange={(checked) => toggleSelectAll(checked === true)}
+                            aria-label={t("selectAll")}
+                          />
+                        </TableHead>
+                        <TableHead>{t("columnSoftware")}</TableHead>
+                        <TableHead>{t("columnStep")}</TableHead>
+                        <TableHead>{t("columnCriticality")}</TableHead>
+                        <TableHead>{t("columnSla")}</TableHead>
+                        <TableHead className="sr-only">{t("columnAction")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {items.map((execution) => (
+                        <TableRow
+                          key={execution.id}
+                          className="cursor-pointer"
+                          onClick={() => setSelected(execution)}
+                        >
+                          <TableCell onClick={(event) => event.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedIds.has(execution.id)}
+                              onCheckedChange={(checked) =>
+                                toggleSelected(execution.id, checked === true)
+                              }
+                              aria-label={t("selectRow")}
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {execution.assessmentWorkflowInstance.assessment.softwareName}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {execution.workflowStep.name}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {criticalityT(execution.assessmentWorkflowInstance.assessment.criticality)}
+                          </TableCell>
+                          <TableCell>
+                            {execution.slaDueAt ? (
+                              <Badge variant={isOverdue(execution.slaDueAt) ? "destructive" : "outline"}>
+                                {new Date(execution.slaDueAt).toLocaleDateString()}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right text-sm text-primary">
+                            {t("decideAction")}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="inventory">
+            <InventoryApprovalsView />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <DecisionDialog

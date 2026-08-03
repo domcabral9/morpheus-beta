@@ -17,6 +17,7 @@ import {
   SOFTWARE_TYPES,
   DATA_CLASSIFICATIONS,
   INVENTORY_STATUSES,
+  APPROVAL_ONLY_STATUSES,
   type InventoryItemDetail,
   type InventoryItemFormValues,
   type InventoryDuplicateCheckResult,
@@ -431,7 +432,18 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
                 )}
               />
             </div>
-            {mode === "edit" && (
+            {mode === "edit" && item.status && APPROVAL_ONLY_STATUSES.includes(item.status) && (
+              <div className="flex flex-col gap-2">
+                <Label>{t("fieldStatus")}</Label>
+                <div>
+                  <Badge variant={item.status === "REJECTED" ? "destructive" : "warning"}>
+                    {t(`statuses.${item.status}`)}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">{t("statusApprovalFlowHint")}</p>
+              </div>
+            )}
+            {mode === "edit" && item.status && !APPROVAL_ONLY_STATUSES.includes(item.status) && (
               <div className="flex flex-col gap-2">
                 <Label htmlFor="status">{t("fieldStatus")}</Label>
                 <Controller
@@ -443,11 +455,13 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {INVENTORY_STATUSES.map((value) => (
-                          <SelectItem key={value} value={value}>
-                            {t(`statuses.${value}`)}
-                          </SelectItem>
-                        ))}
+                        {INVENTORY_STATUSES.filter((value) => !APPROVAL_ONLY_STATUSES.includes(value)).map(
+                          (value) => (
+                            <SelectItem key={value} value={value}>
+                              {t(`statuses.${value}`)}
+                            </SelectItem>
+                          ),
+                        )}
                       </SelectContent>
                     </Select>
                   )}

@@ -10,6 +10,8 @@
 const INVENTORY_STATUS_COLOR: Record<string, string> = {
   ACTIVE: "var(--chart-good)",
   PENDING_REVIEW: "var(--chart-warning)",
+  PENDING_APPROVAL: "var(--chart-warning)",
+  REJECTED: "var(--chart-critical)",
   EXPIRED: "var(--chart-critical)",
 };
 
