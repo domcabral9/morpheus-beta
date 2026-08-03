@@ -4,6 +4,8 @@ export interface OwnProfile {
   email: string;
   hasAvatar: boolean;
   hasLocalPassword: boolean;
+  hasTwoFactorEnabled: boolean;
+  twoFactorEnforced: boolean;
   roles: string[];
   lastLoginAt: string | null;
   createdAt: string;
