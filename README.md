@@ -15,7 +15,8 @@ adotado pela empresa e o fornecedor por trás dele. Do questionário de risco à
 2. Matriz de decisão configurável (faixas de probabilidade × impacto → classificação de risco).
 3. Workflow de aprovação com etapas e responsáveis configuráveis por tenant.
 4. Parecer técnico em PDF, com QR Code de verificação.
-5. Inventário de software homologado, com ciclo de revisão periódica.
+5. Inventário de software homologado, com ciclo de revisão periódica. Itens cadastrados manualmente
+   (fora da homologação) passam por um gate de aprovação próprio antes de entrar em produção.
 6. Dashboards de postura de conformidade e placar de maturidade por área.
 7. Avaliação de risco de fornecedores, com questionário inspirado no NIST SP 800-161, pontuação
    automática e Tiers de monitoramento com cadência de reavaliação configurável.
@@ -141,6 +142,10 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | --- |
 | ![Políticas de plataforma](./docs/screenshots/admin-platform-policy.png) |
 
+| Aprovação de item de inventário manual | Item reprovado - motivo e reenvio |
+| --- | --- |
+| ![Aprovação de item de inventário manual](./docs/screenshots/inventory-approval-queue.png) | ![Item reprovado](./docs/screenshots/inventory-approval-rejected.png) |
+
 ## Stack
 
 | Camada          | Tecnologia                                                             |
@@ -212,7 +217,8 @@ by the company and the vendor behind it. From risk questionnaire to final decisi
 2. Configurable decision matrix (probability × impact ranges → risk classification).
 3. Approval workflow with configurable steps and responsible roles per tenant.
 4. Technical opinion (PDF report), with a verification QR code.
-5. Homologated software inventory, with periodic review cycle.
+5. Homologated software inventory, with periodic review cycle. Manually registered items (outside the
+   homologation flow) go through a dedicated approval gate before going live.
 6. Compliance-posture dashboards and a maturity leaderboard by area.
 7. Vendor risk assessment, with a questionnaire inspired by NIST SP 800-161, automatic scoring, and
    monitoring Tiers with configurable reassessment cadence.
@@ -334,6 +340,10 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | Platform policies (super-admin) |
 | --- |
 | ![Platform policies](./docs/screenshots/admin-platform-policy-en.png) |
+
+| Manual inventory item approval | Rejected item - reason and resubmit |
+| --- | --- |
+| ![Manual inventory item approval](./docs/screenshots/inventory-approval-queue-en.png) | ![Rejected item](./docs/screenshots/inventory-approval-rejected-en.png) |
 
 ## Stack
 
