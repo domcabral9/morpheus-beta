@@ -19,7 +19,15 @@
     "ssoButton": "Sign in with corporate SSO",
     "genericError": "Could not sign in. Check your details and try again.",
     "localeSwitcherLabel": "Language",
-    "themeToggleLabel": "Toggle theme"
+    "themeToggleLabel": "Toggle theme",
+    "totpTitle": "Two-factor verification",
+    "totpSubtitle": "Enter the code from your authenticator app (or a backup code).",
+    "totpCodeLabel": "Code",
+    "totpCodePlaceholder": "000000",
+    "totpSubmit": "Verify",
+    "totpSubmitting": "Verifying...",
+    "totpBack": "Back",
+    "totpGenericError": "Invalid code. Please try again."
   },
   "Dashboard": {
     "welcome": "Hello, {name}",
