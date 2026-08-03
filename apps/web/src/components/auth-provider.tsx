@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { apiFetch, ApiError } from "@/lib/api-client";
-import type { AccessTokenResponse, AuthenticatedUser } from "@/lib/auth-types";
+import type { AccessTokenResponse, AuthenticatedUser, LoginResult } from "@/lib/auth-types";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -10,7 +10,8 @@ interface AuthContextValue {
   user: AuthenticatedUser | null;
   accessToken: string | null;
   status: AuthStatus;
-  login: (params: { tenantSlug: string; email: string; password: string }) => Promise<void>;
+  login: (params: { tenantSlug: string; email: string; password: string }) => Promise<LoginResult>;
+  verifyTwoFactor: (preAuthToken: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
   switchTenant: (tenantId: string) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -93,9 +94,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = React.useCallback(
     async (params: { tenantSlug: string; email: string; password: string }) => {
       sessionStorage.removeItem(VIEWING_TENANT_STORAGE_KEY);
-      const tokens = await apiFetch<AccessTokenResponse>("/auth/login", {
+      const result = await apiFetch<LoginResult>("/auth/login", {
         method: "POST",
         body: JSON.stringify(params),
+      });
+      // 2FA pendente: nenhuma sessão foi aberta ainda (backend não setou
+      // cookies) - não carrega o usuário agora, quem chamou decide o
+      // próximo passo (pedir o código via verifyTwoFactor).
+      if (!result.twoFactorRequired) {
+        await loadUser(result.accessToken);
+      }
+      return result;
+    },
+    [loadUser],
+  );
+
+  // Segundo passo do login quando `login()` devolveu twoFactorRequired:true -
+  // mesmo mecanismo Bearer de login()/refresh(), só que com o preAuthToken de
+  // escopo limitado no lugar de credenciais.
+  const verifyTwoFactor = React.useCallback(
+    async (preAuthToken: string, code: string) => {
+      const tokens = await apiFetch<AccessTokenResponse>("/auth/2fa/verify-login", {
+        method: "POST",
+        accessToken: preAuthToken,
+        body: JSON.stringify({ code }),
       });
       await loadUser(tokens.accessToken);
     },
@@ -111,8 +133,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = React.useMemo(
-    () => ({ user, accessToken, status, login, logout, switchTenant, refreshUser }),
-    [user, accessToken, status, login, logout, switchTenant, refreshUser],
+    () => ({
+      user,
+      accessToken,
+      status,
+      login,
+      verifyTwoFactor,
+      logout,
+      switchTenant,
+      refreshUser,
+    }),
+    [user, accessToken, status, login, verifyTwoFactor, logout, switchTenant, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

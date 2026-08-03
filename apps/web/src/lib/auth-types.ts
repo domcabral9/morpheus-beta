@@ -11,9 +11,21 @@ export interface AuthenticatedUser {
 }
 
 export interface AccessTokenResponse {
+  twoFactorRequired?: false;
   accessToken: string;
   expiresIn: string;
 }
+
+/** Resposta de POST /auth/login quando o usuário tem 2FA habilitado - nenhuma
+ * sessão foi aberta ainda (sem cookies); `preAuthToken` alimenta
+ * POST /auth/2fa/verify-login. */
+export interface TwoFactorChallengeResponse {
+  twoFactorRequired: true;
+  preAuthToken: string;
+  expiresIn: string;
+}
+
+export type LoginResult = AccessTokenResponse | TwoFactorChallengeResponse;
 
 export interface TenantSummary {
   id: string;
