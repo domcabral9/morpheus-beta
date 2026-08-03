@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import type { PlatformPasswordPolicy } from "@/lib/platform-policy-types";
+import type { PlatformPasswordPolicy, PlatformTwoFactorPolicy } from "@/lib/platform-policy-types";
 import { AdminSectionGate } from "../_components/section-gate";
 
 const passwordPolicySchema = z.object({
@@ -118,18 +118,74 @@ function PasswordPolicyForm({
   );
 }
 
+function TwoFactorPolicyForm({
+  policy,
+  onSaved,
+}: {
+  policy: PlatformTwoFactorPolicy;
+  onSaved: (policy: PlatformTwoFactorPolicy) => void;
+}) {
+  const t = useTranslations("AdminPlatformPolicy");
+  const api = useApi();
+
+  const [enforced, setEnforced] = React.useState(policy.enforced);
+  const [submitting, setSubmitting] = React.useState(false);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      const updated = await api.patch<PlatformTwoFactorPolicy>("/platform/two-factor-policy", {
+        enforced,
+      });
+      toast.success(t("saveSuccess"));
+      onSaved(updated);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("saveError"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="twoFactorEnforced"
+          checked={enforced}
+          onCheckedChange={(checked) => setEnforced(checked === true)}
+        />
+        <Label htmlFor="twoFactorEnforced" className="font-normal">
+          {t("twoFactorFieldEnforced")}
+        </Label>
+      </div>
+      <p className="text-xs text-muted-foreground">{t("twoFactorEnforcedHint")}</p>
+
+      <div>
+        <Button type="submit" disabled={submitting || enforced === policy.enforced}>
+          {submitting ? t("saving") : t("save")}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 function PlatformPolicyContent() {
   const t = useTranslations("AdminPlatformPolicy");
   const api = useApi();
 
   const [policy, setPolicy] = React.useState<PlatformPasswordPolicy | null>(null);
+  const [twoFactorPolicy, setTwoFactorPolicy] = React.useState<PlatformTwoFactorPolicy | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    api
-      .get<PlatformPasswordPolicy>("/platform/password-policy")
-      .then((result) => {
-        setPolicy(result);
+    Promise.all([
+      api.get<PlatformPasswordPolicy>("/platform/password-policy"),
+      api.get<PlatformTwoFactorPolicy>("/platform/two-factor-policy"),
+    ])
+      .then(([passwordResult, twoFactorResult]) => {
+        setPolicy(passwordResult);
+        setTwoFactorPolicy(twoFactorResult);
         setError(null);
       })
       .catch(() => setError(t("loadError")));
@@ -144,7 +200,7 @@ function PlatformPolicyContent() {
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      {!error && !policy && (
+      {!error && (!policy || !twoFactorPolicy) && (
         <div className="flex justify-center py-8">
           <Loader2 className="animate-spin text-muted-foreground" />
         </div>
@@ -157,6 +213,17 @@ function PlatformPolicyContent() {
           </CardHeader>
           <CardContent>
             <PasswordPolicyForm policy={policy} onSaved={setPolicy} />
+          </CardContent>
+        </Card>
+      )}
+
+      {twoFactorPolicy && (
+        <Card className="max-w-xl">
+          <CardHeader>
+            <CardTitle className="text-base">{t("twoFactorCardTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TwoFactorPolicyForm policy={twoFactorPolicy} onSaved={setTwoFactorPolicy} />
           </CardContent>
         </Card>
       )}
