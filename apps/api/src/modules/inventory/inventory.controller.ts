@@ -12,6 +12,10 @@ import { UpdateInventoryItemDto } from "./dto/update-inventory-item.dto";
 import { ListInventoryQueryDto } from "./dto/list-inventory.query.dto";
 import { ExportInventoryQueryDto } from "./dto/export-inventory.query.dto";
 import { CheckDuplicateInventoryQueryDto } from "./dto/check-duplicate-inventory.query.dto";
+import {
+  ApproveInventoryApprovalDto,
+  RejectInventoryApprovalDto,
+} from "./dto/decide-inventory-approval.dto";
 import { buildInventoryCsv } from "./inventory-export.util";
 
 @ApiTags("inventory")
@@ -70,6 +74,16 @@ export class InventoryController {
     return this.inventoryService.checkDuplicate(user, query);
   }
 
+  // Precisa vir antes de `:id` - senão "pending-approvals" seria interpretado como um id.
+  // Gate por `assessments:approve` (não `inventory:manage`) - sobrescreve o `inventory:view` de
+  // classe: só quem decide etapas de aprovação enxerga a fila, mesmo permissão reaproveitada do
+  // workflow de Assessment (decisão de escopo - ver docs/changelog/2026-08.md).
+  @RequirePermissions(PERMISSIONS.ASSESSMENTS_APPROVE)
+  @Get("pending-approvals")
+  listPendingApprovals(@CurrentUser() user: AuthenticatedUser) {
+    return this.inventoryService.listPendingApprovals(user);
+  }
+
   @Get(":id")
   getById(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.inventoryService.getById(user, id);
@@ -91,5 +105,33 @@ export class InventoryController {
     @Body() dto: UpdateInventoryItemDto,
   ) {
     return this.inventoryService.update(user, id, dto);
+  }
+
+  // Sem @Audit() decorator nas 3 rotas abaixo - metadata (motivo da reprovação,
+  // notas, evento) roda explícito no service, mesmo padrão de decideStep/changeOwnPassword.
+  @RequirePermissions(PERMISSIONS.ASSESSMENTS_APPROVE)
+  @Post(":id/approve")
+  approve(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") id: string,
+    @Body() dto: ApproveInventoryApprovalDto,
+  ) {
+    return this.inventoryService.approve(user, id, dto);
+  }
+
+  @RequirePermissions(PERMISSIONS.ASSESSMENTS_APPROVE)
+  @Post(":id/reject")
+  reject(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") id: string,
+    @Body() dto: RejectInventoryApprovalDto,
+  ) {
+    return this.inventoryService.reject(user, id, dto);
+  }
+
+  @RequirePermissions(PERMISSIONS.INVENTORY_MANAGE)
+  @Post(":id/resubmit")
+  resubmit(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.inventoryService.resubmit(user, id);
   }
 }

@@ -19,7 +19,14 @@ import {
   DocumentationLinkDto,
 } from "./create-inventory-item.dto";
 
-const INVENTORY_STATUSES = ["ACTIVE", "PENDING_REVIEW", "EXPIRED", "DECOMMISSIONED"] as const;
+const INVENTORY_STATUSES = [
+  "ACTIVE",
+  "PENDING_REVIEW",
+  "PENDING_APPROVAL",
+  "REJECTED",
+  "EXPIRED",
+  "DECOMMISSIONED",
+] as const;
 
 export class UpdateInventoryItemDto {
   @ApiPropertyOptional()

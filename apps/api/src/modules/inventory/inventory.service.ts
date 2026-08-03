@@ -1,13 +1,26 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { Criticality } from "@morpheus/database";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
+import { PERMISSIONS } from "../../common/constants/permissions";
+import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
 import { AuditLogService } from "../audit/audit-log.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { InventoryRepository, InventoryItemDetail } from "./inventory.repository";
+import { InventoryApprovalRepository } from "./inventory-approval.repository";
 import { CreateInventoryItemDto } from "./dto/create-inventory-item.dto";
 import { UpdateInventoryItemDto } from "./dto/update-inventory-item.dto";
 import { ListInventoryQueryDto } from "./dto/list-inventory.query.dto";
 import { ExportInventoryQueryDto } from "./dto/export-inventory.query.dto";
 import { CheckDuplicateInventoryQueryDto } from "./dto/check-duplicate-inventory.query.dto";
+import {
+  ApproveInventoryApprovalDto,
+  RejectInventoryApprovalDto,
+} from "./dto/decide-inventory-approval.dto";
 
 /** Cadência padrão de revisão para itens criados automaticamente na aprovação. */
 const DEFAULT_REVIEW_CYCLE_MONTHS = 12;
@@ -54,7 +67,10 @@ export interface ApprovedAssessmentForInventory {
 export class InventoryService {
   constructor(
     private readonly repository: InventoryRepository,
+    private readonly approvalRepository: InventoryApprovalRepository,
     private readonly auditLogService: AuditLogService,
+    private readonly notificationsService: NotificationsService,
+    private readonly separationOfDutiesService: SeparationOfDutiesService,
   ) {}
 
   async list(user: AuthenticatedUser, query: ListInventoryQueryDto) {
@@ -132,13 +148,19 @@ export class InventoryService {
     return attachTechnicalOpinion(item);
   }
 
+  /** Cadastro manual (`POST /inventory`) sempre nasce `PENDING_APPROVAL` e
+   * gera uma `InventoryApprovalRequest` — nunca vai direto pra `ACTIVE` (ver
+   * fluxo de aprovação dedicado, `docs/changelog/2026-08.md`). `status` nunca
+   * vem do DTO — `CreateInventoryItemDto` não tem esse campo. */
   async create(
     user: AuthenticatedUser,
     dto: CreateInventoryItemDto,
   ): Promise<InventoryItemWithOpinion> {
-    const item = await this.repository.create(
+    const item = await this.repository.createWithApprovalRequest(
       {
         tenantId: user.tenantId,
+        createdById: user.id,
+        status: "PENDING_APPROVAL",
         name: dto.name,
         vendor: dto.vendor,
         vendorId: dto.vendorId,
@@ -157,8 +179,20 @@ export class InventoryService {
         hasRiskAnalysis: dto.hasRiskAnalysis,
         hasInfoSecClause: dto.hasInfoSecClause,
       },
+      user.id,
       dto.documentationLinks,
     );
+
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "SUBMIT",
+      entityType: "InventoryApprovalRequest",
+      entityId: item.id,
+      metadata: { event: "submitted", inventoryItemName: item.name },
+    });
+    await this.notifyApprovers(user.tenantId, item.name, item.id);
+
     return attachTechnicalOpinion(item);
   }
 
@@ -176,6 +210,16 @@ export class InventoryService {
         "ART/cláusula de segurança da informação são herdados da homologação e não podem ser editados diretamente no inventário.",
       );
     }
+    if (dto.status !== undefined) {
+      if (existing.status === "PENDING_APPROVAL" || existing.status === "REJECTED") {
+        throw new BadRequestException(
+          "Use os endpoints de aprovação/reenvio para alterar o status deste item.",
+        );
+      }
+      if (dto.status === "PENDING_APPROVAL" || dto.status === "REJECTED") {
+        throw new BadRequestException("Este status só pode ser definido pelo fluxo de aprovação.");
+      }
+    }
     const { documentationLinks, ...scalarFields } = dto;
     const item = await this.repository.update(id, {
       ...scalarFields,
@@ -187,6 +231,123 @@ export class InventoryService {
     await this.repository.setDocumentationLinks(id, user.tenantId, documentationLinks);
     const refreshed = await this.repository.findById(id);
     return attachTechnicalOpinion(refreshed ?? item);
+  }
+
+  /** Fila de itens manuais aguardando decisão — só quem tem
+   * `assessments:approve` enxerga (rota gated no controller). */
+  listPendingApprovals(user: AuthenticatedUser) {
+    return this.approvalRepository.findPendingItems(user.tenantId);
+  }
+
+  async approve(
+    user: AuthenticatedUser,
+    id: string,
+    dto: ApproveInventoryApprovalDto,
+  ): Promise<InventoryItemWithOpinion> {
+    const { approvalRequest } = await this.getPendingApprovalOrThrow(user.tenantId, id);
+    this.separationOfDutiesService.assertNotSelfApproval(
+      approvalRequest.requesterId,
+      user.id,
+      "aprovar",
+    );
+
+    await this.approvalRepository.markDecided(approvalRequest.id, {
+      status: "APPROVED",
+      decidedById: user.id,
+      decisionNotes: dto.notes ?? null,
+    });
+    const item = await this.repository.update(id, { status: "ACTIVE" });
+
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "APPROVE",
+      entityType: "InventoryApprovalRequest",
+      entityId: approvalRequest.id,
+      metadata: { inventoryItemId: id, notes: dto.notes ?? null },
+    });
+    await this.notificationsService.notify({
+      tenantId: user.tenantId,
+      userId: approvalRequest.requesterId,
+      type: "APPROVAL",
+      title: `Item de inventário aprovado: ${item.name}`,
+      body: `Seu cadastro manual de "${item.name}" foi aprovado e já está ativo no inventário.`,
+      relatedEntityType: "SoftwareInventoryItem",
+      relatedEntityId: id,
+    });
+
+    return attachTechnicalOpinion(item);
+  }
+
+  async reject(
+    user: AuthenticatedUser,
+    id: string,
+    dto: RejectInventoryApprovalDto,
+  ): Promise<InventoryItemWithOpinion> {
+    const { approvalRequest } = await this.getPendingApprovalOrThrow(user.tenantId, id);
+    this.separationOfDutiesService.assertNotSelfApproval(
+      approvalRequest.requesterId,
+      user.id,
+      "reprovar",
+    );
+
+    await this.approvalRepository.markDecided(approvalRequest.id, {
+      status: "REJECTED",
+      decidedById: user.id,
+      decisionNotes: dto.notes,
+    });
+    const item = await this.repository.update(id, { status: "REJECTED" });
+
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "REJECT",
+      entityType: "InventoryApprovalRequest",
+      entityId: approvalRequest.id,
+      metadata: { inventoryItemId: id, notes: dto.notes },
+    });
+    await this.notificationsService.notify({
+      tenantId: user.tenantId,
+      userId: approvalRequest.requesterId,
+      type: "REJECTION",
+      title: `Item de inventário reprovado: ${item.name}`,
+      body: `Seu cadastro manual de "${item.name}" foi reprovado. Motivo: ${dto.notes}`,
+      relatedEntityType: "SoftwareInventoryItem",
+      relatedEntityId: id,
+    });
+
+    return attachTechnicalOpinion(item);
+  }
+
+  /** Só o criador original pode reenviar um item reprovado — espelho, do
+   * lado do reenvio, da checagem de auto-aprovação acima. */
+  async resubmit(user: AuthenticatedUser, id: string): Promise<InventoryItemWithOpinion> {
+    const existing = await this.getOwnedOrThrow(user.tenantId, id);
+    if (existing.status !== "REJECTED") {
+      throw new BadRequestException("Só itens reprovados podem ser reenviados.");
+    }
+    const approvalRequest = await this.approvalRepository.findByItemId(id);
+    if (!approvalRequest) {
+      throw new NotFoundException("Solicitação de aprovação não encontrada para este item.");
+    }
+    if (approvalRequest.requesterId !== user.id) {
+      throw new ForbiddenException("Só quem criou o item pode reenviá-lo para aprovação.");
+    }
+
+    await this.approvalRepository.resetForResubmit(approvalRequest.id);
+    const item = await this.repository.update(id, { status: "PENDING_APPROVAL" });
+
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "SUBMIT",
+      entityType: "InventoryApprovalRequest",
+      entityId: approvalRequest.id,
+      metadata: { event: "resubmitted", inventoryItemName: item.name },
+    });
+    await this.notifyApprovers(user.tenantId, item.name, id);
+
+    return attachTechnicalOpinion(item);
   }
 
   /**
@@ -255,5 +416,34 @@ export class InventoryService {
     if (!item) throw new NotFoundException("Item de inventário não encontrado.");
     if (item.tenantId !== tenantId) throw new ForbiddenException("Item de outro tenant.");
     return item;
+  }
+
+  /** Item precisa estar `PENDING_APPROVAL` e ter uma `InventoryApprovalRequest`
+   * viva pra approve/reject decidirem — cobre também a race de "já decidido
+   * por outro aprovador nesse meio-tempo" (400, não um 200 silencioso). */
+  private async getPendingApprovalOrThrow(tenantId: string, id: string) {
+    const item = await this.getOwnedOrThrow(tenantId, id);
+    if (item.status !== "PENDING_APPROVAL") {
+      throw new BadRequestException("Este item não está aguardando aprovação.");
+    }
+    const approvalRequest = await this.approvalRepository.findByItemId(id);
+    if (!approvalRequest) {
+      throw new NotFoundException("Solicitação de aprovação não encontrada para este item.");
+    }
+    return { item, approvalRequest };
+  }
+
+  private async notifyApprovers(tenantId: string, itemName: string, itemId: string): Promise<void> {
+    await this.notificationsService.notifyPermissionHolders(
+      tenantId,
+      PERMISSIONS.ASSESSMENTS_APPROVE,
+      {
+        type: "INVENTORY_APPROVAL_REQUESTED",
+        title: `Novo item de inventário aguardando aprovação: ${itemName}`,
+        body: `"${itemName}" foi enviado para aprovação de cadastro manual no inventário.`,
+        relatedEntityType: "SoftwareInventoryItem",
+        relatedEntityId: itemId,
+      },
+    );
   }
 }
