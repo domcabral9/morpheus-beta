@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ShieldCheck } from "lucide-react";
 
@@ -22,12 +23,20 @@ export default function LoginPage() {
   const { login, verifyTwoFactor, status, user } = useAuth();
   const api = useApi();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [tenants, setTenants] = React.useState<TenantPublicSummary[] | null>(null);
   const [tenantSlug, setTenantSlug] = React.useState("demo");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [error, setError] = React.useState<string | null>(null);
+  // Inicializado a partir da query string, não de um efeito: o backend
+  // (POST /auth/saml/callback) redireciona pra cá com `?ssoError=
+  // totp_required` quando a conta tem 2FA habilitado - SSO ainda não
+  // suporta o segundo fator, então esse login via IdP é bloqueado em vez de
+  // completar sem o código (achado da revisão de segurança, ver CHANGELOG).
+  const [error, setError] = React.useState<string | null>(() =>
+    searchParams.get("ssoError") === "totp_required" ? t("ssoTotpRequiredError") : null,
+  );
   const [submitting, setSubmitting] = React.useState(false);
 
   // Segundo passo (código 2FA): só existe depois que login() devolve
