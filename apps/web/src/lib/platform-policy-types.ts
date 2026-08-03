@@ -9,3 +9,11 @@ export interface PlatformPasswordPolicy {
   updatedAt: string;
   createdAt: string;
 }
+
+export interface PlatformTwoFactorPolicy {
+  id: string;
+  enforced: boolean;
+  updatedByUserId: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
