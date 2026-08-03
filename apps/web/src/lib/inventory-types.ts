@@ -6,8 +6,20 @@ export type SoftwareType = (typeof SOFTWARE_TYPES)[number];
 export const DATA_CLASSIFICATIONS = ["PUBLIC", "INTERNAL", "CONFIDENTIAL", "RESTRICTED"] as const;
 export type DataClassification = (typeof DATA_CLASSIFICATIONS)[number];
 
-export const INVENTORY_STATUSES = ["ACTIVE", "PENDING_REVIEW", "EXPIRED", "DECOMMISSIONED"] as const;
+export const INVENTORY_STATUSES = [
+  "ACTIVE",
+  "PENDING_REVIEW",
+  "PENDING_APPROVAL",
+  "REJECTED",
+  "EXPIRED",
+  "DECOMMISSIONED",
+] as const;
 export type InventoryStatus = (typeof INVENTORY_STATUSES)[number];
+
+/** Os 2 status só atingíveis pelo fluxo de aprovação de cadastro manual -
+ * nunca atribuíveis à mão no formulário de edição (o servidor também
+ * rejeita, isto só evita a UX de "escolhi, salvei, deu erro"). */
+export const APPROVAL_ONLY_STATUSES: InventoryStatus[] = ["PENDING_APPROVAL", "REJECTED"];
 
 export const CRITICALITY_VALUES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
 
@@ -51,8 +63,23 @@ export interface InventoryItemSummary {
   /** Parecer da homologação que originou este item - `null` pra itens de entrada manual. */
   technicalOpinion: InventoryTechnicalOpinionSummary | null;
   assessmentId: string | null;
+  /** Quem submeteu via cadastro manual - `null` pra itens de Assessment aprovada
+   * e pra itens manuais legados anteriores ao fluxo de aprovação. */
+  createdById: string | null;
+  /** Estado do gate de aprovação de cadastro manual - `null` nos mesmos casos
+   * de `createdById` (nunca passou pelo fluxo). */
+  approvalRequest: InventoryApprovalSummary | null;
   hasRiskAnalysis: boolean;
   hasInfoSecClause: boolean;
+}
+
+export interface InventoryApprovalSummary {
+  id: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  requesterId: string;
+  requester: { id: string; name: string; email: string };
+  decisionNotes: string | null;
+  decidedAt: string | null;
 }
 
 export interface InventoryItemDetail extends InventoryItemSummary {
