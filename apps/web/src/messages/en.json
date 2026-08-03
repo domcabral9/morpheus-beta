@@ -27,7 +27,8 @@
     "totpSubmit": "Verify",
     "totpSubmitting": "Verifying...",
     "totpBack": "Back",
-    "totpGenericError": "Invalid code. Please try again."
+    "totpGenericError": "Invalid code. Please try again.",
+    "ssoTotpRequiredError": "This account has two-factor verification enabled — corporate SSO sign-in doesn't support 2FA yet. Sign in with email and password instead."
   },
   "Dashboard": {
     "welcome": "Hello, {name}",
