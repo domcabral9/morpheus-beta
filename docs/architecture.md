@@ -350,15 +350,26 @@ erDiagram
     ASSESSMENT ||--o{ COMMENT : recebe
     USER ||--o{ NOTIFICATION : recebe
     SOFTWARE_INVENTORY_ITEM }o--o| VENDOR : "pode referenciar (fornecedor real, opcional)"
+    SOFTWARE_INVENTORY_ITEM ||--o| INVENTORY_APPROVAL_REQUEST : "cadastro manual aguarda aprovação"
 
     SOFTWARE_INVENTORY_ITEM {
         string id PK
         string tenantId FK
         string assessmentId FK "nullable"
-        string status "ACTIVE|PENDING_REVIEW|..."
+        string createdById FK "nullable - só cadastro manual; itens antigos ficam null"
+        string status "ACTIVE|PENDING_REVIEW|PENDING_APPROVAL|REJECTED|..."
         datetime nextReviewDate
         string vendor "snapshot em texto - sempre presente"
         string vendorId FK "nullable, aponta pro Vendor real quando vinculado"
+    }
+    INVENTORY_APPROVAL_REQUEST {
+        string id PK
+        string tenantId FK
+        string inventoryItemId FK "unique - uma linha por item, reaproveitada a cada ciclo"
+        string requesterId FK
+        string status "PENDING|APPROVED|REJECTED"
+        string decidedById FK "nullable"
+        string decisionNotes "nullable"
     }
     ATTACHMENT {
         string id PK
