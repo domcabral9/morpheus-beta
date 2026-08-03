@@ -19,7 +19,15 @@
     "ssoButton": "Entrar com SSO corporativo",
     "genericError": "Não foi possível entrar. Verifique os dados e tente novamente.",
     "localeSwitcherLabel": "Idioma",
-    "themeToggleLabel": "Alternar tema"
+    "themeToggleLabel": "Alternar tema",
+    "totpTitle": "Verificação em duas etapas",
+    "totpSubtitle": "Digite o código do seu app autenticador (ou um código de backup).",
+    "totpCodeLabel": "Código",
+    "totpCodePlaceholder": "000000",
+    "totpSubmit": "Verificar",
+    "totpSubmitting": "Verificando...",
+    "totpBack": "Voltar",
+    "totpGenericError": "Código inválido. Tente novamente."
   },
   "Dashboard": {
     "welcome": "Olá, {name}",
