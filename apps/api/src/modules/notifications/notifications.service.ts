@@ -61,6 +61,19 @@ export class NotificationsService {
     await Promise.all(users.map((user) => this.notify({ ...data, tenantId, userId: user.id })));
   }
 
+  /** Notifica todo usuário ativo do tenant que tenha, por qualquer papel, a
+   * permissão informada — ver `NotificationsRepository.findUsersByPermission`
+   * pra por que isto é diferente de `notifyRole` (aqui o conjunto de papéis
+   * concedendo a permissão pode ser >1). */
+  async notifyPermissionHolders(
+    tenantId: string,
+    permissionKey: string,
+    data: Omit<NotifyInput, "tenantId" | "userId">,
+  ): Promise<void> {
+    const users = await this.repository.findUsersByPermission(tenantId, permissionKey);
+    await Promise.all(users.map((user) => this.notify({ ...data, tenantId, userId: user.id })));
+  }
+
   listForUser(userId: string, page: number, pageSize: number) {
     return this.repository.findForUser(userId, page, pageSize);
   }
