@@ -12,6 +12,8 @@ interface AuthContextValue {
   status: AuthStatus;
   login: (params: { tenantSlug: string; email: string; password: string }) => Promise<LoginResult>;
   verifyTwoFactor: (preAuthToken: string, code: string) => Promise<void>;
+  requestPasswordlessLogin: (tenantSlug: string, email: string) => Promise<void>;
+  verifyPasswordlessLogin: (tenantSlug: string, email: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
   switchTenant: (tenantId: string) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -124,6 +126,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [loadUser],
   );
 
+  // Passo 1 do login passwordless (Fase 4) — sempre resolve, mesmo pra
+  // tenant/e-mail inexistente ou conta inelegível: o backend nunca lança
+  // aqui (contrato de anti-enumeração, ver PasswordlessService), então esta
+  // função também não ramifica por resultado — quem chama sempre avança pro
+  // passo de código.
+  const requestPasswordlessLogin = React.useCallback(async (tenantSlug: string, email: string) => {
+    sessionStorage.removeItem(VIEWING_TENANT_STORAGE_KEY);
+    await apiFetch<{ sent: true }>("/auth/passwordless/request", {
+      method: "POST",
+      body: JSON.stringify({ tenantSlug, email }),
+    });
+  }, []);
+
+  // Passo 2 — verifica o código e abre a sessão diretamente (o backend já
+  // seta os cookies de refresh/CSRF nesta chamada, mesmo formato de
+  // AccessTokenResponse que login()/verifyTwoFactor() já consomem).
+  const verifyPasswordlessLogin = React.useCallback(
+    async (tenantSlug: string, email: string, code: string) => {
+      const tokens = await apiFetch<AccessTokenResponse>("/auth/passwordless/verify", {
+        method: "POST",
+        body: JSON.stringify({ tenantSlug, email, code }),
+      });
+      await loadUser(tokens.accessToken);
+    },
+    [loadUser],
+  );
+
   const logout = React.useCallback(async () => {
     await apiFetch("/auth/logout", { method: "POST" }).catch(() => {});
     sessionStorage.removeItem(VIEWING_TENANT_STORAGE_KEY);
@@ -139,11 +168,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       status,
       login,
       verifyTwoFactor,
+      requestPasswordlessLogin,
+      verifyPasswordlessLogin,
       logout,
       switchTenant,
       refreshUser,
     }),
-    [user, accessToken, status, login, verifyTwoFactor, logout, switchTenant, refreshUser],
+    [
+      user,
+      accessToken,
+      status,
+      login,
+      verifyTwoFactor,
+      requestPasswordlessLogin,
+      verifyPasswordlessLogin,
+      logout,
+      switchTenant,
+      refreshUser,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
