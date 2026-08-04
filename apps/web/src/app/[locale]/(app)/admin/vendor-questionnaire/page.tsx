@@ -29,7 +29,10 @@ function CategorySection({
   onQuestionCreated: (question: VendorQuestionAdmin) => void;
 }) {
   const t = useTranslations("AdminVendorQuestionnaire");
-  const [open, setOpen] = React.useState(true);
+  // Fechada por padrão - mesmo raciocínio de admin/questionnaire (que espelha
+  // esta tela quase 1:1): categorias de altura muito desigual quando abertas
+  // impediriam a grade de 2 colunas de funcionar bem.
+  const [open, setOpen] = React.useState(false);
   const [createOpen, setCreateOpen] = React.useState(false);
 
   return (
@@ -158,7 +161,7 @@ function VendorQuestionnaireAdminContent() {
       )}
 
       {categories && questions && (
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
           {categories.map((category) => (
             <CategorySection
               key={category.id}
