@@ -31,6 +31,8 @@ export interface OwnProfile {
   hasLocalPassword: boolean;
   hasTwoFactorEnabled: boolean;
   twoFactorEnforced: boolean;
+  emailVerified: boolean;
+  emailVerifiedAt: Date | null;
   roles: string[];
   lastLoginAt: Date | null;
   createdAt: Date;
@@ -279,6 +281,15 @@ export class UsersService {
     return this.getOwnProfile(actor);
   }
 
+  /** Chamado por EmailVerificationService (módulo `auth`) após confirmar um
+   * código válido - passthrough deliberado, não repete a auditoria (quem
+   * chama já audita a própria operação de verificação). `UsersRepository`
+   * fica privado a este módulo (só `UsersService` é exportado por
+   * `UsersModule`), então mutações vindas de fora entram por aqui. */
+  async markEmailVerified(userId: string): Promise<void> {
+    await this.usersRepository.markEmailVerified(userId);
+  }
+
   async getOwnAvatar(actor: AuthenticatedUser): Promise<OwnAvatar> {
     const profile = await this.findOwnProfileOrThrow(actor.id);
     if (!profile.avatarPath) {
@@ -309,6 +320,8 @@ export class UsersService {
       hasLocalPassword: raw.passwordHash !== null,
       hasTwoFactorEnabled: raw.totpEnabled,
       twoFactorEnforced,
+      emailVerified: raw.emailVerified,
+      emailVerifiedAt: raw.emailVerifiedAt,
       roles: raw.userRoles.map((link) => link.role.name),
       lastLoginAt: raw.lastLoginAt,
       createdAt: raw.createdAt,

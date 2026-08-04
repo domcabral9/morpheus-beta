@@ -9,11 +9,21 @@ import { LocalStrategy } from "./strategies/local.strategy";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { PreAuthStrategy } from "./strategies/preauth.strategy";
 import { SamlStrategy } from "./strategies/saml.strategy";
+import { OneTimeCodeRepository } from "./one-time-code.repository";
+import { EmailVerificationService } from "./email-verification.service";
 
 @Module({
   imports: [PassportModule, JwtModule.register({}), UsersModule, TwoFactorModule],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, PreAuthStrategy, SamlStrategy],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    PreAuthStrategy,
+    SamlStrategy,
+    OneTimeCodeRepository,
+    EmailVerificationService,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

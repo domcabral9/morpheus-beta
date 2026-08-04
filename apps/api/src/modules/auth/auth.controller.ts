@@ -44,6 +44,8 @@ import { UpdateOwnProfileDto } from "../users/dto/update-own-profile.dto";
 import { TwoFactorService } from "../two-factor/two-factor.service";
 import { EnableTwoFactorDto } from "../two-factor/dto/enable-two-factor.dto";
 import { TwoFactorReauthDto } from "../two-factor/dto/two-factor-reauth.dto";
+import { EmailVerificationService } from "./email-verification.service";
+import { ConfirmEmailVerificationDto } from "./dto/confirm-email-verification.dto";
 
 const REFRESH_COOKIE_NAME = "morpheus_refresh_token";
 const REFRESH_COOKIE_PATH = "/auth";
@@ -58,6 +60,7 @@ export class AuthController {
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
     private readonly twoFactorService: TwoFactorService,
+    private readonly emailVerificationService: EmailVerificationService,
   ) {}
 
   @Public()
@@ -266,6 +269,29 @@ export class AuthController {
     @Body() dto: TwoFactorReauthDto,
   ) {
     return this.twoFactorService.regenerateBackupCodes(user, dto.currentPassword);
+  }
+
+  // Verificação de e-mail (autoatendimento, pré-requisito de login
+  // passwordless — Fase 3) — mesmo padrão de /auth/2fa/*: Bearer normal, sem
+  // @RequirePermissions (age só sobre @CurrentUser()), mesmo limite de força
+  // bruta de um código adivinhável.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post("email/verify/request")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "Envia um código de verificação para o próprio e-mail." })
+  async requestEmailVerification(@CurrentUser() user: AuthenticatedUser): Promise<void> {
+    await this.emailVerificationService.requestVerification(user);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post("email/verify/confirm")
+  @ApiOperation({ summary: "Confirma o código e marca o e-mail como verificado." })
+  async confirmEmailVerification(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ConfirmEmailVerificationDto,
+  ) {
+    await this.emailVerificationService.confirmVerification(user, dto.code);
+    return this.usersService.getOwnProfile(user);
   }
 
   // Autenticado via Bearer normal (JwtAuthGuard + PermissionsGuard, ambos

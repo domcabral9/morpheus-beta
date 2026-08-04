@@ -74,6 +74,21 @@ export class NotificationsService {
     await Promise.all(users.map((user) => this.notify({ ...data, tenantId, userId: user.id })));
   }
 
+  /**
+   * Envia um e-mail avulso, sem gravar `Notification` (destinatário pode nem
+   * estar autenticado ainda, ex. código de login passwordless) e sem ficar
+   * amarrado a `NotifyInput`/`NotificationType`. Mesmo não-throw de `notify()`:
+   * falha de SMTP vira log, nunca deve derrubar quem chamou.
+   */
+  async sendRawEmail(input: { to: string; subject: string; html: string }): Promise<void> {
+    try {
+      await this.emailAdapter.send(input);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Falha ao enviar e-mail avulso para ${input.to}: ${message}`);
+    }
+  }
+
   listForUser(userId: string, page: number, pageSize: number) {
     return this.repository.findForUser(userId, page, pageSize);
   }
