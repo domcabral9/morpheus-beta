@@ -31,6 +31,8 @@ const baseUser: UserWithPermissions = {
   totpSecret: null,
   totpPendingSecret: null,
   totpEnabled: false,
+  emailVerified: false,
+  emailVerifiedAt: null,
   isActive: true,
   lastLoginAt: null,
   createdAt: new Date(),

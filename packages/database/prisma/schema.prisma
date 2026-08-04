@@ -168,6 +168,12 @@ model User {
   /// válido — nunca promovido a totpSecret sem POST /auth/2fa/enable ter sucesso.
   totpPendingSecret String?
   totpEnabled       Boolean   @default(false)
+  /// Prova formal e persistente de posse do e-mail cadastrado — pré-requisito
+  /// pra login passwordless (POST /auth/passwordless/*). Setado só por
+  /// EmailVerificationService.confirmVerification, nunca como efeito
+  /// colateral implícito de um login bem-sucedido.
+  emailVerified     Boolean   @default(false)
+  emailVerifiedAt   DateTime?
   isActive          Boolean   @default(true)
   lastLoginAt       DateTime?
   createdAt         DateTime  @default(now())
@@ -193,6 +199,7 @@ model User {
   createdVendors             Vendor[]                @relation("VendorCreatedBy")
   performedVendorAssessments VendorAssessment[]      @relation("VendorAssessmentPerformedBy")
   twoFactorBackupCodes       TwoFactorBackupCode[]
+  oneTimeCodes               OneTimeCode[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -249,6 +256,32 @@ model TwoFactorBackupCode {
   @@map("two_factor_backup_codes")
 }
 
+enum OneTimeCodePurpose {
+  EMAIL_VERIFICATION
+  PASSWORDLESS_LOGIN
+}
+
+/// Código numérico de uso único, hash SHA-256 (não bcrypt — expiração curta +
+/// throttle já cobrem o risco de força bruta, mesmo raciocínio já aplicado ao
+/// hash de refresh token). Tabela compartilhada pelos dois propósitos (não
+/// duas tabelas) porque a forma é idêntica; `purpose` discrimina qual fluxo
+/// pode consumir a linha. `attempts` é a defesa contra força bruta distribuída
+/// dentro da janela de validade, independente do throttle por IP.
+model OneTimeCode {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose   OneTimeCodePurpose
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int                @default(0)
+  usedAt    DateTime?
+  createdAt DateTime           @default(now())
+
+  @@index([userId, purpose])
+  @@map("one_time_codes")
+}
+
 // =============================================================================
 // Configuração de plataforma (cross-tenant)
 // =============================================================================
@@ -284,6 +317,20 @@ model PlatformTwoFactorPolicy {
   createdAt       DateTime @default(now())
 
   @@map("platform_two_factor_policies")
+}
+
+/// Habilita (ou não) o login passwordless (código por e-mail) pra plataforma
+/// inteira — mesmo padrão singleton de PlatformPasswordPolicy/
+/// PlatformTwoFactorPolicy. Só usuários com User.emailVerified=true ficam
+/// elegíveis mesmo com o toggle ligado (ver plano/CHANGELOG).
+model PlatformPasswordlessPolicy {
+  id              String   @id @default("singleton")
+  enabled         Boolean  @default(false)
+  updatedByUserId String?
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  @@map("platform_passwordless_policies")
 }
 
 // =============================================================================
