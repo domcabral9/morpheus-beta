@@ -260,43 +260,41 @@ function PlatformPolicyContent() {
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      {!error && (!policy || !twoFactorPolicy) && (
+      {!error && (!policy || !twoFactorPolicy || !passwordlessPolicy) && (
         <div className="flex justify-center py-8">
           <Loader2 className="animate-spin text-muted-foreground" />
         </div>
       )}
 
-      {policy && (
-        <Card className="max-w-xl">
-          <CardHeader>
-            <CardTitle className="text-base">{t("cardTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PasswordPolicyForm policy={policy} onSaved={setPolicy} />
-          </CardContent>
-        </Card>
-      )}
+      {policy && twoFactorPolicy && passwordlessPolicy && (
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{t("cardTitle")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PasswordPolicyForm policy={policy} onSaved={setPolicy} />
+            </CardContent>
+          </Card>
 
-      {twoFactorPolicy && (
-        <Card className="max-w-xl">
-          <CardHeader>
-            <CardTitle className="text-base">{t("twoFactorCardTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TwoFactorPolicyForm policy={twoFactorPolicy} onSaved={setTwoFactorPolicy} />
-          </CardContent>
-        </Card>
-      )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{t("twoFactorCardTitle")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TwoFactorPolicyForm policy={twoFactorPolicy} onSaved={setTwoFactorPolicy} />
+            </CardContent>
+          </Card>
 
-      {passwordlessPolicy && (
-        <Card className="max-w-xl">
-          <CardHeader>
-            <CardTitle className="text-base">{t("passwordlessCardTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PasswordlessPolicyForm policy={passwordlessPolicy} onSaved={setPasswordlessPolicy} />
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{t("passwordlessCardTitle")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PasswordlessPolicyForm policy={passwordlessPolicy} onSaved={setPasswordlessPolicy} />
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
