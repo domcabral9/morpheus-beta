@@ -422,8 +422,14 @@ function ConfigDetailContent() {
             </CardContent>
           </Card>
 
-          <LevelsSection axis="probability" config={config} onChanged={load} />
-          <LevelsSection axis="impact" config={config} onChanged={load} />
+          {/* Probabilidade/impacto pareados (mesma forma - 3 itens cada, altura
+              parecida); Config básica e Classificações ficam sozinhas
+              (conteúdo não relacionado, pareamento forçado pareceria
+              arbitrário) - mesmo critério já usado no grid de /profile. */}
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+            <LevelsSection axis="probability" config={config} onChanged={load} />
+            <LevelsSection axis="impact" config={config} onChanged={load} />
+          </div>
           <ClassificationsSection config={config} onChanged={load} />
 
           <Card>
