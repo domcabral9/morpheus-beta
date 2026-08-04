@@ -58,6 +58,45 @@ function IdentityCard({
     }
   }
 
+  // Verificação de e-mail (passwordless, Fase 5) - badge + mini-fluxo inline
+  // dentro deste card, de propósito (não um card novo): evita piorar o item
+  // já sinalizado no backlog de "/profile está longo demais".
+  const [emailVerifyStep, setEmailVerifyStep] = React.useState<"idle" | "code">("idle");
+  const [emailCode, setEmailCode] = React.useState("");
+  const [emailVerifySubmitting, setEmailVerifySubmitting] = React.useState(false);
+
+  async function handleRequestEmailVerification() {
+    setEmailVerifySubmitting(true);
+    try {
+      await api.post("/auth/email/verify/request");
+      setEmailVerifyStep("code");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("emailVerifyGenericError"));
+    } finally {
+      setEmailVerifySubmitting(false);
+    }
+  }
+
+  // Botão comum (não `type="submit"`) de propósito: este bloco vive dentro
+  // do <form> do nome/identidade acima, e HTML não permite <form> aninhado -
+  // um <form> interno aqui foi tentado e causou um bug real (o clique
+  // borbulhava pro <form> externo, disparando um submit nativo de página
+  // inteira em vez de chamar a API - achado confirmado via teste manual).
+  async function handleConfirmEmailVerification() {
+    setEmailVerifySubmitting(true);
+    try {
+      const updated = await api.post<OwnProfile>("/auth/email/verify/confirm", { code: emailCode });
+      onSaved(updated);
+      toast.success(t("emailVerifySuccess"));
+      setEmailVerifyStep("idle");
+      setEmailCode("");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("emailVerifyGenericError"));
+    } finally {
+      setEmailVerifySubmitting(false);
+    }
+  }
+
   return (
     <Card className="max-w-xl">
       <CardHeader>
@@ -72,8 +111,75 @@ function IdentityCard({
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="profile-email">{t("fieldEmail")}</Label>
-            <Input id="profile-email" value={profile.email} disabled />
+            <div className="flex items-center gap-2">
+              <Input id="profile-email" value={profile.email} disabled className="flex-1" />
+              {profile.emailVerified ? (
+                <Badge variant="success">{t("emailVerifiedBadge")}</Badge>
+              ) : (
+                <Badge variant="outline">{t("emailNotVerifiedBadge")}</Badge>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">{t("fieldEmailHint")}</p>
+
+            {!profile.emailVerified && emailVerifyStep === "idle" && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="self-start"
+                disabled={emailVerifySubmitting}
+                onClick={handleRequestEmailVerification}
+              >
+                {emailVerifySubmitting ? t("emailVerifyRequesting") : t("emailVerifyButton")}
+              </Button>
+            )}
+
+            {emailVerifyStep === "code" && (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="emailVerifyCode">{t("emailVerifyCodeLabel")}</Label>
+                  <Input
+                    id="emailVerifyCode"
+                    className="max-w-32"
+                    value={emailCode}
+                    onChange={(event) => setEmailCode(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void handleConfirmEmailVerification();
+                      }
+                    }}
+                    placeholder="000000"
+                    autoComplete="one-time-code"
+                    autoFocus
+                    required
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={emailVerifySubmitting}
+                    onClick={handleConfirmEmailVerification}
+                  >
+                    {emailVerifySubmitting
+                      ? t("emailVerifyConfirming")
+                      : t("emailVerifyConfirmButton")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setEmailVerifyStep("idle");
+                      setEmailCode("");
+                    }}
+                  >
+                    {t("emailVerifyCancelButton")}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           <dl className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
