@@ -70,6 +70,13 @@ export class PasswordlessService {
   ): Promise<UserWithPermissions> {
     const invalid = () => new UnauthorizedException("Código inválido.");
 
+    // Reconfirmado aqui, não só em requestLogin - achado da revisão de
+    // segurança da Fase 6: sem isto, desligar o toggle não interrompe login
+    // com um código já emitido e ainda dentro da janela de 10min (o toggle
+    // deixava de ser um kill-switch de verdade).
+    const policy = await this.passwordlessPolicyService.getPolicy();
+    if (!policy.enabled) throw invalid();
+
     const tenant = await this.prisma.tenant.findUnique({ where: { slug: tenantSlug } });
     if (!tenant) throw invalid();
 
