@@ -63,6 +63,8 @@ const ownProfileSelect = {
   avatarPath: true,
   passwordHash: true,
   totpEnabled: true,
+  emailVerified: true,
+  emailVerifiedAt: true,
   lastLoginAt: true,
   createdAt: true,
   userRoles: { select: { role: { select: { name: true } } } },
@@ -153,5 +155,12 @@ export class UsersRepository {
 
   async setAvatarPath(id: string, avatarPath: string): Promise<void> {
     await this.prisma.user.update({ where: { id }, data: { avatarPath } });
+  }
+
+  async markEmailVerified(id: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { emailVerified: true, emailVerifiedAt: new Date() },
+    });
   }
 }
