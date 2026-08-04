@@ -823,7 +823,10 @@
     "saveError": "Não foi possível salvar a política.",
     "twoFactorCardTitle": "Exigência de 2FA",
     "twoFactorFieldEnforced": "Recomendar 2FA a todos os usuários",
-    "twoFactorEnforcedHint": "Não bloqueia o login — sinaliza na tela de perfil de quem ainda não configurou 2FA."
+    "twoFactorEnforcedHint": "Não bloqueia o login — sinaliza na tela de perfil de quem ainda não configurou 2FA.",
+    "passwordlessCardTitle": "Login sem senha",
+    "passwordlessFieldEnabled": "Permitir login sem senha",
+    "passwordlessEnabledHint": "Permite que qualquer usuário com e-mail verificado dispense a senha usando um código de uso único enviado por e-mail. Pula o 2FA nesse caminho específico de login."
   },
   "PasswordPolicyHint": {
     "minLength": "mínimo de {count} caracteres",
@@ -867,6 +870,16 @@
     "avatarUploadError": "Não foi possível enviar a foto (só PNG/JPEG até 2MB).",
     "avatarHint": "PNG ou JPEG, até 2MB.",
     "ssoOnlyNotice": "Este usuário só entra via SSO corporativo — não há senha local para trocar.",
+    "emailVerifiedBadge": "Verificado",
+    "emailNotVerifiedBadge": "Não verificado",
+    "emailVerifyButton": "Verificar e-mail",
+    "emailVerifyRequesting": "Enviando...",
+    "emailVerifyCodeLabel": "Código de 6 dígitos",
+    "emailVerifyConfirmButton": "Confirmar",
+    "emailVerifyConfirming": "Confirmando...",
+    "emailVerifyCancelButton": "Cancelar",
+    "emailVerifySuccess": "E-mail verificado.",
+    "emailVerifyGenericError": "Não foi possível verificar o e-mail. Tente novamente.",
     "twoFactorCardTitle": "Autenticação em duas etapas (2FA)",
     "twoFactorEnforcedNotice": "Sua organização recomenda ativar o 2FA.",
     "twoFactorEnabledBadge": "Ativado",

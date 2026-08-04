@@ -823,7 +823,10 @@
     "saveError": "Could not save the policy.",
     "twoFactorCardTitle": "2FA enforcement",
     "twoFactorFieldEnforced": "Recommend 2FA to every user",
-    "twoFactorEnforcedHint": "Does not block login — flags it on the profile page for anyone who hasn't set up 2FA yet."
+    "twoFactorEnforcedHint": "Does not block login — flags it on the profile page for anyone who hasn't set up 2FA yet.",
+    "passwordlessCardTitle": "Passwordless sign-in",
+    "passwordlessFieldEnabled": "Allow passwordless sign-in",
+    "passwordlessEnabledHint": "Lets any user with a verified email skip the password using a one-time code sent by email. Bypasses 2FA on that specific sign-in path."
   },
   "PasswordPolicyHint": {
     "minLength": "at least {count} characters",
@@ -867,6 +870,16 @@
     "avatarUploadError": "Could not upload the photo (PNG/JPEG only, up to 2MB).",
     "avatarHint": "PNG or JPEG, up to 2MB.",
     "ssoOnlyNotice": "This user only signs in via corporate SSO — there is no local password to change.",
+    "emailVerifiedBadge": "Verified",
+    "emailNotVerifiedBadge": "Not verified",
+    "emailVerifyButton": "Verify email",
+    "emailVerifyRequesting": "Sending...",
+    "emailVerifyCodeLabel": "6-digit code",
+    "emailVerifyConfirmButton": "Confirm",
+    "emailVerifyConfirming": "Confirming...",
+    "emailVerifyCancelButton": "Cancel",
+    "emailVerifySuccess": "Email verified.",
+    "emailVerifyGenericError": "Could not verify the email. Please try again.",
     "twoFactorCardTitle": "Two-factor authentication (2FA)",
     "twoFactorEnforcedNotice": "Your organization recommends enabling 2FA.",
     "twoFactorEnabledBadge": "Enabled",

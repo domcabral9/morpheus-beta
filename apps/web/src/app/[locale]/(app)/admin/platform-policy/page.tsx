@@ -15,7 +15,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import type { PlatformPasswordPolicy, PlatformTwoFactorPolicy } from "@/lib/platform-policy-types";
+import type {
+  PlatformPasswordPolicy,
+  PlatformTwoFactorPolicy,
+  PlatformPasswordlessPolicy,
+} from "@/lib/platform-policy-types";
 import { AdminSectionGate } from "../_components/section-gate";
 
 const passwordPolicySchema = z.object({
@@ -170,22 +174,78 @@ function TwoFactorPolicyForm({
   );
 }
 
+function PasswordlessPolicyForm({
+  policy,
+  onSaved,
+}: {
+  policy: PlatformPasswordlessPolicy;
+  onSaved: (policy: PlatformPasswordlessPolicy) => void;
+}) {
+  const t = useTranslations("AdminPlatformPolicy");
+  const api = useApi();
+
+  const [enabled, setEnabled] = React.useState(policy.enabled);
+  const [submitting, setSubmitting] = React.useState(false);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      const updated = await api.patch<PlatformPasswordlessPolicy>("/platform/passwordless-policy", {
+        enabled,
+      });
+      toast.success(t("saveSuccess"));
+      onSaved(updated);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("saveError"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="passwordlessEnabled"
+          checked={enabled}
+          onCheckedChange={(checked) => setEnabled(checked === true)}
+        />
+        <Label htmlFor="passwordlessEnabled" className="font-normal">
+          {t("passwordlessFieldEnabled")}
+        </Label>
+      </div>
+      <p className="text-xs text-muted-foreground">{t("passwordlessEnabledHint")}</p>
+
+      <div>
+        <Button type="submit" disabled={submitting || enabled === policy.enabled}>
+          {submitting ? t("saving") : t("save")}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 function PlatformPolicyContent() {
   const t = useTranslations("AdminPlatformPolicy");
   const api = useApi();
 
   const [policy, setPolicy] = React.useState<PlatformPasswordPolicy | null>(null);
   const [twoFactorPolicy, setTwoFactorPolicy] = React.useState<PlatformTwoFactorPolicy | null>(null);
+  const [passwordlessPolicy, setPasswordlessPolicy] =
+    React.useState<PlatformPasswordlessPolicy | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     Promise.all([
       api.get<PlatformPasswordPolicy>("/platform/password-policy"),
       api.get<PlatformTwoFactorPolicy>("/platform/two-factor-policy"),
+      api.get<PlatformPasswordlessPolicy>("/platform/passwordless-policy"),
     ])
-      .then(([passwordResult, twoFactorResult]) => {
+      .then(([passwordResult, twoFactorResult, passwordlessResult]) => {
         setPolicy(passwordResult);
         setTwoFactorPolicy(twoFactorResult);
+        setPasswordlessPolicy(passwordlessResult);
         setError(null);
       })
       .catch(() => setError(t("loadError")));
@@ -224,6 +284,17 @@ function PlatformPolicyContent() {
           </CardHeader>
           <CardContent>
             <TwoFactorPolicyForm policy={twoFactorPolicy} onSaved={setTwoFactorPolicy} />
+          </CardContent>
+        </Card>
+      )}
+
+      {passwordlessPolicy && (
+        <Card className="max-w-xl">
+          <CardHeader>
+            <CardTitle className="text-base">{t("passwordlessCardTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PasswordlessPolicyForm policy={passwordlessPolicy} onSaved={setPasswordlessPolicy} />
           </CardContent>
         </Card>
       )}
