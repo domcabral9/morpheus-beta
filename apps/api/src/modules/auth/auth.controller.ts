@@ -46,6 +46,9 @@ import { EnableTwoFactorDto } from "../two-factor/dto/enable-two-factor.dto";
 import { TwoFactorReauthDto } from "../two-factor/dto/two-factor-reauth.dto";
 import { EmailVerificationService } from "./email-verification.service";
 import { ConfirmEmailVerificationDto } from "./dto/confirm-email-verification.dto";
+import { PasswordlessService } from "./passwordless.service";
+import { RequestPasswordlessLoginDto } from "./dto/request-passwordless-login.dto";
+import { VerifyPasswordlessLoginDto } from "./dto/verify-passwordless-login.dto";
 
 const REFRESH_COOKIE_NAME = "morpheus_refresh_token";
 const REFRESH_COOKIE_PATH = "/auth";
@@ -61,6 +64,7 @@ export class AuthController {
     private readonly usersService: UsersService,
     private readonly twoFactorService: TwoFactorService,
     private readonly emailVerificationService: EmailVerificationService,
+    private readonly passwordlessService: PasswordlessService,
   ) {}
 
   @Public()
@@ -113,6 +117,52 @@ export class AuthController {
     }
 
     await this.twoFactorService.verifyLoginCode(user, dto.code);
+
+    const tokens = await this.authService.login(user, this.requestMeta(req));
+    this.setRefreshCookie(res, tokens.refreshToken);
+    this.setCsrfCookie(res);
+    return {
+      twoFactorRequired: false,
+      accessToken: tokens.accessToken,
+      expiresIn: tokens.expiresIn,
+    };
+  }
+
+  // Login passwordless (Fase 3) — fator primário alternativo ao par
+  // e-mail/senha, sem prompt de senha. Sempre responde no formato exato do
+  // caso de sucesso, mesmo quando tenant/e-mail não existe, usuário está
+  // inativo, e-mail não verificado ou o toggle de plataforma está desligado
+  // - PasswordlessService.requestLogin nunca lança, contrato deliberado de
+  // anti-enumeração (ver plano/CHANGELOG). Mesmo throttle de força bruta do
+  // login.
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post("passwordless/request")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Envia um código de login para o e-mail, se a conta for elegível." })
+  async requestPasswordlessLogin(
+    @Body() dto: RequestPasswordlessLoginDto,
+  ): Promise<{ sent: true }> {
+    await this.passwordlessService.requestLogin(dto.tenantSlug, dto.email);
+    return { sent: true };
+  }
+
+  // Verificado o código, abre a sessão diretamente via authService.login() -
+  // pula por completo o branch de totpEnabled/issuePreAuthChallenge que o
+  // login por senha percorre (decisão explícita do usuário: posse do e-mail
+  // substitui os dois fatores tradicionais neste caminho específico, ver
+  // plano/CHANGELOG - marcado para escrutínio extra na Fase 6 de segurança).
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post("passwordless/verify")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Confirma o código de login passwordless e emite a sessão." })
+  async verifyPasswordlessLogin(
+    @Body() dto: VerifyPasswordlessLoginDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AccessTokenResponseDto> {
+    const user = await this.passwordlessService.verifyLogin(dto.tenantSlug, dto.email, dto.code);
 
     const tokens = await this.authService.login(user, this.requestMeta(req));
     this.setRefreshCookie(res, tokens.refreshToken);
