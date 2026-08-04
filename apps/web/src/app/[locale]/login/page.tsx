@@ -20,7 +20,8 @@ import type { TenantPublicSummary } from "@/lib/auth-types";
 
 export default function LoginPage() {
   const t = useTranslations("LoginPage");
-  const { login, verifyTwoFactor, status, user } = useAuth();
+  const { login, verifyTwoFactor, requestPasswordlessLogin, verifyPasswordlessLogin, status, user } =
+    useAuth();
   const api = useApi();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -41,9 +42,14 @@ export default function LoginPage() {
 
   // Segundo passo (código 2FA): só existe depois que login() devolve
   // twoFactorRequired:true - nenhuma sessão foi aberta ainda nesse ponto.
-  const [step, setStep] = React.useState<"credentials" | "totp">("credentials");
+  // "passwordless-request"/"passwordless-code": segundo caminho de login,
+  // sem senha - reaproveita tenantSlug/email do formulário de credenciais.
+  const [step, setStep] = React.useState<
+    "credentials" | "totp" | "passwordless-request" | "passwordless-code"
+  >("credentials");
   const [preAuthToken, setPreAuthToken] = React.useState<string | null>(null);
   const [totpCode, setTotpCode] = React.useState("");
+  const [passwordlessCode, setPasswordlessCode] = React.useState("");
 
   React.useEffect(() => {
     if (status === "authenticated" && user) {
@@ -101,7 +107,39 @@ export default function LoginPage() {
     setStep("credentials");
     setPreAuthToken(null);
     setTotpCode("");
+    setPasswordlessCode("");
     setError(null);
+  }
+
+  // Sempre avança pro passo de código, independente do resultado interno do
+  // pedido (contrato de anti-enumeração - ver PasswordlessService no
+  // backend): só um erro de rede/throttle real impede o avanço.
+  async function handlePasswordlessRequest(event: React.FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    try {
+      await requestPasswordlessLogin(tenantSlug, email);
+      setStep("passwordless-code");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t("genericError"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handlePasswordlessVerify(event: React.FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    try {
+      await verifyPasswordlessLogin(tenantSlug, email, passwordlessCode);
+      router.replace("/dashboard");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t("passwordlessCodeGenericError"));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -204,9 +242,21 @@ export default function LoginPage() {
                   >
                     {t("ssoButton")}
                   </Button>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="mt-2 w-full"
+                    onClick={() => {
+                      setError(null);
+                      setStep("passwordless-request");
+                    }}
+                  >
+                    {t("passwordlessButton")}
+                  </Button>
                 </CardContent>
               </>
-            ) : (
+            ) : step === "totp" ? (
               <>
                 <CardHeader>
                   <CardTitle className="text-3xl tracking-tight">{t("totpTitle")}</CardTitle>
@@ -238,6 +288,107 @@ export default function LoginPage() {
 
                     <Button type="submit" disabled={submitting} className="mt-2">
                       {submitting ? t("totpSubmitting") : t("totpSubmit")}
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={handleBackToCredentials}>
+                      {t("totpBack")}
+                    </Button>
+                  </form>
+                </CardContent>
+              </>
+            ) : step === "passwordless-request" ? (
+              <>
+                <CardHeader>
+                  <CardTitle className="text-3xl tracking-tight">
+                    {t("passwordlessRequestTitle")}
+                  </CardTitle>
+                  <CardDescription>{t("passwordlessRequestSubtitle")}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handlePasswordlessRequest} className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="plTenantSlug">{t("tenantSlugLabel")}</Label>
+                      <Select value={tenantSlug} onValueChange={setTenantSlug} disabled={!tenants}>
+                        <SelectTrigger id="plTenantSlug">
+                          <SelectValue placeholder={t("tenantSelectPlaceholder")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(tenants ?? []).map((tenant) => (
+                            <SelectItem key={tenant.slug} value={tenant.slug}>
+                              {tenant.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="plEmail">{t("emailLabel")}</Label>
+                      <Input
+                        id="plEmail"
+                        name="email"
+                        type="email"
+                        autoComplete="username"
+                        placeholder={t("emailPlaceholder")}
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        autoFocus
+                        required
+                      />
+                    </div>
+
+                    {error && (
+                      <p role="alert" className="text-sm text-destructive">
+                        {error}
+                      </p>
+                    )}
+
+                    <Button type="submit" disabled={submitting} className="mt-2">
+                      {submitting
+                        ? t("passwordlessRequestSubmitting")
+                        : t("passwordlessRequestSubmit")}
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={handleBackToCredentials}>
+                      {t("totpBack")}
+                    </Button>
+                  </form>
+                </CardContent>
+              </>
+            ) : (
+              <>
+                <CardHeader>
+                  <CardTitle className="text-3xl tracking-tight">
+                    {t("passwordlessCodeTitle")}
+                  </CardTitle>
+                  <CardDescription>{t("passwordlessCodeSubtitle")}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{t("passwordlessSentNotice")}</p>
+                  <form onSubmit={handlePasswordlessVerify} className="mt-4 flex flex-col gap-5">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="passwordlessCode">{t("passwordlessCodeLabel")}</Label>
+                      <Input
+                        id="passwordlessCode"
+                        name="passwordlessCode"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        placeholder={t("passwordlessCodePlaceholder")}
+                        maxLength={6}
+                        value={passwordlessCode}
+                        onChange={(event) => setPasswordlessCode(event.target.value)}
+                        autoFocus
+                        required
+                      />
+                    </div>
+
+                    {error && (
+                      <p role="alert" className="text-sm text-destructive">
+                        {error}
+                      </p>
+                    )}
+
+                    <Button type="submit" disabled={submitting} className="mt-2">
+                      {submitting ? t("passwordlessCodeSubmitting") : t("passwordlessCodeSubmit")}
                     </Button>
                     <Button type="button" variant="ghost" onClick={handleBackToCredentials}>
                       {t("totpBack")}

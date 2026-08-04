@@ -28,7 +28,20 @@
     "totpSubmitting": "Verifying...",
     "totpBack": "Back",
     "totpGenericError": "Invalid code. Please try again.",
-    "ssoTotpRequiredError": "This account has two-factor verification enabled — corporate SSO sign-in doesn't support 2FA yet. Sign in with email and password instead."
+    "ssoTotpRequiredError": "This account has two-factor verification enabled — corporate SSO sign-in doesn't support 2FA yet. Sign in with email and password instead.",
+    "passwordlessButton": "Sign in without a password",
+    "passwordlessRequestTitle": "Sign in without a password",
+    "passwordlessRequestSubtitle": "Enter your organization and email — we'll send a one-time code.",
+    "passwordlessRequestSubmit": "Send code",
+    "passwordlessRequestSubmitting": "Sending...",
+    "passwordlessCodeTitle": "Enter your code",
+    "passwordlessCodeSubtitle": "Check your inbox for a 6-digit code.",
+    "passwordlessSentNotice": "If that email exists and is eligible for passwordless sign-in, a code was just sent to it.",
+    "passwordlessCodeLabel": "Code",
+    "passwordlessCodePlaceholder": "000000",
+    "passwordlessCodeSubmit": "Sign in",
+    "passwordlessCodeSubmitting": "Signing in...",
+    "passwordlessCodeGenericError": "Invalid or expired code. Please try again."
   },
   "Dashboard": {
     "welcome": "Hello, {name}",

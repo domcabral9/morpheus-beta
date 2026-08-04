@@ -28,7 +28,20 @@
     "totpSubmitting": "Verificando...",
     "totpBack": "Voltar",
     "totpGenericError": "Código inválido. Tente novamente.",
-    "ssoTotpRequiredError": "Esta conta tem verificação em duas etapas ativada — o login via SSO corporativo ainda não suporta 2FA. Entre com e-mail e senha."
+    "ssoTotpRequiredError": "Esta conta tem verificação em duas etapas ativada — o login via SSO corporativo ainda não suporta 2FA. Entre com e-mail e senha.",
+    "passwordlessButton": "Entrar sem senha",
+    "passwordlessRequestTitle": "Entrar sem senha",
+    "passwordlessRequestSubtitle": "Informe sua organização e e-mail — vamos enviar um código de uso único.",
+    "passwordlessRequestSubmit": "Enviar código",
+    "passwordlessRequestSubmitting": "Enviando...",
+    "passwordlessCodeTitle": "Digite o código",
+    "passwordlessCodeSubtitle": "Confira sua caixa de entrada, enviamos um código de 6 dígitos.",
+    "passwordlessSentNotice": "Se esse e-mail existir e for elegível para login sem senha, um código acabou de ser enviado para ele.",
+    "passwordlessCodeLabel": "Código",
+    "passwordlessCodePlaceholder": "000000",
+    "passwordlessCodeSubmit": "Entrar",
+    "passwordlessCodeSubmitting": "Entrando...",
+    "passwordlessCodeGenericError": "Código inválido ou expirado. Tente novamente."
   },
   "Dashboard": {
     "welcome": "Olá, {name}",
