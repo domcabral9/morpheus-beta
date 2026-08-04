@@ -79,6 +79,14 @@ avaliado ou está com reavaliação vencida/próxima.
   dependência de terceiros. Toggle de recomendação por plataforma inteira, e revisão de segurança
   dedicada encontrou e corrigiu um bypass real (login via SSO ignorava o segundo fator) antes de ir
   ao ar.
+- **Login sem senha (passwordless)**: código de 6 dígitos por e-mail, digitado - não um link
+  clicável, escolha deliberada para não depender de scanners de e-mail corporativo não
+  pré-consumirem o token. Condicionado a um pré-requisito formal de e-mail verificado
+  (autoatendimento em `/profile`) e a um toggle de plataforma inteira. Decisão de design deliberada:
+  posse do e-mail substitui os dois fatores tradicionais nesse caminho específico, pulando o 2FA
+  mesmo em contas com TOTP habilitado - a revisão de segurança dedicada dessa feature também
+  encontrou e corrigiu um achado real antes de ir ao ar (o toggle de plataforma não interrompia um
+  login já em andamento com um código ainda válido).
 - **Política de senha configurável, plataforma inteira**: tamanho mínimo e classes de caractere
   exigidas (maiúscula/minúscula/dígito/símbolo) definidos por super-admin em `/admin/platform-policy`
   e aplicados a todo tenant - autoatendimento de troca de senha e reset administrativo reusam a
@@ -137,6 +145,10 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | Códigos de backup do 2FA | Login - código de verificação |
 | --- | --- |
 | ![Códigos de backup do 2FA](./docs/screenshots/profile-2fa-backup-codes.png) | ![Login - código de verificação](./docs/screenshots/login-2fa.png) |
+
+| Login - sem senha |
+| --- |
+| ![Login - sem senha](./docs/screenshots/login-passwordless.png) |
 
 | Políticas de plataforma (super-admin) |
 | --- |
@@ -279,6 +291,13 @@ overdue/upcoming reassessment.
   with reauthentication) - own implementation on top of `node:crypto`, no third-party dependency.
   Platform-wide recommendation toggle, and a dedicated security review found and fixed a real bypass
   (SSO login skipped the second factor) before it shipped.
+- **Passwordless sign-in**: a typed 6-digit email code, not a clickable link - a deliberate choice
+  so corporate email scanners can't pre-consume the token. Gated behind a formal verified-email
+  prerequisite (self-service at `/profile`) and a platform-wide toggle. Deliberate design decision:
+  email possession substitutes both traditional factors on this specific path, skipping 2FA even for
+  accounts with TOTP enabled - that feature's dedicated security review also found and fixed a real
+  issue before shipping (the platform toggle wasn't actually interrupting a login already in progress
+  with a still-valid code).
 - **Platform-wide, configurable password policy**: minimum length and required character classes
   (uppercase/lowercase/digit/symbol) set by a super-admin at `/admin/platform-policy` and enforced
   for every tenant - self-service password change and admin-triggered resets reuse the same
@@ -336,6 +355,10 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | 2FA backup codes | Login - verification code |
 | --- | --- |
 | ![2FA backup codes](./docs/screenshots/profile-2fa-backup-codes-en.png) | ![Login - verification code](./docs/screenshots/login-2fa-en.png) |
+
+| Login - passwordless |
+| --- |
+| ![Login - passwordless](./docs/screenshots/login-passwordless-en.png) |
 
 | Platform policies (super-admin) |
 | --- |
