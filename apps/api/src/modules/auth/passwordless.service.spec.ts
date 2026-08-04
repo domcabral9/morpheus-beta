@@ -120,6 +120,20 @@ describe("PasswordlessService", () => {
   });
 
   describe("verifyLogin", () => {
+    it("rejeita quando o toggle de plataforma está desligado, mesmo com código válido ainda dentro do prazo", async () => {
+      passwordlessPolicyService.getPolicy.mockResolvedValue({ enabled: false });
+      usersService.findByEmail.mockResolvedValue(makeUser());
+      oneTimeCodeRepository.findActiveCode.mockResolvedValue({
+        id: "code-1",
+        codeHash: hashOneTimeCode("111111"),
+        attempts: 0,
+      });
+      await expect(service.verifyLogin("demo", "ana@example.com", "111111")).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(oneTimeCodeRepository.markUsed).not.toHaveBeenCalled();
+    });
+
     it("rejeita com a mesma mensagem quando o tenant não existe", async () => {
       prisma.tenant.findUnique.mockResolvedValue(null);
       await expect(service.verifyLogin("naoexiste", "ana@example.com", "123456")).rejects.toThrow(
