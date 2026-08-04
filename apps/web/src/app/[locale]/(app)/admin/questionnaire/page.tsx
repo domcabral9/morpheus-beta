@@ -26,7 +26,12 @@ function CategorySection({
   onQuestionCreated: (question: QuestionAdmin) => void;
 }) {
   const t = useTranslations("AdminQuestionnaire");
-  const [open, setOpen] = React.useState(true);
+  // Fechada por padrão (diferente do comportamento antigo, que abria todas):
+  // com 10 categorias na base de demonstração e contagens de pergunta muito
+  // desiguais (0 a 7), manter tudo aberto tornava a página a mais longa do
+  // admin - fechado por padrão deixa os cards com altura quase igual,
+  // condição necessária pra grade de 2 colunas funcionar bem.
+  const [open, setOpen] = React.useState(false);
   const [createOpen, setCreateOpen] = React.useState(false);
 
   return (
@@ -156,7 +161,7 @@ function QuestionnaireAdminContent() {
       )}
 
       {categories && questions && (
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
           {categories.map((category) => (
             <CategorySection
               key={category.id}
