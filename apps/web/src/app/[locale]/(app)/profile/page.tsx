@@ -98,7 +98,7 @@ function IdentityCard({
   }
 
   return (
-    <Card className="max-w-xl">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">{t("identityCardTitle")}</CardTitle>
       </CardHeader>
@@ -268,7 +268,7 @@ function AvatarCard({
   }
 
   return (
-    <Card className="max-w-xl">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">{t("avatarCardTitle")}</CardTitle>
       </CardHeader>
@@ -316,7 +316,7 @@ function PasswordCard({ profile }: { profile: OwnProfile }) {
   const changePasswordT = useTranslations("ChangePassword");
 
   return (
-    <Card className="max-w-xl">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">{changePasswordT("dialogTitle")}</CardTitle>
       </CardHeader>
@@ -441,7 +441,7 @@ function TwoFactorCard({
   }
 
   return (
-    <Card className="max-w-xl">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">{t("twoFactorCardTitle")}</CardTitle>
       </CardHeader>
@@ -625,7 +625,10 @@ function ProfileContent() {
       )}
 
       {profile && (
-        <div className="flex flex-col gap-6">
+        // items-start (não stretch): cada card tem altura própria e variável
+        // (o card de 2FA cresce bastante durante o wizard de setup) - forçar
+        // altura igual entre pares deixaria espaço vazio artificial.
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
           <IdentityCard profile={profile} onSaved={setProfile} />
           <AvatarCard profile={profile} onUploaded={setProfile} />
           <PasswordCard profile={profile} />
