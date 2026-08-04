@@ -265,6 +265,8 @@ describe("TwoFactorService", () => {
         totpSecret,
         totpPendingSecret: null,
         totpEnabled: true,
+        emailVerified: false,
+        emailVerifiedAt: null,
         isActive: true,
         lastLoginAt: null,
         createdAt: new Date(),
