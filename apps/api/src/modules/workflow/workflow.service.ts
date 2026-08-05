@@ -11,6 +11,7 @@ import { AuditAction, WorkflowStep, WorkflowStepStatus } from "@morpheus/databas
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
+import { withHasAvatar, withHasAvatarOrNull } from "../../common/utils/avatar.util";
 import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { InventoryService } from "../inventory/inventory.service";
@@ -23,7 +24,6 @@ import {
 import {
   WorkflowRepository,
   WorkflowDefinitionWithSteps,
-  WorkflowInstanceDetail,
   StepExecutionDetail,
 } from "./workflow.repository";
 import { CreateWorkflowDefinitionDto } from "./dto/create-definition.dto";
@@ -278,10 +278,7 @@ export class WorkflowService {
     return results;
   }
 
-  async getInstanceForUser(
-    user: AuthenticatedUser,
-    assessmentId: string,
-  ): Promise<WorkflowInstanceDetail> {
+  async getInstanceForUser(user: AuthenticatedUser, assessmentId: string) {
     const assessment = await this.workflowRepository.findAssessmentContext(assessmentId);
     if (!assessment) throw new NotFoundException("Avaliação não encontrada.");
     if (assessment.tenantId !== user.tenantId) {
@@ -299,14 +296,30 @@ export class WorkflowService {
     if (!instance) {
       throw new NotFoundException("Esta avaliação ainda não iniciou um fluxo de aprovação.");
     }
-    return instance;
+    return {
+      ...instance,
+      stepExecutions: instance.stepExecutions.map((step) => ({
+        ...step,
+        decidedBy: withHasAvatarOrNull(step.decidedBy),
+      })),
+    };
   }
 
   /** "Caixa de entrada" do aprovador: etapas pendentes nos papéis que o usuário possui. */
   async getInbox(user: AuthenticatedUser) {
     const roleIds = await this.workflowRepository.findUserRoleIds(user.id);
     if (roleIds.length === 0) return [];
-    return this.workflowRepository.findPendingStepsForRoles(user.tenantId, roleIds);
+    const steps = await this.workflowRepository.findPendingStepsForRoles(user.tenantId, roleIds);
+    return steps.map((step) => ({
+      ...step,
+      assessmentWorkflowInstance: {
+        ...step.assessmentWorkflowInstance,
+        assessment: {
+          ...step.assessmentWorkflowInstance.assessment,
+          requester: withHasAvatar(step.assessmentWorkflowInstance.assessment.requester),
+        },
+      },
+    }));
   }
 
   // --- Administração (workflows:manage) ------------------------------------------------

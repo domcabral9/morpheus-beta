@@ -16,7 +16,7 @@ const instanceDetailInclude = {
     include: {
       workflowStep: true,
       assignedUser: { select: { id: true, name: true, email: true } },
-      decidedBy: { select: { id: true, name: true, email: true } },
+      decidedBy: { select: { id: true, name: true, email: true, avatarPath: true } },
     },
     orderBy: { createdAt: "asc" },
   },
@@ -221,6 +221,7 @@ export class WorkflowRepository {
                 vendor: true,
                 criticality: true,
                 requesterId: true,
+                requester: { select: { id: true, name: true, avatarPath: true } },
                 hasRiskAnalysis: true,
                 hasInfoSecClause: true,
                 vendorId: true,

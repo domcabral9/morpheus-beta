@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { AuditLogRepository, RecordAuditLogInput, AuditLogFilters } from "./audit-log.repository";
 import { SIEM_ADAPTER, SiemAdapter } from "../integrations/siem/siem.interface";
+import { withHasAvatarOrNull } from "../../common/utils/avatar.util";
 
 /**
  * Registro de auditoria (Etapa 8). Dois jeitos de acionar, conforme o caso:
@@ -55,7 +56,11 @@ export class AuditLogService {
     }
   }
 
-  list(filters: AuditLogFilters, page: number, pageSize: number) {
-    return this.repository.findMany(filters, page, pageSize);
+  async list(filters: AuditLogFilters, page: number, pageSize: number) {
+    const { items, total } = await this.repository.findMany(filters, page, pageSize);
+    return {
+      items: items.map((item) => ({ ...item, user: withHasAvatarOrNull(item.user) })),
+      total,
+    };
   }
 }

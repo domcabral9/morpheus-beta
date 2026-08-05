@@ -21,7 +21,7 @@ export const itemDetailInclude = {
       id: true,
       status: true,
       requesterId: true,
-      requester: { select: { id: true, name: true, email: true } },
+      requester: { select: { id: true, name: true, email: true, avatarPath: true } },
       decisionNotes: true,
       decidedAt: true,
     },

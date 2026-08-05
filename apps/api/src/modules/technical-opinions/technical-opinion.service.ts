@@ -10,6 +10,7 @@ import { ConfigService } from "@nestjs/config";
 import * as QRCode from "qrcode";
 import { TechnicalOpinion } from "@morpheus/database";
 import { PERMISSIONS } from "../../common/constants/permissions";
+import { withHasAvatar } from "../../common/utils/avatar.util";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -213,7 +214,12 @@ export class TechnicalOpinionService {
       pageSize,
     );
 
-    return { items, total, page, pageSize };
+    return {
+      items: items.map((item) => ({ ...item, issuedBy: withHasAvatar(item.issuedBy) })),
+      total,
+      page,
+      pageSize,
+    };
   }
 
   async verify(tenantSlug: string, number: string) {

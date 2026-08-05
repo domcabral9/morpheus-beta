@@ -353,6 +353,25 @@ export class UsersService {
     return { buffer, contentType };
   }
 
+  /**
+   * Avatar de um TERCEIRO do mesmo tenant (solicitante, aprovador, quem
+   * realizou uma ART, etc.) - qualquer usuário autenticado pode ver, sem
+   * `users:manage`, já que essas pessoas já aparecem por nome em várias
+   * telas que qualquer usuário comum acessa (aprovações, avaliações,
+   * fornecedores). Isolamento por tenant vem do `where` da query
+   * (`findAvatarPath`), não de uma checagem posterior.
+   */
+  async getAvatarForUser(tenantId: string, id: string): Promise<OwnAvatar> {
+    const record = await this.usersRepository.findAvatarPath(tenantId, id);
+    if (!record || !record.avatarPath) {
+      throw new NotFoundException("Usuário não encontrado ou sem foto de perfil.");
+    }
+    const extension = record.avatarPath.split(".").pop();
+    const contentType = extension === "jpg" ? "image/jpeg" : "image/png";
+    const buffer = await this.storage.read(record.avatarPath);
+    return { buffer, contentType };
+  }
+
   private async findOwnProfileOrThrow(id: string) {
     const profile = await this.usersRepository.findOwnProfile(id);
     if (!profile) throw new NotFoundException("Usuário não encontrado.");
