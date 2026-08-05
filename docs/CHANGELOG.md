@@ -14,9 +14,13 @@ uma linha do que aconteceu.
 
 - [**Agosto**](./changelog/2026-08.md) — "Perfumaria" de PR, tela de perfil de autoatendimento, 2FA
   via TOTP (RFC 6238, com um bypass de SSO real encontrado e corrigido na revisão de segurança), fluxo
-  de aprovação para itens de inventário manuais (Fases 1-5, item mais antigo do backlog), e login
+  de aprovação para itens de inventário manuais (Fases 1-5, item mais antigo do backlog), login
   passwordless completo (código por e-mail, pulando 2FA por decisão deliberada, com um achado real de
-  kill-switch corrigido na revisão de segurança — Fases 1-7, fecha o backlog de Autenticação).
+  kill-switch corrigido na revisão de segurança — Fases 1-7, fecha o backlog de Autenticação),
+  reestruturação em grade de `/profile`/`/admin/platform-policy`/matriz de risco/questionários
+  (com 2 bugs reais de screenshot corrigidos — regeneração esquecida e um gotcha de captura
+  `fullPage`+sticky), e auditoria de conteúdo do FAQ (9 perguntas novas, incluindo uma seção própria
+  "Fornecedores").
 - [**Julho**](./changelog/2026-07.md) — Construção inicial do produto (roteiro técnico Etapas 1-16 +
   plano pós-roteiro Etapas A-I), multi-tenancy e administração avançada, backlog pós-uso, renovação
   anual de homologação, avaliação de risco de fornecedores, vínculo Inventory↔Vendor, SSDLC/CI, e

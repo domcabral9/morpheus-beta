@@ -193,7 +193,9 @@
         "q2Question": "How do I start a new assessment?",
         "q2Answer": "On the Assessments screen, use the new assessment button, fill in the software details and answer the questionnaire. Once submitted, it automatically enters the approval workflow.",
         "q3Question": "What does each final classification mean (Homologado, Rejeitado, Aguardando Ajustes)?",
-        "q3Answer": "It's the outcome recorded on the technical opinion issued at the end of the workflow: \"Homologado\" clears the software for use, \"Rejeitado\" blocks it, and \"Aguardando Ajustes\" requests fixes before a new review."
+        "q3Answer": "It's the outcome recorded on the technical opinion issued at the end of the workflow: \"Homologado\" clears the software for use, \"Rejeitado\" blocks it, and \"Aguardando Ajustes\" requests fixes before a new review.",
+        "q4Question": "What happens when a homologation's validity expires?",
+        "q4Answer": "The original assessment automatically reopens for renewal, with a 30-calendar-day window for the requester to resubmit it (the same assessment, not a new one). If the deadline passes unresolved, the inventory item expires and the corresponding area is temporarily blocked from opening new assessments until the pending renewal is resolved - an Administrator can reassign the requester if the original person has left the organization."
       },
       "approvals": {
         "title": "Approvals",
@@ -209,7 +211,18 @@
         "q2Question": "Does every inventory item have a linked technical opinion?",
         "q2Answer": "No. Only items originated from an approved homologation have a linked opinion - manually created items show \"-\" in the opinion field.",
         "q3Question": "How do I see the technical opinion linked to an inventory item?",
-        "q3Answer": "On the item's detail screen, or in the \"Opinion\" column of the list - the link takes you straight to the opinion, already filtered on the Technical Opinions screen."
+        "q3Answer": "On the item's detail screen, or in the \"Opinion\" column of the list - the link takes you straight to the opinion, already filtered on the Technical Opinions screen.",
+        "q4Question": "Why doesn't a manually created item show up as active right away?",
+        "q4Answer": "Manual entries (outside the homologation workflow) go through their own approval step before going live: the item stays \"Pending approval\" until someone with approval permission decides, under the \"Inventory items\" tab on Approvals. If rejected, the reason is recorded on the item and only the person who created it can fix and resubmit."
+      },
+      "vendors": {
+        "title": "Vendors",
+        "q1Question": "What is vendor risk assessment (ART) and what does Tier mean?",
+        "q1Answer": "It's a dedicated questionnaire, inspired by NIST SP 800-161 practices, filled out by an internal analyst about the vendor behind a piece of software - contract, information security policy, vulnerability management, and similar points. On completion, the system automatically computes a score and classifies the vendor into a Tier from 1 (least monitoring) to 4 (closest monitoring), with a reassessment cadence that depends on the Tier and the vendor's business criticality.",
+        "q2Question": "How do I link a vendor to an inventory item and start an assessment?",
+        "q2Answer": "From the inventory item's detail screen, use \"Link vendor\" to search for an already-registered vendor (or quickly register a new one) - linking and starting the assessment is a single action. If the vendor already has a completed assessment, the Tier shows right there; if not, the \"Start ART\" button opens the questionnaire.",
+        "q3Question": "What is the \"Tracking\" tab under Vendors?",
+        "q3Answer": "It brings together, in one place, vendors that have never been assessed, vendors with an overdue reassessment, and vendors with a reassessment due in the next 30 days - useful to see who needs attention without opening every vendor one by one."
       },
       "technicalOpinions": {
         "title": "Technical opinions",
@@ -227,7 +240,15 @@
         "q2Question": "How do roles and permissions work?",
         "q2Answer": "Each user has one or more roles, and each role groups a set of permissions (e.g. approve assessments, manage users). Roles are managed under Administration > Roles.",
         "q3Question": "How do I change the language or theme (light/dark)?",
-        "q3Answer": "Use the controls at the bottom of the sidebar, available on every screen of the system."
+        "q3Answer": "Use the controls at the bottom of the sidebar, available on every screen of the system.",
+        "q4Question": "Where do I edit my personal details (name, photo) and verify my email?",
+        "q4Answer": "Under \"My profile\", reachable from your avatar menu at the bottom of the sidebar. There you can edit your name and profile photo, and verify your email - required to use passwordless login.",
+        "q5Question": "How do I change my password, and what are the requirements?",
+        "q5Answer": "Also under \"My profile\" - the password section requires your current password and validates the new one against the complexity policy configured by the platform (minimum length and required character classes, shown right on the form).",
+        "q6Question": "How do I enable two-factor verification (2FA)?",
+        "q6Answer": "Under \"My profile\", the 2FA section generates a QR code to scan with an authenticator app (Google Authenticator, Authy, or similar). Once confirmed, the system shows 10 single-use backup codes - save them, they're only shown once.",
+        "q7Question": "How does passwordless login work?",
+        "q7Answer": "On the login screen, the \"Sign in without a password\" button asks for your organization and email and sends a one-time code by email, no password required. This path requires a verified email and needs to be enabled by the platform; logging in through it skips the 2FA step - possessing the email already substitutes for both factors on this specific path."
       }
     }
   },
