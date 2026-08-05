@@ -26,7 +26,7 @@ export type VendorQuestionWithOptions = Prisma.VendorQuestionGetPayload<{
 
 const vendorAssessmentDetailInclude = {
   vendor: true,
-  performedBy: { select: { id: true, name: true, email: true } },
+  performedBy: { select: { id: true, name: true, email: true, avatarPath: true } },
   answers: {
     include: {
       vendorQuestion: true,
@@ -133,7 +133,7 @@ export class VendorsRepository {
   findAssessmentHistory(tenantId: string, vendorId: string) {
     return this.prisma.vendorAssessment.findMany({
       where: { tenantId, vendorId },
-      include: { performedBy: { select: { id: true, name: true, email: true } } },
+      include: { performedBy: { select: { id: true, name: true, email: true, avatarPath: true } } },
       orderBy: { createdAt: "desc" },
     });
   }

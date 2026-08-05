@@ -78,6 +78,7 @@ const DRAFT_ASSESSMENT = {
   vendorTierConfigId: "tier-config-1",
   status: "DRAFT" as const,
   vendor: VENDOR,
+  performedBy: { id: "user-1", name: "A", email: "a@b.com", avatarPath: null as string | null },
   answers: [
     {
       id: "answer-1",

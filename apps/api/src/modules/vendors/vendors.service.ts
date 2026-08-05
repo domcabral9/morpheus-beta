@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from "@ne
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { RiskEngineService, ScorableAnswer } from "../risk-engine/risk-engine.service";
 import { AuditLogService } from "../audit/audit-log.service";
+import { withHasAvatar } from "../../common/utils/avatar.util";
 import { VendorAssessmentDetail, VendorsRepository } from "./vendors.repository";
 import { tierForScore } from "./vendor-tier.util";
 import { computeNextReviewDate } from "./vendor-reassessment.util";
@@ -90,7 +91,8 @@ export class VendorsService {
 
   async getVendorHistory(user: AuthenticatedUser, vendorId: string) {
     await this.getVendor(user, vendorId);
-    return this.repository.findAssessmentHistory(user.tenantId, vendorId);
+    const history = await this.repository.findAssessmentHistory(user.tenantId, vendorId);
+    return history.map((entry) => ({ ...entry, performedBy: withHasAvatar(entry.performedBy) }));
   }
 
   // --- Catálogo de perguntas (admin) --------------------------------------------
@@ -349,7 +351,7 @@ export class VendorsService {
     if (!assessment || assessment.vendorId !== vendorId) {
       throw new NotFoundException("Avaliação de fornecedor não encontrada.");
     }
-    return assessment;
+    return { ...assessment, performedBy: withHasAvatar(assessment.performedBy) };
   }
 
   // --- Auxiliares privados -----------------------------------------------------------

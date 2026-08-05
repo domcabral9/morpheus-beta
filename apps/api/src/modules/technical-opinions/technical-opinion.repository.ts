@@ -47,7 +47,7 @@ const technicalOpinionListInclude = {
       assessment: { select: { id: true, softwareName: true, vendor: true } },
     },
   },
-  issuedBy: { select: { id: true, name: true, email: true } },
+  issuedBy: { select: { id: true, name: true, email: true, avatarPath: true } },
 } satisfies Prisma.TechnicalOpinionInclude;
 
 export type TechnicalOpinionListItem = Prisma.TechnicalOpinionGetPayload<{
