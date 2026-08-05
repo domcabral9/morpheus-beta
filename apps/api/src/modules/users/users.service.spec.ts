@@ -59,6 +59,7 @@ describe("UsersService", () => {
   let repo: {
     findByIdRaw: jest.Mock;
     findById: jest.Mock;
+    findAvatarPath: jest.Mock;
     setPasswordHash: jest.Mock;
     findOwnProfile: jest.Mock;
     updateName: jest.Mock;
@@ -75,6 +76,7 @@ describe("UsersService", () => {
     repo = {
       findByIdRaw: jest.fn().mockResolvedValue(USER_ADMIN_RAW),
       findById: jest.fn(),
+      findAvatarPath: jest.fn(),
       setPasswordHash: jest.fn().mockResolvedValue(undefined),
       findOwnProfile: jest.fn().mockResolvedValue(OWN_PROFILE_RAW),
       updateName: jest.fn().mockResolvedValue(undefined),
@@ -328,6 +330,35 @@ describe("UsersService", () => {
 
       expect(storage.read).toHaveBeenCalledWith("user-avatars/user-1/avatar.jpg");
       expect(avatar).toEqual({ buffer: Buffer.from("imagem"), contentType: "image/jpeg" });
+    });
+  });
+
+  describe("getAvatarForUser", () => {
+    it("rejeita quando o usuário não existe (id inválido ou de outro tenant)", async () => {
+      repo.findAvatarPath.mockResolvedValue(null);
+      await expect(service.getAvatarForUser("tenant-1", "user-2")).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(storage.read).not.toHaveBeenCalled();
+    });
+
+    it("rejeita quando o usuário não tem avatar", async () => {
+      repo.findAvatarPath.mockResolvedValue({ avatarPath: null });
+      await expect(service.getAvatarForUser("tenant-1", "user-2")).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(storage.read).not.toHaveBeenCalled();
+    });
+
+    it("lê do storage e resolve o content-type pela extensão, escopado por tenant", async () => {
+      repo.findAvatarPath.mockResolvedValue({ avatarPath: "user-avatars/user-2/avatar.png" });
+      storage.read.mockResolvedValue(Buffer.from("imagem"));
+
+      const avatar = await service.getAvatarForUser("tenant-1", "user-2");
+
+      expect(repo.findAvatarPath).toHaveBeenCalledWith("tenant-1", "user-2");
+      expect(storage.read).toHaveBeenCalledWith("user-avatars/user-2/avatar.png");
+      expect(avatar).toEqual({ buffer: Buffer.from("imagem"), contentType: "image/png" });
     });
   });
 });

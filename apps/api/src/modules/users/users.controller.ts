@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Res } from "@nestjs/common";
+import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import type { Response } from "express";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
 import { RequireAnyPermission } from "../../common/decorators/require-any-permission.decorator";
@@ -44,6 +45,27 @@ export class UsersController {
   @Get(":id")
   getById(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.usersService.getForTenant(user.tenantId, id);
+  }
+
+  // Sem @RequirePermissions de propósito: qualquer usuário autenticado do
+  // mesmo tenant pode ver o avatar de um colega - essas pessoas já aparecem
+  // por nome em telas que não exigem users:manage (aprovações, avaliações,
+  // fornecedores). Isolamento por tenant é reforçado no service/repository
+  // (where com tenantId), não aqui.
+  @ApiOperation({ summary: "Foto de perfil de outro usuário do mesmo tenant." })
+  @Get(":id/avatar")
+  async getAvatar(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") id: string,
+    @Res({ passthrough: false }) res: Response,
+  ): Promise<void> {
+    const { buffer, contentType } = await this.usersService.getAvatarForUser(user.tenantId, id);
+    res.set({
+      "Content-Type": contentType,
+      "Content-Disposition": "inline",
+      "Content-Length": String(buffer.length),
+    });
+    res.send(buffer);
   }
 
   @RequirePermissions(PERMISSIONS.USERS_MANAGE)

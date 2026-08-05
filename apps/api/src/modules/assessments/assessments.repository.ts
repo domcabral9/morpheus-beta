@@ -5,7 +5,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 const assessmentDetailInclude = {
   area: true,
   responsible: { select: { id: true, name: true, email: true } },
-  requester: { select: { id: true, name: true, email: true } },
+  requester: { select: { id: true, name: true, email: true, avatarPath: true } },
   versions: { orderBy: { createdAt: "desc" } },
   // Fornecedor cadastrado vinculado (opcional) - trazido aqui pra já deixar o
   // tier disponível pro badge do dialog de aprovação (Fase 4 do plano de

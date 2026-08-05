@@ -24,7 +24,7 @@ export interface AuditLogFilters {
 }
 
 const auditLogDetailInclude = {
-  user: { select: { id: true, name: true, email: true } },
+  user: { select: { id: true, name: true, email: true, avatarPath: true } },
 } satisfies Prisma.AuditLogInclude;
 
 export type AuditLogDetail = Prisma.AuditLogGetPayload<{ include: typeof auditLogDetailInclude }>;

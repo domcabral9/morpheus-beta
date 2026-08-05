@@ -133,6 +133,18 @@ export class UsersRepository {
     return this.prisma.user.findUnique({ where: { id }, select: userAdminSelect });
   }
 
+  /** `tenantId` no `where`, não checado depois - um id de outro tenant já
+   * não bate com a query, então devolve `null` (404) em vez de vazar que o
+   * usuário existe em outro tenant. Usado por `GET /users/:id/avatar`, o
+   * único lugar do app onde um usuário lê um recurso pertencente a OUTRO
+   * usuário do mesmo tenant (sem precisar de `users:manage`). */
+  findAvatarPath(tenantId: string, id: string): Promise<{ avatarPath: string | null } | null> {
+    return this.prisma.user.findFirst({
+      where: { id, tenantId },
+      select: { avatarPath: true },
+    });
+  }
+
   async assignRole(userId: string, roleId: string): Promise<void> {
     await this.prisma.userRole.upsert({
       where: { userId_roleId: { userId, roleId } },

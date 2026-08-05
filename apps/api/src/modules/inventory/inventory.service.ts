@@ -8,6 +8,7 @@ import { Criticality } from "@morpheus/database";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
+import { withHasAvatar } from "../../common/utils/avatar.util";
 import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { InventoryRepository, InventoryItemDetail } from "./inventory.repository";
@@ -235,8 +236,14 @@ export class InventoryService {
 
   /** Fila de itens manuais aguardando decisão — só quem tem
    * `assessments:approve` enxerga (rota gated no controller). */
-  listPendingApprovals(user: AuthenticatedUser) {
-    return this.approvalRepository.findPendingItems(user.tenantId);
+  async listPendingApprovals(user: AuthenticatedUser) {
+    const items = await this.approvalRepository.findPendingItems(user.tenantId);
+    return items.map((item) => ({
+      ...item,
+      approvalRequest: item.approvalRequest
+        ? { ...item.approvalRequest, requester: withHasAvatar(item.approvalRequest.requester) }
+        : item.approvalRequest,
+    }));
   }
 
   async approve(

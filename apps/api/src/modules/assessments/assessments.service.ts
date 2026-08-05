@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { AssessmentStatus } from "@morpheus/database";
 import { PERMISSIONS } from "../../common/constants/permissions";
+import { withHasAvatar } from "../../common/utils/avatar.util";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { AreasService } from "../areas/areas.service";
 import { UsersService } from "../users/users.service";
@@ -102,10 +103,10 @@ export class AssessmentsService {
     return { items, total, page, pageSize };
   }
 
-  async findOneForUser(user: AuthenticatedUser, id: string): Promise<AssessmentDetail> {
+  async findOneForUser(user: AuthenticatedUser, id: string) {
     const assessment = await this.getOwnedOrThrow(user.tenantId, id);
     this.assertCanView(user, assessment);
-    return assessment;
+    return { ...assessment, requester: withHasAvatar(assessment.requester) };
   }
 
   async update(
