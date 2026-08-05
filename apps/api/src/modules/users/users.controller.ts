@@ -77,6 +77,15 @@ export class UsersController {
     return this.usersService.setPassword(user.tenantId, user.id, id, dto.password);
   }
 
+  // Sem @Audit(): mesmo motivo de setPassword acima - a auditoria é gravada
+  // explicitamente em UsersService.forceDisableTwoFactor porque precisa do
+  // metadata `initiatedBy`.
+  @RequirePermissions(PERMISSIONS.USERS_MANAGE)
+  @Post(":id/force-disable-two-factor")
+  forceDisableTwoFactor(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.usersService.forceDisableTwoFactor(user.tenantId, user.id, id);
+  }
+
   @RequirePermissions(PERMISSIONS.USERS_MANAGE)
   @Audit("CREATE", "UserRole")
   @Post(":id/roles")

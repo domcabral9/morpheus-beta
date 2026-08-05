@@ -19,8 +19,9 @@ uma linha do que aconteceu.
   kill-switch corrigido na revisão de segurança — Fases 1-7, fecha o backlog de Autenticação),
   reestruturação em grade de `/profile`/`/admin/platform-policy`/matriz de risco/questionários
   (com 2 bugs reais de screenshot corrigidos — regeneração esquecida e um gotcha de captura
-  `fullPage`+sticky), e auditoria de conteúdo do FAQ (9 perguntas novas, incluindo uma seção própria
-  "Fornecedores").
+  `fullPage`+sticky), auditoria de conteúdo do FAQ (9 perguntas novas, incluindo uma seção própria
+  "Fornecedores"), e recuperação de conta assistida por administrador (forçar desativação de 2FA de
+  terceiro travado fora, sem achado na revisão de segurança).
 - [**Julho**](./changelog/2026-07.md) — Construção inicial do produto (roteiro técnico Etapas 1-16 +
   plano pós-roteiro Etapas A-I), multi-tenancy e administração avançada, backlog pós-uso, renovação
   anual de homologação, avaliação de risco de fornecedores, vínculo Inventory↔Vendor, SSDLC/CI, e
