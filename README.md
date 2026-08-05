@@ -167,6 +167,14 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | --- |
 | ![Recuperação de conta](./docs/screenshots/admin-force-disable-2fa.png) |
 
+| Pareceres técnicos - quem emitiu | Auditoria - quem fez o quê |
+| --- | --- |
+| ![Pareceres técnicos](./docs/screenshots/pareceres-tecnicos.png) | ![Auditoria](./docs/screenshots/admin-auditoria.png) |
+
+| Aprovação - solicitante identificado | Avaliação de fornecedor - quem realizou |
+| --- | --- |
+| ![Aprovação - solicitante](./docs/screenshots/approvals-solicitante.png) | ![Avaliação - realizada por](./docs/screenshots/vendors-avaliacao-realizada-por.png) |
+
 ## Stack
 
 | Camada          | Tecnologia                                                             |
@@ -385,6 +393,14 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | Account recovery - force-disable 2FA |
 | --- |
 | ![Account recovery](./docs/screenshots/admin-force-disable-2fa-en.png) |
+
+| Technical opinions - who issued it | Audit log - who did what |
+| --- | --- |
+| ![Technical opinions](./docs/screenshots/pareceres-tecnicos-en.png) | ![Audit log](./docs/screenshots/admin-auditoria-en.png) |
+
+| Approval - requester identified | Vendor assessment - who performed it |
+| --- | --- |
+| ![Approval - requester](./docs/screenshots/approvals-solicitante-en.png) | ![Assessment - performed by](./docs/screenshots/vendors-avaliacao-realizada-por-en.png) |
 
 ## Stack
 
