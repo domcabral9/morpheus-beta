@@ -6,7 +6,7 @@ import { ChevronRight, ShieldIcon } from "lucide-react";
 
 import { useAuth } from "@/components/auth-provider";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   DropdownMenu,
@@ -34,13 +34,6 @@ import {
 import { useHasAnyManagePermission } from "@/lib/use-permission";
 import { ADMIN_NAV_ITEMS, PRIMARY_NAV_ITEMS, getVisibleNavItems, isNavItemActive } from "@/lib/nav-items";
 import { OrgSwitcher } from "@/components/org-switcher";
-
-function getInitials(name: string | undefined): string {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  const initials = parts.length > 1 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : parts[0].slice(0, 2);
-  return initials.toUpperCase();
-}
 
 export function AppSidebar() {
   const t = useTranslations("Nav");
@@ -154,9 +147,13 @@ export function AppSidebar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg">
-                  <Avatar className="size-6 rounded-md">
-                    <AvatarFallback className="rounded-md">{getInitials(user?.name)}</AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    name={user?.name}
+                    avatarUrl="/auth/avatar"
+                    size="sm"
+                    className="rounded-md"
+                    fallbackClassName="rounded-md"
+                  />
                   <span className="truncate">{user?.name}</span>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>

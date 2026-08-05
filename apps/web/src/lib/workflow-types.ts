@@ -39,6 +39,7 @@ export interface InboxStepExecution {
       vendor: string;
       criticality: Criticality;
       requesterId: string;
+      requester: { id: string; name: string; hasAvatar: boolean };
       hasRiskAnalysis: boolean;
       hasInfoSecClause: boolean;
       vendorId: string | null;
@@ -78,7 +79,7 @@ export interface WorkflowHistoryStepExecution {
   createdAt: string;
   workflowStep: { id: string; order: number; name: string; isOptional: boolean };
   assignedUser: { id: string; name: string; email: string } | null;
-  decidedBy: { id: string; name: string; email: string } | null;
+  decidedBy: { id: string; name: string; email: string; hasAvatar: boolean } | null;
 }
 
 export interface WorkflowInstanceDetail {

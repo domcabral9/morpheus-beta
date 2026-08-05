@@ -58,7 +58,7 @@ export interface AssessmentSummary {
   status: AssessmentStatus;
   createdAt: string;
   area: { id: string; name: string };
-  requester: { id: string; name: string; email: string };
+  requester: { id: string; name: string; email: string; hasAvatar: boolean };
   responsible: { id: string; name: string; email: string };
 }
 

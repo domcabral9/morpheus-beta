@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 
 import { useApi } from "@/lib/use-api";
+import { UserAvatar } from "@/components/user-avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { PendingInventoryApproval } from "@/lib/inventory-approval-types";
@@ -72,7 +73,20 @@ export function InventoryApprovalsView() {
                       {criticalityT(item.criticality)}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {item.approvalRequest?.requester.name}
+                      {item.approvalRequest && (
+                        <div className="flex items-center gap-2">
+                          <UserAvatar
+                            name={item.approvalRequest.requester.name}
+                            avatarUrl={
+                              item.approvalRequest.requester.hasAvatar
+                                ? `/users/${item.approvalRequest.requester.id}/avatar`
+                                : null
+                            }
+                            size="sm"
+                          />
+                          <span>{item.approvalRequest.requester.name}</span>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {new Date(item.createdAt).toLocaleDateString()}

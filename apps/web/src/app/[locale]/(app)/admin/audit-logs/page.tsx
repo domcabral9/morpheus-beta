@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 
 import { useApi } from "@/lib/use-api";
+import { UserAvatar } from "@/components/user-avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -241,7 +242,18 @@ function AuditLogsContent() {
                         {log.entityId ? ` #${log.entityId.slice(-8)}` : ""}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {log.user ? log.user.name : t("systemUser")}
+                        {log.user ? (
+                          <div className="flex items-center gap-2">
+                            <UserAvatar
+                              name={log.user.name}
+                              avatarUrl={log.user.hasAvatar ? `/users/${log.user.id}/avatar` : null}
+                              size="sm"
+                            />
+                            <span>{log.user.name}</span>
+                          </div>
+                        ) : (
+                          t("systemUser")
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{log.ipAddress ?? "—"}</TableCell>
                     </TableRow>

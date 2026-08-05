@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { useApi } from "@/lib/use-api";
 import { ApiError } from "@/components/auth-provider";
+import { UserAvatar } from "@/components/user-avatar";
 import type { InboxStepExecution, WorkflowDecision } from "@/lib/workflow-types";
 import {
   Dialog,
@@ -99,6 +100,19 @@ export function DecisionDialog({ execution, onOpenChange, onDecided }: DecisionD
           <div>
             <span className="text-muted-foreground">{t("vendorLabel")}: </span>
             {execution.assessmentWorkflowInstance.assessment.vendor}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">{t("requesterLabel")}: </span>
+            <UserAvatar
+              name={execution.assessmentWorkflowInstance.assessment.requester.name}
+              avatarUrl={
+                execution.assessmentWorkflowInstance.assessment.requester.hasAvatar
+                  ? `/users/${execution.assessmentWorkflowInstance.assessment.requester.id}/avatar`
+                  : null
+              }
+              size="sm"
+            />
+            {execution.assessmentWorkflowInstance.assessment.requester.name}
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span className="flex items-center gap-2">

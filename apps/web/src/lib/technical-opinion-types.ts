@@ -6,7 +6,7 @@ export interface TechnicalOpinionListItem {
   assessmentVersion: {
     assessment: { id: string; softwareName: string; vendor: string };
   };
-  issuedBy: { id: string; name: string; email: string };
+  issuedBy: { id: string; name: string; email: string; hasAvatar: boolean };
 }
 
 export interface PaginatedTechnicalOpinions {
