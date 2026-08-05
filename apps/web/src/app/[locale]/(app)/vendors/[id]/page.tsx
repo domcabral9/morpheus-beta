@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { VendorAssessmentSummary, VendorDetail } from "@/lib/vendor-types";
 import { TierBadge } from "@/components/tier-badge";
+import { UserAvatar } from "@/components/user-avatar";
 import { VendorFormDialog } from "../_components/vendor-form-dialog";
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -184,7 +185,18 @@ export default function VendorDetailPage() {
                             )}
                           </TableCell>
                           <TableCell className="text-muted-foreground">
-                            {assessment.performedBy.name}
+                            <div className="flex items-center gap-2">
+                              <UserAvatar
+                                name={assessment.performedBy.name}
+                                avatarUrl={
+                                  assessment.performedBy.hasAvatar
+                                    ? `/users/${assessment.performedBy.id}/avatar`
+                                    : null
+                                }
+                                size="sm"
+                              />
+                              <span>{assessment.performedBy.name}</span>
+                            </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">
                             {assessment.completedAt

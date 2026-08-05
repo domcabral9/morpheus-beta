@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { VendorAssessmentDetail, VendorQuestionCategory } from "@/lib/vendor-types";
 import { TierBadge } from "@/components/tier-badge";
+import { UserAvatar } from "@/components/user-avatar";
 
 type LocalAnswer = { textValue?: string; scaleValue?: number; selectedOptionIds?: string[] };
 
@@ -140,11 +141,24 @@ export default function VendorAssessmentPage() {
                 )}
               </div>
             </CardHeader>
-            {assessment.status === "COMPLETED" && assessment.totalScore && (
-              <CardContent className="text-sm text-muted-foreground">
-                {t("scoreSummary", { score: assessment.totalScore })}
-              </CardContent>
-            )}
+            <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <span>{t("performedByLabel")}:</span>
+                <UserAvatar
+                  name={assessment.performedBy.name}
+                  avatarUrl={
+                    assessment.performedBy.hasAvatar
+                      ? `/users/${assessment.performedBy.id}/avatar`
+                      : null
+                  }
+                  size="sm"
+                />
+                <span>{assessment.performedBy.name}</span>
+              </div>
+              {assessment.status === "COMPLETED" && assessment.totalScore && (
+                <span>{t("scoreSummary", { score: assessment.totalScore })}</span>
+              )}
+            </CardContent>
           </Card>
 
           {!isEditable && assessment.status === "COMPLETED" && (

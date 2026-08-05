@@ -34,7 +34,7 @@ export interface AuditLogEntry {
   ipAddress: string | null;
   userAgent: string | null;
   createdAt: string;
-  user: { id: string; name: string; email: string } | null;
+  user: { id: string; name: string; email: string; hasAvatar: boolean } | null;
 }
 
 export interface PaginatedAuditLogs {

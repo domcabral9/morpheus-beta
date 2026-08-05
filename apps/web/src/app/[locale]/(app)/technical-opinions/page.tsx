@@ -7,6 +7,7 @@ import { Download, Eye, Loader2 } from "lucide-react";
 
 import { useApi } from "@/lib/use-api";
 import { Link } from "@/i18n/navigation";
+import { UserAvatar } from "@/components/user-avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -301,7 +302,18 @@ export default function TechnicalOpinionsPage() {
                       <TableCell className="text-muted-foreground">
                         {new Date(opinion.issuedAt).toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{opinion.issuedBy.name}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <UserAvatar
+                            name={opinion.issuedBy.name}
+                            avatarUrl={
+                              opinion.issuedBy.hasAvatar ? `/users/${opinion.issuedBy.id}/avatar` : null
+                            }
+                            size="sm"
+                          />
+                          <span>{opinion.issuedBy.name}</span>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button

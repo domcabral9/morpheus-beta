@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { useApi } from "@/lib/use-api";
 import { ApiError } from "@/lib/api-client";
+import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +17,7 @@ import type { UserOption } from "@/lib/user-picker-types";
 
 interface ReassignRequesterCardProps {
   assessmentId: string;
-  currentRequester: { id: string; name: string; email: string };
+  currentRequester: { id: string; name: string; email: string; hasAvatar: boolean };
   users: UserOption[];
   onReassigned: (assessment: AssessmentDetail) => void;
 }
@@ -65,9 +66,16 @@ export function ReassignRequesterCard({
         <CardTitle className="text-base">{t("reassignTitle")}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground">
-          {t("reassignDescription", { name: currentRequester.name })}
-        </p>
+        <div className="flex items-center gap-2">
+          <UserAvatar
+            name={currentRequester.name}
+            avatarUrl={currentRequester.hasAvatar ? `/users/${currentRequester.id}/avatar` : null}
+            size="sm"
+          />
+          <p className="text-sm text-muted-foreground">
+            {t("reassignDescription", { name: currentRequester.name })}
+          </p>
+        </div>
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="newRequesterId">{t("reassignNewRequesterLabel")}</Label>

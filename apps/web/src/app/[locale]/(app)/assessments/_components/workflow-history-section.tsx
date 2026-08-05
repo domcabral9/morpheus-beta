@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 
 import { useApi } from "@/lib/use-api";
+import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { WorkflowInstanceDetail, WorkflowStepStatus } from "@/lib/workflow-types";
@@ -64,12 +65,19 @@ export function WorkflowHistorySection({ assessmentId }: { assessmentId: string 
               </Badge>
             </div>
             {step.decidedBy && step.decidedAt && (
-              <p className="text-sm text-muted-foreground">
-                {t("workflowHistoryDecidedBy", {
-                  name: step.decidedBy.name,
-                  date: new Date(step.decidedAt).toLocaleString(),
-                })}
-              </p>
+              <div className="flex items-center gap-2">
+                <UserAvatar
+                  name={step.decidedBy.name}
+                  avatarUrl={step.decidedBy.hasAvatar ? `/users/${step.decidedBy.id}/avatar` : null}
+                  size="sm"
+                />
+                <p className="text-sm text-muted-foreground">
+                  {t("workflowHistoryDecidedBy", {
+                    name: step.decidedBy.name,
+                    date: new Date(step.decidedAt).toLocaleString(),
+                  })}
+                </p>
+              </div>
             )}
             {step.comments && <p className="text-sm">{step.comments}</p>}
           </div>
