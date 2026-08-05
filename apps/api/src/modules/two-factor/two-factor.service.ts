@@ -108,6 +108,20 @@ export class TwoFactorService {
     });
   }
 
+  /**
+   * Desativação sem reautenticação - usada só pelo endpoint administrativo
+   * de recuperação de conta (`UsersService.forceDisableTwoFactor`), quando o
+   * próprio usuário perdeu a senha E os códigos de backup e não tem como se
+   * autoatender via `disable()` acima. Sem auditoria/e-mail aqui de propósito
+   * - quem chama (`UsersService`) já grava o audit log com `initiatedBy:
+   * "admin"` e envia o aviso por e-mail, porque só ali existe o
+   * `actingUserId` do administrador.
+   */
+  async forceDisable(userId: string): Promise<void> {
+    await this.repository.disable(userId);
+    await this.repository.deleteAllBackupCodes(userId);
+  }
+
   async regenerateBackupCodes(
     actor: AuthenticatedUser,
     currentPassword: string,

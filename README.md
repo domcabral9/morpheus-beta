@@ -79,6 +79,11 @@ avaliado ou está com reavaliação vencida/próxima.
   dependência de terceiros. Toggle de recomendação por plataforma inteira, e revisão de segurança
   dedicada encontrou e corrigiu um bypass real (login via SSO ignorava o segundo fator) antes de ir
   ao ar.
+- **Recuperação de conta assistida por administrador**: quando um usuário perde a senha e os
+  códigos de backup do 2FA ao mesmo tempo (lockout total, sem caminho de autoatendimento possível),
+  um admin do próprio tenant pode forçar a desativação do 2FA de um terceiro sem a senha dele -
+  ação bloqueada contra o próprio ator (evita contornar a reautenticação normal do autoatendimento),
+  registrada em auditoria com o administrador identificado, e a pessoa afetada é avisada por e-mail.
 - **Login sem senha (passwordless)**: código de 6 dígitos por e-mail, digitado - não um link
   clicável, escolha deliberada para não depender de scanners de e-mail corporativo não
   pré-consumirem o token. Condicionado a um pré-requisito formal de e-mail verificado
@@ -157,6 +162,10 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | Aprovação de item de inventário manual | Item reprovado - motivo e reenvio |
 | --- | --- |
 | ![Aprovação de item de inventário manual](./docs/screenshots/inventory-approval-queue.png) | ![Item reprovado](./docs/screenshots/inventory-approval-rejected.png) |
+
+| Recuperação de conta - forçar desativação de 2FA |
+| --- |
+| ![Recuperação de conta](./docs/screenshots/admin-force-disable-2fa.png) |
 
 ## Stack
 
@@ -291,6 +300,11 @@ overdue/upcoming reassessment.
   with reauthentication) - own implementation on top of `node:crypto`, no third-party dependency.
   Platform-wide recommendation toggle, and a dedicated security review found and fixed a real bypass
   (SSO login skipped the second factor) before it shipped.
+- **Admin-assisted account recovery**: when a user loses their password and their 2FA backup codes
+  at the same time (a total lockout, with no self-service path left), a tenant admin can force-disable
+  that user's 2FA without their password - the action is blocked against the acting admin's own
+  account (so it can't be used to bypass self-service reauthentication), recorded in the audit log
+  with the admin identified, and the affected user is notified by email.
 - **Passwordless sign-in**: a typed 6-digit email code, not a clickable link - a deliberate choice
   so corporate email scanners can't pre-consume the token. Gated behind a formal verified-email
   prerequisite (self-service at `/profile`) and a platform-wide toggle. Deliberate design decision:
@@ -367,6 +381,10 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | Manual inventory item approval | Rejected item - reason and resubmit |
 | --- | --- |
 | ![Manual inventory item approval](./docs/screenshots/inventory-approval-queue-en.png) | ![Rejected item](./docs/screenshots/inventory-approval-rejected-en.png) |
+
+| Account recovery - force-disable 2FA |
+| --- |
+| ![Account recovery](./docs/screenshots/admin-force-disable-2fa-en.png) |
 
 ## Stack
 

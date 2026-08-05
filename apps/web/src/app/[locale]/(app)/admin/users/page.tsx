@@ -16,6 +16,7 @@ import { AdminSectionGate } from "../_components/section-gate";
 import { RoleAssignmentDialog } from "./_components/role-assignment-dialog";
 import { CreateUserDialog } from "./_components/create-user-dialog";
 import { ResetPasswordDialog } from "./_components/reset-password-dialog";
+import { ForceDisableTwoFactorDialog } from "./_components/force-disable-two-factor-dialog";
 
 function UsersAdminContent() {
   const t = useTranslations("AdminUsers");
@@ -27,6 +28,7 @@ function UsersAdminContent() {
   const [error, setError] = React.useState<string | null>(null);
   const [managingUser, setManagingUser] = React.useState<UserAdmin | null>(null);
   const [resettingUser, setResettingUser] = React.useState<UserAdmin | null>(null);
+  const [disabling2faUser, setDisabling2faUser] = React.useState<UserAdmin | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
   const [togglingId, setTogglingId] = React.useState<string | null>(null);
 
@@ -155,6 +157,16 @@ function UsersAdminContent() {
                           >
                             {t("resetPasswordButton")}
                           </Button>
+                          {user.totpEnabled && !isSelf && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setDisabling2faUser(user)}
+                            >
+                              {t("forceDisableTwoFactorButton")}
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -196,6 +208,19 @@ function UsersAdminContent() {
           user={resettingUser}
           open={!!resettingUser}
           onOpenChange={(open) => !open && setResettingUser(null)}
+        />
+      )}
+
+      {disabling2faUser && (
+        <ForceDisableTwoFactorDialog
+          user={disabling2faUser}
+          open={!!disabling2faUser}
+          onOpenChange={(open) => !open && setDisabling2faUser(null)}
+          onDisabled={(updated) => {
+            setUsers((current) =>
+              current?.map((item) => (item.id === updated.id ? updated : item)) ?? current,
+            );
+          }}
         />
       )}
     </div>

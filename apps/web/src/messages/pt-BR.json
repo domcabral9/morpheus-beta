@@ -740,7 +740,14 @@
     "skipForNow": "Pular por agora",
     "setPasswordButton": "Definir senha",
     "setPasswordSuccess": "Senha definida.",
-    "setPasswordError": "Não foi possível definir a senha."
+    "setPasswordError": "Não foi possível definir a senha.",
+    "cancel": "Cancelar",
+    "forceDisableTwoFactorButton": "Forçar desativação de 2FA",
+    "forceDisableTwoFactorTitle": "Desativar 2FA de {name}?",
+    "forceDisableTwoFactorWarning": "Isso remove um fator de autenticação real da conta - use apenas para recuperação de acesso, quando a pessoa perdeu a senha e os códigos de backup ao mesmo tempo. A ação fica registrada na auditoria e a pessoa afetada recebe um aviso por e-mail.",
+    "forceDisableTwoFactorConfirm": "Desativar 2FA",
+    "forceDisableTwoFactorSuccess": "2FA de {name} desativado.",
+    "forceDisableTwoFactorError": "Não foi possível desativar o 2FA."
   },
   "AdminRoles": {
     "title": "Papéis",

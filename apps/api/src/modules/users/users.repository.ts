@@ -46,6 +46,7 @@ const userAdminSelect = {
   name: true,
   email: true,
   isActive: true,
+  totpEnabled: true,
   lastLoginAt: true,
   createdAt: true,
   userRoles: { select: { role: { select: { id: true, name: true } } } },

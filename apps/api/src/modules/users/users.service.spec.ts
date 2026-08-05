@@ -11,6 +11,8 @@ import { UsersRepository } from "./users.repository";
 import { RolesService } from "../roles/roles.service";
 import { PasswordPolicyService } from "../platform-policy/password-policy.service";
 import { TwoFactorPolicyService } from "../platform-policy/two-factor-policy.service";
+import { TwoFactorService } from "../two-factor/two-factor.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { AuditLogService } from "../audit/audit-log.service";
 import { STORAGE_ADAPTER } from "../storage/storage.interface";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
@@ -34,6 +36,7 @@ const USER_ADMIN_RAW = {
   name: "A",
   email: "a@b.com",
   isActive: true,
+  totpEnabled: false,
   lastLoginAt: null,
   createdAt: new Date(),
   userRoles: [],
@@ -63,6 +66,8 @@ describe("UsersService", () => {
   };
   let passwordPolicyService: { validate: jest.Mock };
   let twoFactorPolicyService: { getPolicy: jest.Mock };
+  let twoFactorService: { forceDisable: jest.Mock };
+  let notificationsService: { sendRawEmail: jest.Mock };
   let auditLogService: { record: jest.Mock };
   let storage: { save: jest.Mock; read: jest.Mock };
 
@@ -77,6 +82,8 @@ describe("UsersService", () => {
     };
     passwordPolicyService = { validate: jest.fn().mockResolvedValue(undefined) };
     twoFactorPolicyService = { getPolicy: jest.fn().mockResolvedValue({ enforced: false }) };
+    twoFactorService = { forceDisable: jest.fn().mockResolvedValue(undefined) };
+    notificationsService = { sendRawEmail: jest.fn().mockResolvedValue(undefined) };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
     storage = { save: jest.fn().mockResolvedValue(undefined), read: jest.fn() };
 
@@ -87,6 +94,8 @@ describe("UsersService", () => {
         { provide: RolesService, useValue: {} },
         { provide: PasswordPolicyService, useValue: passwordPolicyService },
         { provide: TwoFactorPolicyService, useValue: twoFactorPolicyService },
+        { provide: TwoFactorService, useValue: twoFactorService },
+        { provide: NotificationsService, useValue: notificationsService },
         { provide: AuditLogService, useValue: auditLogService },
         { provide: STORAGE_ADAPTER, useValue: storage },
       ],
@@ -129,6 +138,51 @@ describe("UsersService", () => {
           entityId: "user-1",
           metadata: { passwordChange: true, initiatedBy: "admin" },
         }),
+      );
+    });
+  });
+
+  describe("forceDisableTwoFactor", () => {
+    it("rejeita quando o alvo é o próprio ator, sem tocar o repositório", async () => {
+      await expect(service.forceDisableTwoFactor("tenant-1", "user-1", "user-1")).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(twoFactorService.forceDisable).not.toHaveBeenCalled();
+    });
+
+    it("rejeita usuário de outro tenant", async () => {
+      repo.findByIdRaw.mockResolvedValue({ ...USER_ADMIN_RAW, tenantId: "tenant-2" });
+      await expect(service.forceDisableTwoFactor("tenant-1", "admin-1", "user-1")).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it("rejeita quando o alvo não tem 2FA ativo", async () => {
+      repo.findByIdRaw.mockResolvedValue({ ...USER_ADMIN_RAW, totpEnabled: false });
+      await expect(service.forceDisableTwoFactor("tenant-1", "admin-1", "user-1")).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(twoFactorService.forceDisable).not.toHaveBeenCalled();
+    });
+
+    it("desativa, grava auditoria com initiatedBy admin e notifica o usuário por e-mail", async () => {
+      repo.findByIdRaw.mockResolvedValue({ ...USER_ADMIN_RAW, totpEnabled: true });
+
+      await service.forceDisableTwoFactor("tenant-1", "admin-1", "user-1");
+
+      expect(twoFactorService.forceDisable).toHaveBeenCalledWith("user-1");
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId: "tenant-1",
+          userId: "admin-1",
+          action: "UPDATE",
+          entityType: "User",
+          entityId: "user-1",
+          metadata: { field: "twoFactor", event: "disabled", initiatedBy: "admin" },
+        }),
+      );
+      expect(notificationsService.sendRawEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: "a@b.com" }),
       );
     });
   });

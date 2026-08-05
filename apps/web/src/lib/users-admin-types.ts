@@ -13,6 +13,7 @@ export interface UserAdmin {
   name: string;
   email: string;
   isActive: boolean;
+  totpEnabled: boolean;
   lastLoginAt: string | null;
   createdAt: string;
   userRoles: UserRoleLink[];
