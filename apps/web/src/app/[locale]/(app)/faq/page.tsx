@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import type { LucideIcon } from "lucide-react";
-import { Boxes, CheckCircle2, ClipboardList, FileText, UserCircle } from "lucide-react";
+import { Boxes, Building2, CheckCircle2, ClipboardList, FileText, UserCircle } from "lucide-react";
 
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,11 +19,12 @@ interface FaqSection {
  * fixo (não dinâmico) — cobre os principais fluxos do sistema hoje; ganhar
  * uma pergunta nova é só adicionar a chave aqui e o texto em pt-BR/en. */
 const FAQ_SECTIONS: FaqSection[] = [
-  { key: "assessments", icon: ClipboardList, questionKeys: ["q1", "q2", "q3"] },
+  { key: "assessments", icon: ClipboardList, questionKeys: ["q1", "q2", "q3", "q4"] },
   { key: "approvals", icon: CheckCircle2, questionKeys: ["q1", "q2"] },
-  { key: "inventory", icon: Boxes, questionKeys: ["q1", "q2", "q3"] },
+  { key: "inventory", icon: Boxes, questionKeys: ["q1", "q2", "q3", "q4"] },
+  { key: "vendors", icon: Building2, questionKeys: ["q1", "q2", "q3"] },
   { key: "technicalOpinions", icon: FileText, questionKeys: ["q1", "q2", "q3"] },
-  { key: "account", icon: UserCircle, questionKeys: ["q1", "q2", "q3"] },
+  { key: "account", icon: UserCircle, questionKeys: ["q1", "q2", "q3", "q4", "q5", "q6", "q7"] },
 ];
 
 export default function FaqPage() {
