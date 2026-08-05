@@ -193,7 +193,9 @@
         "q2Question": "Como eu inicio uma nova avaliação?",
         "q2Answer": "Na tela de Avaliações, use o botão de nova avaliação, preencha os dados do software e responda o questionário. Assim que enviado, ele entra automaticamente no fluxo de aprovação.",
         "q3Question": "O que significa cada classificação do parecer final (Homologado, Rejeitado, Aguardando Ajustes)?",
-        "q3Answer": "É o resultado registrado no parecer técnico emitido ao final do fluxo: \"Homologado\" libera o uso do software, \"Rejeitado\" impede o uso, e \"Aguardando Ajustes\" pede correções antes de uma nova análise."
+        "q3Answer": "É o resultado registrado no parecer técnico emitido ao final do fluxo: \"Homologado\" libera o uso do software, \"Rejeitado\" impede o uso, e \"Aguardando Ajustes\" pede correções antes de uma nova análise.",
+        "q4Question": "O que acontece quando a validade de uma homologação vence?",
+        "q4Answer": "A avaliação original reabre automaticamente para renovação, com um prazo de 30 dias corridos para o solicitante reenviá-la (a mesma avaliação, não uma nova). Se o prazo vencer sem resolução, o item de inventário expira e a área correspondente fica temporariamente impedida de abrir novas avaliações até a renovação pendente ser resolvida — um Administrador pode reatribuir o solicitante caso a pessoa original não esteja mais na organização."
       },
       "approvals": {
         "title": "Aprovações",
@@ -209,7 +211,18 @@
         "q2Question": "Todo item do inventário tem parecer técnico vinculado?",
         "q2Answer": "Não. Só os itens originados de uma homologação aprovada têm parecer vinculado — itens cadastrados manualmente mostram \"—\" no campo de parecer.",
         "q3Question": "Como vejo o parecer técnico vinculado a um item do inventário?",
-        "q3Answer": "Na tela de detalhe do item, ou na coluna \"Parecer\" da listagem — o link leva direto para o parecer já filtrado em Pareceres Técnicos."
+        "q3Answer": "Na tela de detalhe do item, ou na coluna \"Parecer\" da listagem — o link leva direto para o parecer já filtrado em Pareceres Técnicos.",
+        "q4Question": "Por que um item cadastrado manualmente não aparece ativo na hora?",
+        "q4Answer": "Cadastro manual (fora do fluxo de homologação) passa por uma aprovação própria antes de entrar em uso: o item fica \"Aguardando aprovação\" até alguém com permissão de aprovação decidir, na aba \"Itens de inventário\" de Aprovações. Se for reprovado, o motivo fica registrado no item e só quem cadastrou pode corrigir e reenviar."
+      },
+      "vendors": {
+        "title": "Fornecedores",
+        "q1Question": "O que é a avaliação de risco de fornecedores (ART) e o que significa o Tier?",
+        "q1Answer": "É um questionário próprio, inspirado em práticas do NIST SP 800-161, preenchido por um analista interno sobre o fornecedor por trás de um software — contrato, política de segurança da informação, gestão de vulnerabilidades, entre outros pontos. Ao concluir, o sistema calcula um score automaticamente e classifica o fornecedor num Tier de 1 (menor acompanhamento) a 4 (acompanhamento mais próximo), com uma cadência de reavaliação que depende do Tier e da criticidade do fornecedor para o negócio.",
+        "q2Question": "Como vinculo um fornecedor a um item de inventário e inicio uma avaliação?",
+        "q2Answer": "Na tela de detalhe do item de inventário, use \"Vincular fornecedor\" para buscar um fornecedor já cadastrado (ou cadastrar um novo rapidamente) — vincular e iniciar a avaliação é uma ação só. Se o fornecedor já tiver uma avaliação concluída, o Tier aparece direto ali; se ainda não tiver nenhuma, o botão \"Iniciar ART\" abre o questionário.",
+        "q3Question": "O que é a aba \"Acompanhamento\" em Fornecedores?",
+        "q3Answer": "Reúne, num só lugar, os fornecedores que nunca foram avaliados, os com reavaliação vencida e os com reavaliação prevista para os próximos 30 dias — útil para saber quem precisa de atenção sem precisar abrir fornecedor por fornecedor."
       },
       "technicalOpinions": {
         "title": "Pareceres técnicos",
@@ -227,7 +240,15 @@
         "q2Question": "Como funcionam papéis e permissões?",
         "q2Answer": "Cada usuário tem um ou mais papéis, e cada papel agrupa um conjunto de permissões (ex.: aprovar avaliações, gerenciar usuários). Papéis são gerenciados em Administração > Papéis.",
         "q3Question": "Como mudo o idioma ou o tema (claro/escuro)?",
-        "q3Answer": "Use os controles no rodapé da barra lateral, disponíveis em qualquer tela do sistema."
+        "q3Answer": "Use os controles no rodapé da barra lateral, disponíveis em qualquer tela do sistema.",
+        "q4Question": "Onde edito meus dados pessoais (nome, foto) e verifico meu e-mail?",
+        "q4Answer": "Em \"Meu perfil\", acessível pelo menu do seu avatar no rodapé da barra lateral. Lá você edita nome e foto de perfil, e pode verificar seu e-mail — necessário para usar o login sem senha.",
+        "q5Question": "Como troco minha senha e quais são os requisitos?",
+        "q5Answer": "Também em \"Meu perfil\" — a seção de senha exige a senha atual e valida a nova conforme a política de complexidade configurada pela plataforma (tamanho mínimo e classes de caractere exigidas, exibidos no próprio formulário).",
+        "q6Question": "Como ativo a verificação em duas etapas (2FA)?",
+        "q6Answer": "Em \"Meu perfil\", a seção de 2FA gera um QR code para escanear com um aplicativo autenticador (Google Authenticator, Authy ou similar). Depois de confirmado, o sistema mostra 10 códigos de backup de uso único — guarde-os, eles só aparecem uma vez.",
+        "q7Question": "Como funciona o login sem senha?",
+        "q7Answer": "Na tela de login, o botão \"Entrar sem senha\" pede sua organização e e-mail e envia um código de uso único por e-mail, sem digitar senha. Esse caminho exige e-mail verificado e precisa estar habilitado pela plataforma; ao entrar por ele, a etapa de 2FA é dispensada — a posse do e-mail já substitui os dois fatores nesse fluxo específico."
       }
     }
   },
