@@ -11,6 +11,8 @@ import { RolesService } from "../roles/roles.service";
 import { AuditLogService } from "../audit/audit-log.service";
 import { PasswordPolicyService } from "../platform-policy/password-policy.service";
 import { TwoFactorPolicyService } from "../platform-policy/two-factor-policy.service";
+import { TwoFactorService } from "../two-factor/two-factor.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { STORAGE_ADAPTER, StorageAdapter } from "../storage/storage.interface";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { UsersRepository, UserWithPermissions, UserAdminRaw } from "./users.repository";
@@ -50,6 +52,8 @@ export class UsersService {
     private readonly rolesService: RolesService,
     private readonly passwordPolicyService: PasswordPolicyService,
     private readonly twoFactorPolicyService: TwoFactorPolicyService,
+    private readonly twoFactorService: TwoFactorService,
+    private readonly notificationsService: NotificationsService,
     private readonly auditLogService: AuditLogService,
     @Inject(STORAGE_ADAPTER) private readonly storage: StorageAdapter,
   ) {}
@@ -194,6 +198,54 @@ export class UsersService {
       entityType: "User",
       entityId: id,
       metadata: { passwordChange: true, initiatedBy: "admin" },
+    });
+
+    return this.assertUserInTenant(tenantId, id);
+  }
+
+  /**
+   * Recuperação de conta: remove o 2FA de um terceiro sem exigir a senha
+   * atual dele (ao contrário de `TwoFactorService.disable`, autoatendimento)
+   * - existe especificamente para o caso de um usuário travado fora por ter
+   * perdido a senha E os códigos de backup ao mesmo tempo, quando resetar só
+   * a senha (`setPassword` acima) não basta, porque o login ainda exige
+   * passar pelo desafio de 2FA. Bloqueia alvo = ator: um admin não pode usar
+   * esta rota pra desativar o próprio 2FA sem senha - contornaria a
+   * reautenticação que `disable()` exige de propósito.
+   */
+  async forceDisableTwoFactor(
+    tenantId: string,
+    actingUserId: string,
+    id: string,
+  ): Promise<UserAdminRaw> {
+    if (id === actingUserId) {
+      throw new BadRequestException("Use a opção em Meu perfil para desativar o próprio 2FA.");
+    }
+
+    const target = await this.assertUserInTenant(tenantId, id);
+    if (!target.totpEnabled) {
+      throw new BadRequestException("2FA não está ativo para este usuário.");
+    }
+
+    await this.twoFactorService.forceDisable(id);
+
+    await this.auditLogService.record({
+      tenantId,
+      userId: actingUserId,
+      action: "UPDATE",
+      entityType: "User",
+      entityId: id,
+      metadata: { field: "twoFactor", event: "disabled", initiatedBy: "admin" },
+    });
+
+    await this.notificationsService.sendRawEmail({
+      to: target.email,
+      subject: "Verificação em duas etapas desativada por um administrador",
+      html:
+        `<p>A verificação em duas etapas (2FA) da sua conta na Morpheus foi desativada por um ` +
+        `administrador da sua organização, como parte de uma recuperação de acesso.</p>` +
+        `<p>Se você não solicitou isso, entre em contato com o time de segurança da sua ` +
+        `organização imediatamente.</p>`,
     });
 
     return this.assertUserInTenant(tenantId, id);

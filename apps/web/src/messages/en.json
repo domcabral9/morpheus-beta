@@ -740,7 +740,14 @@
     "skipForNow": "Skip for now",
     "setPasswordButton": "Set password",
     "setPasswordSuccess": "Password set.",
-    "setPasswordError": "Could not set the password."
+    "setPasswordError": "Could not set the password.",
+    "cancel": "Cancel",
+    "forceDisableTwoFactorButton": "Force-disable 2FA",
+    "forceDisableTwoFactorTitle": "Disable 2FA for {name}?",
+    "forceDisableTwoFactorWarning": "This removes a real authentication factor from the account - only use it for account recovery, when the person lost their password and their backup codes at the same time. The action is recorded in the audit log and the affected person gets notified by email.",
+    "forceDisableTwoFactorConfirm": "Disable 2FA",
+    "forceDisableTwoFactorSuccess": "2FA disabled for {name}.",
+    "forceDisableTwoFactorError": "Could not disable 2FA."
   },
   "AdminRoles": {
     "title": "Roles",
