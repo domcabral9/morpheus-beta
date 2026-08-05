@@ -77,7 +77,7 @@ export interface InventoryApprovalSummary {
   id: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
   requesterId: string;
-  requester: { id: string; name: string; email: string };
+  requester: { id: string; name: string; email: string; hasAvatar: boolean };
   decisionNotes: string | null;
   decidedAt: string | null;
 }

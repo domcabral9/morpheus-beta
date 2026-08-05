@@ -105,7 +105,7 @@ export interface VendorAssessmentSummary {
   completedAt: string | null;
   nextReviewDueAt: string | null;
   createdAt: string;
-  performedBy: { id: string; name: string; email: string };
+  performedBy: { id: string; name: string; email: string; hasAvatar: boolean };
 }
 
 export interface VendorAssessmentDetail extends VendorAssessmentSummary {
