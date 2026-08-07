@@ -8,6 +8,7 @@ import { UserDashboardView } from "./_components/user-dashboard-view";
 import { AdminDashboardView } from "./_components/admin-dashboard-view";
 import { ExecutiveDashboardView } from "./_components/executive-dashboard-view";
 import { LeaderboardView } from "./_components/leaderboard-view";
+import { ComplianceDashboardView } from "./_components/compliance-dashboard-view";
 
 const ADMIN_PERMISSION = "assessments:view-all";
 
@@ -30,8 +31,9 @@ export default function DashboardsPage() {
         <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
           <TabsTrigger value="me">{t("tabs.me")}</TabsTrigger>
           {canViewTenantWide && <TabsTrigger value="admin">{t("tabs.admin")}</TabsTrigger>}
+          {canViewTenantWide && <TabsTrigger value="executive">{t("tabs.executive")}</TabsTrigger>}
           {canViewTenantWide && (
-            <TabsTrigger value="executive">{t("tabs.executive")}</TabsTrigger>
+            <TabsTrigger value="compliance">{t("tabs.compliance")}</TabsTrigger>
           )}
           <TabsTrigger value="leaderboard">{t("tabs.leaderboard")}</TabsTrigger>
         </TabsList>
@@ -47,6 +49,11 @@ export default function DashboardsPage() {
         {canViewTenantWide && (
           <TabsContent value="executive">
             <ExecutiveDashboardView />
+          </TabsContent>
+        )}
+        {canViewTenantWide && (
+          <TabsContent value="compliance">
+            <ComplianceDashboardView />
           </TabsContent>
         )}
         <TabsContent value="leaderboard">

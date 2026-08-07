@@ -32,3 +32,21 @@ export interface AreaLeaderboardEntry {
   compositeScore: number;
   level: string;
 }
+
+export interface ComplianceControlResult {
+  controlId: string;
+  code: string;
+  title: string;
+  metCount: number;
+  totalCount: number;
+  /** Percentual de sujeitos que atendem o controle, ou `null` se nunca avaliado. */
+  metPercentage: number | null;
+}
+
+export interface ComplianceFrameworkResult {
+  frameworkCode: string;
+  frameworkName: string;
+  controls: ComplianceControlResult[];
+  evaluatedControlsCount: number;
+  totalControlsCount: number;
+}
