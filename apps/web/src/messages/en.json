@@ -1189,6 +1189,31 @@
     "quickCreateTitle": "Quick vendor registration",
     "quickCreateDescription": "Only the fields needed to classify the vendor. Full registration (tax ID, contact, contract) is available on the Vendors screen."
   },
+  "Attachments": {
+    "title": "Attachments",
+    "categoryLabel": "Category",
+    "uploadButton": "Upload file",
+    "uploading": "Uploading...",
+    "uploadSuccess": "Attachment uploaded.",
+    "uploadError": "Could not upload the attachment.",
+    "uploadTooLarge": "File larger than 25MB.",
+    "downloadButton": "Download",
+    "downloadError": "Could not download the attachment.",
+    "loadError": "Could not load attachments.",
+    "empty": "No attachments uploaded yet.",
+    "versionBadge": "v{version}",
+    "categories": {
+      "CONTRACT": "Contract",
+      "DPA": "DPA (Data Processing Agreement)",
+      "SOC2_REPORT": "SOC 2 report",
+      "ISO27001_CERTIFICATE": "ISO 27001 certificate",
+      "PENTEST_REPORT": "Pentest report",
+      "ARCHITECTURE_DOCUMENT": "Architecture document",
+      "DPIA": "DPIA (Data Protection Impact Assessment)",
+      "PRIVACY_POLICY": "Privacy policy",
+      "OTHER": "Other"
+    }
+  },
   "AdminVendorQuestionnaire": {
     "title": "Vendor questionnaire",
     "subtitle": "Categories, questions, and options used in vendor risk assessment.",
