@@ -1189,6 +1189,31 @@
     "quickCreateTitle": "Cadastro rápido de fornecedor",
     "quickCreateDescription": "Só os campos essenciais para classificar o fornecedor. Cadastro completo (CNPJ, contato, contrato) fica disponível na tela de Fornecedores."
   },
+  "Attachments": {
+    "title": "Anexos",
+    "categoryLabel": "Categoria",
+    "uploadButton": "Enviar arquivo",
+    "uploading": "Enviando...",
+    "uploadSuccess": "Anexo enviado.",
+    "uploadError": "Não foi possível enviar o anexo.",
+    "uploadTooLarge": "Arquivo maior que 25MB.",
+    "downloadButton": "Baixar",
+    "downloadError": "Não foi possível baixar o anexo.",
+    "loadError": "Não foi possível carregar os anexos.",
+    "empty": "Nenhum anexo enviado ainda.",
+    "versionBadge": "v{version}",
+    "categories": {
+      "CONTRACT": "Contrato",
+      "DPA": "DPA (Acordo de Processamento de Dados)",
+      "SOC2_REPORT": "Relatório SOC 2",
+      "ISO27001_CERTIFICATE": "Certificado ISO 27001",
+      "PENTEST_REPORT": "Relatório de pentest",
+      "ARCHITECTURE_DOCUMENT": "Documento de arquitetura",
+      "DPIA": "DPIA (Avaliação de Impacto)",
+      "PRIVACY_POLICY": "Política de privacidade",
+      "OTHER": "Outro"
+    }
+  },
   "AdminVendorQuestionnaire": {
     "title": "Questionário de fornecedores",
     "subtitle": "Categorias, perguntas e opções usadas na avaliação de risco de fornecedores.",

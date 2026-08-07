@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { QuestionnaireForm } from "@/components/questionnaire-form";
+import { AttachmentsPanel } from "@/components/attachments-panel";
 import type {
   AssessmentAnswer,
   AssessmentDetail,
@@ -35,6 +36,7 @@ export default function AssessmentDetailPage() {
   const user = useRequireAuth();
   const api = useApi();
   const canReassignRequester = usePermission("assessments:reopen");
+  const canViewAllAssessments = usePermission("assessments:view-all");
 
   const [assessment, setAssessment] = React.useState<AssessmentDetail | null>(null);
   const [categories, setCategories] = React.useState<QuestionCategory[] | null>(null);
@@ -85,6 +87,10 @@ export default function AssessmentDetailPage() {
     Boolean(assessment) &&
     EDITABLE_STATUSES.has(assessment!.status) &&
     assessment!.requesterId === user.id;
+
+  const canUploadAttachments =
+    Boolean(assessment) &&
+    (assessment!.requesterId === user.id || canViewAllAssessments);
 
   function setAnswer(questionId: string, value: LocalAnswer) {
     setAnswers((prev) => ({ ...prev, [questionId]: { ...prev[questionId], ...value } }));
@@ -194,6 +200,11 @@ export default function AssessmentDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            <AttachmentsPanel
+              parent={{ assessmentId: assessment.id }}
+              canUpload={canUploadAttachments}
+            />
 
             {!isEditable && (
               <p className="rounded-md border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
