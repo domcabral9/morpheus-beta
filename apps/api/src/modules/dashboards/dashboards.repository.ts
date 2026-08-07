@@ -1,6 +1,28 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 
+const complianceAssessmentAnswersSelect = {
+  scaleValue: true,
+  question: {
+    select: {
+      type: true,
+      controls: { select: { controlId: true } },
+    },
+  },
+  selectedOptions: { select: { questionOption: { select: { score: true } } } },
+} as const;
+
+const complianceVendorAnswersSelect = {
+  scaleValue: true,
+  vendorQuestion: {
+    select: {
+      type: true,
+      controls: { select: { controlId: true } },
+    },
+  },
+  selectedOptions: { select: { vendorQuestionOption: { select: { score: true } } } },
+} as const;
+
 @Injectable()
 export class DashboardsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -106,5 +128,49 @@ export class DashboardsRepository {
       distinct: ["areaId"],
     });
     return rows.length;
+  }
+
+  /** Catálogo global de controles com o framework — mesma consulta de `ControlsRepository.findControls`, sem filtro de tenant (não é dado tenant-scoped). */
+  findAllControlsWithFramework() {
+    return this.prisma.control.findMany({
+      select: {
+        id: true,
+        code: true,
+        title: true,
+        framework: { select: { code: true, name: true } },
+      },
+      orderBy: [{ framework: { name: "asc" } }, { code: "asc" }],
+    });
+  }
+
+  /**
+   * Uma linha por software (`distinct` + `orderBy updatedAt desc` = a mais
+   * recente do grupo, mesmo padrão `distinct`+`orderBy` já usado em
+   * `AssessmentsRepository`/`DashboardsRepository`), só as APPROVED — decisão
+   * de escopo confirmada: dashboard de conformidade só considera a última
+   * homologação aprovada de cada software, não rascunhos/rejeitadas.
+   */
+  findLatestApprovedAssessmentsForCompliance(tenantId: string) {
+    return this.prisma.assessment.findMany({
+      where: { tenantId, status: "APPROVED" },
+      orderBy: [{ softwareName: "asc" }, { updatedAt: "desc" }],
+      distinct: ["softwareName"],
+      select: { answers: { select: complianceAssessmentAnswersSelect } },
+    });
+  }
+
+  /**
+   * Mesma ideia, para fornecedor: uma linha por Vendor, a VendorAssessment
+   * COMPLETED mais recente — `COMPLETED` é o único status terminal de
+   * `VendorAssessment` (que não tem um "APPROVED" literal, ao contrário de
+   * `Assessment`), tratado como equivalente para este filtro.
+   */
+  findLatestCompletedVendorAssessmentsForCompliance(tenantId: string) {
+    return this.prisma.vendorAssessment.findMany({
+      where: { tenantId, status: "COMPLETED" },
+      orderBy: [{ vendorId: "asc" }, { completedAt: "desc" }],
+      distinct: ["vendorId"],
+      select: { answers: { select: complianceVendorAnswersSelect } },
+    });
   }
 }
