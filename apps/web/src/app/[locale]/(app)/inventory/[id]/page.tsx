@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TierBadge } from "@/components/tier-badge";
+import { AttachmentsPanel } from "@/components/attachments-panel";
 import type { Area } from "@/lib/assessment-types";
 import type { UserOption } from "@/lib/user-picker-types";
 import type { InventoryItemDetail } from "@/lib/inventory-types";
@@ -312,6 +313,8 @@ export default function InventoryItemPage() {
             </CardContent>
           </Card>
         )}
+
+        {item && <AttachmentsPanel parent={{ inventoryItemId: item.id }} canUpload={canManage} />}
       </div>
 
       {item && canManage && (
