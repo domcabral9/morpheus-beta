@@ -33,4 +33,10 @@ export class DashboardsController {
   getLeaderboard(@CurrentUser() user: AuthenticatedUser) {
     return this.dashboardsService.getAreaLeaderboard(user.tenantId);
   }
+
+  @RequirePermissions(PERMISSIONS.ASSESSMENTS_VIEW_ALL)
+  @Get("compliance")
+  getComplianceOverview(@CurrentUser() user: AuthenticatedUser) {
+    return this.dashboardsService.getComplianceOverview(user.tenantId);
+  }
 }

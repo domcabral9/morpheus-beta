@@ -44,6 +44,9 @@ describe("DashboardsService", () => {
     findAllActiveAreas: jest.Mock;
     countSubmittedByArea: jest.Mock;
     countBlockedAreas: jest.Mock;
+    findAllControlsWithFramework: jest.Mock;
+    findLatestApprovedAssessmentsForCompliance: jest.Mock;
+    findLatestCompletedVendorAssessmentsForCompliance: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -58,6 +61,9 @@ describe("DashboardsService", () => {
       findAllActiveAreas: jest.fn(),
       countSubmittedByArea: jest.fn(),
       countBlockedAreas: jest.fn().mockResolvedValue(0),
+      findAllControlsWithFramework: jest.fn().mockResolvedValue([]),
+      findLatestApprovedAssessmentsForCompliance: jest.fn().mockResolvedValue([]),
+      findLatestCompletedVendorAssessmentsForCompliance: jest.fn().mockResolvedValue([]),
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -211,6 +217,70 @@ describe("DashboardsService", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]!.areaId).toBe("area-1");
+    });
+  });
+
+  describe("getComplianceOverview", () => {
+    it("agrupa controles por framework, cada um com metCount/totalCount/metPercentage", async () => {
+      repo.findAllControlsWithFramework.mockResolvedValue([
+        {
+          id: "control-mfa",
+          code: "AC-1",
+          title: "Autenticação multifator",
+          framework: { code: "CIS_V8", name: "CIS Controls v8" },
+        },
+        {
+          id: "control-sem-avaliacao",
+          code: "AC-2",
+          title: "Nunca avaliado",
+          framework: { code: "CIS_V8", name: "CIS Controls v8" },
+        },
+      ]);
+      // sujeito software: pergunta SCALE favorável (0) ligada a control-mfa
+      repo.findLatestApprovedAssessmentsForCompliance.mockResolvedValue([
+        {
+          answers: [
+            {
+              scaleValue: 0,
+              question: { type: "SCALE", controls: [{ controlId: "control-mfa" }] },
+              selectedOptions: [],
+            },
+          ],
+        },
+      ]);
+      // sujeito fornecedor: SINGLE_CHOICE desfavorável (score 4) ligada ao mesmo controle
+      repo.findLatestCompletedVendorAssessmentsForCompliance.mockResolvedValue([
+        {
+          answers: [
+            {
+              scaleValue: null,
+              vendorQuestion: { type: "SINGLE_CHOICE", controls: [{ controlId: "control-mfa" }] },
+              selectedOptions: [{ vendorQuestionOption: { score: 4 } }],
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getComplianceOverview("tenant-1");
+
+      expect(result).toHaveLength(1);
+      const framework = result[0]!;
+      expect(framework.frameworkCode).toBe("CIS_V8");
+      expect(framework.totalControlsCount).toBe(2);
+      expect(framework.evaluatedControlsCount).toBe(1);
+
+      const mfa = framework.controls.find((c) => c.controlId === "control-mfa")!;
+      expect(mfa).toMatchObject({ metCount: 1, totalCount: 2, metPercentage: 0.5 });
+
+      const neverEvaluated = framework.controls.find(
+        (c) => c.controlId === "control-sem-avaliacao",
+      )!;
+      expect(neverEvaluated).toMatchObject({ metCount: 0, totalCount: 0, metPercentage: null });
+    });
+
+    it("devolve lista vazia quando não há controles no catálogo", async () => {
+      const result = await service.getComplianceOverview("tenant-1");
+      expect(result).toEqual([]);
     });
   });
 });
