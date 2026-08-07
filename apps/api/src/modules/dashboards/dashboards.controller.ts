@@ -1,10 +1,11 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, Query } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { DashboardsService } from "./dashboards.service";
+import { ComplianceOverviewQueryDto } from "./dto/compliance-overview.query.dto";
 
 @ApiTags("dashboards")
 @Controller("dashboards")
@@ -36,7 +37,10 @@ export class DashboardsController {
 
   @RequirePermissions(PERMISSIONS.ASSESSMENTS_VIEW_ALL)
   @Get("compliance")
-  getComplianceOverview(@CurrentUser() user: AuthenticatedUser) {
-    return this.dashboardsService.getComplianceOverview(user.tenantId);
+  getComplianceOverview(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ComplianceOverviewQueryDto,
+  ) {
+    return this.dashboardsService.getComplianceOverview(user.tenantId, query.vendorId);
   }
 }
