@@ -945,6 +945,7 @@
       "me": "My view",
       "admin": "Admin",
       "executive": "Executive",
+      "compliance": "Compliance",
       "leaderboard": "Area leaderboard"
     },
     "stats": {
@@ -961,7 +962,9 @@
       "pendingRenewals": "Pending renewal",
       "pendingRenewalsHint": "Assessments with an annual renewal cycle in progress.",
       "blockedAreas": "Blocked areas",
-      "blockedAreasHint": "Areas with an overdue renewal - new submissions blocked until resolved."
+      "blockedAreasHint": "Areas with an overdue renewal - new submissions blocked until resolved.",
+      "controlsInCatalog": "Controls in catalog",
+      "controlsEvaluated": "Controls with at least 1 evaluation"
     },
     "charts": {
       "myStatusDistribution": "My assessments by status",
@@ -978,6 +981,22 @@
       "columnVolume": "Volume",
       "columnQuality": "Quality",
       "columnApprovalRate": "Approval rate"
+    },
+    "filters": {
+      "framework": "Framework"
+    },
+    "compliance": {
+      "overallPostureLabel": "Overall compliance posture",
+      "overallPostureHint": "Average across the {evaluated} of {total} catalog controls with at least one evaluation.",
+      "percentageLabel": "% met",
+      "noneEvaluated": "No control in this framework has been evaluated yet.",
+      "neverEvaluatedLabel": "Controls in this framework still without any evaluation (left out of the chart): {count}.",
+      "detailTitle": "Breakdown by control",
+      "columnCode": "Code",
+      "columnTitle": "Control",
+      "columnSubjects": "Met / evaluated",
+      "columnPercentage": "% met",
+      "notEvaluated": "Never evaluated"
     }
   },
   "Status": {

@@ -945,6 +945,7 @@
       "me": "Minha visão",
       "admin": "Administrativo",
       "executive": "Executivo",
+      "compliance": "Conformidade",
       "leaderboard": "Placar por área"
     },
     "stats": {
@@ -961,7 +962,9 @@
       "pendingRenewals": "Pendente renovação",
       "pendingRenewalsHint": "Avaliações com ciclo de renovação anual em andamento.",
       "blockedAreas": "Áreas bloqueadas",
-      "blockedAreasHint": "Áreas com renovação vencida sem resolução - novas submissões travadas até regularizar."
+      "blockedAreasHint": "Áreas com renovação vencida sem resolução - novas submissões travadas até regularizar.",
+      "controlsInCatalog": "Controles no catálogo",
+      "controlsEvaluated": "Controles com ao menos 1 avaliação"
     },
     "charts": {
       "myStatusDistribution": "Minhas avaliações por status",
@@ -978,6 +981,22 @@
       "columnVolume": "Volume",
       "columnQuality": "Qualidade",
       "columnApprovalRate": "Taxa de aprovação"
+    },
+    "filters": {
+      "framework": "Framework"
+    },
+    "compliance": {
+      "overallPostureLabel": "Postura geral de conformidade",
+      "overallPostureHint": "Média entre os {evaluated} de {total} controles do catálogo com ao menos uma avaliação.",
+      "percentageLabel": "% atendido",
+      "noneEvaluated": "Nenhum controle deste framework foi avaliado ainda.",
+      "neverEvaluatedLabel": "Controles deste framework ainda sem nenhuma avaliação (fora do gráfico): {count}.",
+      "detailTitle": "Detalhamento por controle",
+      "columnCode": "Código",
+      "columnTitle": "Controle",
+      "columnSubjects": "Atendido / avaliado",
+      "columnPercentage": "% atendido",
+      "notEvaluated": "Nunca avaliado"
     }
   },
   "Status": {
