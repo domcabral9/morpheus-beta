@@ -20,3 +20,18 @@ const NEUTRAL_IN_PROGRESS = "var(--muted-foreground)";
 export function colorForOutcomeKey(key: string): string {
   return STATUS_OUTCOME_COLOR[key] ?? NEUTRAL_IN_PROGRESS;
 }
+
+/**
+ * Cor por faixa de percentual atendido (dashboard de conformidade) - usa os
+ * 4 tokens de status reservados (good/warning/serious/critical), nunca a
+ * paleta categórica, pelo mesmo motivo de `colorForOutcomeKey`: o percentual
+ * já carrega um significado bom/ruim. `null` (controle nunca avaliado) usa o
+ * mesmo cinza neutro de "ainda em andamento".
+ */
+export function colorForCompliancePercentage(percentage: number | null): string {
+  if (percentage === null) return NEUTRAL_IN_PROGRESS;
+  if (percentage >= 0.8) return "var(--chart-good)";
+  if (percentage >= 0.5) return "var(--chart-warning)";
+  if (percentage >= 0.2) return "var(--chart-serious)";
+  return "var(--chart-critical)";
+}
