@@ -13,6 +13,7 @@ import { ApiError } from "@/components/auth-provider";
 import type { Area } from "@/lib/assessment-types";
 import type { UserOption } from "@/lib/user-picker-types";
 import { VendorCombobox, type VendorComboboxValue } from "@/components/vendor-combobox";
+import { UserCombobox } from "@/components/user-combobox";
 import {
   SOFTWARE_TYPES,
   DATA_CLASSIFICATIONS,
@@ -332,18 +333,13 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
                 control={control}
                 name="managerId"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="managerId" aria-invalid={!!errors.managerId}>
-                      <SelectValue placeholder={t("fieldUserPlaceholder")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.name} ({user.email})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <UserCombobox
+                    id="managerId"
+                    users={users}
+                    value={field.value}
+                    onChange={field.onChange}
+                    ariaInvalid={!!errors.managerId}
+                  />
                 )}
               />
             </div>
@@ -353,18 +349,13 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
                 control={control}
                 name="technicalResponsibleId"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="technicalResponsibleId" aria-invalid={!!errors.technicalResponsibleId}>
-                      <SelectValue placeholder={t("fieldUserPlaceholder")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.name} ({user.email})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <UserCombobox
+                    id="technicalResponsibleId"
+                    users={users}
+                    value={field.value}
+                    onChange={field.onChange}
+                    ariaInvalid={!!errors.technicalResponsibleId}
+                  />
                 )}
               />
             </div>
