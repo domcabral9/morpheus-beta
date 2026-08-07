@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { DashboardsRepository } from "./dashboards.repository";
+import { aggregateComplianceSubjects, ComplianceSubject } from "./compliance.util";
 
 const DECIDED_STATUSES = new Set(["APPROVED", "REJECTED"]);
 
@@ -32,6 +33,25 @@ export interface AreaLeaderboardEntry {
   approvalRate: number;
   compositeScore: number;
   level: string;
+}
+
+export interface ComplianceControlResult {
+  controlId: string;
+  code: string;
+  title: string;
+  metCount: number;
+  totalCount: number;
+  /** Percentual de sujeitos (software+fornecedor) que atendem o controle, ou `null` se nunca avaliado. */
+  metPercentage: number | null;
+}
+
+export interface ComplianceFrameworkResult {
+  frameworkCode: string;
+  frameworkName: string;
+  controls: ComplianceControlResult[];
+  /** Quantos dos controles do framework têm ao menos uma avaliação (totalCount > 0). */
+  evaluatedControlsCount: number;
+  totalControlsCount: number;
 }
 
 @Injectable()
@@ -163,6 +183,78 @@ export class DashboardsService {
     });
 
     return leaderboard.sort((a, b) => b.compositeScore - a.compositeScore);
+  }
+
+  /**
+   * Conformidade CIS/NIST/ISO/LGPD/GDPR/OWASP: para cada Control do catálogo
+   * global, quantos sujeitos (a última homologação de software APPROVED por
+   * software + a última avaliação de fornecedor COMPLETED por fornecedor) o
+   * atendem. "Atendido" por sujeito exige que TODAS as respostas vinculadas
+   * àquele controle dentro do mesmo sujeito sejam favoráveis (ver
+   * `compliance.util.ts`) — decisão de escopo confirmada com o usuário.
+   */
+  async getComplianceOverview(tenantId: string): Promise<ComplianceFrameworkResult[]> {
+    const [controls, softwareAssessments, vendorAssessments] = await Promise.all([
+      this.repository.findAllControlsWithFramework(),
+      this.repository.findLatestApprovedAssessmentsForCompliance(tenantId),
+      this.repository.findLatestCompletedVendorAssessmentsForCompliance(tenantId),
+    ]);
+
+    const subjects: ComplianceSubject[] = [
+      ...softwareAssessments.map((assessment) => ({
+        answers: assessment.answers.map((answer) => ({
+          type: answer.question.type,
+          scaleValue: answer.scaleValue,
+          selectedOptionScores: answer.selectedOptions.map((selected) =>
+            Number(selected.questionOption.score),
+          ),
+          controlIds: answer.question.controls.map((link) => link.controlId),
+        })),
+      })),
+      ...vendorAssessments.map((assessment) => ({
+        answers: assessment.answers.map((answer) => ({
+          type: answer.vendorQuestion.type,
+          scaleValue: answer.scaleValue,
+          selectedOptionScores: answer.selectedOptions.map((selected) =>
+            Number(selected.vendorQuestionOption.score),
+          ),
+          controlIds: answer.vendorQuestion.controls.map((link) => link.controlId),
+        })),
+      })),
+    ];
+
+    const aggregates = aggregateComplianceSubjects(subjects);
+
+    const frameworksByCode = new Map<string, ComplianceFrameworkResult>();
+    for (const control of controls) {
+      let framework = frameworksByCode.get(control.framework.code);
+      if (!framework) {
+        framework = {
+          frameworkCode: control.framework.code,
+          frameworkName: control.framework.name,
+          controls: [],
+          evaluatedControlsCount: 0,
+          totalControlsCount: 0,
+        };
+        frameworksByCode.set(control.framework.code, framework);
+      }
+
+      const aggregate = aggregates.get(control.id) ?? { met: 0, total: 0 };
+      framework.controls.push({
+        controlId: control.id,
+        code: control.code,
+        title: control.title,
+        metCount: aggregate.met,
+        totalCount: aggregate.total,
+        metPercentage: aggregate.total > 0 ? this.round2(aggregate.met / aggregate.total) : null,
+      });
+      framework.totalControlsCount += 1;
+      if (aggregate.total > 0) framework.evaluatedControlsCount += 1;
+    }
+
+    return [...frameworksByCode.values()].sort((a, b) =>
+      a.frameworkName.localeCompare(b.frameworkName),
+    );
   }
 
   // --- Helpers ------------------------------------------------------------------
