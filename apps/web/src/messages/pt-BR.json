@@ -366,6 +366,8 @@
     "fieldManagerId": "Gestor responsável",
     "fieldTechnicalResponsibleId": "Responsável técnico",
     "fieldUserPlaceholder": "Selecione",
+    "userComboboxSearchPlaceholder": "Buscar por nome ou e-mail...",
+    "userComboboxEmpty": "Nenhum usuário encontrado.",
     "fieldHomologationDate": "Data de homologação",
     "homologationDateImmutableHint": "Fato histórico da homologação original - não editável depois de criado.",
     "fieldNextReviewDate": "Próxima revisão",
