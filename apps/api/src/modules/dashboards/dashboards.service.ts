@@ -3,6 +3,11 @@ import type { AuthenticatedUser } from "../../common/interfaces/authenticated-us
 import { DashboardsRepository } from "./dashboards.repository";
 import { aggregateComplianceSubjects, ComplianceSubject } from "./compliance.util";
 
+/** Formato comum devolvido por `findLatestCompletedVendorAssessment{s,ForVendor}` (mesmo `select`). */
+type VendorAssessmentForCompliance = Awaited<
+  ReturnType<DashboardsRepository["findLatestCompletedVendorAssessmentsForCompliance"]>
+>[number];
+
 const DECIDED_STATUSES = new Set(["APPROVED", "REJECTED"]);
 
 /**
@@ -193,35 +198,24 @@ export class DashboardsService {
    * àquele controle dentro do mesmo sujeito sejam favoráveis (ver
    * `compliance.util.ts`) — decisão de escopo confirmada com o usuário.
    */
-  async getComplianceOverview(tenantId: string): Promise<ComplianceFrameworkResult[]> {
-    const [controls, softwareAssessments, vendorAssessments] = await Promise.all([
-      this.repository.findAllControlsWithFramework(),
-      this.repository.findLatestApprovedAssessmentsForCompliance(tenantId),
-      this.repository.findLatestCompletedVendorAssessmentsForCompliance(tenantId),
-    ]);
+  /**
+   * `vendorId` presente = visão "Fornecedor específico" (decisão de escopo
+   * confirmada com o usuário): mostra só o que a última VendorAssessment
+   * COMPLETED daquele fornecedor avalia, sem misturar sujeitos de software —
+   * "individual" significa os dados daquele fornecedor sozinho, não um
+   * destaque dentro do agregado do tenant. `vendorId` de outro tenant (ou
+   * fornecedor sem avaliação concluída) resulta silenciosamente em nenhum
+   * sujeito — todos os controles voltam como "nunca avaliado", não um erro.
+   */
+  async getComplianceOverview(
+    tenantId: string,
+    vendorId?: string,
+  ): Promise<ComplianceFrameworkResult[]> {
+    const controls = await this.repository.findAllControlsWithFramework();
 
-    const subjects: ComplianceSubject[] = [
-      ...softwareAssessments.map((assessment) => ({
-        answers: assessment.answers.map((answer) => ({
-          type: answer.question.type,
-          scaleValue: answer.scaleValue,
-          selectedOptionScores: answer.selectedOptions.map((selected) =>
-            Number(selected.questionOption.score),
-          ),
-          controlIds: answer.question.controls.map((link) => link.controlId),
-        })),
-      })),
-      ...vendorAssessments.map((assessment) => ({
-        answers: assessment.answers.map((answer) => ({
-          type: answer.vendorQuestion.type,
-          scaleValue: answer.scaleValue,
-          selectedOptionScores: answer.selectedOptions.map((selected) =>
-            Number(selected.vendorQuestionOption.score),
-          ),
-          controlIds: answer.vendorQuestion.controls.map((link) => link.controlId),
-        })),
-      })),
-    ];
+    const subjects: ComplianceSubject[] = vendorId
+      ? await this.buildSingleVendorSubjects(tenantId, vendorId)
+      : await this.buildTenantWideSubjects(tenantId);
 
     const aggregates = aggregateComplianceSubjects(subjects);
 
@@ -255,6 +249,53 @@ export class DashboardsService {
     return [...frameworksByCode.values()].sort((a, b) =>
       a.frameworkName.localeCompare(b.frameworkName),
     );
+  }
+
+  private async buildTenantWideSubjects(tenantId: string): Promise<ComplianceSubject[]> {
+    const [softwareAssessments, vendorAssessments] = await Promise.all([
+      this.repository.findLatestApprovedAssessmentsForCompliance(tenantId),
+      this.repository.findLatestCompletedVendorAssessmentsForCompliance(tenantId),
+    ]);
+
+    return [
+      ...softwareAssessments.map((assessment) => ({
+        answers: assessment.answers.map((answer) => ({
+          type: answer.question.type,
+          scaleValue: answer.scaleValue,
+          selectedOptionScores: answer.selectedOptions.map((selected) =>
+            Number(selected.questionOption.score),
+          ),
+          controlIds: answer.question.controls.map((link) => link.controlId),
+        })),
+      })),
+      ...vendorAssessments.map((assessment) => this.mapVendorAssessmentToSubject(assessment)),
+    ];
+  }
+
+  private async buildSingleVendorSubjects(
+    tenantId: string,
+    vendorId: string,
+  ): Promise<ComplianceSubject[]> {
+    const assessment = await this.repository.findLatestCompletedVendorAssessmentForVendor(
+      tenantId,
+      vendorId,
+    );
+    return assessment ? [this.mapVendorAssessmentToSubject(assessment)] : [];
+  }
+
+  private mapVendorAssessmentToSubject(
+    assessment: VendorAssessmentForCompliance,
+  ): ComplianceSubject {
+    return {
+      answers: assessment.answers.map((answer) => ({
+        type: answer.vendorQuestion.type,
+        scaleValue: answer.scaleValue,
+        selectedOptionScores: answer.selectedOptions.map((selected) =>
+          Number(selected.vendorQuestionOption.score),
+        ),
+        controlIds: answer.vendorQuestion.controls.map((link) => link.controlId),
+      })),
+    };
   }
 
   // --- Helpers ------------------------------------------------------------------
