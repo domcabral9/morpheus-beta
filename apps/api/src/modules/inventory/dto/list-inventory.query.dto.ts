@@ -7,6 +7,11 @@ import { SOFTWARE_TYPES, CRITICALITY_VALUES } from "./create-inventory-item.dto"
 const ORIGIN_VALUES = ["HOMOLOGATED", "MANUAL"] as const;
 
 export class ListInventoryQueryDto {
+  @ApiPropertyOptional({ description: "Busca por nome (contém, sem diferenciar maiúsculas)." })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @ApiPropertyOptional({ enum: INVENTORY_STATUSES })
   @IsOptional()
   @IsIn(INVENTORY_STATUSES)

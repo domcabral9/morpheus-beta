@@ -7,6 +7,11 @@ import { ORIGIN_VALUES } from "./list-inventory.query.dto";
 const EXPORT_FORMATS = ["csv", "json"] as const;
 
 export class ExportInventoryQueryDto {
+  @ApiPropertyOptional({ description: "Busca por nome (contém, sem diferenciar maiúsculas)." })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @ApiPropertyOptional({ enum: INVENTORY_STATUSES })
   @IsOptional()
   @IsIn(INVENTORY_STATUSES)

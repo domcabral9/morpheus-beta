@@ -79,6 +79,7 @@ export class InventoryService {
     const pageSize = query.pageSize ?? 20;
     const { items, total } = await this.repository.findMany({
       tenantId: user.tenantId,
+      search: query.search,
       status: query.status,
       areaId: query.areaId,
       type: query.type,
@@ -107,6 +108,7 @@ export class InventoryService {
   ): Promise<InventoryItemWithOpinion[]> {
     const items = await this.repository.findAllMatching({
       tenantId: user.tenantId,
+      search: query.search,
       status: query.status,
       areaId: query.areaId,
       type: query.type,
