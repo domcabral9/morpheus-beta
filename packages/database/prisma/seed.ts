@@ -954,6 +954,59 @@ const QUESTION_CONTROL_LINKS: Array<{ questionTextContains: string; controls: st
   },
 ];
 
+// Mesmo raciocínio de QUESTION_CONTROL_LINKS, curado sobre o questionário de
+// FORNECEDOR - controles compartilham o mesmo catálogo global (Control),
+// mas o vínculo em si é uma tabela de junção separada (VendorQuestionControl)
+// porque aponta pra VendorQuestion, não Question. Alguns controles (MFA,
+// RBAC) aparecem nos dois vínculos de propósito - o mesmo controle pode ser
+// avaliado tanto pelo questionário de software quanto pelo de fornecedor.
+const VENDOR_QUESTION_CONTROL_LINKS: Array<{ questionTextContains: string; controls: string[] }> = [
+  {
+    questionTextContains: "autenticação multifator (MFA) para acessos administrativos",
+    controls: ["ISO_27001::A.9", "ISO_27001::8.5", "NIST_CSF::PR.AA", "CIS_V8::6", "OWASP_ASVS::V2"],
+  },
+  {
+    questionTextContains: "controle de acesso baseado em papéis (RBAC)",
+    controls: ["ISO_27001::8.2", "CIS_V8::6", "OWASP_ASVS::V4", "OWASP_TOP10::A01"],
+  },
+  {
+    questionTextContains: "certificação de segurança reconhecida (ex.: ISO 27001)",
+    controls: ["ISO_27001::5.19"],
+  },
+  {
+    questionTextContains: "Política de Segurança da Informação (PSI) formalizada",
+    controls: ["ISO_27002::5", "NIST_CSF::GV"],
+  },
+  {
+    questionTextContains: "treinamento/conscientização de segurança",
+    controls: ["ISO_27002::6", "CIS_V8::14"],
+  },
+  {
+    questionTextContains: "ciclo formal de gestão de vulnerabilidades",
+    controls: ["CIS_V8::7", "NIST_CSF::ID"],
+  },
+  {
+    questionTextContains: "testes de penetração (pentest) periódicos",
+    controls: ["CIS_V8::18"],
+  },
+  {
+    questionTextContains: "plano de resposta a incidentes de segurança documentado",
+    controls: ["CIS_V8::17", "NIST_CSF::RS"],
+  },
+  {
+    questionTextContains: "notificar incidentes de segurança em prazo definido",
+    controls: ["LGPD::Art. 48", "GDPR::Art. 33"],
+  },
+  {
+    questionTextContains: "rotina de backup regular dos dados/sistemas",
+    controls: ["ISO_27001::8.13", "CIS_V8::11"],
+  },
+  {
+    questionTextContains: "Plano de Continuidade de Negócio (PCN/BCP) documentado",
+    controls: ["NIST_CSF::RC"],
+  },
+];
+
 // --- Matriz de risco padrão (dados compartilhados por todos os tenants) ------
 // Escala 1-5, alinhada ao motor já em produção da empresa (n8n): quanto
 // MAIOR o score, mais SEGURO (mesma convenção do output de exemplo do n8n
@@ -1427,6 +1480,21 @@ async function seedFullTenant(params: SeedFullTenantParams) {
           score: option.score,
           order: optionIndex,
         },
+      });
+    }
+  }
+
+  // --- Vínculo de perguntas de fornecedor aos controles da biblioteca ---------
+  for (const link of VENDOR_QUESTION_CONTROL_LINKS) {
+    const question = await prisma.vendorQuestion.findFirstOrThrow({
+      where: { tenantId: tenant.id, text: { contains: link.questionTextContains, mode: "insensitive" } },
+    });
+    for (const key of link.controls) {
+      const control = controlByKey.get(key)!;
+      await prisma.vendorQuestionControl.upsert({
+        where: { vendorQuestionId_controlId: { vendorQuestionId: question.id, controlId: control.id } },
+        update: {},
+        create: { vendorQuestionId: question.id, controlId: control.id },
       });
     }
   }

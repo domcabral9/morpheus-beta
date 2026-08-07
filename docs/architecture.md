@@ -104,6 +104,11 @@ permissão `platform:cross-tenant`, valendo para todos os tenants.
 
 ### Questionário e biblioteca de controles
 
+`CONTROL` também é referenciado pelo questionário de fornecedor via `VENDOR_QUESTION_CONTROL`
+(mesma junção `QUESTION_CONTROL`, mas para `VENDOR_QUESTION`) - omitido deste diagrama pelo mesmo
+motivo que nenhum diagrama aqui cruza contextos (ex.: `VendorAssessment.performedById` também não
+aparece desenhado na seção de Fornecedores), ver diagrama da seção "Fornecedores e tierização".
+
 ```mermaid
 erDiagram
     QUESTION_CATEGORY ||--o{ QUESTION : agrupa
@@ -284,7 +289,10 @@ erDiagram
 Catálogo e motor de score deliberadamente **separados** dos de software acima - a tierização de
 fornecedores é um score agregado 1D (não uma matriz probabilidade×impacto 2D), reaproveita só a
 função pura de cálculo (`RiskEngineService.computeScores`), não as tabelas. Sem workflow de
-aprovação: `VendorAssessment` calcula e fecha sozinha ao ser concluída.
+aprovação: `VendorAssessment` calcula e fecha sozinha ao ser concluída. `VENDOR_QUESTION` também se
+vincula à biblioteca de controles compartilhada (`CONTROL`, ver seção "Questionário e biblioteca de
+controles") via `VENDOR_QUESTION_CONTROL` - mesmo controle pode ser avaliado tanto por uma pergunta
+de software quanto de fornecedor.
 
 ```mermaid
 erDiagram

@@ -493,7 +493,8 @@ model Control {
   title       String
   description String?
 
-  questionControls QuestionControl[]
+  questionControls       QuestionControl[]
+  vendorQuestionControls VendorQuestionControl[]
 
   @@unique([frameworkId, code])
   @@index([frameworkId])
@@ -511,6 +512,22 @@ model QuestionControl {
 
   @@id([questionId, controlId])
   @@map("question_controls")
+}
+
+/// Mesmo vínculo de `QuestionControl`, para o questionário de avaliação de
+/// fornecedor — tabela de junção separada porque `VendorQuestion` é um
+/// catálogo distinto de `Question` (score 1D de tierização, não a matriz
+/// probabilidade×impacto do software), mas aponta pro mesmo `Control`
+/// compartilhado - um controle pode ser avaliado tanto por uma pergunta de
+/// software quanto por uma de fornecedor.
+model VendorQuestionControl {
+  vendorQuestionId String
+  vendorQuestion   VendorQuestion @relation(fields: [vendorQuestionId], references: [id], onDelete: Cascade)
+  controlId        String
+  control          Control        @relation(fields: [controlId], references: [id], onDelete: Cascade)
+
+  @@id([vendorQuestionId, controlId])
+  @@map("vendor_question_controls")
 }
 
 // =============================================================================
@@ -1065,8 +1082,9 @@ model VendorQuestion {
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
 
-  options VendorQuestionOption[]
-  answers VendorAnswer[]
+  options  VendorQuestionOption[]
+  answers  VendorAnswer[]
+  controls VendorQuestionControl[]
 
   @@index([tenantId])
   @@index([categoryId])
