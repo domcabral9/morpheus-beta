@@ -17,7 +17,8 @@ adotado pela empresa e o fornecedor por trás dele. Do questionário de risco à
 4. Parecer técnico em PDF, com QR Code de verificação.
 5. Inventário de software homologado, com ciclo de revisão periódica. Itens cadastrados manualmente
    (fora da homologação) passam por um gate de aprovação próprio antes de entrar em produção.
-6. Dashboards de postura de conformidade e placar de maturidade por área.
+6. Dashboards de postura de conformidade, conformidade contra frameworks de segurança (ISO 27001/
+   27002, NIST CSF, CIS Controls v8, LGPD, GDPR, OWASP ASVS/Top 10) e placar de maturidade por área.
 7. Avaliação de risco de fornecedores, com questionário inspirado no NIST SP 800-161, pontuação
    automática e Tiers de monitoramento com cadência de reavaliação configurável.
 
@@ -67,6 +68,20 @@ avaliado ou está com reavaliação vencida/próxima.
 | ART do fornecedor no detalhe do item | Acompanhamento de fornecedores |
 | --- | --- |
 | ![ART do fornecedor](./docs/screenshots/inventory-item-art.png) | ![Acompanhamento de fornecedores](./docs/screenshots/vendors-acompanhamento.png) |
+
+## Conformidade com frameworks de segurança (metodologia)
+
+Todo controle que uma pergunta do questionário avalia - seja do questionário de software ou do de
+fornecedor - é rastreado contra um catálogo de referência com 77 controles reais, cobrindo 8
+frameworks: ISO/IEC 27001:2022, ISO/IEC 27002, NIST Cybersecurity Framework (CSF 2.0), CIS Controls
+v8, LGPD, GDPR, OWASP ASVS e OWASP Top 10. A aba "Conformidade" em `/dashboards` cruza esse catálogo
+com a última avaliação já aprovada de cada software e a última concluída de cada fornecedor, e mostra,
+por framework, quantos "atendem" cada controle - um controle só conta como atendido quando todas as
+respostas do questionário vinculadas a ele estiverem dentro do limiar de risco aceitável.
+
+| Dashboard - conformidade com frameworks (CIS/NIST/ISO) |
+| --- |
+| ![Dashboard - conformidade](./docs/screenshots/dashboard-conformidade.png) |
 
 ## Controles de segurança implementados
 
@@ -130,6 +145,10 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | Executivo | Placar por área |
 | --- | --- |
 | ![Dashboard - executivo](./docs/screenshots/dashboard-executivo.png) | ![Dashboard - placar por área](./docs/screenshots/dashboard-placar-por-area.png) |
+
+| Conformidade com frameworks (CIS/NIST/ISO) |
+| --- |
+| ![Dashboard - conformidade](./docs/screenshots/dashboard-conformidade.png) |
 
 | Login - seleção de organização | Busca rápida (Cmd/Ctrl+K) |
 | --- | --- |
@@ -248,7 +267,8 @@ by the company and the vendor behind it. From risk questionnaire to final decisi
 4. Technical opinion (PDF report), with a verification QR code.
 5. Homologated software inventory, with periodic review cycle. Manually registered items (outside the
    homologation flow) go through a dedicated approval gate before going live.
-6. Compliance-posture dashboards and a maturity leaderboard by area.
+6. Compliance-posture dashboards, compliance against security frameworks (ISO 27001/27002, NIST CSF,
+   CIS Controls v8, LGPD, GDPR, OWASP ASVS/Top 10), and a maturity leaderboard by area.
 7. Vendor risk assessment, with a questionnaire inspired by NIST SP 800-161, automatic scoring, and
    monitoring Tiers with configurable reassessment cadence.
 
@@ -297,6 +317,20 @@ overdue/upcoming reassessment.
 | Vendor ART on the item detail page | Vendor tracking |
 | --- | --- |
 | ![Vendor ART](./docs/screenshots/inventory-item-art-en.png) | ![Vendor tracking](./docs/screenshots/vendors-acompanhamento-en.png) |
+
+## Compliance with security frameworks (methodology)
+
+Every control a questionnaire question evaluates - whether from the software or the vendor
+questionnaire - is tracked against a reference catalog of 77 real controls, covering 8 frameworks:
+ISO/IEC 27001:2022, ISO/IEC 27002, NIST Cybersecurity Framework (CSF 2.0), CIS Controls v8, LGPD,
+GDPR, OWASP ASVS, and OWASP Top 10. The "Compliance" tab in `/dashboards` cross-references that
+catalog against each software's latest approved assessment and each vendor's latest completed one,
+and shows, per framework, how many "meet" each control - a control only counts as met when every
+questionnaire answer linked to it falls within the acceptable risk threshold.
+
+| Dashboard - compliance against security frameworks (CIS/NIST/ISO) |
+| --- |
+| ![Dashboard - compliance](./docs/screenshots/dashboard-conformidade-en.png) |
 
 ## Implemented security controls
 
@@ -357,6 +391,10 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | Executive | Leaderboard |
 | --- | --- |
 | ![Dashboard - executive](./docs/screenshots/dashboard-executivo-en.png) | ![Dashboard - leaderboard](./docs/screenshots/dashboard-placar-por-area-en.png) |
+
+| Compliance against security frameworks (CIS/NIST/ISO) |
+| --- |
+| ![Dashboard - compliance](./docs/screenshots/dashboard-conformidade-en.png) |
 
 | Login - organization picker | Quick search (Cmd/Ctrl+K) |
 | --- | --- |
