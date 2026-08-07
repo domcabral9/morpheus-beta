@@ -13,10 +13,8 @@ import { Link } from "@/i18n/navigation";
 import { AssessmentStatusBadge } from "@/components/assessment-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { QuestionnaireForm } from "@/components/questionnaire-form";
 import type {
   AssessmentAnswer,
   AssessmentDetail,
@@ -216,110 +214,16 @@ export default function AssessmentDetailPage() {
 
             <h2 className="text-lg font-semibold tracking-tight">{t("questionnaire")}</h2>
 
-            {categories
-              ?.filter((category) => category.questions.length > 0)
-              .map((category) => (
-                <Card key={category.id}>
-                  <CardHeader>
-                    <CardTitle className="text-base">{category.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-6">
-                    {category.questions.map((question) => (
-                      <div key={question.id} className="flex flex-col gap-2">
-                        <label className="text-sm font-medium">
-                          {question.text}
-                          {question.isRequired && (
-                            <span className="ml-1 text-destructive" aria-label={t("requiredMark")}>
-                              *
-                            </span>
-                          )}
-                        </label>
-                        {question.description && (
-                          <p className="text-xs text-muted-foreground">{question.description}</p>
-                        )}
-
-                        {question.type === "TEXT" && (
-                          <Textarea
-                            disabled={!isEditable}
-                            placeholder={t("textPlaceholder")}
-                            value={answers[question.id]?.textValue ?? ""}
-                            onChange={(event) =>
-                              setAnswer(question.id, { textValue: event.target.value })
-                            }
-                          />
-                        )}
-
-                        {question.type === "SCALE" && (
-                          <input
-                            type="number"
-                            disabled={!isEditable}
-                            className="h-9 w-24 rounded-md border border-input bg-transparent px-3 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                            value={answers[question.id]?.scaleValue ?? ""}
-                            onChange={(event) =>
-                              setAnswer(question.id, { scaleValue: Number(event.target.value) })
-                            }
-                          />
-                        )}
-
-                        {question.type === "SINGLE_CHOICE" && (
-                          <div className="flex flex-col gap-1.5">
-                            {question.options.map((option) => (
-                              <label
-                                key={option.id}
-                                className="flex items-center gap-2 text-sm"
-                              >
-                                <input
-                                  type="radio"
-                                  name={question.id}
-                                  disabled={!isEditable}
-                                  className="accent-primary"
-                                  checked={
-                                    answers[question.id]?.selectedOptionIds?.[0] === option.id
-                                  }
-                                  onChange={() =>
-                                    setAnswer(question.id, { selectedOptionIds: [option.id] })
-                                  }
-                                />
-                                {option.label}
-                              </label>
-                            ))}
-                          </div>
-                        )}
-
-                        {question.type === "MULTI_CHOICE" && (
-                          <div className="flex flex-col gap-1.5">
-                            {question.options.map((option) => {
-                              const selected = answers[question.id]?.selectedOptionIds ?? [];
-                              const checked = selected.includes(option.id);
-                              return (
-                                <label
-                                  key={option.id}
-                                  className="flex items-center gap-2 text-sm"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    disabled={!isEditable}
-                                    className="accent-primary"
-                                    checked={checked}
-                                    onChange={() =>
-                                      setAnswer(question.id, {
-                                        selectedOptionIds: checked
-                                          ? selected.filter((id) => id !== option.id)
-                                          : [...selected, option.id],
-                                      })
-                                    }
-                                  />
-                                  {option.label}
-                                </label>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              ))}
+            {categories && (
+              <QuestionnaireForm
+                categories={categories}
+                answers={answers}
+                onAnswer={setAnswer}
+                isEditable={isEditable}
+                requiredMarkLabel={t("requiredMark")}
+                textPlaceholder={t("textPlaceholder")}
+              />
+            )}
 
             {actionError && <p className="text-sm text-destructive">{actionError}</p>}
             {actionMessage && <p className="text-sm text-success">{actionMessage}</p>}
