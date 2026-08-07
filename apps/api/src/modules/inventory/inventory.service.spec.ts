@@ -228,9 +228,7 @@ describe("InventoryService", () => {
     it("repassa search pro repository", async () => {
       repo.findMany.mockResolvedValue({ items: [], total: 0 });
       await service.list(makeUser(), { search: "Contract" } as never);
-      expect(repo.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ search: "Contract" }),
-      );
+      expect(repo.findMany).toHaveBeenCalledWith(expect.objectContaining({ search: "Contract" }));
     });
   });
 
