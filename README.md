@@ -150,49 +150,33 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | --- |
 | ![Dashboard - conformidade](./docs/screenshots/dashboard-conformidade.png) |
 
-| Login - seleção de organização | Busca rápida (Cmd/Ctrl+K) |
+| Questionário de risco - abas por categoria | Aprovação - dialog de decisão |
 | --- | --- |
-| ![Login - seleção de organização](./docs/screenshots/login-organizacao.png) | ![Busca rápida](./docs/screenshots/busca-rapida.png) |
+| ![Questionário em abas](./docs/screenshots/questionario-abas.png) | ![Aprovação - dialog de decisão](./docs/screenshots/approvals-decisao.png) |
+
+| Parecer técnico - PDF com QR Code de verificação | Pareceres técnicos - quem emitiu |
+| --- | --- |
+| ![Parecer técnico - PDF](./docs/screenshots/parecer-pdf.png) | ![Pareceres técnicos](./docs/screenshots/pareceres-tecnicos.png) |
+
+| Inventário - lista completa | Aprovação de item de inventário manual |
+| --- | --- |
+| ![Inventário - lista](./docs/screenshots/inventory-lista.png) | ![Aprovação de item de inventário manual](./docs/screenshots/inventory-approval-queue.png) |
+
+| Item reprovado - motivo e reenvio | Aprovação - solicitante identificado |
+| --- | --- |
+| ![Item reprovado](./docs/screenshots/inventory-approval-rejected.png) | ![Aprovação - solicitante](./docs/screenshots/approvals-solicitante.png) |
 
 | Fornecedores - lista com tierização | Fornecedores - detalhe |
 | --- | --- |
 | ![Fornecedores - lista](./docs/screenshots/vendors-lista.png) | ![Fornecedores - detalhe](./docs/screenshots/vendors-detalhe.png) |
 
-| Administração - gestão de papéis |
-| --- |
-| ![Administração - papéis](./docs/screenshots/admin-papeis.png) |
-
-| Meu perfil (autoatendimento) | Ativando o 2FA |
+| Avaliação de fornecedor - quem realizou | Auditoria - quem fez o quê |
 | --- | --- |
-| ![Meu perfil](./docs/screenshots/profile.png) | ![Ativando o 2FA](./docs/screenshots/profile-2fa-setup.png) |
+| ![Avaliação - realizada por](./docs/screenshots/vendors-avaliacao-realizada-por.png) | ![Auditoria](./docs/screenshots/admin-auditoria.png) |
 
-| Códigos de backup do 2FA | Login - código de verificação |
+| Administração - gestão de papéis | Políticas de plataforma (super-admin) |
 | --- | --- |
-| ![Códigos de backup do 2FA](./docs/screenshots/profile-2fa-backup-codes.png) | ![Login - código de verificação](./docs/screenshots/login-2fa.png) |
-
-| Login - sem senha |
-| --- |
-| ![Login - sem senha](./docs/screenshots/login-passwordless.png) |
-
-| Políticas de plataforma (super-admin) |
-| --- |
-| ![Políticas de plataforma](./docs/screenshots/admin-platform-policy.png) |
-
-| Aprovação de item de inventário manual | Item reprovado - motivo e reenvio |
-| --- | --- |
-| ![Aprovação de item de inventário manual](./docs/screenshots/inventory-approval-queue.png) | ![Item reprovado](./docs/screenshots/inventory-approval-rejected.png) |
-
-| Recuperação de conta - forçar desativação de 2FA |
-| --- |
-| ![Recuperação de conta](./docs/screenshots/admin-force-disable-2fa.png) |
-
-| Pareceres técnicos - quem emitiu | Auditoria - quem fez o quê |
-| --- | --- |
-| ![Pareceres técnicos](./docs/screenshots/pareceres-tecnicos.png) | ![Auditoria](./docs/screenshots/admin-auditoria.png) |
-
-| Aprovação - solicitante identificado | Avaliação de fornecedor - quem realizou |
-| --- | --- |
-| ![Aprovação - solicitante](./docs/screenshots/approvals-solicitante.png) | ![Avaliação - realizada por](./docs/screenshots/vendors-avaliacao-realizada-por.png) |
+| ![Administração - papéis](./docs/screenshots/admin-papeis.png) | ![Políticas de plataforma](./docs/screenshots/admin-platform-policy.png) |
 
 ## Stack
 
@@ -396,49 +380,33 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | --- |
 | ![Dashboard - compliance](./docs/screenshots/dashboard-conformidade-en.png) |
 
-| Login - organization picker | Quick search (Cmd/Ctrl+K) |
+| Risk questionnaire - tabs by category | Approval - decision dialog |
 | --- | --- |
-| ![Login - organization picker](./docs/screenshots/login-organizacao-en.png) | ![Quick search](./docs/screenshots/busca-rapida-en.png) |
+| ![Questionnaire in tabs](./docs/screenshots/questionario-abas-en.png) | ![Approval - decision dialog](./docs/screenshots/approvals-decisao-en.png) |
+
+| Technical opinion - PDF with verification QR Code | Technical opinions - who issued it |
+| --- | --- |
+| ![Technical opinion - PDF](./docs/screenshots/parecer-pdf-en.png) | ![Technical opinions](./docs/screenshots/pareceres-tecnicos-en.png) |
+
+| Inventory - full list | Manual inventory item approval |
+| --- | --- |
+| ![Inventory - list](./docs/screenshots/inventory-lista-en.png) | ![Manual inventory item approval](./docs/screenshots/inventory-approval-queue-en.png) |
+
+| Rejected item - reason and resubmit | Approval - requester identified |
+| --- | --- |
+| ![Rejected item](./docs/screenshots/inventory-approval-rejected-en.png) | ![Approval - requester](./docs/screenshots/approvals-solicitante-en.png) |
 
 | Vendors - list with tiering | Vendors - detail |
 | --- | --- |
 | ![Vendors - list](./docs/screenshots/vendors-lista-en.png) | ![Vendors - detail](./docs/screenshots/vendors-detalhe-en.png) |
 
-| Admin - role management |
-| --- |
-| ![Admin - roles](./docs/screenshots/admin-papeis-en.png) |
-
-| My profile (self-service) | Setting up 2FA |
+| Vendor assessment - who performed it | Audit log - who did what |
 | --- | --- |
-| ![My profile](./docs/screenshots/profile-en.png) | ![Setting up 2FA](./docs/screenshots/profile-2fa-setup-en.png) |
+| ![Assessment - performed by](./docs/screenshots/vendors-avaliacao-realizada-por-en.png) | ![Audit log](./docs/screenshots/admin-auditoria-en.png) |
 
-| 2FA backup codes | Login - verification code |
+| Admin - role management | Platform policies (super-admin) |
 | --- | --- |
-| ![2FA backup codes](./docs/screenshots/profile-2fa-backup-codes-en.png) | ![Login - verification code](./docs/screenshots/login-2fa-en.png) |
-
-| Login - passwordless |
-| --- |
-| ![Login - passwordless](./docs/screenshots/login-passwordless-en.png) |
-
-| Platform policies (super-admin) |
-| --- |
-| ![Platform policies](./docs/screenshots/admin-platform-policy-en.png) |
-
-| Manual inventory item approval | Rejected item - reason and resubmit |
-| --- | --- |
-| ![Manual inventory item approval](./docs/screenshots/inventory-approval-queue-en.png) | ![Rejected item](./docs/screenshots/inventory-approval-rejected-en.png) |
-
-| Account recovery - force-disable 2FA |
-| --- |
-| ![Account recovery](./docs/screenshots/admin-force-disable-2fa-en.png) |
-
-| Technical opinions - who issued it | Audit log - who did what |
-| --- | --- |
-| ![Technical opinions](./docs/screenshots/pareceres-tecnicos-en.png) | ![Audit log](./docs/screenshots/admin-auditoria-en.png) |
-
-| Approval - requester identified | Vendor assessment - who performed it |
-| --- | --- |
-| ![Approval - requester](./docs/screenshots/approvals-solicitante-en.png) | ![Assessment - performed by](./docs/screenshots/vendors-avaliacao-realizada-por-en.png) |
+| ![Admin - roles](./docs/screenshots/admin-papeis-en.png) | ![Platform policies](./docs/screenshots/admin-platform-policy-en.png) |
 
 ## Stack
 
