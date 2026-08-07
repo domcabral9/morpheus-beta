@@ -9,6 +9,7 @@ import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +47,10 @@ const STATUS_VARIANT: Record<string, "secondary" | "success" | "destructive" | "
   DECOMMISSIONED: "outline",
 };
 
+const SEARCH_DEBOUNCE_MS = 400;
+
 interface Filters {
+  search: string;
   status: string;
   areaId: string;
   type: string;
@@ -57,6 +61,7 @@ interface Filters {
 }
 
 const EMPTY_FILTERS: Filters = {
+  search: "",
   status: ALL_VALUE,
   areaId: ALL_VALUE,
   type: ALL_VALUE,
@@ -68,6 +73,7 @@ const EMPTY_FILTERS: Filters = {
 
 function buildQuery(filters: Filters, page: number): string {
   const params = new URLSearchParams();
+  if (filters.search.trim()) params.set("search", filters.search.trim());
   if (filters.status !== ALL_VALUE) params.set("status", filters.status);
   if (filters.areaId !== ALL_VALUE) params.set("areaId", filters.areaId);
   if (filters.type !== ALL_VALUE) params.set("type", filters.type);
@@ -92,11 +98,20 @@ export function InventoryListView({ areas, users, canManage }: InventoryListView
   const api = useApi();
 
   const [filters, setFilters] = React.useState<Filters>(EMPTY_FILTERS);
+  const [searchInput, setSearchInput] = React.useState("");
   const [page, setPage] = React.useState(1);
   const [data, setData] = React.useState<PaginatedInventory | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [exporting, setExporting] = React.useState(false);
   const [createOpen, setCreateOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setPage(1);
+      setFilters((current) => ({ ...current, search: searchInput }));
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const loadItems = React.useCallback(
     (targetPage: number) => {
@@ -122,7 +137,9 @@ export function InventoryListView({ areas, users, canManage }: InventoryListView
     setFilters((current) => ({ ...current, [key]: value }));
   }
 
-  const hasActiveFilters = Object.values(filters).some((value) => value !== ALL_VALUE);
+  const hasActiveFilters =
+    filters.search.trim() !== "" ||
+    Object.entries(filters).some(([key, value]) => key !== "search" && value !== ALL_VALUE);
 
   async function handleExport(format: "csv" | "json") {
     setExporting(true);
@@ -172,6 +189,16 @@ export function InventoryListView({ areas, users, canManage }: InventoryListView
           </div>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 flex flex-col gap-2">
+            <span className="text-xs text-muted-foreground">{t("searchLabel")}</span>
+            <Input
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder={t("searchPlaceholder")}
+              className="sm:max-w-sm"
+            />
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="flex flex-col gap-2">
               <span className="text-xs text-muted-foreground">{t("columnStatus")}</span>
@@ -302,6 +329,7 @@ export function InventoryListView({ areas, users, canManage }: InventoryListView
               onClick={() => {
                 setPage(1);
                 setFilters(EMPTY_FILTERS);
+                setSearchInput("");
               }}
             >
               {t("clearFilters")}

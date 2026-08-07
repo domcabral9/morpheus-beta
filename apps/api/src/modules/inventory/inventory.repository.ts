@@ -56,6 +56,7 @@ export interface DocumentationLinkInput {
 
 export interface InventoryFilterParams {
   tenantId: string;
+  search?: string;
   status?: InventoryStatus;
   areaId?: string;
   type?: SoftwareType;
@@ -68,6 +69,9 @@ export interface InventoryFilterParams {
 function buildWhereClause(params: InventoryFilterParams): Prisma.SoftwareInventoryItemWhereInput {
   return {
     tenantId: params.tenantId,
+    ...(params.search?.trim()
+      ? { name: { contains: params.search.trim(), mode: "insensitive" } }
+      : {}),
     ...(params.status ? { status: params.status } : {}),
     ...(params.areaId ? { areaId: params.areaId } : {}),
     ...(params.type ? { type: params.type } : {}),

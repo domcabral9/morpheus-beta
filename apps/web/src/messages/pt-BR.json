@@ -329,6 +329,8 @@
     "empty": "Nenhum item encontrado.",
     "back": "Voltar",
     "filtersTitle": "Filtros",
+    "searchLabel": "Buscar por nome",
+    "searchPlaceholder": "Nome do software...",
     "filterStatusAll": "Todos os status",
     "filterAreaAll": "Todas as áreas",
     "filterTypeAll": "Todos os tipos",
