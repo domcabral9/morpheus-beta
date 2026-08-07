@@ -173,4 +173,20 @@ export class DashboardsRepository {
       select: { answers: { select: complianceVendorAnswersSelect } },
     });
   }
+
+  /**
+   * Mesma consulta acima, mas escoada a um único fornecedor (visão
+   * "Fornecedor específico" do dashboard de conformidade) — `findFirst` em
+   * vez de `distinct`+`orderBy`, sem indireção desnecessária já que só
+   * existe um sujeito possível. `vendorId` fora do tenant simplesmente não
+   * bate no `where` e devolve `null` — mesmo tratamento silencioso de
+   * "nada encontrado" já usado em filtros de busca no projeto, não um erro.
+   */
+  findLatestCompletedVendorAssessmentForVendor(tenantId: string, vendorId: string) {
+    return this.prisma.vendorAssessment.findFirst({
+      where: { tenantId, vendorId, status: "COMPLETED" },
+      orderBy: { completedAt: "desc" },
+      select: { answers: { select: complianceVendorAnswersSelect } },
+    });
+  }
 }

@@ -983,7 +983,8 @@
       "columnApprovalRate": "Approval rate"
     },
     "filters": {
-      "framework": "Framework"
+      "framework": "Framework",
+      "vendor": "Vendor"
     },
     "compliance": {
       "overallPostureLabel": "Overall compliance posture",
@@ -996,7 +997,10 @@
       "columnTitle": "Control",
       "columnSubjects": "Met / evaluated",
       "columnPercentage": "% met",
-      "notEvaluated": "Never evaluated"
+      "notEvaluated": "Never evaluated",
+      "viewTenant": "Whole organization",
+      "viewVendor": "Specific vendor",
+      "noAssessedVendors": "No vendor has a completed assessment yet - complete one under Vendors to see individual compliance here."
     }
   },
   "Status": {

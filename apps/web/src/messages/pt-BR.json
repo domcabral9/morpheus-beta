@@ -983,7 +983,8 @@
       "columnApprovalRate": "Taxa de aprovação"
     },
     "filters": {
-      "framework": "Framework"
+      "framework": "Framework",
+      "vendor": "Fornecedor"
     },
     "compliance": {
       "overallPostureLabel": "Postura geral de conformidade",
@@ -996,7 +997,10 @@
       "columnTitle": "Controle",
       "columnSubjects": "Atendido / avaliado",
       "columnPercentage": "% atendido",
-      "notEvaluated": "Nunca avaliado"
+      "notEvaluated": "Nunca avaliado",
+      "viewTenant": "Toda a organização",
+      "viewVendor": "Fornecedor específico",
+      "noAssessedVendors": "Nenhum fornecedor tem avaliação concluída ainda - conclua uma ART em Fornecedores para ver a conformidade individual aqui."
     }
   },
   "Status": {

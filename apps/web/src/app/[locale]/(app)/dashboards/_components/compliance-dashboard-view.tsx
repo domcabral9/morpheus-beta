@@ -9,6 +9,7 @@ import { useApi } from "@/lib/use-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -18,6 +19,9 @@ import {
 } from "@/components/ui/select";
 import type { ComplianceFrameworkResult } from "@/lib/dashboard-types";
 import { colorForCompliancePercentage } from "@/lib/dashboard-colors";
+import type { PaginatedVendors, VendorListItem } from "@/lib/vendor-types";
+
+type ViewMode = "tenant" | "vendor";
 
 export function ComplianceDashboardView() {
   const t = useTranslations("Dashboards");
@@ -26,28 +30,78 @@ export function ComplianceDashboardView() {
   const [data, setData] = React.useState<ComplianceFrameworkResult[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [frameworkCode, setFrameworkCode] = React.useState<string | null>(null);
+  const [viewMode, setViewMode] = React.useState<ViewMode>("tenant");
+  const [assessedVendors, setAssessedVendors] = React.useState<VendorListItem[] | null>(null);
+  const [selectedVendorId, setSelectedVendorId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     api
-      .get<ComplianceFrameworkResult[]>("/dashboards/compliance")
+      .get<PaginatedVendors>("/vendors?page=1&pageSize=100")
+      .then((result) => {
+        setAssessedVendors(result.items.filter((vendor) => vendor.currentTier !== null));
+      })
+      .catch(() => setAssessedVendors([]));
+  }, [api]);
+
+  // Sem vendor escolhido explicitamente pelo usuário, cai no primeiro fornecedor avaliado -
+  // calculado durante o render (não via effect) para não disparar um setState em cascata.
+  const effectiveVendorId =
+    selectedVendorId ??
+    (assessedVendors && assessedVendors.length > 0 ? assessedVendors[0]!.id : null);
+
+  React.useEffect(() => {
+    if (viewMode === "vendor" && !effectiveVendorId) return;
+    const url =
+      viewMode === "vendor" && effectiveVendorId
+        ? `/dashboards/compliance?vendorId=${encodeURIComponent(effectiveVendorId)}`
+        : "/dashboards/compliance";
+    api
+      .get<ComplianceFrameworkResult[]>(url)
       .then((frameworks) => {
         setData(frameworks);
         setFrameworkCode((current) => current ?? frameworks[0]?.frameworkCode ?? null);
       })
       .catch(() => setError(t("loadError")));
-  }, [api, t]);
+  }, [api, t, viewMode, effectiveVendorId]);
 
   if (error) return <p className="text-sm text-destructive">{error}</p>;
+
+  const modeSwitch = (
+    <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
+      <TabsList>
+        <TabsTrigger value="tenant">{t("compliance.viewTenant")}</TabsTrigger>
+        <TabsTrigger value="vendor">{t("compliance.viewVendor")}</TabsTrigger>
+      </TabsList>
+    </Tabs>
+  );
+
+  if (viewMode === "vendor" && assessedVendors !== null && assessedVendors.length === 0) {
+    return (
+      <div className="flex flex-col gap-6">
+        {modeSwitch}
+        <p className="text-sm text-muted-foreground">{t("compliance.noAssessedVendors")}</p>
+      </div>
+    );
+  }
+
   if (!data) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="animate-spin text-muted-foreground" />
+      <div className="flex flex-col gap-6">
+        {modeSwitch}
+        <div className="flex justify-center py-12">
+          <Loader2 className="animate-spin text-muted-foreground" />
+        </div>
       </div>
     );
   }
 
   if (data.length === 0) {
-    return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
+    return (
+      <div className="flex flex-col gap-6">
+        {modeSwitch}
+        <p className="text-sm text-muted-foreground">{t("empty")}</p>
+      </div>
+    );
   }
 
   const totalControls = data.reduce((sum, fw) => sum + fw.totalControlsCount, 0);
@@ -76,6 +130,8 @@ export function ComplianceDashboardView() {
 
   return (
     <div className="flex flex-col gap-6">
+      {modeSwitch}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{t("compliance.overallPostureLabel")}</CardTitle>
@@ -106,22 +162,44 @@ export function ComplianceDashboardView() {
         <StatTile label={t("stats.controlsEvaluated")} value={evaluatedControls} />
       </div>
 
-      <div className="flex flex-col gap-2 sm:w-72">
-        <label htmlFor="compliance-framework" className="text-sm font-medium">
-          {t("filters.framework")}
-        </label>
-        <Select value={selectedFramework.frameworkCode} onValueChange={setFrameworkCode}>
-          <SelectTrigger id="compliance-framework">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {data.map((fw) => (
-              <SelectItem key={fw.frameworkCode} value={fw.frameworkCode}>
-                {fw.frameworkName} ({fw.evaluatedControlsCount}/{fw.totalControlsCount})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex flex-col gap-4 sm:flex-row">
+        {viewMode === "vendor" && assessedVendors && assessedVendors.length > 0 && (
+          <div className="flex flex-col gap-2 sm:w-72">
+            <label htmlFor="compliance-vendor" className="text-sm font-medium">
+              {t("filters.vendor")}
+            </label>
+            <Select value={effectiveVendorId ?? undefined} onValueChange={setSelectedVendorId}>
+              <SelectTrigger id="compliance-vendor">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {assessedVendors.map((vendor) => (
+                  <SelectItem key={vendor.id} value={vendor.id}>
+                    {vendor.name} ({vendor.currentTierLabel})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-2 sm:w-72">
+          <label htmlFor="compliance-framework" className="text-sm font-medium">
+            {t("filters.framework")}
+          </label>
+          <Select value={selectedFramework.frameworkCode} onValueChange={setFrameworkCode}>
+            <SelectTrigger id="compliance-framework">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {data.map((fw) => (
+                <SelectItem key={fw.frameworkCode} value={fw.frameworkCode}>
+                  {fw.frameworkName} ({fw.evaluatedControlsCount}/{fw.totalControlsCount})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Card>

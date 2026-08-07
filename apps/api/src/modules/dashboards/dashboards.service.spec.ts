@@ -47,6 +47,7 @@ describe("DashboardsService", () => {
     findAllControlsWithFramework: jest.Mock;
     findLatestApprovedAssessmentsForCompliance: jest.Mock;
     findLatestCompletedVendorAssessmentsForCompliance: jest.Mock;
+    findLatestCompletedVendorAssessmentForVendor: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -64,6 +65,7 @@ describe("DashboardsService", () => {
       findAllControlsWithFramework: jest.fn().mockResolvedValue([]),
       findLatestApprovedAssessmentsForCompliance: jest.fn().mockResolvedValue([]),
       findLatestCompletedVendorAssessmentsForCompliance: jest.fn().mockResolvedValue([]),
+      findLatestCompletedVendorAssessmentForVendor: jest.fn().mockResolvedValue(null),
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -281,6 +283,55 @@ describe("DashboardsService", () => {
     it("devolve lista vazia quando não há controles no catálogo", async () => {
       const result = await service.getComplianceOverview("tenant-1");
       expect(result).toEqual([]);
+    });
+
+    it("com vendorId, usa só a avaliação daquele fornecedor (não busca dados de software)", async () => {
+      repo.findAllControlsWithFramework.mockResolvedValue([
+        {
+          id: "control-mfa",
+          code: "AC-1",
+          title: "Autenticação multifator",
+          framework: { code: "CIS_V8", name: "CIS Controls v8" },
+        },
+      ]);
+      repo.findLatestCompletedVendorAssessmentForVendor.mockResolvedValue({
+        answers: [
+          {
+            scaleValue: 0,
+            vendorQuestion: { type: "SCALE", controls: [{ controlId: "control-mfa" }] },
+            selectedOptions: [],
+          },
+        ],
+      });
+
+      const result = await service.getComplianceOverview("tenant-1", "vendor-1");
+
+      expect(repo.findLatestCompletedVendorAssessmentForVendor).toHaveBeenCalledWith(
+        "tenant-1",
+        "vendor-1",
+      );
+      expect(repo.findLatestApprovedAssessmentsForCompliance).not.toHaveBeenCalled();
+      expect(repo.findLatestCompletedVendorAssessmentsForCompliance).not.toHaveBeenCalled();
+
+      const mfa = result[0]!.controls[0]!;
+      expect(mfa).toMatchObject({ metCount: 1, totalCount: 1, metPercentage: 1 });
+    });
+
+    it("com vendorId sem avaliação concluída (ou de outro tenant), todos os controles voltam nunca avaliados", async () => {
+      repo.findAllControlsWithFramework.mockResolvedValue([
+        {
+          id: "control-mfa",
+          code: "AC-1",
+          title: "Autenticação multifator",
+          framework: { code: "CIS_V8", name: "CIS Controls v8" },
+        },
+      ]);
+      repo.findLatestCompletedVendorAssessmentForVendor.mockResolvedValue(null);
+
+      const result = await service.getComplianceOverview("tenant-1", "vendor-inexistente");
+
+      const mfa = result[0]!.controls[0]!;
+      expect(mfa).toMatchObject({ metCount: 0, totalCount: 0, metPercentage: null });
     });
   });
 });
