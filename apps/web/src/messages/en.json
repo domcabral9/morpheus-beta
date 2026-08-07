@@ -366,6 +366,8 @@
     "fieldManagerId": "Manager",
     "fieldTechnicalResponsibleId": "Technical responsible",
     "fieldUserPlaceholder": "Select",
+    "userComboboxSearchPlaceholder": "Search by name or email...",
+    "userComboboxEmpty": "No user found.",
     "fieldHomologationDate": "Homologation date",
     "homologationDateImmutableHint": "Historical fact from the original homologation - not editable after creation.",
     "fieldNextReviewDate": "Next review",
