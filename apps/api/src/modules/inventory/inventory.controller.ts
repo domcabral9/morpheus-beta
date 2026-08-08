@@ -16,6 +16,8 @@ import {
   ApproveInventoryApprovalDto,
   RejectInventoryApprovalDto,
 } from "./dto/decide-inventory-approval.dto";
+import { SearchEolProductsQueryDto } from "./dto/search-eol-products.query.dto";
+import { LinkEolProductDto } from "./dto/link-eol-product.dto";
 import { buildInventoryCsv } from "./inventory-export.util";
 
 @ApiTags("inventory")
@@ -84,6 +86,15 @@ export class InventoryController {
     return this.inventoryService.listPendingApprovals(user);
   }
 
+  // Precisa vir antes de `:id` - senão "enrichment" seria interpretado como um id.
+  // Gate por `inventory:manage` (sobrescreve o `inventory:view` de classe) - só usado no formulário
+  // de edição de item, que já exige essa permissão.
+  @RequirePermissions(PERMISSIONS.INVENTORY_MANAGE)
+  @Get("enrichment/eol-products")
+  searchEolProducts(@Query() query: SearchEolProductsQueryDto) {
+    return this.inventoryService.searchEolProducts(query.search);
+  }
+
   @Get(":id")
   getById(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.inventoryService.getById(user, id);
@@ -105,6 +116,16 @@ export class InventoryController {
     @Body() dto: UpdateInventoryItemDto,
   ) {
     return this.inventoryService.update(user, id, dto);
+  }
+
+  @RequirePermissions(PERMISSIONS.INVENTORY_MANAGE)
+  @Patch(":id/eol-link")
+  linkEolProduct(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") id: string,
+    @Body() dto: LinkEolProductDto,
+  ) {
+    return this.inventoryService.linkEolProduct(user, id, dto.eolProductId ?? null);
   }
 
   // Sem @Audit() decorator nas 3 rotas abaixo - metadata (motivo da reprovação,

@@ -6,6 +6,7 @@ import { InventoryApprovalRepository } from "./inventory-approval.repository";
 import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
+import { EolCatalogRepository } from "./eol/eol-catalog.repository";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
@@ -58,6 +59,7 @@ describe("InventoryService", () => {
   };
   let auditLogService: { record: jest.Mock };
   let notificationsService: { notify: jest.Mock; notifyPermissionHolders: jest.Mock };
+  let eolCatalogRepo: { search: jest.Mock; findBySlug: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -85,6 +87,7 @@ describe("InventoryService", () => {
       notify: jest.fn().mockResolvedValue(undefined),
       notifyPermissionHolders: jest.fn().mockResolvedValue(undefined),
     };
+    eolCatalogRepo = { search: jest.fn(), findBySlug: jest.fn() };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -94,6 +97,7 @@ describe("InventoryService", () => {
         { provide: AuditLogService, useValue: auditLogService },
         { provide: NotificationsService, useValue: notificationsService },
         SeparationOfDutiesService,
+        { provide: EolCatalogRepository, useValue: eolCatalogRepo },
       ],
     }).compile();
 
@@ -229,6 +233,93 @@ describe("InventoryService", () => {
       repo.findMany.mockResolvedValue({ items: [], total: 0 });
       await service.list(makeUser(), { search: "Contract" } as never);
       expect(repo.findMany).toHaveBeenCalledWith(expect.objectContaining({ search: "Contract" }));
+    });
+  });
+
+  describe("frescor de versão (eolProduct/freshness)", () => {
+    it("achata eolProduct pra {slug,name} e nunca expõe cycles cru", async () => {
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        assessment: null,
+        version: "3.14.7",
+        eolProduct: {
+          slug: "python",
+          name: "Python",
+          cycles: [{ name: "3.14", isEol: false, latest: { name: "3.14.7" } }],
+        },
+      });
+      const result = await service.getById(makeUser(), "item-1");
+      expect(result.eolProduct).toEqual({ slug: "python", name: "Python" });
+      expect(result.freshness).toBe("up-to-date");
+      expect(JSON.stringify(result)).not.toContain("cycles");
+    });
+
+    it("eolProduct null e freshness unknown quando nunca vinculado", async () => {
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        assessment: null,
+        version: null,
+        eolProduct: null,
+      });
+      const result = await service.getById(makeUser(), "item-1");
+      expect(result.eolProduct).toBeNull();
+      expect(result.freshness).toBe("unknown");
+    });
+
+    describe("linkEolProduct", () => {
+      it("rejeita slug que não existe no catálogo local", async () => {
+        repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1" });
+        eolCatalogRepo.findBySlug.mockResolvedValue(null);
+        await expect(service.linkEolProduct(makeUser(), "item-1", "inexistente")).rejects.toThrow(
+          BadRequestException,
+        );
+        expect(repo.update).not.toHaveBeenCalled();
+      });
+
+      it("vincula um slug válido e audita", async () => {
+        repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", assessment: null });
+        eolCatalogRepo.findBySlug.mockResolvedValue({ slug: "python", name: "Python" });
+        await service.linkEolProduct(makeUser(), "item-1", "python");
+
+        expect(repo.update).toHaveBeenCalledWith(
+          "item-1",
+          expect.objectContaining({ eolProductId: "python", eolLinkedByUserId: "user-1" }),
+        );
+        expect(auditLogService.record).toHaveBeenCalledWith(
+          expect.objectContaining({ metadata: { field: "eolProduct", eolProductId: "python" } }),
+        );
+      });
+
+      it("desvincula quando eolProductId é null, sem checar o catálogo", async () => {
+        repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", assessment: null });
+        await service.linkEolProduct(makeUser(), "item-1", null);
+
+        expect(eolCatalogRepo.findBySlug).not.toHaveBeenCalled();
+        expect(repo.update).toHaveBeenCalledWith(
+          "item-1",
+          expect.objectContaining({
+            eolProductId: null,
+            eolLinkedAt: null,
+            eolLinkedByUserId: null,
+          }),
+        );
+      });
+
+      it("rejeita item de outro tenant", async () => {
+        repo.findById.mockResolvedValue({ id: "item-1", tenantId: "outro-tenant" });
+        await expect(service.linkEolProduct(makeUser(), "item-1", "python")).rejects.toThrow(
+          ForbiddenException,
+        );
+      });
+    });
+
+    it("searchEolProducts repassa a query pro repository", async () => {
+      eolCatalogRepo.search.mockResolvedValue([{ slug: "python", name: "Python" }]);
+      const result = await service.searchEolProducts("pyth");
+      expect(eolCatalogRepo.search).toHaveBeenCalledWith("pyth");
+      expect(result).toEqual([{ slug: "python", name: "Python" }]);
     });
   });
 
