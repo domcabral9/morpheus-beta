@@ -319,4 +319,18 @@ export class InventoryRepository {
       include: itemDetailInclude,
     });
   }
+
+  /** Itens elegíveis pra varredura noturna de reputação (ReputationSweepScheduler):
+   * nunca checados ou checados há mais que `cutoff`, **e** com artefato
+   * resolvível (URL ou algum anexo) - sem isso, `performCheck` rejeitaria
+   * cada um por "sem artefato", desperdiçando o loop. */
+  findDueForReputationCheck(cutoff: Date): Promise<InventoryItemDetail[]> {
+    return this.prisma.softwareInventoryItem.findMany({
+      where: {
+        OR: [{ reputationLastCheckedAt: null }, { reputationLastCheckedAt: { lt: cutoff } }],
+        AND: [{ OR: [{ url: { not: null } }, { attachments: { some: {} } }] }],
+      },
+      include: itemDetailInclude,
+    });
+  }
 }

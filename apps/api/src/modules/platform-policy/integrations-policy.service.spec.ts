@@ -28,6 +28,7 @@ function makeRow(overrides: Partial<Record<string, unknown>> = {}) {
 
 describe("IntegrationsPolicyService", () => {
   let service: IntegrationsPolicyService;
+  let cryptoService: CryptoService;
   let repo: { getOrCreate: jest.Mock; update: jest.Mock };
   let auditLogService: { record: jest.Mock };
 
@@ -44,6 +45,7 @@ describe("IntegrationsPolicyService", () => {
         { provide: AuditLogService, useValue: auditLogService },
       ],
     }).compile();
+    cryptoService = moduleRef.get(CryptoService);
 
     service = moduleRef.get(IntegrationsPolicyService);
   });
@@ -123,6 +125,19 @@ describe("IntegrationsPolicyService", () => {
       );
       const [[auditCall]] = auditLogService.record.mock.calls;
       expect(JSON.stringify(auditCall.metadata)).not.toMatch(/vt-real-key-value/);
+    });
+  });
+
+  describe("getDecryptedVirusTotalApiKey", () => {
+    it("devolve null quando nenhuma chave foi configurada", async () => {
+      repo.getOrCreate.mockResolvedValue(makeRow());
+      expect(await service.getDecryptedVirusTotalApiKey()).toBeNull();
+    });
+
+    it("descriptografa e devolve o valor real quando há chave configurada", async () => {
+      const encrypted = cryptoService.encrypt("chave-real");
+      repo.getOrCreate.mockResolvedValue(makeRow({ virusTotalApiKeyEncrypted: encrypted }));
+      expect(await service.getDecryptedVirusTotalApiKey()).toBe("chave-real");
     });
   });
 });

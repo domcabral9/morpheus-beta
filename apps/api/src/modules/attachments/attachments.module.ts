@@ -8,6 +8,9 @@ import { AttachmentsService } from "./attachments.service";
   imports: [StorageModule],
   controllers: [AttachmentsController],
   providers: [AttachmentsRepository, AttachmentsService],
-  exports: [AttachmentsService],
+  // AttachmentsRepository é exportado além do Service pra permitir leitura
+  // direta (sem checagem de permissão de usuário) pela varredura noturna de
+  // reputação de inventário (ReputationService), que roda sem ator humano.
+  exports: [AttachmentsRepository, AttachmentsService],
 })
 export class AttachmentsModule {}
