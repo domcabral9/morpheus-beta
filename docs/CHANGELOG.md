@@ -20,8 +20,12 @@ uma linha do que aconteceu.
   reestruturação em grade de `/profile`/`/admin/platform-policy`/matriz de risco/questionários
   (com 2 bugs reais de screenshot corrigidos — regeneração esquecida e um gotcha de captura
   `fullPage`+sticky), auditoria de conteúdo do FAQ (9 perguntas novas, incluindo uma seção própria
-  "Fornecedores"), e recuperação de conta assistida por administrador (forçar desativação de 2FA de
-  terceiro travado fora, sem achado na revisão de segurança).
+  "Fornecedores"), recuperação de conta assistida por administrador (forçar desativação de 2FA de
+  terceiro travado fora, sem achado na revisão de segurança), gráficos de conformidade CIS/NIST/ISO em
+  `/dashboards` (capacidade de mapeamento de controles já existente no schema, nunca antes exposta),
+  curadoria de portfólio focada em conformidade/GRC, revisão conjunta do inventário (painel de anexos,
+  busca por nome, seletor de usuário pesquisável), e o início do arco de enriquecimento de itens de
+  inventário (frescor de versão via endoflife.date + reputação de ameaça via VirusTotal).
 - [**Julho**](./changelog/2026-07.md) — Construção inicial do produto (roteiro técnico Etapas 1-16 +
   plano pós-roteiro Etapas A-I), multi-tenancy e administração avançada, backlog pós-uso, renovação
   anual de homologação, avaliação de risco de fornecedores, vínculo Inventory↔Vendor, SSDLC/CI, e
