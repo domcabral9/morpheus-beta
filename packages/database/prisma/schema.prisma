@@ -70,28 +70,28 @@ model Tenant {
   annualClosingWindowEnd     String?
   annualClosingWindowEnabled Boolean @default(false)
 
-  users                    User[]
-  roles                    Role[]
-  areas                    Area[]
-  questionCategories       QuestionCategory[]
-  questions                Question[]
-  riskMatrixConfigs        RiskMatrixConfig[]
-  recommendations          Recommendation[]
-  workflowDefinitions      WorkflowDefinition[]
-  assessments              Assessment[]
-  inventoryItems           SoftwareInventoryItem[]
+  users                     User[]
+  roles                     Role[]
+  areas                     Area[]
+  questionCategories        QuestionCategory[]
+  questions                 Question[]
+  riskMatrixConfigs         RiskMatrixConfig[]
+  recommendations           Recommendation[]
+  workflowDefinitions       WorkflowDefinition[]
+  assessments               Assessment[]
+  inventoryItems            SoftwareInventoryItem[]
   inventoryApprovalRequests InventoryApprovalRequest[]
-  documentationLinks       InventoryDocumentationLink[]
-  attachments              Attachment[]
-  comments                 Comment[]
-  auditLogs                AuditLog[]
-  notifications            Notification[]
-  technicalOpinions        TechnicalOpinion[]
-  vendors                  Vendor[]
-  vendorQuestionCategories VendorQuestionCategory[]
-  vendorTierConfigs        VendorTierConfig[]
-  vendorAssessments        VendorAssessment[]
-  vendorQuestions          VendorQuestion[]
+  documentationLinks        InventoryDocumentationLink[]
+  attachments               Attachment[]
+  comments                  Comment[]
+  auditLogs                 AuditLog[]
+  notifications             Notification[]
+  technicalOpinions         TechnicalOpinion[]
+  vendors                   Vendor[]
+  vendorQuestionCategories  VendorQuestionCategory[]
+  vendorTierConfigs         VendorTierConfig[]
+  vendorAssessments         VendorAssessment[]
+  vendorQuestions           VendorQuestion[]
 
   @@map("tenants")
 }
@@ -179,27 +179,27 @@ model User {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  userRoles                  UserRole[]
-  refreshTokens              RefreshToken[]
-  requestedAssessments       Assessment[]            @relation("AssessmentRequester")
-  responsibleAssessments     Assessment[]            @relation("AssessmentResponsible")
-  assessmentVersions         AssessmentVersion[]
-  workflowAssignments        WorkflowStepExecution[] @relation("WorkflowStepAssignee")
-  workflowDecisions          WorkflowStepExecution[] @relation("WorkflowStepDecidedBy")
-  technicalOpinionsIssued    TechnicalOpinion[]
-  managedInventoryItems      SoftwareInventoryItem[] @relation("InventoryManager")
-  ownedInventoryItems        SoftwareInventoryItem[] @relation("InventoryTechnicalResponsible")
-  createdInventoryItems      SoftwareInventoryItem[] @relation("InventoryCreatedBy")
+  userRoles                          UserRole[]
+  refreshTokens                      RefreshToken[]
+  requestedAssessments               Assessment[]               @relation("AssessmentRequester")
+  responsibleAssessments             Assessment[]               @relation("AssessmentResponsible")
+  assessmentVersions                 AssessmentVersion[]
+  workflowAssignments                WorkflowStepExecution[]    @relation("WorkflowStepAssignee")
+  workflowDecisions                  WorkflowStepExecution[]    @relation("WorkflowStepDecidedBy")
+  technicalOpinionsIssued            TechnicalOpinion[]
+  managedInventoryItems              SoftwareInventoryItem[]    @relation("InventoryManager")
+  ownedInventoryItems                SoftwareInventoryItem[]    @relation("InventoryTechnicalResponsible")
+  createdInventoryItems              SoftwareInventoryItem[]    @relation("InventoryCreatedBy")
   inventoryApprovalRequestsSubmitted InventoryApprovalRequest[] @relation("InventoryApprovalRequester")
   inventoryApprovalRequestsDecided   InventoryApprovalRequest[] @relation("InventoryApprovalDecidedBy")
-  attachments                Attachment[]
-  comments                   Comment[]
-  auditLogs                  AuditLog[]
-  notifications              Notification[]
-  createdVendors             Vendor[]                @relation("VendorCreatedBy")
-  performedVendorAssessments VendorAssessment[]      @relation("VendorAssessmentPerformedBy")
-  twoFactorBackupCodes       TwoFactorBackupCode[]
-  oneTimeCodes               OneTimeCode[]
+  attachments                        Attachment[]
+  comments                           Comment[]
+  auditLogs                          AuditLog[]
+  notifications                      Notification[]
+  createdVendors                     Vendor[]                   @relation("VendorCreatedBy")
+  performedVendorAssessments         VendorAssessment[]         @relation("VendorAssessmentPerformedBy")
+  twoFactorBackupCodes               TwoFactorBackupCode[]
+  oneTimeCodes                       OneTimeCode[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -331,6 +331,31 @@ model PlatformPasswordlessPolicy {
   createdAt       DateTime @default(now())
 
   @@map("platform_passwordless_policies")
+}
+
+/// Config de plataforma (super-admin, cross-tenant) pras integrações
+/// externas de enriquecimento de inventário - VirusTotal (reputação de
+/// ameaça) e endoflife.date (frescor de versão). Mesmo padrão singleton das
+/// 3 policies acima, com um desvio deliberado: `GET` nunca devolve
+/// `virusTotalApiKeyEncrypted` (nem cru nem decriptografado) - o service
+/// mapeia pra uma forma mascarada (`hasVirusTotalApiKey: boolean`) antes de
+/// responder. `PATCH` também preserva a chave existente quando omitida do
+/// payload, ao contrário das outras 3 policies (que sempre sobrescrevem todo
+/// campo a cada PATCH).
+model PlatformIntegrationsPolicy {
+  id                        String   @id @default("singleton")
+  /// Criptografado via CryptoService (AES-256-GCM, reversível) - primeiro
+  /// campo de segredo dentro de uma policy singleton de plataforma.
+  virusTotalApiKeyEncrypted String?
+  virusTotalEnabled         Boolean  @default(false)
+  /// Folga deliberada sob o teto de 500/dia do tier gratuito do VirusTotal.
+  virusTotalDailyBudget     Int      @default(450)
+  endoflifeEnabled          Boolean  @default(true)
+  updatedByUserId           String?
+  updatedAt                 DateTime @updatedAt
+  createdAt                 DateTime @default(now())
+
+  @@map("platform_integrations_policies")
 }
 
 // =============================================================================
@@ -1261,6 +1286,23 @@ enum DataClassification {
   RESTRICTED
 }
 
+/// Veredito da checagem automática de reputação (VirusTotal) - só tem
+/// sentido quando `reputationLastCheckedAt` está setado. Ausência de dado
+/// (hash nunca visto pelo VT, HTTP 404) NÃO vira CLEAN - fica null/
+/// `reputationLastCheckedAt` também null, ver InventoryEnrichmentService.
+enum ReputationVerdict {
+  CLEAN
+  SUSPICIOUS
+}
+
+/// Qual artefato foi usado na última checagem automática de reputação -
+/// hash de anexo tem precedência sobre URL quando os dois existem (mais
+/// resistente a adulteração, e evita gastar 2 chamadas de cota por checagem).
+enum ReputationCheckSource {
+  URL
+  ATTACHMENT_HASH
+}
+
 /// Criado automaticamente quando uma Assessment é aprovada (`assessmentId`
 /// setado), ou via cadastro manual direto (`POST /inventory`, `assessmentId`
 /// nulo) — este último passa pelo gate de `InventoryApprovalRequest` antes de
@@ -1268,58 +1310,80 @@ enum DataClassification {
 /// antes desta feature existir foram mantidos `ACTIVE` sem aprovação
 /// retroativa (`createdById` nulo neles) — só itens novos passam pelo gate.
 model SoftwareInventoryItem {
-  id                     String             @id @default(cuid())
-  tenantId               String
-  tenant                 Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  assessmentId           String?
-  assessment             Assessment?        @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  id                            String                 @id @default(cuid())
+  tenantId                      String
+  tenant                        Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assessmentId                  String?
+  assessment                    Assessment?            @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
   /// Quem submeteu via cadastro manual (POST /inventory) — nulo para itens
   /// vindos de Assessment aprovada e para itens manuais legados anteriores a
   /// esta feature. Não confundir com `managerId`/`technicalResponsibleId`
   /// (donos de negócio do ativo, não quem o cadastrou).
-  createdById            String?
-  createdBy              User?              @relation("InventoryCreatedBy", fields: [createdById], references: [id])
-  name                   String
-  vendor                 String
+  createdById                   String?
+  createdBy                     User?                  @relation("InventoryCreatedBy", fields: [createdById], references: [id])
+  name                          String
+  vendor                        String
   /// FK real pro fornecedor cadastrado, quando existir - `vendor` acima
   /// continua sendo o snapshot em texto (mesmo padrão de `Assessment.vendor`/
   /// `Assessment.vendorId`). Nullable: itens antigos e itens cujo fornecedor
   /// nunca foi vinculado a um `Vendor` de verdade ficam null.
-  vendorId               String?
-  linkedVendor           Vendor?            @relation(fields: [vendorId], references: [id], onDelete: SetNull)
-  version                String?
-  url                    String?
-  category               String
-  type                   SoftwareType
+  vendorId                      String?
+  linkedVendor                  Vendor?                @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  version                       String?
+  url                           String?
+  category                      String
+  type                          SoftwareType
   /// Onde o ativo está hospedado (ex.: "AWS", "Google Cloud", "Magalu Cloud",
   /// "Datacenter próprio"). Texto livre — a lista de provedores muda com o
   /// tempo e travar isso em enum geraria migration a cada novo provedor
   /// contratado. Alimenta o corte "Cloud x Local" do dashboard executivo,
   /// que é uma dimensão diferente de `type` (SaaS x On-Premises).
-  hostingProvider        String?
-  areaId                 String
-  area                   Area               @relation(fields: [areaId], references: [id])
-  managerId              String
-  manager                User               @relation("InventoryManager", fields: [managerId], references: [id])
-  technicalResponsibleId String
-  technicalResponsible   User               @relation("InventoryTechnicalResponsible", fields: [technicalResponsibleId], references: [id])
-  homologationDate       DateTime
-  nextReviewDate         DateTime
-  status                 InventoryStatus    @default(ACTIVE)
-  criticality            Criticality
-  dataClassification     DataClassification
+  hostingProvider               String?
+  areaId                        String
+  area                          Area                   @relation(fields: [areaId], references: [id])
+  managerId                     String
+  manager                       User                   @relation("InventoryManager", fields: [managerId], references: [id])
+  technicalResponsibleId        String
+  technicalResponsible          User                   @relation("InventoryTechnicalResponsible", fields: [technicalResponsibleId], references: [id])
+  homologationDate              DateTime
+  nextReviewDate                DateTime
+  status                        InventoryStatus        @default(ACTIVE)
+  criticality                   Criticality
+  dataClassification            DataClassification
   /// Declaração de que o fornecedor tem ART (Análise de Risco) documentada -
   /// mesmo campo/semântica de `Assessment.hasRiskAnalysis`. Para itens vindos
   /// de homologação (`assessmentId` setado), o valor é herdado do Assessment
   /// na criação e passa a ser somente leitura na UI (evita divergência entre
   /// os dois registros); só itens de entrada manual (`assessmentId` nulo)
   /// podem editar isto diretamente.
-  hasRiskAnalysis        Boolean            @default(false)
+  hasRiskAnalysis               Boolean                @default(false)
   /// Mesma lógica de `hasRiskAnalysis`, para a cláusula de segurança da
   /// informação assinada com o fornecedor.
-  hasInfoSecClause       Boolean            @default(false)
-  createdAt              DateTime           @default(now())
-  updatedAt              DateTime           @updatedAt
+  hasInfoSecClause              Boolean                @default(false)
+  /// Vínculo manual (nunca auto-detectado por nome - risco de match errado)
+  /// com o catálogo local de produtos do endoflife.date (`EolProduct`).
+  /// Opcional: a maioria dos itens provavelmente não tem correspondência no
+  /// catálogo (~462 produtos, viés forte pra infra/stack de dev), e isso é
+  /// esperado, não um estado de erro.
+  eolProductId                  String?
+  eolProduct                    EolProduct?            @relation(fields: [eolProductId], references: [slug], onDelete: SetNull)
+  eolLinkedAt                   DateTime?
+  eolLinkedByUserId             String?
+  /// Flag declarada manualmente (mesma forma de `hasRiskAnalysis`) para
+  /// software obviamente conhecido/confiável sem artefato pra checar de
+  /// verdade (ex.: Adobe Reader) - evita gastar cota de API à toa e evita o
+  /// beco-sem-saída de "sem dado" pra maioria dos itens sem URL/anexo.
+  reputationDeclaredKnown       Boolean                @default(false)
+  reputationLastCheckedAt       DateTime?
+  reputationVerdict             ReputationVerdict?
+  reputationCheckedSource       ReputationCheckSource?
+  /// Só para rastreabilidade ("qual anexo foi hasheado na última checagem") -
+  /// sem FK de propósito, mesmo padrão de `updatedByUserId`: o anexo pode ser
+  /// substituído/apagado (nova versão via re-upload) sem invalidar o veredito
+  /// já registrado.
+  reputationCheckedAttachmentId String?
+  createdAt                     DateTime               @default(now())
+  updatedAt                     DateTime               @updatedAt
 
   attachments        Attachment[]
   documentationLinks InventoryDocumentationLink[]
@@ -1334,7 +1398,47 @@ model SoftwareInventoryItem {
   /// bloqueio quanto pelas queries do RenewalScheduler.
   @@index([tenantId, areaId, status])
   @@index([nextReviewDate])
+  /// Alimenta a varredura noturna de "vencido, precisa recheck de reputação"
+  /// (ReputationSweepScheduler).
+  @@index([reputationLastCheckedAt])
   @@map("software_inventory_items")
+}
+
+/// Orçamento diário de chamadas ao VirusTotal, compartilhado pelo botão
+/// manual ("verificar agora") e pela varredura noturna (ReputationSweepScheduler)
+/// - é o ponto real de enforcement do teto do tier gratuito (500/dia). Uma
+/// linha por dia, incrementada atomicamente via `UPDATE ... WHERE
+/// calls_used < budget RETURNING` (ReputationBudgetRepository.tryConsume) -
+/// sem essa tabela, cliques manuais de vários usuários somados ao job
+/// automático poderiam estourar a cota sem nenhum enforcement central.
+model EnrichmentDailyBudget {
+  id                  String   @id @default(cuid())
+  date                DateTime @unique @db.Date
+  virusTotalCallsUsed Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("enrichment_daily_budgets")
+}
+
+/// Cache local do catálogo do endoflife.date (~462 produtos), sincronizado à
+/// noite (EolCatalogScheduler) - itens de inventário só leem este cache pra
+/// vincular/comparar frescor de versão, nunca chamam o endoflife.date
+/// diretamente (evita martelar um terceiro a cada keystroke de autocomplete
+/// de cada usuário de cada tenant). `cycles` fica bruto (JSON, não uma linha
+/// por ciclo) de propósito: a comparação de frescor é deliberadamente
+/// conservadora (ver InventoryEolFreshnessUtil) e não precisa de query
+/// relacional sobre ciclos individuais.
+model EolProduct {
+  slug         String   @id
+  name         String
+  /// Array bruto de `{cycle, latest, releaseDate, eolDate}`, direto da API.
+  cycles       Json
+  lastSyncedAt DateTime @default(now())
+
+  inventoryItems SoftwareInventoryItem[]
+
+  @@map("eol_products")
 }
 
 /// Aprovação humana dedicada a itens de inventário criados manualmente
@@ -1347,20 +1451,20 @@ model SoftwareInventoryItem {
 /// (entityType "InventoryApprovalRequest"), esta linha só reflete o estado
 /// vigente.
 model InventoryApprovalRequest {
-  id              String                   @id @default(cuid())
+  id              String                  @id @default(cuid())
   tenantId        String
-  tenant          Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  inventoryItemId String                   @unique
-  inventoryItem   SoftwareInventoryItem    @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  tenant          Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  inventoryItemId String                  @unique
+  inventoryItem   SoftwareInventoryItem   @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
   requesterId     String
-  requester       User                     @relation("InventoryApprovalRequester", fields: [requesterId], references: [id])
-  status          InventoryApprovalStatus  @default(PENDING)
+  requester       User                    @relation("InventoryApprovalRequester", fields: [requesterId], references: [id])
+  status          InventoryApprovalStatus @default(PENDING)
   decidedById     String?
-  decidedBy       User?                    @relation("InventoryApprovalDecidedBy", fields: [decidedById], references: [id])
+  decidedBy       User?                   @relation("InventoryApprovalDecidedBy", fields: [decidedById], references: [id])
   decidedAt       DateTime?
   decisionNotes   String?
-  createdAt       DateTime                 @default(now())
-  updatedAt       DateTime                 @updatedAt
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
 
   @@index([tenantId])
   @@index([tenantId, status])
