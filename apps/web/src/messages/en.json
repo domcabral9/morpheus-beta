@@ -859,7 +859,15 @@
     "twoFactorEnforcedHint": "Does not block login — flags it on the profile page for anyone who hasn't set up 2FA yet.",
     "passwordlessCardTitle": "Passwordless sign-in",
     "passwordlessFieldEnabled": "Allow passwordless sign-in",
-    "passwordlessEnabledHint": "Lets any user with a verified email skip the password using a one-time code sent by email. Bypasses 2FA on that specific sign-in path."
+    "passwordlessEnabledHint": "Lets any user with a verified email skip the password using a one-time code sent by email. Bypasses 2FA on that specific sign-in path.",
+    "integrationsCardTitle": "Integrations",
+    "integrationsFieldApiKey": "VirusTotal API key",
+    "integrationsApiKeyEmptyPlaceholder": "Paste the key here",
+    "integrationsApiKeyConfiguredPlaceholder": "•••• configured",
+    "integrationsApiKeyHint": "Never shown back once saved — leave blank to keep the currently configured key.",
+    "integrationsFieldVirusTotalEnabled": "Enable reputation checks (VirusTotal)",
+    "integrationsFieldDailyBudget": "Daily call budget",
+    "integrationsFieldEndoflifeEnabled": "Enable version freshness checks (endoflife.date)"
   },
   "PasswordPolicyHint": {
     "minLength": "at least {count} characters",

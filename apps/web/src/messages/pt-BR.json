@@ -859,7 +859,15 @@
     "twoFactorEnforcedHint": "Não bloqueia o login — sinaliza na tela de perfil de quem ainda não configurou 2FA.",
     "passwordlessCardTitle": "Login sem senha",
     "passwordlessFieldEnabled": "Permitir login sem senha",
-    "passwordlessEnabledHint": "Permite que qualquer usuário com e-mail verificado dispense a senha usando um código de uso único enviado por e-mail. Pula o 2FA nesse caminho específico de login."
+    "passwordlessEnabledHint": "Permite que qualquer usuário com e-mail verificado dispense a senha usando um código de uso único enviado por e-mail. Pula o 2FA nesse caminho específico de login.",
+    "integrationsCardTitle": "Integrações",
+    "integrationsFieldApiKey": "Chave de API do VirusTotal",
+    "integrationsApiKeyEmptyPlaceholder": "Cole a chave aqui",
+    "integrationsApiKeyConfiguredPlaceholder": "•••• configurada",
+    "integrationsApiKeyHint": "Nunca é exibida de volta depois de salva — deixe em branco para manter a chave já configurada.",
+    "integrationsFieldVirusTotalEnabled": "Habilitar checagem de reputação (VirusTotal)",
+    "integrationsFieldDailyBudget": "Orçamento diário de chamadas",
+    "integrationsFieldEndoflifeEnabled": "Habilitar checagem de frescor de versão (endoflife.date)"
   },
   "PasswordPolicyHint": {
     "minLength": "mínimo de {count} caracteres",
