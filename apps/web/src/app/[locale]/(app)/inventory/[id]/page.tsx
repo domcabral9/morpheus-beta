@@ -15,12 +15,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TierBadge } from "@/components/tier-badge";
+import { FreshnessBadge } from "@/components/freshness-badge";
 import { AttachmentsPanel } from "@/components/attachments-panel";
 import type { Area } from "@/lib/assessment-types";
 import type { UserOption } from "@/lib/user-picker-types";
 import type { InventoryItemDetail } from "@/lib/inventory-types";
 import { ItemFormDialog } from "../_components/item-form-dialog";
 import { LinkVendorDialog } from "../_components/link-vendor-dialog";
+import { LinkEolProductDialog } from "../_components/link-eol-product-dialog";
 
 const STATUS_VARIANT: Record<string, "secondary" | "success" | "destructive" | "outline" | "warning"> = {
   ACTIVE: "success",
@@ -57,6 +59,7 @@ export default function InventoryItemPage() {
   const [users, setUsers] = React.useState<UserOption[]>([]);
   const [editOpen, setEditOpen] = React.useState(false);
   const [linkVendorOpen, setLinkVendorOpen] = React.useState(false);
+  const [linkEolOpen, setLinkEolOpen] = React.useState(false);
   const [startingArt, setStartingArt] = React.useState(false);
   const [resubmitting, setResubmitting] = React.useState(false);
 
@@ -291,6 +294,31 @@ export default function InventoryItemPage() {
                 </div>
               )}
 
+              <div className="mt-4 flex flex-col gap-2 border-t pt-4">
+                <span className="text-xs text-muted-foreground">{t("eolFreshnessTitle")}</span>
+                {!item.eolProduct && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-sm text-muted-foreground">{t("eolFreshnessNoneLinked")}</span>
+                    {canManage && (
+                      <Button size="sm" variant="outline" onClick={() => setLinkEolOpen(true)}>
+                        {t("eolFreshnessLinkButton")}
+                      </Button>
+                    )}
+                  </div>
+                )}
+                {item.eolProduct && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-sm">{item.eolProduct.name}</span>
+                    <FreshnessBadge state={item.freshness} />
+                    {canManage && (
+                      <Button size="sm" variant="outline" onClick={() => setLinkEolOpen(true)}>
+                        {t("eolFreshnessChangeButton")}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {item.documentationLinks.length > 0 && (
                 <div className="mt-4 flex flex-col gap-1 border-t pt-4">
                   <span className="text-xs text-muted-foreground">{t("documentationLinksTitle")}</span>
@@ -334,6 +362,15 @@ export default function InventoryItemPage() {
 
       {item && canManageVendors && (
         <LinkVendorDialog itemId={item.id} open={linkVendorOpen} onOpenChange={setLinkVendorOpen} />
+      )}
+
+      {item && canManage && (
+        <LinkEolProductDialog
+          itemId={item.id}
+          open={linkEolOpen}
+          onOpenChange={setLinkEolOpen}
+          onLinked={setItem}
+        />
       )}
     </>
   );
