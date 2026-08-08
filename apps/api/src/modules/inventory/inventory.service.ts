@@ -22,27 +22,35 @@ import {
   ApproveInventoryApprovalDto,
   RejectInventoryApprovalDto,
 } from "./dto/decide-inventory-approval.dto";
+import { EolCatalogRepository } from "./eol/eol-catalog.repository";
+import { computeFreshness, FreshnessState } from "./eol/eol-freshness.util";
 
 /** Cadência padrão de revisão para itens criados automaticamente na aprovação. */
 const DEFAULT_REVIEW_CYCLE_MONTHS = 12;
 
-export type InventoryItemWithOpinion = Omit<InventoryItemDetail, "assessment"> & {
+export type InventoryItemWithOpinion = Omit<InventoryItemDetail, "assessment" | "eolProduct"> & {
   technicalOpinion: {
     id: string;
     number: string;
     classificationLabel: string;
     issuedAt: Date;
   } | null;
+  eolProduct: { slug: string; name: string } | null;
+  freshness: FreshnessState;
 };
 
 /** Achata `assessment.versions[0].technicalOpinion` (forma de query, com o
  * hop artificial de "versão mais recente") num campo único e opcional - a
- * API não deveria expor a rota de navegação do schema, só o resultado. */
-function attachTechnicalOpinion(item: InventoryItemDetail): InventoryItemWithOpinion {
-  const { assessment, ...rest } = item;
+ * API não deveria expor a rota de navegação do schema, só o resultado.
+ * Também achata `eolProduct` - nunca repassa `cycles` (bruto) pro cliente,
+ * só o veredito já computado (`computeFreshness`, ver eol-freshness.util.ts). */
+function mapItemDetail(item: InventoryItemDetail): InventoryItemWithOpinion {
+  const { assessment, eolProduct, ...rest } = item;
   return {
     ...rest,
     technicalOpinion: assessment?.versions[0]?.technicalOpinion ?? null,
+    eolProduct: eolProduct ? { slug: eolProduct.slug, name: eolProduct.name } : null,
+    freshness: computeFreshness(item.version, eolProduct?.cycles),
   };
 }
 
@@ -72,6 +80,7 @@ export class InventoryService {
     private readonly auditLogService: AuditLogService,
     private readonly notificationsService: NotificationsService,
     private readonly separationOfDutiesService: SeparationOfDutiesService,
+    private readonly eolCatalogRepository: EolCatalogRepository,
   ) {}
 
   async list(user: AuthenticatedUser, query: ListInventoryQueryDto) {
@@ -90,7 +99,7 @@ export class InventoryService {
       page,
       pageSize,
     });
-    return { items: items.map(attachTechnicalOpinion), total, page, pageSize };
+    return { items: items.map(mapItemDetail), total, page, pageSize };
   }
 
   /** Agregados pra aba "Visão geral" do módulo - sempre do tenant inteiro,
@@ -117,7 +126,7 @@ export class InventoryService {
       hasRiskAnalysis: toBoolean(query.hasRiskAnalysis),
       hasInfoSecClause: toBoolean(query.hasInfoSecClause),
     });
-    const mapped = items.map(attachTechnicalOpinion);
+    const mapped = items.map(mapItemDetail);
 
     await this.auditLogService.record({
       tenantId: user.tenantId,
@@ -148,7 +157,52 @@ export class InventoryService {
 
   async getById(user: AuthenticatedUser, id: string): Promise<InventoryItemWithOpinion> {
     const item = await this.getOwnedOrThrow(user.tenantId, id);
-    return attachTechnicalOpinion(item);
+    return mapItemDetail(item);
+  }
+
+  /** Autocomplete usado no formulário de item - busca só no cache local
+   * (`EolProduct`), nunca chama o endoflife.date ao vivo por tecla digitada
+   * (ver EolCatalogScheduler pra sincronização). Nunca devolve `cycles` -
+   * o autocomplete só precisa de slug/name, e o array bruto pode ser grande. */
+  async searchEolProducts(query: string): Promise<{ slug: string; name: string }[]> {
+    const products = await this.eolCatalogRepository.search(query);
+    return products.map(({ slug, name }) => ({ slug, name }));
+  }
+
+  /** Vínculo manual (nunca auto-detectado por nome) com o catálogo local de
+   * frescor de versão - `eolProductId: null` desvincula. Rejeita um slug que
+   * não existe no cache local em vez de gravar uma FK pra um produto
+   * inexistente silenciosamente. */
+  async linkEolProduct(
+    user: AuthenticatedUser,
+    id: string,
+    eolProductId: string | null,
+  ): Promise<InventoryItemWithOpinion> {
+    await this.getOwnedOrThrow(user.tenantId, id);
+
+    if (eolProductId !== null) {
+      const product = await this.eolCatalogRepository.findBySlug(eolProductId);
+      if (!product) {
+        throw new BadRequestException("Produto não encontrado no catálogo de frescor de versão.");
+      }
+    }
+
+    const item = await this.repository.update(id, {
+      eolProductId,
+      eolLinkedAt: eolProductId ? new Date() : null,
+      eolLinkedByUserId: eolProductId ? user.id : null,
+    });
+
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "UPDATE",
+      entityType: "SoftwareInventoryItem",
+      entityId: id,
+      metadata: { field: "eolProduct", eolProductId },
+    });
+
+    return mapItemDetail(item);
   }
 
   /** Cadastro manual (`POST /inventory`) sempre nasce `PENDING_APPROVAL` e
@@ -196,7 +250,7 @@ export class InventoryService {
     });
     await this.notifyApprovers(user.tenantId, item.name, item.id);
 
-    return attachTechnicalOpinion(item);
+    return mapItemDetail(item);
   }
 
   async update(
@@ -229,11 +283,11 @@ export class InventoryService {
       nextReviewDate: dto.nextReviewDate ? new Date(dto.nextReviewDate) : undefined,
     });
     if (documentationLinks === undefined) {
-      return attachTechnicalOpinion(item);
+      return mapItemDetail(item);
     }
     await this.repository.setDocumentationLinks(id, user.tenantId, documentationLinks);
     const refreshed = await this.repository.findById(id);
-    return attachTechnicalOpinion(refreshed ?? item);
+    return mapItemDetail(refreshed ?? item);
   }
 
   /** Fila de itens manuais aguardando decisão — só quem tem
@@ -285,7 +339,7 @@ export class InventoryService {
       relatedEntityId: id,
     });
 
-    return attachTechnicalOpinion(item);
+    return mapItemDetail(item);
   }
 
   async reject(
@@ -325,7 +379,7 @@ export class InventoryService {
       relatedEntityId: id,
     });
 
-    return attachTechnicalOpinion(item);
+    return mapItemDetail(item);
   }
 
   /** Só o criador original pode reenviar um item reprovado — espelho, do
@@ -356,7 +410,7 @@ export class InventoryService {
     });
     await this.notifyApprovers(user.tenantId, item.name, id);
 
-    return attachTechnicalOpinion(item);
+    return mapItemDetail(item);
   }
 
   /**
