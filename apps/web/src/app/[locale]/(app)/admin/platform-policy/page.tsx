@@ -19,6 +19,7 @@ import type {
   PlatformPasswordPolicy,
   PlatformTwoFactorPolicy,
   PlatformPasswordlessPolicy,
+  PlatformIntegrationsPolicy,
 } from "@/lib/platform-policy-types";
 import { AdminSectionGate } from "../_components/section-gate";
 
@@ -226,6 +227,154 @@ function PasswordlessPolicyForm({
   );
 }
 
+const integrationsPolicySchema = z.object({
+  virusTotalApiKey: z.string().optional(),
+  virusTotalEnabled: z.boolean(),
+  virusTotalDailyBudget: z.coerce.number().int().min(1).max(500),
+  endoflifeEnabled: z.boolean(),
+});
+
+type IntegrationsPolicyFormInput = z.input<typeof integrationsPolicySchema>;
+type IntegrationsPolicyFormOutput = z.output<typeof integrationsPolicySchema>;
+
+function IntegrationsPolicyForm({
+  policy,
+  onSaved,
+}: {
+  policy: PlatformIntegrationsPolicy;
+  onSaved: (policy: PlatformIntegrationsPolicy) => void;
+}) {
+  const t = useTranslations("AdminPlatformPolicy");
+  const api = useApi();
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting, isDirty, errors },
+  } = useForm<IntegrationsPolicyFormInput, unknown, IntegrationsPolicyFormOutput>({
+    resolver: zodResolver(integrationsPolicySchema),
+    defaultValues: {
+      virusTotalApiKey: "",
+      virusTotalEnabled: policy.virusTotalEnabled,
+      virusTotalDailyBudget: policy.virusTotalDailyBudget,
+      endoflifeEnabled: policy.endoflifeEnabled,
+    },
+  });
+
+  async function onSubmit(values: IntegrationsPolicyFormOutput) {
+    const payload: {
+      virusTotalApiKey?: string;
+      virusTotalEnabled: boolean;
+      virusTotalDailyBudget: number;
+      endoflifeEnabled: boolean;
+    } = {
+      virusTotalEnabled: values.virusTotalEnabled,
+      virusTotalDailyBudget: values.virusTotalDailyBudget,
+      endoflifeEnabled: values.endoflifeEnabled,
+    };
+    // Chave só entra no payload se o usuário digitou algo - vazio/omitido
+    // preserva a chave já salva no backend (nunca sobrescreve com vazio).
+    if (values.virusTotalApiKey && values.virusTotalApiKey.trim() !== "") {
+      payload.virusTotalApiKey = values.virusTotalApiKey.trim();
+    }
+
+    try {
+      const updated = await api.patch<PlatformIntegrationsPolicy>(
+        "/platform/integrations-policy",
+        payload,
+      );
+      toast.success(t("saveSuccess"));
+      reset({
+        virusTotalApiKey: "",
+        virusTotalEnabled: updated.virusTotalEnabled,
+        virusTotalDailyBudget: updated.virusTotalDailyBudget,
+        endoflifeEnabled: updated.endoflifeEnabled,
+      });
+      onSaved(updated);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("saveError"));
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="virusTotalApiKey">{t("integrationsFieldApiKey")}</Label>
+        <Input
+          id="virusTotalApiKey"
+          type="password"
+          autoComplete="off"
+          placeholder={
+            policy.hasVirusTotalApiKey
+              ? t("integrationsApiKeyConfiguredPlaceholder")
+              : t("integrationsApiKeyEmptyPlaceholder")
+          }
+          {...register("virusTotalApiKey")}
+        />
+        <p className="text-xs text-muted-foreground">{t("integrationsApiKeyHint")}</p>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Controller
+          control={control}
+          name="virusTotalEnabled"
+          render={({ field }) => (
+            <Checkbox
+              id="virusTotalEnabled"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(checked === true)}
+            />
+          )}
+        />
+        <Label htmlFor="virusTotalEnabled" className="font-normal">
+          {t("integrationsFieldVirusTotalEnabled")}
+        </Label>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="virusTotalDailyBudget">{t("integrationsFieldDailyBudget")}</Label>
+        <Input
+          id="virusTotalDailyBudget"
+          type="number"
+          min={1}
+          max={500}
+          className="max-w-32"
+          aria-invalid={!!errors.virusTotalDailyBudget}
+          {...register("virusTotalDailyBudget")}
+        />
+        {errors.virusTotalDailyBudget && (
+          <p className="text-xs text-destructive">{errors.virusTotalDailyBudget.message}</p>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Controller
+          control={control}
+          name="endoflifeEnabled"
+          render={({ field }) => (
+            <Checkbox
+              id="endoflifeEnabled"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(checked === true)}
+            />
+          )}
+        />
+        <Label htmlFor="endoflifeEnabled" className="font-normal">
+          {t("integrationsFieldEndoflifeEnabled")}
+        </Label>
+      </div>
+
+      <div>
+        <Button type="submit" disabled={isSubmitting || !isDirty}>
+          {isSubmitting ? t("saving") : t("save")}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 function PlatformPolicyContent() {
   const t = useTranslations("AdminPlatformPolicy");
   const api = useApi();
@@ -234,6 +383,8 @@ function PlatformPolicyContent() {
   const [twoFactorPolicy, setTwoFactorPolicy] = React.useState<PlatformTwoFactorPolicy | null>(null);
   const [passwordlessPolicy, setPasswordlessPolicy] =
     React.useState<PlatformPasswordlessPolicy | null>(null);
+  const [integrationsPolicy, setIntegrationsPolicy] =
+    React.useState<PlatformIntegrationsPolicy | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -241,11 +392,13 @@ function PlatformPolicyContent() {
       api.get<PlatformPasswordPolicy>("/platform/password-policy"),
       api.get<PlatformTwoFactorPolicy>("/platform/two-factor-policy"),
       api.get<PlatformPasswordlessPolicy>("/platform/passwordless-policy"),
+      api.get<PlatformIntegrationsPolicy>("/platform/integrations-policy"),
     ])
-      .then(([passwordResult, twoFactorResult, passwordlessResult]) => {
+      .then(([passwordResult, twoFactorResult, passwordlessResult, integrationsResult]) => {
         setPolicy(passwordResult);
         setTwoFactorPolicy(twoFactorResult);
         setPasswordlessPolicy(passwordlessResult);
+        setIntegrationsPolicy(integrationsResult);
         setError(null);
       })
       .catch(() => setError(t("loadError")));
@@ -260,13 +413,13 @@ function PlatformPolicyContent() {
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      {!error && (!policy || !twoFactorPolicy || !passwordlessPolicy) && (
+      {!error && (!policy || !twoFactorPolicy || !passwordlessPolicy || !integrationsPolicy) && (
         <div className="flex justify-center py-8">
           <Loader2 className="animate-spin text-muted-foreground" />
         </div>
       )}
 
-      {policy && twoFactorPolicy && passwordlessPolicy && (
+      {policy && twoFactorPolicy && passwordlessPolicy && integrationsPolicy && (
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
@@ -292,6 +445,15 @@ function PlatformPolicyContent() {
             </CardHeader>
             <CardContent>
               <PasswordlessPolicyForm policy={passwordlessPolicy} onSaved={setPasswordlessPolicy} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{t("integrationsCardTitle")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <IntegrationsPolicyForm policy={integrationsPolicy} onSaved={setIntegrationsPolicy} />
             </CardContent>
           </Card>
         </div>

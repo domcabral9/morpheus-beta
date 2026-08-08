@@ -25,3 +25,13 @@ export interface PlatformPasswordlessPolicy {
   updatedAt: string;
   createdAt: string;
 }
+
+/** Forma mascarada - nunca inclui a chave do VirusTotal, cru ou decriptografado. */
+export interface PlatformIntegrationsPolicy {
+  virusTotalEnabled: boolean;
+  virusTotalDailyBudget: number;
+  hasVirusTotalApiKey: boolean;
+  endoflifeEnabled: boolean;
+  updatedByUserId: string | null;
+  updatedAt: string;
+}
