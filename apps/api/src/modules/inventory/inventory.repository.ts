@@ -13,6 +13,12 @@ export const itemDetailInclude = {
   linkedVendor: {
     select: { id: true, name: true, currentTier: true, currentTierLabel: true },
   },
+  // `cycles` (bruto, da API do endoflife.date) vem só pro service computar
+  // o veredito de frescor - nunca repassado cru pro cliente (ver
+  // InventoryService, hop-flatten igual ao já feito com `technicalOpinion`).
+  eolProduct: {
+    select: { slug: true, name: true, cycles: true },
+  },
   // Estado do gate de aprovação de cadastro manual (Fase 2 do fluxo de
   // aprovação) - null pra itens vindos de Assessment aprovada e pra itens
   // manuais legados anteriores a esta feature (grandfathering).
