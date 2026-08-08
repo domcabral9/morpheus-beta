@@ -95,12 +95,20 @@ erDiagram
         string id PK "singleton, sempre 'singleton'"
         bool enabled "exige User.emailVerified mesmo com o toggle ligado"
     }
+    PLATFORM_INTEGRATIONS_POLICY {
+        string id PK "singleton, sempre 'singleton'"
+        string virusTotalApiKeyEncrypted "AES-256-GCM, GET nunca devolve"
+        bool virusTotalEnabled
+        int virusTotalDailyBudget "folga sob o teto 500/dia do tier gratuito"
+        bool endoflifeEnabled
+    }
 ```
 
-`PLATFORM_PASSWORD_POLICY`, `PLATFORM_TWO_FACTOR_POLICY` e `PLATFORM_PASSWORDLESS_POLICY` não têm
-nenhuma relação no diagrama de propósito: são, junto de `PERMISSION`, os únicos models do sistema que
-são cross-tenant em vez de tenant-scoped - uma única linha cada, configuráveis só por quem tem a
-permissão `platform:cross-tenant`, valendo para todos os tenants.
+`PLATFORM_PASSWORD_POLICY`, `PLATFORM_TWO_FACTOR_POLICY`, `PLATFORM_PASSWORDLESS_POLICY` e
+`PLATFORM_INTEGRATIONS_POLICY` não têm nenhuma relação no diagrama de propósito: são, junto de
+`PERMISSION`, os únicos models do sistema que são cross-tenant em vez de tenant-scoped - uma única
+linha cada, configuráveis só por quem tem a permissão `platform:cross-tenant`, valendo para todos os
+tenants.
 
 ### Questionário e biblioteca de controles
 
@@ -374,6 +382,7 @@ erDiagram
     USER ||--o{ NOTIFICATION : recebe
     SOFTWARE_INVENTORY_ITEM }o--o| VENDOR : "pode referenciar (fornecedor real, opcional)"
     SOFTWARE_INVENTORY_ITEM ||--o| INVENTORY_APPROVAL_REQUEST : "cadastro manual aguarda aprovação"
+    SOFTWARE_INVENTORY_ITEM }o--o| EOL_PRODUCT : "vínculo manual, opcional (frescor de versão)"
 
     SOFTWARE_INVENTORY_ITEM {
         string id PK
@@ -384,6 +393,16 @@ erDiagram
         datetime nextReviewDate
         string vendor "snapshot em texto - sempre presente"
         string vendorId FK "nullable, aponta pro Vendor real quando vinculado"
+        string eolProductId FK "nullable, vínculo manual com o catálogo local"
+        bool reputationDeclaredKnown "flag manual, fallback sem artefato"
+        datetime reputationLastCheckedAt "nullable"
+        string reputationVerdict "CLEAN|SUSPICIOUS, nullable"
+    }
+    EOL_PRODUCT {
+        string slug PK
+        string name
+        json cycles "bruto, direto da API do endoflife.date"
+        datetime lastSyncedAt
     }
     INVENTORY_APPROVAL_REQUEST {
         string id PK
