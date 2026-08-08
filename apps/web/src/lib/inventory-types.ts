@@ -46,6 +46,14 @@ export interface InventoryLinkedVendor {
   currentTierLabel: string | null;
 }
 
+export const FRESHNESS_STATES = ["up-to-date", "outdated", "unknown"] as const;
+export type FreshnessState = (typeof FRESHNESS_STATES)[number];
+
+export interface InventoryEolProduct {
+  slug: string;
+  name: string;
+}
+
 export interface InventoryItemSummary {
   id: string;
   name: string;
@@ -71,6 +79,8 @@ export interface InventoryItemSummary {
   approvalRequest: InventoryApprovalSummary | null;
   hasRiskAnalysis: boolean;
   hasInfoSecClause: boolean;
+  eolProduct: InventoryEolProduct | null;
+  freshness: FreshnessState;
 }
 
 export interface InventoryApprovalSummary {
