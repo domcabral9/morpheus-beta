@@ -54,6 +54,14 @@ export interface InventoryEolProduct {
   name: string;
 }
 
+export const REPUTATION_STATES = [
+  "verified-clean",
+  "verified-suspicious",
+  "declared-known",
+  "unverified",
+] as const;
+export type ReputationState = (typeof REPUTATION_STATES)[number];
+
 export interface InventoryItemSummary {
   id: string;
   name: string;
@@ -81,6 +89,11 @@ export interface InventoryItemSummary {
   hasInfoSecClause: boolean;
   eolProduct: InventoryEolProduct | null;
   freshness: FreshnessState;
+  reputationState: ReputationState;
+  reputationDeclaredKnown: boolean;
+  reputationLastCheckedAt: string | null;
+  reputationVerdict: "CLEAN" | "SUSPICIOUS" | null;
+  reputationCheckedSource: "URL" | "ATTACHMENT_HASH" | null;
 }
 
 export interface InventoryApprovalSummary {
