@@ -164,6 +164,13 @@ onde fica o histórico de cada janela) em [`docs/security.md`](./security.md); d
 foi montado (incluindo dois bugs reais que a primeira execução do CI pegou) no
 [`CHANGELOG.md`](./CHANGELOG.md).
 
+## Dados de demonstração (tenant `demo`)
+
+Ao criar/editar amostras no tenant `demo` (dados usados pra navegação manual e pros screenshots do
+portfólio), seguir o checklist combinado em [`docs/demo-data-checklist.md`](./demo-data-checklist.md)
+- cobertura de status, coerência entre `Inventory`/`Vendor`/`Assessment`, impacto real nos
+dashboards (não só na tela de detalhe), e sempre via API real, nunca `seed.ts`/SQL direto.
+
 ## Labels e milestones de PR
 
 Toda PR ganha uma label espelhando o prefixo de commit convencional usado no título
