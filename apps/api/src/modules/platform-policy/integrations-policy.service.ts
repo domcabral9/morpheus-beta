@@ -70,6 +70,15 @@ export class IntegrationsPolicyService {
     return this.toView(updated);
   }
 
+  /** Acesso interno à chave real, decriptografada - nunca exposto via
+   * controller. Só chamado por serviços que efetivamente fazem a chamada
+   * externa (`VirusTotalClient`, via `ReputationService`). */
+  async getDecryptedVirusTotalApiKey(): Promise<string | null> {
+    const row = await this.repository.getOrCreate();
+    if (!row.virusTotalApiKeyEncrypted) return null;
+    return this.cryptoService.decrypt(row.virusTotalApiKeyEncrypted);
+  }
+
   private toView(row: PlatformIntegrationsPolicy): IntegrationsPolicyView {
     return {
       virusTotalEnabled: row.virusTotalEnabled,
