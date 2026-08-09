@@ -7,6 +7,7 @@ import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
 import { EolCatalogRepository } from "./eol/eol-catalog.repository";
+import { ReputationService } from "./reputation/reputation.service";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
@@ -60,6 +61,7 @@ describe("InventoryService", () => {
   let auditLogService: { record: jest.Mock };
   let notificationsService: { notify: jest.Mock; notifyPermissionHolders: jest.Mock };
   let eolCatalogRepo: { search: jest.Mock; findBySlug: jest.Mock };
+  let reputationService: { performCheck: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -88,6 +90,7 @@ describe("InventoryService", () => {
       notifyPermissionHolders: jest.fn().mockResolvedValue(undefined),
     };
     eolCatalogRepo = { search: jest.fn(), findBySlug: jest.fn() };
+    reputationService = { performCheck: jest.fn() };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -98,6 +101,7 @@ describe("InventoryService", () => {
         { provide: NotificationsService, useValue: notificationsService },
         SeparationOfDutiesService,
         { provide: EolCatalogRepository, useValue: eolCatalogRepo },
+        { provide: ReputationService, useValue: reputationService },
       ],
     }).compile();
 
@@ -678,6 +682,61 @@ describe("InventoryService", () => {
         PERMISSIONS.ASSESSMENTS_APPROVE,
         expect.objectContaining({ type: "INVENTORY_APPROVAL_REQUESTED" }),
       );
+    });
+  });
+
+  describe("reputação de ameaça", () => {
+    it("checkReputation valida posse do item e delega ao ReputationService", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", assessment: null });
+      reputationService.performCheck.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        assessment: null,
+        reputationVerdict: "CLEAN",
+        reputationLastCheckedAt: new Date(),
+        reputationDeclaredKnown: false,
+      });
+
+      const result = await service.checkReputation(makeUser(), "item-1");
+
+      expect(reputationService.performCheck).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "item-1" }),
+        "user-1",
+      );
+      expect(result.reputationState).toBe("verified-clean");
+    });
+
+    it("checkReputation rejeita item de outro tenant sem chamar o ReputationService", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "outro-tenant" });
+      await expect(service.checkReputation(makeUser(), "item-1")).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(reputationService.performCheck).not.toHaveBeenCalled();
+    });
+
+    it("setReputationDeclaredKnown atualiza a flag e audita", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1" });
+
+      const result = await service.setReputationDeclaredKnown(makeUser(), "item-1", true);
+
+      expect(repo.update).toHaveBeenCalledWith("item-1", { reputationDeclaredKnown: true });
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ metadata: { field: "reputationDeclaredKnown", value: true } }),
+      );
+      expect(result.reputationState).toBe("declared-known");
+    });
+
+    it("mapItemDetail computa reputationState a partir dos campos escalares do item", async () => {
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        assessment: null,
+        reputationVerdict: null,
+        reputationLastCheckedAt: null,
+        reputationDeclaredKnown: false,
+      });
+      const result = await service.getById(makeUser(), "item-1");
+      expect(result.reputationState).toBe("unverified");
     });
   });
 });

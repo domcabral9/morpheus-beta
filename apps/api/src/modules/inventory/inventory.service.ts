@@ -24,6 +24,8 @@ import {
 } from "./dto/decide-inventory-approval.dto";
 import { EolCatalogRepository } from "./eol/eol-catalog.repository";
 import { computeFreshness, FreshnessState } from "./eol/eol-freshness.util";
+import { ReputationService } from "./reputation/reputation.service";
+import { computeReputationState, ReputationState } from "./reputation/reputation-state.util";
 
 /** Cadência padrão de revisão para itens criados automaticamente na aprovação. */
 const DEFAULT_REVIEW_CYCLE_MONTHS = 12;
@@ -37,6 +39,7 @@ export type InventoryItemWithOpinion = Omit<InventoryItemDetail, "assessment" | 
   } | null;
   eolProduct: { slug: string; name: string } | null;
   freshness: FreshnessState;
+  reputationState: ReputationState;
 };
 
 /** Achata `assessment.versions[0].technicalOpinion` (forma de query, com o
@@ -51,6 +54,11 @@ function mapItemDetail(item: InventoryItemDetail): InventoryItemWithOpinion {
     technicalOpinion: assessment?.versions[0]?.technicalOpinion ?? null,
     eolProduct: eolProduct ? { slug: eolProduct.slug, name: eolProduct.name } : null,
     freshness: computeFreshness(item.version, eolProduct?.cycles),
+    reputationState: computeReputationState({
+      reputationLastCheckedAt: item.reputationLastCheckedAt,
+      reputationVerdict: item.reputationVerdict,
+      reputationDeclaredKnown: item.reputationDeclaredKnown,
+    }),
   };
 }
 
@@ -81,6 +89,7 @@ export class InventoryService {
     private readonly notificationsService: NotificationsService,
     private readonly separationOfDutiesService: SeparationOfDutiesService,
     private readonly eolCatalogRepository: EolCatalogRepository,
+    private readonly reputationService: ReputationService,
   ) {}
 
   async list(user: AuthenticatedUser, query: ListInventoryQueryDto) {
@@ -200,6 +209,42 @@ export class InventoryService {
       entityType: "SoftwareInventoryItem",
       entityId: id,
       metadata: { field: "eolProduct", eolProductId },
+    });
+
+    return mapItemDetail(item);
+  }
+
+  /** Botão "verificar agora" - dispara uma checagem real contra o VirusTotal
+   * (precedência hash-de-anexo > URL, ver ReputationService). `actingUserId`
+   * vai pro audit log; a checagem automática noturna (varredura) chama
+   * `ReputationService.performCheck` direto com `null`, sem passar por aqui
+   * (não precisa de checagem de posse de tenant - já roda no escopo certo). */
+  async checkReputation(user: AuthenticatedUser, id: string): Promise<InventoryItemWithOpinion> {
+    const item = await this.getOwnedOrThrow(user.tenantId, id);
+    const updated = await this.reputationService.performCheck(item, user.id);
+    return mapItemDetail(updated);
+  }
+
+  /** Flag manual declarada (mesma forma de `hasRiskAnalysis`) - fallback pra
+   * software obviamente conhecido/confiável sem artefato pra checar de
+   * verdade. Uma checagem automática já feita sempre prevalece na leitura
+   * (ver computeReputationState) - esta flag só preenche a lacuna quando
+   * nenhuma checagem existe. */
+  async setReputationDeclaredKnown(
+    user: AuthenticatedUser,
+    id: string,
+    declaredKnown: boolean,
+  ): Promise<InventoryItemWithOpinion> {
+    await this.getOwnedOrThrow(user.tenantId, id);
+    const item = await this.repository.update(id, { reputationDeclaredKnown: declaredKnown });
+
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "UPDATE",
+      entityType: "SoftwareInventoryItem",
+      entityId: id,
+      metadata: { field: "reputationDeclaredKnown", value: declaredKnown },
     });
 
     return mapItemDetail(item);

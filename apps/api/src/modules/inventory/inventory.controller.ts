@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { ApiTags } from "@nestjs/swagger";
+import { Throttle } from "@nestjs/throttler";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
 import { Audit } from "../../common/decorators/audit.decorator";
@@ -18,6 +19,7 @@ import {
 } from "./dto/decide-inventory-approval.dto";
 import { SearchEolProductsQueryDto } from "./dto/search-eol-products.query.dto";
 import { LinkEolProductDto } from "./dto/link-eol-product.dto";
+import { SetReputationDeclaredKnownDto } from "./dto/set-reputation-declared-known.dto";
 import { buildInventoryCsv } from "./inventory-export.util";
 
 @ApiTags("inventory")
@@ -126,6 +128,27 @@ export class InventoryController {
     @Body() dto: LinkEolProductDto,
   ) {
     return this.inventoryService.linkEolProduct(user, id, dto.eolProductId ?? null);
+  }
+
+  // Sem @Audit() decorator - metadata (fonte, veredito) roda explícito no
+  // service. Throttle mesmo limite de login/2FA - defesa em profundidade
+  // sobre o orçamento diário (ReputationBudgetRepository), que é o
+  // enforcement real, não este decorator sozinho.
+  @RequirePermissions(PERMISSIONS.INVENTORY_MANAGE)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post(":id/reputation-check")
+  checkReputation(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.inventoryService.checkReputation(user, id);
+  }
+
+  @RequirePermissions(PERMISSIONS.INVENTORY_MANAGE)
+  @Patch(":id/reputation-declared-known")
+  setReputationDeclaredKnown(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") id: string,
+    @Body() dto: SetReputationDeclaredKnownDto,
+  ) {
+    return this.inventoryService.setReputationDeclaredKnown(user, id, dto.declaredKnown);
   }
 
   // Sem @Audit() decorator nas 3 rotas abaixo - metadata (motivo da reprovação,
