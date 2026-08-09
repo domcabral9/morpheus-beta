@@ -726,6 +726,14 @@ describe("InventoryService", () => {
       expect(result.reputationState).toBe("declared-known");
     });
 
+    it("setReputationDeclaredKnown rejeita item de outro tenant sem gravar nada", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "outro-tenant" });
+      await expect(service.setReputationDeclaredKnown(makeUser(), "item-1", true)).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
     it("mapItemDetail computa reputationState a partir dos campos escalares do item", async () => {
       repo.findById.mockResolvedValue({
         id: "item-1",
