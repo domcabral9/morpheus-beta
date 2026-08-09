@@ -24,8 +24,10 @@ uma linha do que aconteceu.
   terceiro travado fora, sem achado na revisão de segurança), gráficos de conformidade CIS/NIST/ISO em
   `/dashboards` (capacidade de mapeamento de controles já existente no schema, nunca antes exposta),
   curadoria de portfólio focada em conformidade/GRC, revisão conjunta do inventário (painel de anexos,
-  busca por nome, seletor de usuário pesquisável), e o início do arco de enriquecimento de itens de
-  inventário (frescor de versão via endoflife.date + reputação de ameaça via VirusTotal).
+  busca por nome, seletor de usuário pesquisável), e o arco completo de enriquecimento de itens de
+  inventário (frescor de versão via endoflife.date + reputação de ameaça via VirusTotal, Fases 1-8,
+  fecha o backlog — inclui um novo checklist padrão de dados de demonstração adotado até o fim do
+  projeto).
 - [**Julho**](./changelog/2026-07.md) — Construção inicial do produto (roteiro técnico Etapas 1-16 +
   plano pós-roteiro Etapas A-I), multi-tenancy e administração avançada, backlog pós-uso, renovação
   anual de homologação, avaliação de risco de fornecedores, vínculo Inventory↔Vendor, SSDLC/CI, e
