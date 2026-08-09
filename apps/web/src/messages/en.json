@@ -410,6 +410,26 @@
       "outdated": "Outdated",
       "unknown": "Unknown freshness"
     },
+    "reputationTitle": "Threat reputation",
+    "reputationLastChecked": "Last checked via {source} on {date}",
+    "reputationSource": {
+      "URL": "URL",
+      "ATTACHMENT_HASH": "attachment hash"
+    },
+    "reputationCheckButton": "Check now",
+    "reputationChecking": "Checking...",
+    "reputationCheckSuccess": "Reputation check completed.",
+    "reputationCheckError": "Could not check reputation.",
+    "reputationDeclaredKnownLabel": "Declare software as known/trusted (no automated check)",
+    "reputationDeclaredKnownError": "Could not save the declaration.",
+    "reputation": {
+      "states": {
+        "verified-clean": "Clean reputation (verified)",
+        "verified-suspicious": "Suspicious reputation (verified)",
+        "declared-known": "Declared known",
+        "unverified": "Unverified"
+      }
+    },
     "yes": "Yes",
     "no": "No",
     "documentationLinksTitle": "Documentation links",

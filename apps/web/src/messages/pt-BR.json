@@ -410,6 +410,26 @@
       "outdated": "Versão desatualizada",
       "unknown": "Frescor desconhecido"
     },
+    "reputationTitle": "Reputação de ameaça",
+    "reputationLastChecked": "Última checagem via {source} em {date}",
+    "reputationSource": {
+      "URL": "URL",
+      "ATTACHMENT_HASH": "hash do anexo"
+    },
+    "reputationCheckButton": "Verificar agora",
+    "reputationChecking": "Verificando...",
+    "reputationCheckSuccess": "Checagem de reputação concluída.",
+    "reputationCheckError": "Não foi possível verificar a reputação.",
+    "reputationDeclaredKnownLabel": "Declarar software conhecido/confiável (sem checagem automática)",
+    "reputationDeclaredKnownError": "Não foi possível salvar a declaração.",
+    "reputation": {
+      "states": {
+        "verified-clean": "Reputação limpa (verificada)",
+        "verified-suspicious": "Reputação suspeita (verificada)",
+        "declared-known": "Declarado conhecido",
+        "unverified": "Não verificado"
+      }
+    },
     "yes": "Sim",
     "no": "Não",
     "documentationLinksTitle": "Links de documentação",

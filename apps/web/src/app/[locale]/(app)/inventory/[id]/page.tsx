@@ -16,6 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TierBadge } from "@/components/tier-badge";
 import { FreshnessBadge } from "@/components/freshness-badge";
+import { ReputationBadge } from "@/components/reputation-badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { AttachmentsPanel } from "@/components/attachments-panel";
 import type { Area } from "@/lib/assessment-types";
 import type { UserOption } from "@/lib/user-picker-types";
@@ -62,6 +65,8 @@ export default function InventoryItemPage() {
   const [linkEolOpen, setLinkEolOpen] = React.useState(false);
   const [startingArt, setStartingArt] = React.useState(false);
   const [resubmitting, setResubmitting] = React.useState(false);
+  const [checkingReputation, setCheckingReputation] = React.useState(false);
+  const [savingDeclaredKnown, setSavingDeclaredKnown] = React.useState(false);
 
   const loadItem = React.useCallback(() => {
     return api
@@ -98,6 +103,37 @@ export default function InventoryItemPage() {
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : t("vendorArtStartError"));
       setStartingArt(false);
+    }
+  }
+
+  async function handleCheckReputation() {
+    setCheckingReputation(true);
+    try {
+      const updated = await api.post<InventoryItemDetail>(
+        `/inventory/${params.id}/reputation-check`,
+        {},
+      );
+      setItem(updated);
+      toast.success(t("reputationCheckSuccess"));
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("reputationCheckError"));
+    } finally {
+      setCheckingReputation(false);
+    }
+  }
+
+  async function handleSetDeclaredKnown(declaredKnown: boolean) {
+    setSavingDeclaredKnown(true);
+    try {
+      const updated = await api.patch<InventoryItemDetail>(
+        `/inventory/${params.id}/reputation-declared-known`,
+        { declaredKnown },
+      );
+      setItem(updated);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("reputationDeclaredKnownError"));
+    } finally {
+      setSavingDeclaredKnown(false);
     }
   }
 
@@ -315,6 +351,44 @@ export default function InventoryItemPage() {
                         {t("eolFreshnessChangeButton")}
                       </Button>
                     )}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 flex flex-col gap-3 border-t pt-4">
+                <span className="text-xs text-muted-foreground">{t("reputationTitle")}</span>
+                <div className="flex flex-wrap items-center gap-3">
+                  <ReputationBadge state={item.reputationState} />
+                  {item.reputationLastCheckedAt && item.reputationCheckedSource && (
+                    <span className="text-sm text-muted-foreground">
+                      {t("reputationLastChecked", {
+                        source: t(`reputationSource.${item.reputationCheckedSource}`),
+                        date: new Date(item.reputationLastCheckedAt).toLocaleDateString(),
+                      })}
+                    </span>
+                  )}
+                  {canManage && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={checkingReputation}
+                      onClick={handleCheckReputation}
+                    >
+                      {checkingReputation ? t("reputationChecking") : t("reputationCheckButton")}
+                    </Button>
+                  )}
+                </div>
+                {canManage && (
+                  <div className="flex items-start gap-2">
+                    <Checkbox
+                      id="reputationDeclaredKnown"
+                      checked={item.reputationDeclaredKnown}
+                      disabled={savingDeclaredKnown}
+                      onCheckedChange={(checked) => handleSetDeclaredKnown(checked === true)}
+                    />
+                    <Label htmlFor="reputationDeclaredKnown" className="font-normal text-sm">
+                      {t("reputationDeclaredKnownLabel")}
+                    </Label>
                   </div>
                 )}
               </div>
