@@ -21,6 +21,9 @@ adotado pela empresa e o fornecedor por trás dele. Do questionário de risco à
    27002, NIST CSF, CIS Controls v8, LGPD, GDPR, OWASP ASVS/Top 10) e placar de maturidade por área.
 7. Avaliação de risco de fornecedores, com questionário inspirado no NIST SP 800-161, pontuação
    automática e Tiers de monitoramento com cadência de reavaliação configurável.
+8. Enriquecimento automático do inventário: frescor de versão (endoflife.date) e reputação de ameaça
+   (VirusTotal) - configurável pelo super-admin, nunca bloqueia a leitura do inventário se o
+   terceiro estiver indisponível.
 
 Um efeito direto disso: como toda nova contratação passa por um canal único e fica registrada num
 inventário central, o processo também fortalece a governança corporativa e reduz Shadow IT - o
@@ -68,6 +71,33 @@ avaliado ou está com reavaliação vencida/próxima.
 | ART do fornecedor no detalhe do item | Acompanhamento de fornecedores |
 | --- | --- |
 | ![ART do fornecedor](./docs/screenshots/inventory-item-art.png) | ![Acompanhamento de fornecedores](./docs/screenshots/vendors-acompanhamento.png) |
+
+## Enriquecimento de inventário (metodologia)
+
+Além dos sinais autodeclarados (ART, cláusula de segurança da informação), cada item do inventário
+pode ganhar dois sinais automáticos, consultados sob demanda ou por uma varredura noturna com
+orçamento diário compartilhado (nunca estoura a cota gratuita do terceiro, mesmo somando cliques
+manuais de vários usuários):
+
+- **Frescor de versão**: vínculo manual com o catálogo do [endoflife.date](https://endoflife.date/)
+  (sincronizado localmente todo dia) - compara a versão cadastrada do item contra o ciclo de release
+  correspondente e classifica "em dia" ou "desatualizada". A comparação é deliberadamente
+  conservadora: sem um match exato de ciclo, o resultado é "desconhecido", nunca um veredito
+  arriscado.
+- **Reputação de ameaça**: checagem passiva no [VirusTotal](https://www.virustotal.com/) por hash de
+  anexo (precedência) ou URL do item - nunca envia mais que o artefato necessário, nunca dados
+  identificáveis do tenant. Um hash/URL que o VirusTotal nunca viu antes vira "não verificado", jamais
+  "limpo" por omissão. Para software obviamente confiável sem artefato pra checar (ex. um SaaS
+  comercial conhecido), existe também uma flag manual "declarado conhecido".
+
+Ambas as integrações são opcionais e configuradas pelo super-admin numa tela central - e, seguindo a
+mesma premissa de resiliência do resto do sistema, a indisponibilidade de qualquer uma delas nunca
+compromete a leitura normal do inventário: os dados exibidos vêm sempre do último resultado já salvo,
+nunca de uma chamada ao vivo durante a navegação.
+
+| Frescor de versão no detalhe do item | Reputação de ameaça no detalhe do item |
+| --- | --- |
+| ![Frescor de versão](./docs/screenshots/inventory-freshness.png) | ![Reputação de ameaça](./docs/screenshots/inventory-reputation.png) |
 
 ## Conformidade com frameworks de segurança (metodologia)
 
@@ -255,6 +285,9 @@ by the company and the vendor behind it. From risk questionnaire to final decisi
    CIS Controls v8, LGPD, GDPR, OWASP ASVS/Top 10), and a maturity leaderboard by area.
 7. Vendor risk assessment, with a questionnaire inspired by NIST SP 800-161, automatic scoring, and
    monitoring Tiers with configurable reassessment cadence.
+8. Automatic inventory enrichment: version freshness (endoflife.date) and threat reputation
+   (VirusTotal) - configurable by the super-admin, never blocks inventory reads if the third party
+   is unavailable.
 
 A direct side effect: since every new acquisition goes through a single channel and lands in a
 central inventory, the process also strengthens corporate governance and reduces Shadow IT - the
@@ -301,6 +334,31 @@ overdue/upcoming reassessment.
 | Vendor ART on the item detail page | Vendor tracking |
 | --- | --- |
 | ![Vendor ART](./docs/screenshots/inventory-item-art-en.png) | ![Vendor tracking](./docs/screenshots/vendors-acompanhamento-en.png) |
+
+## Inventory enrichment (methodology)
+
+Beyond the self-declared signals (ART, information security clause), every inventory item can carry
+two automatic signals, checked on demand or by a nightly sweep sharing one daily budget (never
+exceeds the third party's free-tier cap, even counting manual clicks from multiple users at once):
+
+- **Version freshness**: a manual link to the [endoflife.date](https://endoflife.date/) catalog
+  (synced locally every day) - compares the item's registered version against the matching release
+  cycle and classifies it "up to date" or "outdated". The comparison is deliberately conservative:
+  without an exact cycle match, the result is "unknown", never a risky guess.
+- **Threat reputation**: a passive lookup on [VirusTotal](https://www.virustotal.com/) by attachment
+  hash (takes precedence) or the item's URL - never sends more than the artifact itself, never any
+  tenant-identifying data. A hash/URL VirusTotal has never seen becomes "unverified", never "clean"
+  by omission. For software that's obviously trustworthy with no artifact to check (e.g. a well-known
+  commercial SaaS), there's also a manual "declared known" flag.
+
+Both integrations are optional and configured by the super-admin in a central screen - and, following
+the same resilience premise as the rest of the system, either one being unavailable never compromises
+normal inventory reads: the data shown always comes from the last saved result, never a live call made
+while browsing.
+
+| Version freshness on the item detail page | Threat reputation on the item detail page |
+| --- | --- |
+| ![Version freshness](./docs/screenshots/inventory-freshness-en.png) | ![Threat reputation](./docs/screenshots/inventory-reputation-en.png) |
 
 ## Compliance with security frameworks (methodology)
 
