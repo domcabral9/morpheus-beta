@@ -27,9 +27,9 @@ describe("computeExposureState", () => {
   });
 
   it("devolve unverified quando foi checado mas não há dado (URL sem IP público, IP privado, ou 404 da InternetDB) - nunca vira um veredito positivo", () => {
-    expect(
-      computeExposureState({ exposureLastCheckedAt: new Date(), exposureRawData: null }),
-    ).toBe("unverified");
+    expect(computeExposureState({ exposureLastCheckedAt: new Date(), exposureRawData: null })).toBe(
+      "unverified",
+    );
   });
 
   it("devolve exposed quando a checagem encontrou vulnerabilidades conhecidas", () => {

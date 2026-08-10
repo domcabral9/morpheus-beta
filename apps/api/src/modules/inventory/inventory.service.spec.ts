@@ -760,7 +760,14 @@ describe("InventoryService", () => {
         tenantId: "tenant-1",
         assessment: null,
         exposureLastCheckedAt: new Date(),
-        exposureRawData: { ip: "8.8.8.8", ports: [443], cpes: [], hostnames: [], tags: [], vulns: [] },
+        exposureRawData: {
+          ip: "8.8.8.8",
+          ports: [443],
+          cpes: [],
+          hostnames: [],
+          tags: [],
+          vulns: [],
+        },
       });
 
       const result = await service.checkExposure(makeUser(), "item-1");
@@ -774,9 +781,7 @@ describe("InventoryService", () => {
 
     it("checkExposure rejeita item de outro tenant sem chamar o ExposureService", async () => {
       repo.findById.mockResolvedValue({ id: "item-1", tenantId: "outro-tenant" });
-      await expect(service.checkExposure(makeUser(), "item-1")).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.checkExposure(makeUser(), "item-1")).rejects.toThrow(ForbiddenException);
       expect(exposureService.performCheck).not.toHaveBeenCalled();
     });
 

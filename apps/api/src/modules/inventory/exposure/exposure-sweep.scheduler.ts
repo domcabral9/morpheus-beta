@@ -62,7 +62,9 @@ export class ExposureSweepScheduler {
     }
 
     if (dueItems.length > 0) {
-      this.logger.log(`Varredura de exposição externa: ${checked}/${dueItems.length} item(ns) checado(s).`);
+      this.logger.log(
+        `Varredura de exposição externa: ${checked}/${dueItems.length} item(ns) checado(s).`,
+      );
     }
   }
 }
