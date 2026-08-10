@@ -26,11 +26,17 @@ import { EolCatalogRepository } from "./eol/eol-catalog.repository";
 import { computeFreshness, FreshnessState } from "./eol/eol-freshness.util";
 import { ReputationService } from "./reputation/reputation.service";
 import { computeReputationState, ReputationState } from "./reputation/reputation-state.util";
+import { ExposureService } from "./exposure/exposure.service";
+import { computeExposureState, ExposureState } from "./exposure/exposure-state.util";
+import type { InternetDbResult } from "./exposure/internetdb.client";
 
 /** Cadência padrão de revisão para itens criados automaticamente na aprovação. */
 const DEFAULT_REVIEW_CYCLE_MONTHS = 12;
 
-export type InventoryItemWithOpinion = Omit<InventoryItemDetail, "assessment" | "eolProduct"> & {
+export type InventoryItemWithOpinion = Omit<
+  InventoryItemDetail,
+  "assessment" | "eolProduct" | "exposureRawData"
+> & {
   technicalOpinion: {
     id: string;
     number: string;
@@ -40,6 +46,8 @@ export type InventoryItemWithOpinion = Omit<InventoryItemDetail, "assessment" | 
   eolProduct: { slug: string; name: string } | null;
   freshness: FreshnessState;
   reputationState: ReputationState;
+  exposureState: ExposureState;
+  exposureData: InternetDbResult | null;
 };
 
 /** Achata `assessment.versions[0].technicalOpinion` (forma de query, com o
@@ -48,7 +56,8 @@ export type InventoryItemWithOpinion = Omit<InventoryItemDetail, "assessment" | 
  * Também achata `eolProduct` - nunca repassa `cycles` (bruto) pro cliente,
  * só o veredito já computado (`computeFreshness`, ver eol-freshness.util.ts). */
 function mapItemDetail(item: InventoryItemDetail): InventoryItemWithOpinion {
-  const { assessment, eolProduct, ...rest } = item;
+  const { assessment, eolProduct, exposureRawData, ...rest } = item;
+  const exposureData = exposureRawData as unknown as InternetDbResult | null;
   return {
     ...rest,
     technicalOpinion: assessment?.versions[0]?.technicalOpinion ?? null,
@@ -59,6 +68,11 @@ function mapItemDetail(item: InventoryItemDetail): InventoryItemWithOpinion {
       reputationVerdict: item.reputationVerdict,
       reputationDeclaredKnown: item.reputationDeclaredKnown,
     }),
+    exposureState: computeExposureState({
+      exposureLastCheckedAt: item.exposureLastCheckedAt,
+      exposureRawData: exposureData,
+    }),
+    exposureData,
   };
 }
 
@@ -90,6 +104,7 @@ export class InventoryService {
     private readonly separationOfDutiesService: SeparationOfDutiesService,
     private readonly eolCatalogRepository: EolCatalogRepository,
     private readonly reputationService: ReputationService,
+    private readonly exposureService: ExposureService,
   ) {}
 
   async list(user: AuthenticatedUser, query: ListInventoryQueryDto) {
@@ -222,6 +237,17 @@ export class InventoryService {
   async checkReputation(user: AuthenticatedUser, id: string): Promise<InventoryItemWithOpinion> {
     const item = await this.getOwnedOrThrow(user.tenantId, id);
     const updated = await this.reputationService.performCheck(item, user.id);
+    return mapItemDetail(updated);
+  }
+
+  /** Botão "verificar agora" da seção de exposição externa - dispara uma
+   * checagem real contra a Shodan InternetDB, resolvendo IP público a partir
+   * de `url` (ver ExposureService). Mesmo tratamento de `checkReputation`:
+   * `actingUserId` vai pro audit log; a varredura noturna chama
+   * `ExposureService.performCheck` direto com `null`. */
+  async checkExposure(user: AuthenticatedUser, id: string): Promise<InventoryItemWithOpinion> {
+    const item = await this.getOwnedOrThrow(user.tenantId, id);
+    const updated = await this.exposureService.performCheck(item, user.id);
     return mapItemDetail(updated);
   }
 
