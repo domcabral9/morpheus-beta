@@ -430,6 +430,28 @@
         "unverified": "Não verificado"
       }
     },
+    "exposureTitle": "Exposição externa",
+    "exposureNoUrl": "Item sem URL cadastrada - não é possível checar exposição externa.",
+    "exposureLastChecked": "Última checagem em {ip} em {date}",
+    "exposureCheckButton": "Verificar agora",
+    "exposureChecking": "Verificando...",
+    "exposureCheckSuccess": "Checagem de exposição externa concluída.",
+    "exposureCheckError": "Não foi possível verificar a exposição externa.",
+    "exposure": {
+      "states": {
+        "exposed": "Exposição detectada",
+        "no-known-vulnerabilities": "Sem exposição conhecida",
+        "unverified": "Não verificado"
+      }
+    },
+    "exposureDetailsToggle": "Detalhes técnicos",
+    "exposureIp": "IP verificado",
+    "exposurePorts": "Portas abertas",
+    "exposureVulnerabilities": "Vulnerabilidades conhecidas",
+    "exposureTags": "Tags",
+    "exposureCpes": "CPEs",
+    "exposureHostnames": "Hostnames associados",
+    "exposureNoVulns": "Nenhuma vulnerabilidade conhecida",
     "yes": "Sim",
     "no": "Não",
     "documentationLinksTitle": "Links de documentação",
@@ -903,7 +925,8 @@
     "integrationsApiKeyHint": "Nunca é exibida de volta depois de salva — deixe em branco para manter a chave já configurada.",
     "integrationsFieldVirusTotalEnabled": "Habilitar checagem de reputação (VirusTotal)",
     "integrationsFieldDailyBudget": "Orçamento diário de chamadas",
-    "integrationsFieldEndoflifeEnabled": "Habilitar checagem de frescor de versão (endoflife.date)"
+    "integrationsFieldEndoflifeEnabled": "Habilitar checagem de frescor de versão (endoflife.date)",
+    "integrationsFieldInternetDbEnabled": "Habilitar checagem de exposição externa (Shodan InternetDB)"
   },
   "PasswordPolicyHint": {
     "minLength": "mínimo de {count} caracteres",
