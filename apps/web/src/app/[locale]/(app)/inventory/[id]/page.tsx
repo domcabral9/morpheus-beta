@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Loader2 } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useApi } from "@/lib/use-api";
@@ -17,6 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TierBadge } from "@/components/tier-badge";
 import { FreshnessBadge } from "@/components/freshness-badge";
 import { ReputationBadge } from "@/components/reputation-badge";
+import { ExposureBadge } from "@/components/exposure-badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { AttachmentsPanel } from "@/components/attachments-panel";
@@ -67,6 +69,7 @@ export default function InventoryItemPage() {
   const [resubmitting, setResubmitting] = React.useState(false);
   const [checkingReputation, setCheckingReputation] = React.useState(false);
   const [savingDeclaredKnown, setSavingDeclaredKnown] = React.useState(false);
+  const [checkingExposure, setCheckingExposure] = React.useState(false);
 
   const loadItem = React.useCallback(() => {
     return api
@@ -134,6 +137,22 @@ export default function InventoryItemPage() {
       toast.error(err instanceof ApiError ? err.message : t("reputationDeclaredKnownError"));
     } finally {
       setSavingDeclaredKnown(false);
+    }
+  }
+
+  async function handleCheckExposure() {
+    setCheckingExposure(true);
+    try {
+      const updated = await api.post<InventoryItemDetail>(
+        `/inventory/${params.id}/exposure-check`,
+        {},
+      );
+      setItem(updated);
+      toast.success(t("exposureCheckSuccess"));
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t("exposureCheckError"));
+    } finally {
+      setCheckingExposure(false);
     }
   }
 
@@ -390,6 +409,75 @@ export default function InventoryItemPage() {
                       {t("reputationDeclaredKnownLabel")}
                     </Label>
                   </div>
+                )}
+              </div>
+
+              <div className="mt-4 flex flex-col gap-3 border-t pt-4">
+                <span className="text-xs text-muted-foreground">{t("exposureTitle")}</span>
+                {!item.url && (
+                  <span className="text-sm text-muted-foreground">{t("exposureNoUrl")}</span>
+                )}
+                {item.url && (
+                  <>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <ExposureBadge state={item.exposureState} />
+                      {item.exposureLastCheckedAt && item.exposureCheckedIp && (
+                        <span className="text-sm text-muted-foreground">
+                          {t("exposureLastChecked", {
+                            ip: item.exposureCheckedIp,
+                            date: new Date(item.exposureLastCheckedAt).toLocaleDateString(),
+                          })}
+                        </span>
+                      )}
+                      {canManage && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={checkingExposure}
+                          onClick={handleCheckExposure}
+                        >
+                          {checkingExposure ? t("exposureChecking") : t("exposureCheckButton")}
+                        </Button>
+                      )}
+                    </div>
+                    {item.exposureData && (
+                      <Collapsible className="group/collapsible">
+                        <CollapsibleTrigger asChild>
+                          <Button size="sm" variant="ghost" className="w-fit gap-1 px-2">
+                            <ChevronRight className="size-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                            {t("exposureDetailsToggle")}
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="grid gap-3 pt-3 sm:grid-cols-2">
+                          <Field label={t("exposureIp")} value={item.exposureData.ip} />
+                          <Field
+                            label={t("exposurePorts")}
+                            value={item.exposureData.ports.join(", ") || "—"}
+                          />
+                          <Field
+                            label={t("exposureVulnerabilities")}
+                            value={
+                              item.exposureData.vulns.length > 0
+                                ? item.exposureData.vulns.join(", ")
+                                : t("exposureNoVulns")
+                            }
+                          />
+                          <Field
+                            label={t("exposureTags")}
+                            value={item.exposureData.tags.join(", ") || "—"}
+                          />
+                          <Field
+                            label={t("exposureCpes")}
+                            value={item.exposureData.cpes.join(", ") || "—"}
+                          />
+                          <Field
+                            label={t("exposureHostnames")}
+                            value={item.exposureData.hostnames.join(", ") || "—"}
+                          />
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
+                  </>
                 )}
               </div>
 

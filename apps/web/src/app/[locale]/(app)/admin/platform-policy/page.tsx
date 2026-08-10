@@ -232,6 +232,7 @@ const integrationsPolicySchema = z.object({
   virusTotalEnabled: z.boolean(),
   virusTotalDailyBudget: z.coerce.number().int().min(1).max(500),
   endoflifeEnabled: z.boolean(),
+  internetDbEnabled: z.boolean(),
 });
 
 type IntegrationsPolicyFormInput = z.input<typeof integrationsPolicySchema>;
@@ -260,6 +261,7 @@ function IntegrationsPolicyForm({
       virusTotalEnabled: policy.virusTotalEnabled,
       virusTotalDailyBudget: policy.virusTotalDailyBudget,
       endoflifeEnabled: policy.endoflifeEnabled,
+      internetDbEnabled: policy.internetDbEnabled,
     },
   });
 
@@ -269,10 +271,12 @@ function IntegrationsPolicyForm({
       virusTotalEnabled: boolean;
       virusTotalDailyBudget: number;
       endoflifeEnabled: boolean;
+      internetDbEnabled: boolean;
     } = {
       virusTotalEnabled: values.virusTotalEnabled,
       virusTotalDailyBudget: values.virusTotalDailyBudget,
       endoflifeEnabled: values.endoflifeEnabled,
+      internetDbEnabled: values.internetDbEnabled,
     };
     // Chave só entra no payload se o usuário digitou algo - vazio/omitido
     // preserva a chave já salva no backend (nunca sobrescreve com vazio).
@@ -291,6 +295,7 @@ function IntegrationsPolicyForm({
         virusTotalEnabled: updated.virusTotalEnabled,
         virusTotalDailyBudget: updated.virusTotalDailyBudget,
         endoflifeEnabled: updated.endoflifeEnabled,
+        internetDbEnabled: updated.internetDbEnabled,
       });
       onSaved(updated);
     } catch (err) {
@@ -363,6 +368,23 @@ function IntegrationsPolicyForm({
         />
         <Label htmlFor="endoflifeEnabled" className="font-normal">
           {t("integrationsFieldEndoflifeEnabled")}
+        </Label>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Controller
+          control={control}
+          name="internetDbEnabled"
+          render={({ field }) => (
+            <Checkbox
+              id="internetDbEnabled"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(checked === true)}
+            />
+          )}
+        />
+        <Label htmlFor="internetDbEnabled" className="font-normal">
+          {t("integrationsFieldInternetDbEnabled")}
         </Label>
       </div>
 

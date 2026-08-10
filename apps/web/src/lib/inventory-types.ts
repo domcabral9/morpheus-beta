@@ -62,6 +62,18 @@ export const REPUTATION_STATES = [
 ] as const;
 export type ReputationState = (typeof REPUTATION_STATES)[number];
 
+export const EXPOSURE_STATES = ["exposed", "no-known-vulnerabilities", "unverified"] as const;
+export type ExposureState = (typeof EXPOSURE_STATES)[number];
+
+export interface InventoryExposureData {
+  ip: string;
+  ports: number[];
+  cpes: string[];
+  hostnames: string[];
+  tags: string[];
+  vulns: string[];
+}
+
 export interface InventoryItemSummary {
   id: string;
   name: string;
@@ -94,6 +106,10 @@ export interface InventoryItemSummary {
   reputationLastCheckedAt: string | null;
   reputationVerdict: "CLEAN" | "SUSPICIOUS" | null;
   reputationCheckedSource: "URL" | "ATTACHMENT_HASH" | null;
+  exposureState: ExposureState;
+  exposureLastCheckedAt: string | null;
+  exposureCheckedIp: string | null;
+  exposureData: InventoryExposureData | null;
 }
 
 export interface InventoryApprovalSummary {

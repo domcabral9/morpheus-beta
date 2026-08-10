@@ -32,6 +32,7 @@ export interface PlatformIntegrationsPolicy {
   virusTotalDailyBudget: number;
   hasVirusTotalApiKey: boolean;
   endoflifeEnabled: boolean;
+  internetDbEnabled: boolean;
   updatedByUserId: string | null;
   updatedAt: string;
 }
