@@ -351,6 +351,10 @@ model PlatformIntegrationsPolicy {
   /// Folga deliberada sob o teto de 500/dia do tier gratuito do VirusTotal.
   virusTotalDailyBudget     Int      @default(450)
   endoflifeEnabled          Boolean  @default(true)
+  /// Sem chave (API pública/gratuita da Shodan InternetDB) - nasce `true`
+  /// pela mesma lógica de `endoflifeEnabled`, não de `virusTotalEnabled`
+  /// (que nasce `false` só porque exige uma chave ainda não configurada).
+  internetDbEnabled         Boolean  @default(true)
   updatedByUserId           String?
   updatedAt                 DateTime @updatedAt
   createdAt                 DateTime @default(now())
@@ -1382,6 +1386,19 @@ model SoftwareInventoryItem {
   /// substituído/apagado (nova versão via re-upload) sem invalidar o veredito
   /// já registrado.
   reputationCheckedAttachmentId String?
+  /// Sinal de exposição externa (Shodan InternetDB, gratuita/sem chave) -
+  /// checa o IP público resolvido a partir de `url`. `exposureRawData` guarda
+  /// a resposta bruta `{ip, ports, cpes, hostnames, tags, vulns}` tal como a
+  /// InternetDB devolve (mesmo padrão de `EolProduct.cycles`) - o estado
+  /// derivado (`exposed`/`no-known-vulnerabilities`/`unverified`) é calculado
+  /// em runtime, nunca armazenado. `exposureLastCheckedAt` setado mesmo
+  /// quando não há dado (URL sem IP público resolvível, IP privado/reservado
+  /// rejeitado, ou 404 da InternetDB) - evita que a varredura noturna tente
+  /// resolver o mesmo host quebrado todo dia; só a ausência total de `url`
+  /// impede a checagem de acontecer.
+  exposureLastCheckedAt         DateTime?
+  exposureCheckedIp             String?
+  exposureRawData               Json?
   createdAt                     DateTime               @default(now())
   updatedAt                     DateTime               @updatedAt
 
@@ -1401,6 +1418,9 @@ model SoftwareInventoryItem {
   /// Alimenta a varredura noturna de "vencido, precisa recheck de reputação"
   /// (ReputationSweepScheduler).
   @@index([reputationLastCheckedAt])
+  /// Mesmo propósito acima, para a varredura de exposição externa
+  /// (ExposureSweepScheduler).
+  @@index([exposureLastCheckedAt])
   @@map("software_inventory_items")
 }
 
