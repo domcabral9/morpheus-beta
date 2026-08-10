@@ -75,9 +75,11 @@ avaliado ou está com reavaliação vencida/próxima.
 ## Enriquecimento de inventário (metodologia)
 
 Além dos sinais autodeclarados (ART, cláusula de segurança da informação), cada item do inventário
-pode ganhar dois sinais automáticos, consultados sob demanda ou por uma varredura noturna com
-orçamento diário compartilhado (nunca estoura a cota gratuita do terceiro, mesmo somando cliques
-manuais de vários usuários):
+pode ganhar três sinais automáticos, consultados sob demanda ou por uma varredura noturna. A checagem
+de reputação de ameaça soma o clique manual e a varredura num único orçamento diário compartilhado,
+pra nunca estourar a cota gratuita do VirusTotal, mesmo somando cliques de vários usuários; frescor de
+versão e exposição externa consultam APIs públicas sem chave, sem esse teto - só um ritmo interno
+responsável para não martelar o terceiro:
 
 - **Frescor de versão**: vínculo manual com o catálogo do [endoflife.date](https://endoflife.date/)
   (sincronizado localmente todo dia) - compara a versão cadastrada do item contra o ciclo de release
@@ -89,8 +91,14 @@ manuais de vários usuários):
   identificáveis do tenant. Um hash/URL que o VirusTotal nunca viu antes vira "não verificado", jamais
   "limpo" por omissão. Para software obviamente confiável sem artefato pra checar (ex. um SaaS
   comercial conhecido), existe também uma flag manual "declarado conhecido".
+- **Exposição externa**: consulta passiva na [Shodan InternetDB](https://internetdb.shodan.io/) a
+  partir do IP público resolvido da URL do item - portas abertas, CPEs, hostnames e vulnerabilidades
+  conhecidas já indexadas pela Shodan (nunca um scan em tempo real). IPs privados/reservados são
+  descartados antes de qualquer consulta - o código nunca faz uma requisição para o host do próprio
+  item, só resolve o DNS localmente e consulta a Shodan com a string do IP. Um IP nunca indexado (ou
+  descartado por ser privado) vira "não verificado", nunca "sem vulnerabilidades" por omissão.
 
-Ambas as integrações são opcionais e configuradas pelo super-admin numa tela central - e, seguindo a
+As três integrações são opcionais e configuradas pelo super-admin numa tela central - e, seguindo a
 mesma premissa de resiliência do resto do sistema, a indisponibilidade de qualquer uma delas nunca
 compromete a leitura normal do inventário: os dados exibidos vêm sempre do último resultado já salvo,
 nunca de uma chamada ao vivo durante a navegação.
@@ -98,6 +106,10 @@ nunca de uma chamada ao vivo durante a navegação.
 | Frescor de versão no detalhe do item | Reputação de ameaça no detalhe do item |
 | --- | --- |
 | ![Frescor de versão](./docs/screenshots/inventory-freshness.png) | ![Reputação de ameaça](./docs/screenshots/inventory-reputation.png) |
+
+| Exposição externa no detalhe do item |
+| --- |
+| ![Exposição externa](./docs/screenshots/inventory-exposure.png) |
 
 ## Conformidade com frameworks de segurança (metodologia)
 
@@ -338,8 +350,11 @@ overdue/upcoming reassessment.
 ## Inventory enrichment (methodology)
 
 Beyond the self-declared signals (ART, information security clause), every inventory item can carry
-two automatic signals, checked on demand or by a nightly sweep sharing one daily budget (never
-exceeds the third party's free-tier cap, even counting manual clicks from multiple users at once):
+three automatic signals, checked on demand or by a nightly sweep. The threat reputation check pools
+manual clicks and the sweep into a single shared daily budget, so it never exceeds VirusTotal's
+free-tier cap even counting clicks from multiple users; version freshness and external exposure query
+free, keyless public APIs with no such cap - just an internal responsible pace so the third party
+isn't hammered:
 
 - **Version freshness**: a manual link to the [endoflife.date](https://endoflife.date/) catalog
   (synced locally every day) - compares the item's registered version against the matching release
@@ -350,15 +365,26 @@ exceeds the third party's free-tier cap, even counting manual clicks from multip
   tenant-identifying data. A hash/URL VirusTotal has never seen becomes "unverified", never "clean"
   by omission. For software that's obviously trustworthy with no artifact to check (e.g. a well-known
   commercial SaaS), there's also a manual "declared known" flag.
+- **External exposure**: a passive lookup on [Shodan InternetDB](https://internetdb.shodan.io/) from
+  the public IP resolved out of the item's URL - open ports, CPEs, hostnames, and known
+  vulnerabilities Shodan already has indexed (never a real-time scan). Private/reserved IPs are
+  discarded before any lookup happens - the code never issues a request to the item's own host, it
+  only resolves DNS locally and queries Shodan with the IP as a string. An IP Shodan has never
+  indexed (or one discarded for being private) becomes "unverified", never "no known
+  vulnerabilities" by omission.
 
-Both integrations are optional and configured by the super-admin in a central screen - and, following
-the same resilience premise as the rest of the system, either one being unavailable never compromises
-normal inventory reads: the data shown always comes from the last saved result, never a live call made
-while browsing.
+All three integrations are optional and configured by the super-admin in a central screen - and,
+following the same resilience premise as the rest of the system, any one of them being unavailable
+never compromises normal inventory reads: the data shown always comes from the last saved result,
+never a live call made while browsing.
 
 | Version freshness on the item detail page | Threat reputation on the item detail page |
 | --- | --- |
 | ![Version freshness](./docs/screenshots/inventory-freshness-en.png) | ![Threat reputation](./docs/screenshots/inventory-reputation-en.png) |
+
+| External exposure on the item detail page |
+| --- |
+| ![External exposure](./docs/screenshots/inventory-exposure-en.png) |
 
 ## Compliance with security frameworks (methodology)
 
