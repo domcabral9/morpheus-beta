@@ -19,6 +19,7 @@ function makeRow(overrides: Partial<Record<string, unknown>> = {}) {
     virusTotalEnabled: false,
     virusTotalDailyBudget: 450,
     endoflifeEnabled: true,
+    internetDbEnabled: true,
     updatedByUserId: null,
     updatedAt: new Date("2026-08-08T00:00:00.000Z"),
     createdAt: new Date("2026-08-08T00:00:00.000Z"),
@@ -63,6 +64,7 @@ describe("IntegrationsPolicyService", () => {
         virusTotalDailyBudget: 450,
         hasVirusTotalApiKey: true,
         endoflifeEnabled: true,
+        internetDbEnabled: true,
         updatedByUserId: null,
         updatedAt: expect.any(Date),
       });
@@ -102,6 +104,18 @@ describe("IntegrationsPolicyService", () => {
       const [persistedData] = repo.update.mock.calls[0];
       expect(persistedData).not.toHaveProperty("virusTotalApiKeyEncrypted");
       expect(persistedData.virusTotalEnabled).toBe(true);
+    });
+
+    it("atualiza internetDbEnabled quando presente e preserva o resto quando omitido", async () => {
+      repo.update.mockImplementation((data: IntegrationsPolicyUpdateData) =>
+        Promise.resolve(makeRow(data as Record<string, unknown>)),
+      );
+
+      const view = await service.updatePolicy({ internetDbEnabled: false }, "admin-1");
+
+      const [persistedData] = repo.update.mock.calls[0];
+      expect(persistedData).toEqual({ internetDbEnabled: false });
+      expect(view.internetDbEnabled).toBe(false);
     });
 
     it("audita a mudança sem incluir a chave crua no metadata", async () => {
