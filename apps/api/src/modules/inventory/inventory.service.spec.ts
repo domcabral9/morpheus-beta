@@ -8,6 +8,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { SeparationOfDutiesService } from "../../common/services/separation-of-duties.service";
 import { EolCatalogRepository } from "./eol/eol-catalog.repository";
 import { ReputationService } from "./reputation/reputation.service";
+import { ExposureService } from "./exposure/exposure.service";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
@@ -62,6 +63,7 @@ describe("InventoryService", () => {
   let notificationsService: { notify: jest.Mock; notifyPermissionHolders: jest.Mock };
   let eolCatalogRepo: { search: jest.Mock; findBySlug: jest.Mock };
   let reputationService: { performCheck: jest.Mock };
+  let exposureService: { performCheck: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -91,6 +93,7 @@ describe("InventoryService", () => {
     };
     eolCatalogRepo = { search: jest.fn(), findBySlug: jest.fn() };
     reputationService = { performCheck: jest.fn() };
+    exposureService = { performCheck: jest.fn() };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -102,6 +105,7 @@ describe("InventoryService", () => {
         SeparationOfDutiesService,
         { provide: EolCatalogRepository, useValue: eolCatalogRepo },
         { provide: ReputationService, useValue: reputationService },
+        { provide: ExposureService, useValue: exposureService },
       ],
     }).compile();
 
@@ -745,6 +749,47 @@ describe("InventoryService", () => {
       });
       const result = await service.getById(makeUser(), "item-1");
       expect(result.reputationState).toBe("unverified");
+    });
+  });
+
+  describe("exposição externa", () => {
+    it("checkExposure valida posse do item e delega ao ExposureService", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "tenant-1", assessment: null });
+      exposureService.performCheck.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        assessment: null,
+        exposureLastCheckedAt: new Date(),
+        exposureRawData: { ip: "8.8.8.8", ports: [443], cpes: [], hostnames: [], tags: [], vulns: [] },
+      });
+
+      const result = await service.checkExposure(makeUser(), "item-1");
+
+      expect(exposureService.performCheck).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "item-1" }),
+        "user-1",
+      );
+      expect(result.exposureState).toBe("no-known-vulnerabilities");
+    });
+
+    it("checkExposure rejeita item de outro tenant sem chamar o ExposureService", async () => {
+      repo.findById.mockResolvedValue({ id: "item-1", tenantId: "outro-tenant" });
+      await expect(service.checkExposure(makeUser(), "item-1")).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(exposureService.performCheck).not.toHaveBeenCalled();
+    });
+
+    it("mapItemDetail computa exposureState a partir dos campos escalares do item", async () => {
+      repo.findById.mockResolvedValue({
+        id: "item-1",
+        tenantId: "tenant-1",
+        assessment: null,
+        exposureLastCheckedAt: null,
+        exposureRawData: null,
+      });
+      const result = await service.getById(makeUser(), "item-1");
+      expect(result.exposureState).toBe("unverified");
     });
   });
 });

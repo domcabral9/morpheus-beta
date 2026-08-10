@@ -15,6 +15,10 @@ import { VirusTotalClient } from "./reputation/virustotal.client";
 import { ReputationBudgetRepository } from "./reputation/reputation-budget.repository";
 import { ReputationService } from "./reputation/reputation.service";
 import { ReputationSweepScheduler } from "./reputation/reputation-sweep.scheduler";
+import { ExposureHostResolver } from "./exposure/exposure-host-resolver";
+import { InternetDbClient } from "./exposure/internetdb.client";
+import { ExposureService } from "./exposure/exposure.service";
+import { ExposureSweepScheduler } from "./exposure/exposure-sweep.scheduler";
 
 @Module({
   imports: [PlatformPolicyModule, AttachmentsModule, StorageModule],
@@ -32,6 +36,10 @@ import { ReputationSweepScheduler } from "./reputation/reputation-sweep.schedule
     ReputationBudgetRepository,
     ReputationService,
     ReputationSweepScheduler,
+    ExposureHostResolver,
+    InternetDbClient,
+    ExposureService,
+    ExposureSweepScheduler,
   ],
   exports: [InventoryService],
 })
