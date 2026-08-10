@@ -101,6 +101,7 @@ erDiagram
         bool virusTotalEnabled
         int virusTotalDailyBudget "folga sob o teto 500/dia do tier gratuito"
         bool endoflifeEnabled
+        bool internetDbEnabled "Shodan InternetDB, gratuita/sem chave"
     }
 ```
 
@@ -397,6 +398,8 @@ erDiagram
         bool reputationDeclaredKnown "flag manual, fallback sem artefato"
         datetime reputationLastCheckedAt "nullable"
         string reputationVerdict "CLEAN|SUSPICIOUS, nullable"
+        datetime exposureLastCheckedAt "nullable"
+        json exposureRawData "bruto, direto da InternetDB - nullable"
     }
     EOL_PRODUCT {
         string slug PK

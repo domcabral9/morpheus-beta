@@ -25,4 +25,9 @@ export class UpdateIntegrationsPolicyDto {
   @IsOptional()
   @IsBoolean()
   endoflifeEnabled?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  internetDbEnabled?: boolean;
 }

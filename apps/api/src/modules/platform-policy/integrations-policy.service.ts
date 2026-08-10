@@ -18,6 +18,7 @@ export interface IntegrationsPolicyView {
   virusTotalDailyBudget: number;
   hasVirusTotalApiKey: boolean;
   endoflifeEnabled: boolean;
+  internetDbEnabled: boolean;
   updatedByUserId: string | null;
   updatedAt: Date;
 }
@@ -48,6 +49,7 @@ export class IntegrationsPolicyService {
       data.virusTotalDailyBudget = dto.virusTotalDailyBudget;
     }
     if (dto.endoflifeEnabled !== undefined) data.endoflifeEnabled = dto.endoflifeEnabled;
+    if (dto.internetDbEnabled !== undefined) data.internetDbEnabled = dto.internetDbEnabled;
 
     const updated = await this.repository.update(data, actingUserId);
 
@@ -63,6 +65,7 @@ export class IntegrationsPolicyService {
         virusTotalEnabled: updated.virusTotalEnabled,
         virusTotalDailyBudget: updated.virusTotalDailyBudget,
         endoflifeEnabled: updated.endoflifeEnabled,
+        internetDbEnabled: updated.internetDbEnabled,
         keyChanged: dto.virusTotalApiKey !== undefined,
       },
     });
@@ -85,6 +88,7 @@ export class IntegrationsPolicyService {
       virusTotalDailyBudget: row.virusTotalDailyBudget,
       hasVirusTotalApiKey: Boolean(row.virusTotalApiKeyEncrypted),
       endoflifeEnabled: row.endoflifeEnabled,
+      internetDbEnabled: row.internetDbEnabled,
       updatedByUserId: row.updatedByUserId,
       updatedAt: row.updatedAt,
     };

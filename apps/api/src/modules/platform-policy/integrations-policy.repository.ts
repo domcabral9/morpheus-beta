@@ -9,6 +9,7 @@ export interface IntegrationsPolicyUpdateData {
   virusTotalEnabled?: boolean;
   virusTotalDailyBudget?: number;
   endoflifeEnabled?: boolean;
+  internetDbEnabled?: boolean;
 }
 
 @Injectable()
