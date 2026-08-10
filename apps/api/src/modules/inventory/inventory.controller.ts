@@ -141,6 +141,17 @@ export class InventoryController {
     return this.inventoryService.checkReputation(user, id);
   }
 
+  // Sem @Audit() decorator - metadata (IP, contagem de vulns) roda explícito
+  // no service, mesmo padrão de reputation-check. Throttle mesmo limite de
+  // login/2FA/reputation-check - defesa em profundidade (a InternetDB não
+  // tem orçamento diário rígido pra este endpoint enforçar, ver plano).
+  @RequirePermissions(PERMISSIONS.INVENTORY_MANAGE)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post(":id/exposure-check")
+  checkExposure(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.inventoryService.checkExposure(user, id);
+  }
+
   @RequirePermissions(PERMISSIONS.INVENTORY_MANAGE)
   @Patch(":id/reputation-declared-known")
   setReputationDeclaredKnown(

@@ -333,4 +333,18 @@ export class InventoryRepository {
       include: itemDetailInclude,
     });
   }
+
+  /** Itens elegíveis pra varredura noturna de exposição externa
+   * (ExposureSweepScheduler): nunca checados ou checados há mais que
+   * `cutoff`, **e** com `url` cadastrada - sem isso, `ExposureService
+   * .performCheck` rejeitaria cada um por "sem URL", desperdiçando o loop. */
+  findDueForExposureCheck(cutoff: Date): Promise<InventoryItemDetail[]> {
+    return this.prisma.softwareInventoryItem.findMany({
+      where: {
+        url: { not: null },
+        OR: [{ exposureLastCheckedAt: null }, { exposureLastCheckedAt: { lt: cutoff } }],
+      },
+      include: itemDetailInclude,
+    });
+  }
 }
