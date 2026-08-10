@@ -430,6 +430,28 @@
         "unverified": "Unverified"
       }
     },
+    "exposureTitle": "External exposure",
+    "exposureNoUrl": "Item has no URL on file - external exposure cannot be checked.",
+    "exposureLastChecked": "Last checked at {ip} on {date}",
+    "exposureCheckButton": "Check now",
+    "exposureChecking": "Checking...",
+    "exposureCheckSuccess": "External exposure check completed.",
+    "exposureCheckError": "Could not check external exposure.",
+    "exposure": {
+      "states": {
+        "exposed": "Exposure detected",
+        "no-known-vulnerabilities": "No known exposure",
+        "unverified": "Unverified"
+      }
+    },
+    "exposureDetailsToggle": "Technical details",
+    "exposureIp": "Checked IP",
+    "exposurePorts": "Open ports",
+    "exposureVulnerabilities": "Known vulnerabilities",
+    "exposureTags": "Tags",
+    "exposureCpes": "CPEs",
+    "exposureHostnames": "Associated hostnames",
+    "exposureNoVulns": "No known vulnerabilities",
     "yes": "Yes",
     "no": "No",
     "documentationLinksTitle": "Documentation links",
@@ -903,7 +925,8 @@
     "integrationsApiKeyHint": "Never shown back once saved — leave blank to keep the currently configured key.",
     "integrationsFieldVirusTotalEnabled": "Enable reputation checks (VirusTotal)",
     "integrationsFieldDailyBudget": "Daily call budget",
-    "integrationsFieldEndoflifeEnabled": "Enable version freshness checks (endoflife.date)"
+    "integrationsFieldEndoflifeEnabled": "Enable version freshness checks (endoflife.date)",
+    "integrationsFieldInternetDbEnabled": "Enable external exposure checks (Shodan InternetDB)"
   },
   "PasswordPolicyHint": {
     "minLength": "at least {count} characters",
