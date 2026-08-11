@@ -15,6 +15,40 @@ const STATUS_LABELS: Record<OpinionPdfData["finalStatus"], string> = {
   REJECTED: "Rejeitado",
 };
 
+// Mesmos rótulos PT-BR já usados no frontend (mensagens de i18n) - o
+// parecer inteiro é só PT-BR, sem tradução, então esses mapas ficam
+// hardcoded aqui, mesmo estilo de STATUS_LABELS/translateStepStatus.
+const ATTACHMENT_CATEGORY_LABELS: Record<string, string> = {
+  CONTRACT: "Contrato",
+  DPA: "DPA (Acordo de Processamento de Dados)",
+  SOC2_REPORT: "Relatório SOC 2",
+  ISO27001_CERTIFICATE: "Certificado ISO 27001",
+  PENTEST_REPORT: "Relatório de pentest",
+  ARCHITECTURE_DOCUMENT: "Documento de arquitetura",
+  DPIA: "DPIA (Avaliação de Impacto)",
+  PRIVACY_POLICY: "Política de privacidade",
+  OTHER: "Outro",
+};
+
+const FRESHNESS_STATE_LABELS: Record<string, string> = {
+  "up-to-date": "Versão em dia",
+  outdated: "Versão desatualizada",
+  unknown: "Frescor desconhecido",
+};
+
+const REPUTATION_STATE_LABELS: Record<string, string> = {
+  "verified-clean": "Reputação limpa (verificada)",
+  "verified-suspicious": "Reputação suspeita (verificada)",
+  "declared-known": "Declarado conhecido",
+  unverified: "Não verificado",
+};
+
+const EXPOSURE_STATE_LABELS: Record<string, string> = {
+  exposed: "Exposição detectada",
+  "no-known-vulnerabilities": "Sem exposição conhecida",
+  unverified: "Não verificado",
+};
+
 /**
  * Renderiza o parecer técnico em PDF a partir de um payload já achatado
  * (ver OpinionPdfData) — sem acesso a banco, testável isoladamente. Layout
@@ -34,10 +68,14 @@ export class PdfGeneratorService {
       doc.on("error", reject);
 
       this.renderHeader(doc, data);
+      this.renderExecutiveContext(doc, data);
       this.renderIdentification(doc, data);
+      this.renderInventoryLink(doc, data);
       this.renderRiskResult(doc, data);
+      this.renderMethodology(doc, data);
       this.renderQuestionnaire(doc, data);
       this.renderApprovalHistory(doc, data);
+      this.renderRecommendations(doc, data);
       this.renderFooter(doc, data);
 
       doc.end();
@@ -81,6 +119,15 @@ export class PdfGeneratorService {
     this.horizontalRule(doc);
   }
 
+  /** Resumo executivo determinístico (template, não geração probabilística -
+   * ver decisão de não depender de LLM externa) - sempre presente, logo
+   * abaixo do cabeçalho. */
+  private renderExecutiveContext(doc: PDFKit.PDFDocument, data: OpinionPdfData): void {
+    this.sectionTitle(doc, "Contexto", 11);
+    doc.fontSize(10).fillColor(COLORS.text).text(data.executiveContext, { align: "justify" });
+    doc.moveDown(1);
+  }
+
   private renderIdentification(doc: PDFKit.PDFDocument, data: OpinionPdfData): void {
     this.sectionTitle(doc, "Identificação do Software");
     this.keyValue(doc, "Nome do Software", data.softwareName);
@@ -96,6 +143,73 @@ export class PdfGeneratorService {
     doc.moveDown(0.3);
     this.sectionTitle(doc, "Justificativa de Uso", 11);
     doc.fontSize(10).fillColor(COLORS.text).text(data.justification, { align: "justify" });
+    doc.moveDown(1);
+
+    this.sectionTitle(doc, "Conformidade do Fornecedor", 11);
+    this.keyValue(
+      doc,
+      "ART (Análise de Risco)",
+      data.vendorCompliance.hasRiskAnalysis ? "Sim" : "Não",
+    );
+    this.keyValue(
+      doc,
+      "Cláusula de segurança da informação",
+      data.vendorCompliance.hasInfoSecClause ? "Sim" : "Não",
+    );
+    if (data.vendorCompliance.linkedVendor) {
+      const { name, tier, tierLabel } = data.vendorCompliance.linkedVendor;
+      const tierText =
+        tier !== null ? `Tier ${tier} · ${tierLabel}` : "sem avaliação de risco concluída";
+      this.keyValue(doc, "Fornecedor cadastrado", `${name} (${tierText})`);
+    }
+    if (data.attachments.length > 0) {
+      const attachmentsText = data.attachments
+        .map((attachment) => {
+          const category = ATTACHMENT_CATEGORY_LABELS[attachment.category] ?? attachment.category;
+          return `${attachment.fileName} (${category})`;
+        })
+        .join("; ");
+      this.keyValue(doc, "Anexos", attachmentsText);
+    }
+    doc.moveDown(1);
+  }
+
+  /** Só presente para avaliações aprovadas (o item de inventário não existe
+   * para reprovações - ver o reorder em WorkflowService.decideStep). */
+  private renderInventoryLink(doc: PDFKit.PDFDocument, data: OpinionPdfData): void {
+    if (!data.inventoryItem) return;
+
+    this.sectionTitle(doc, "Item de Inventário Vinculado", 11);
+    doc
+      .fontSize(10)
+      .fillColor(COLORS.muted)
+      .text("Item de Inventário: ", { continued: true })
+      .fillColor("#2563eb")
+      .text(data.inventoryItem.url, { link: data.inventoryItem.url, underline: true });
+    doc
+      .fillColor(COLORS.muted)
+      .fontSize(9)
+      .text(
+        "Os estados abaixo refletem o momento da emissão deste parecer - consulte o link acima para o estado atual.",
+      );
+    doc.fillColor(COLORS.text).fontSize(10);
+    this.keyValue(
+      doc,
+      "Frescor de versão",
+      FRESHNESS_STATE_LABELS[data.inventoryItem.freshnessState] ??
+        data.inventoryItem.freshnessState,
+    );
+    this.keyValue(
+      doc,
+      "Reputação de ameaça",
+      REPUTATION_STATE_LABELS[data.inventoryItem.reputationState] ??
+        data.inventoryItem.reputationState,
+    );
+    this.keyValue(
+      doc,
+      "Exposição externa",
+      EXPOSURE_STATE_LABELS[data.inventoryItem.exposureState] ?? data.inventoryItem.exposureState,
+    );
     doc.moveDown(1);
   }
 
@@ -133,6 +247,27 @@ export class PdfGeneratorService {
       `${data.riskScores.impactScore.toFixed(2)} (${data.riskScores.impactLevelLabel})`,
     );
     this.keyValue(doc, "Score Total", data.riskScores.totalScore.toFixed(2));
+    doc.moveDown(1);
+  }
+
+  /** Determinística - parágrafo fixo + pontos críticos calculados a partir
+   * das respostas reais desta avaliação (ver `computeTopRiskFactors`), nunca
+   * gerada. */
+  private renderMethodology(doc: PDFKit.PDFDocument, data: OpinionPdfData): void {
+    this.sectionTitle(doc, "Metodologia", 11);
+    doc.fontSize(10).fillColor(COLORS.text).text(data.methodology.summary, { align: "justify" });
+
+    if (data.methodology.topFactors.length > 0) {
+      doc.moveDown(0.4);
+      doc.fontSize(10).fillColor(COLORS.heading).text("Principais fatores considerados:");
+      doc.moveDown(0.1);
+      for (const factor of data.methodology.topFactors) {
+        doc
+          .fontSize(9)
+          .fillColor(COLORS.muted)
+          .text(`• ${factor.questionText} (${factor.contributionLabel})`, { indent: 10 });
+      }
+    }
     doc.moveDown(1);
   }
 
@@ -180,6 +315,25 @@ export class PdfGeneratorService {
       doc.moveDown(0.5);
     }
     doc.moveDown(0.5);
+  }
+
+  /** Só presente quando há ao menos um comentário real de reprovação/ajuste
+   * já registrado (ver `buildRecommendations` no service) - nunca inventa um
+   * motivo. */
+  private renderRecommendations(doc: PDFKit.PDFDocument, data: OpinionPdfData): void {
+    if (!data.recommendations) return;
+
+    this.sectionTitle(doc, "Recomendações");
+    for (const reason of data.recommendations.reasons) {
+      doc.fontSize(10).fillColor(COLORS.text).text(`• ${reason}`, { indent: 10 });
+      doc.moveDown(0.2);
+    }
+    doc.moveDown(0.3);
+    doc
+      .fontSize(10)
+      .fillColor(COLORS.muted)
+      .text(data.recommendations.closingNote, { align: "justify" });
+    doc.moveDown(1);
   }
 
   private renderFooter(doc: PDFKit.PDFDocument, data: OpinionPdfData): void {

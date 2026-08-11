@@ -11,6 +11,7 @@ import { PdfGeneratorService } from "./pdf-generator.service";
 import { STORAGE_ADAPTER } from "../storage/storage.interface";
 import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { InventoryService } from "../inventory/inventory.service";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 jest.mock("qrcode", () => ({
@@ -41,6 +42,10 @@ const assessmentContext = {
   justification: "Justificativa",
   linkedTicket: null,
   installerFileHash: "a".repeat(64),
+  hasRiskAnalysis: false,
+  hasInfoSecClause: false,
+  linkedVendor: null,
+  attachments: [],
   area: { name: "TI" },
   responsible: { id: "resp-1", name: "Responsável", email: "resp@example.com" },
   requester: { id: "requester-1", name: "Requester", email: "req@example.com" },
@@ -75,6 +80,7 @@ describe("TechnicalOpinionService", () => {
   let storage: { save: jest.Mock; read: jest.Mock };
   let auditLogService: { record: jest.Mock };
   let notificationsService: { notify: jest.Mock };
+  let inventoryService: { getInventoryEnrichmentSnapshot: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -96,15 +102,23 @@ describe("TechnicalOpinionService", () => {
     storage = { save: jest.fn().mockResolvedValue(undefined), read: jest.fn() };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
     notificationsService = { notify: jest.fn().mockResolvedValue(undefined) };
+    inventoryService = { getInventoryEnrichmentSnapshot: jest.fn().mockResolvedValue(null) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
         TechnicalOpinionService,
         { provide: TechnicalOpinionRepository, useValue: repo },
         { provide: PdfGeneratorService, useValue: pdfGenerator },
-        { provide: ConfigService, useValue: { get: () => "http://localhost:3001" } },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: (key: string) =>
+              key === "PUBLIC_WEB_URL" ? "http://localhost:3000" : "http://localhost:3001",
+          },
+        },
         { provide: AuditLogService, useValue: auditLogService },
         { provide: NotificationsService, useValue: notificationsService },
+        { provide: InventoryService, useValue: inventoryService },
         { provide: STORAGE_ADAPTER, useValue: storage },
       ],
     }).compile();
@@ -177,6 +191,108 @@ describe("TechnicalOpinionService", () => {
       );
 
       expect(opinion.number).toMatch(/-002$/);
+    });
+
+    it("inventoryItem fica nulo quando REJECTED (nunca existe item de inventário pra reprovação)", async () => {
+      await service.generateForAssessment("tenant-1", "assessment-1", "REJECTED", "user-1");
+
+      expect(inventoryService.getInventoryEnrichmentSnapshot).not.toHaveBeenCalled();
+      const pdfData = pdfGenerator.build.mock.calls[0][0];
+      expect(pdfData.inventoryItem).toBeNull();
+    });
+
+    it("inventoryItem é populado quando APPROVED, com o hyperlink e os 3 sinais de enriquecimento", async () => {
+      inventoryService.getInventoryEnrichmentSnapshot.mockResolvedValue({
+        id: "item-1",
+        version: "1.2.3",
+        eolProduct: null,
+        reputationLastCheckedAt: null,
+        reputationVerdict: null,
+        reputationDeclaredKnown: false,
+        exposureLastCheckedAt: null,
+        exposureRawData: null,
+      });
+
+      await service.generateForAssessment("tenant-1", "assessment-1", "APPROVED", "user-1");
+
+      expect(inventoryService.getInventoryEnrichmentSnapshot).toHaveBeenCalledWith("assessment-1");
+      const pdfData = pdfGenerator.build.mock.calls[0][0];
+      expect(pdfData.inventoryItem).toEqual({
+        url: "http://localhost:3000/pt-BR/inventory/item-1",
+        freshnessState: "unknown",
+        reputationState: "unverified",
+        exposureState: "unverified",
+      });
+    });
+
+    it("vendorCompliance reflete ART/InfoSec e o Tier do fornecedor vinculado", async () => {
+      repo.findAssessmentContext.mockResolvedValue({
+        ...(assessmentContext as unknown as Record<string, unknown>),
+        hasRiskAnalysis: true,
+        hasInfoSecClause: true,
+        linkedVendor: { name: "Fornecedor X", currentTier: 2, currentTierLabel: "Risco moderado" },
+        attachments: [
+          { fileName: "contrato.pdf", category: "CONTRACT", uploadedAt: new Date("2026-08-01") },
+        ],
+      } as never);
+
+      await service.generateForAssessment("tenant-1", "assessment-1", "APPROVED", "user-1");
+
+      const pdfData = pdfGenerator.build.mock.calls[0][0];
+      expect(pdfData.vendorCompliance).toEqual({
+        hasRiskAnalysis: true,
+        hasInfoSecClause: true,
+        linkedVendor: { name: "Fornecedor X", tier: 2, tierLabel: "Risco moderado" },
+      });
+      expect(pdfData.attachments).toEqual([
+        { fileName: "contrato.pdf", category: "CONTRACT", uploadedAt: new Date("2026-08-01") },
+      ]);
+    });
+
+    it("recommendations fica nulo numa aprovação limpa (sem nenhum comentário de reprovação/ajuste)", async () => {
+      repo.findWorkflowHistory.mockResolvedValue([
+        {
+          status: "APPROVED",
+          comments: null,
+          workflowStep: { name: "Etapa", responsibleRole: { name: "Gestor" } },
+          decidedBy: null,
+          decidedAt: null,
+        },
+      ] as never);
+
+      await service.generateForAssessment("tenant-1", "assessment-1", "APPROVED", "user-1");
+
+      const pdfData = pdfGenerator.build.mock.calls[0][0];
+      expect(pdfData.recommendations).toBeNull();
+    });
+
+    it("recommendations agrega os comentários reais de etapas REJECTED/ADJUSTMENT_REQUESTED, nunca inventa motivo", async () => {
+      repo.findWorkflowHistory.mockResolvedValue([
+        {
+          status: "ADJUSTMENT_REQUESTED",
+          comments: "Falta anexar o contrato assinado.",
+          workflowStep: { name: "Etapa 1", responsibleRole: { name: "Gestor" } },
+          decidedBy: null,
+          decidedAt: null,
+        },
+        // Sem comentário - não deve virar um motivo vazio/fabricado.
+        {
+          status: "REJECTED",
+          comments: null,
+          workflowStep: { name: "Etapa 2", responsibleRole: { name: "Segurança" } },
+          decidedBy: null,
+          decidedAt: null,
+        },
+      ] as never);
+
+      await service.generateForAssessment("tenant-1", "assessment-1", "REJECTED", "user-1");
+
+      const pdfData = pdfGenerator.build.mock.calls[0][0];
+      expect(pdfData.recommendations).toEqual({
+        reasons: ["Falta anexar o contrato assinado."],
+        closingNote:
+          "Para uma eventual resubmissão, revise os pontos acima e reenvie a avaliação para nova análise.",
+      });
     });
   });
 
