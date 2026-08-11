@@ -435,12 +435,10 @@ export class WorkflowService {
         status: "APPROVED",
       });
       await this.workflowRepository.updateAssessmentStatus(assessment.id, "APPROVED");
-      await this.technicalOpinionService.generateForAssessment(
-        assessment.tenantId,
-        assessment.id,
-        "APPROVED",
-        issuedById,
-      );
+      // Ordem importa: o item de inventário precisa existir ANTES do parecer
+      // ser gerado, porque o parecer traz um hyperlink pro item + o estado
+      // atual dos sinais de enriquecimento (frescor/reputação/exposição) -
+      // sem essa ordem, o parecer nasceria sem nada pra linkar/enriquecer.
       await this.inventoryService.createFromApprovedAssessment(assessment.tenantId, {
         id: assessment.id,
         softwareName: assessment.softwareName,
@@ -454,6 +452,12 @@ export class WorkflowService {
         hasRiskAnalysis: assessment.hasRiskAnalysis,
         hasInfoSecClause: assessment.hasInfoSecClause,
       });
+      await this.technicalOpinionService.generateForAssessment(
+        assessment.tenantId,
+        assessment.id,
+        "APPROVED",
+        issuedById,
+      );
       await this.notificationsService.notify({
         tenantId: assessment.tenantId,
         userId: assessment.requesterId,

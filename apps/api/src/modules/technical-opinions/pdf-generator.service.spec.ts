@@ -24,6 +24,35 @@ function makeData(qrCodePng: Buffer, overrides: Partial<OpinionPdfData> = {}): O
     linkedTicket: null,
     installerFileHash: null,
     versionLabel: "v1.0",
+    executiveContext:
+      'Este parecer técnico avalia o software "Sistema X", fornecido por Fornecedor X, ' +
+      "submetido para homologação de segurança da informação. Segundo o solicitante, a " +
+      'justificativa de uso registrada foi: "Justificativa de uso do software."',
+    vendorCompliance: {
+      hasRiskAnalysis: true,
+      hasInfoSecClause: true,
+      linkedVendor: { name: "Fornecedor X", tier: 1, tierLabel: "Baixo risco" },
+    },
+    attachments: [
+      {
+        fileName: "contrato.pdf",
+        category: "CONTRACT",
+        uploadedAt: new Date("2026-07-19T10:00:00Z"),
+      },
+    ],
+    inventoryItem: {
+      url: "http://localhost:3000/pt-BR/inventory/item-1",
+      freshnessState: "unknown",
+      reputationState: "unverified",
+      exposureState: "unverified",
+    },
+    methodology: {
+      summary: "Parágrafo explicando o mecanismo do motor de risco.",
+      topFactors: [
+        { questionText: "Usa MFA?", contributionLabel: "Peso 5.00 · Risco 1.0/5 · Ambos" },
+      ],
+    },
+    recommendations: null,
     riskScores: {
       probabilityScore: 4.5,
       impactScore: 4.2,

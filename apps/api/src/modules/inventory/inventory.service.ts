@@ -544,6 +544,14 @@ export class InventoryService {
     });
   }
 
+  /** Consumido pelo parecer técnico (`TechnicalOpinionService`) - o item já
+   * existe no instante da emissão (ver o reorder em `WorkflowService
+   * .decideStep`), mas os sinais de enriquecimento quase sempre ainda estarão
+   * "não verificado" nesse exato momento (honesto, não um bug). */
+  getInventoryEnrichmentSnapshot(assessmentId: string) {
+    return this.repository.findByAssessmentId(assessmentId);
+  }
+
   // --- Helpers ------------------------------------------------------------------
   private async getOwnedOrThrow(tenantId: string, id: string): Promise<InventoryItemDetail> {
     const item = await this.repository.findById(id);
