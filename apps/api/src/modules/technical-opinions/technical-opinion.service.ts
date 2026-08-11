@@ -16,6 +16,11 @@ import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { STORAGE_ADAPTER, StorageAdapter } from "../storage/storage.interface";
 import { isStorageBackedLogo } from "../tenants/tenants.service";
+import { InventoryService } from "../inventory/inventory.service";
+import { computeFreshness } from "../inventory/eol/eol-freshness.util";
+import { computeReputationState } from "../inventory/reputation/reputation-state.util";
+import { computeExposureState } from "../inventory/exposure/exposure-state.util";
+import type { InternetDbResult } from "../inventory/exposure/internetdb.client";
 import {
   TechnicalOpinionRepository,
   AnswerForOpinion,
@@ -23,9 +28,29 @@ import {
 } from "./technical-opinion.repository";
 import type { ListTechnicalOpinionsQueryDto } from "./dto/list-technical-opinions.query.dto";
 import { PdfGeneratorService } from "./pdf-generator.service";
-import type { OpinionPdfCategory, OpinionPdfData } from "./opinion-pdf-data.interface";
+import type {
+  OpinionPdfCategory,
+  OpinionPdfData,
+  OpinionPdfInventoryItem,
+  OpinionPdfRecommendations,
+} from "./opinion-pdf-data.interface";
+import {
+  computeTopRiskFactors,
+  MethodologyRiskDimension,
+  MethodologyScorableAnswer,
+} from "./opinion-methodology.util";
 
 const MAX_NUMBER_RETRIES = 5;
+
+/** Parágrafo fixo, sem menção a pesos/faixas específicos (configuráveis por
+ * tenant via RiskMatrixConfig) - explica o mecanismo em termos gerais. */
+const METHODOLOGY_SUMMARY =
+  "O score de risco é calculado a partir das respostas do questionário: cada pergunta tem um " +
+  "peso de importância definido pelo administrador e contribui para uma ou ambas as dimensões " +
+  "de risco (Probabilidade e Impacto). O motor calcula uma média ponderada do risco por " +
+  "dimensão, inverte o resultado para um score de segurança (0 a 5, onde valores mais altos são " +
+  "mais favoráveis) e classifica o resultado contra as faixas de risco configuradas pela " +
+  "organização. Os fatores abaixo são as respostas que mais pesaram no resultado desta avaliação.";
 
 /**
  * Orquestra a emissão do parecer técnico: reúne os dados já persistidos
@@ -44,6 +69,7 @@ export class TechnicalOpinionService {
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
     private readonly notificationsService: NotificationsService,
+    private readonly inventoryService: InventoryService,
     @Inject(STORAGE_ADAPTER) private readonly storage: StorageAdapter,
   ) {}
 
@@ -89,6 +115,10 @@ export class TechnicalOpinionService {
       riskResult?.riskClassification.color ?? (finalStatus === "APPROVED" ? "#16a34a" : "#dc2626");
     const logoBuffer = await this.resolveLogoBuffer(assessment.tenant.logoUrl);
 
+    const inventoryItem =
+      finalStatus === "APPROVED" ? await this.buildInventoryItemSnapshot(assessmentId) : null;
+    const methodologyAnswers = this.buildMethodologyAnswers(answers);
+
     const pdfData: OpinionPdfData = {
       documentNumber: number,
       issuedAt,
@@ -110,6 +140,33 @@ export class TechnicalOpinionService {
       linkedTicket: assessment.linkedTicket,
       installerFileHash: assessment.installerFileHash,
       versionLabel: version.versionLabel,
+      executiveContext: this.buildExecutiveContext(
+        assessment.softwareName,
+        assessment.vendor,
+        assessment.justification,
+      ),
+      vendorCompliance: {
+        hasRiskAnalysis: assessment.hasRiskAnalysis,
+        hasInfoSecClause: assessment.hasInfoSecClause,
+        linkedVendor: assessment.linkedVendor
+          ? {
+              name: assessment.linkedVendor.name,
+              tier: assessment.linkedVendor.currentTier,
+              tierLabel: assessment.linkedVendor.currentTierLabel,
+            }
+          : null,
+      },
+      attachments: assessment.attachments.map((attachment) => ({
+        fileName: attachment.fileName,
+        category: attachment.category,
+        uploadedAt: attachment.uploadedAt,
+      })),
+      inventoryItem,
+      methodology: {
+        summary: METHODOLOGY_SUMMARY,
+        topFactors: computeTopRiskFactors(methodologyAnswers),
+      },
+      recommendations: this.buildRecommendations(workflowHistory),
       riskScores: riskResult
         ? {
             probabilityScore: Number(riskResult.probabilityScore),
@@ -289,6 +346,100 @@ export class TechnicalOpinionService {
   private buildVerificationUrl(tenantSlug: string, number: string): string {
     const base = this.configService.get<string>("PUBLIC_API_URL", "http://localhost:3001");
     return `${base}/technical-opinions/verify/${encodeURIComponent(tenantSlug)}/${encodeURIComponent(number)}`;
+  }
+
+  /** Template determinístico (sem geração probabilística) - resumo executivo
+   * a partir de dado real já persistido. Ver decisão de não depender de LLM
+   * externa neste parecer. */
+  private buildExecutiveContext(
+    softwareName: string,
+    vendor: string,
+    justification: string,
+  ): string {
+    return (
+      `Este parecer técnico avalia o software "${softwareName}", fornecido por ${vendor}, ` +
+      `submetido para homologação de segurança da informação. Segundo o solicitante, a ` +
+      `justificativa de uso registrada foi: "${justification}"`
+    );
+  }
+
+  /** Só presente quando o item de inventário já existe (avaliação aprovada -
+   * ver o reorder em WorkflowService.decideStep) E de fato foi encontrado -
+   * `null` em qualquer outro caso, nunca lança (a ausência do item não pode
+   * impedir a emissão do parecer). */
+  private async buildInventoryItemSnapshot(
+    assessmentId: string,
+  ): Promise<OpinionPdfInventoryItem | null> {
+    const snapshot = await this.inventoryService.getInventoryEnrichmentSnapshot(assessmentId);
+    if (!snapshot) return null;
+
+    const webBase = this.configService.get<string>("PUBLIC_WEB_URL", "http://localhost:3000");
+    return {
+      url: `${webBase}/pt-BR/inventory/${snapshot.id}`,
+      freshnessState: computeFreshness(snapshot.version, snapshot.eolProduct?.cycles ?? null),
+      reputationState: computeReputationState({
+        reputationLastCheckedAt: snapshot.reputationLastCheckedAt,
+        reputationVerdict: snapshot.reputationVerdict,
+        reputationDeclaredKnown: snapshot.reputationDeclaredKnown,
+      }),
+      exposureState: computeExposureState({
+        exposureLastCheckedAt: snapshot.exposureLastCheckedAt,
+        exposureRawData: snapshot.exposureRawData as unknown as InternetDbResult | null,
+      }),
+    };
+  }
+
+  /** Mesmo cálculo de `AssessmentsService.resolveScorableAnswers` (peso ×
+   * score de risco por resposta) - duplicado deliberadamente aqui (fronteira
+   * de módulo diferente), ver `computeTopRiskFactors`. */
+  private buildMethodologyAnswers(answers: AnswerForOpinion[]): MethodologyScorableAnswer[] {
+    const scorable: MethodologyScorableAnswer[] = [];
+
+    for (const answer of answers) {
+      if (answer.question.type === "TEXT") continue;
+
+      let score: number | null = null;
+      if (answer.question.type === "SCALE") {
+        score = answer.scaleValue ?? null;
+      } else if (answer.selectedOptions.length > 0) {
+        const sum = answer.selectedOptions.reduce(
+          (acc, selected) => acc + Number(selected.questionOption.score),
+          0,
+        );
+        score = sum / answer.selectedOptions.length;
+      }
+      if (score === null) continue;
+
+      scorable.push({
+        questionText: answer.question.text,
+        weight: Number(answer.question.weight),
+        riskDimension: answer.question.riskDimension as MethodologyRiskDimension,
+        score,
+      });
+    }
+
+    return scorable;
+  }
+
+  /** Agregação estruturada dos comentários reais já registrados nas etapas
+   * REJECTED/ADJUSTMENT_REQUESTED - nunca inventa um motivo que o aprovador
+   * não escreveu. `null` quando não há nenhum comentário real (mesmo numa
+   * avaliação REJECTED sem motivo registrado) - sem dado, sem seção. */
+  private buildRecommendations(
+    workflowHistory: StepExecutionForOpinion[],
+  ): OpinionPdfRecommendations | null {
+    const reasons = workflowHistory
+      .filter((step) => step.status === "REJECTED" || step.status === "ADJUSTMENT_REQUESTED")
+      .map((step) => step.comments?.trim())
+      .filter((comment): comment is string => Boolean(comment));
+
+    if (reasons.length === 0) return null;
+
+    return {
+      reasons,
+      closingNote:
+        "Para uma eventual resubmissão, revise os pontos acima e reenvie a avaliação para nova análise.",
+    };
   }
 
   private groupAnswersByCategory(answers: AnswerForOpinion[]): OpinionPdfCategory[] {

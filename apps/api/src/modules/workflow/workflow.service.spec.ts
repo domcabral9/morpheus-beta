@@ -380,6 +380,33 @@ describe("WorkflowService", () => {
       expect(collaborationAdapter.postMessage).not.toHaveBeenCalled();
     });
 
+    it("APPROVE final cria o item de inventário ANTES de gerar o parecer (o parecer linka/enriquece a partir do item)", async () => {
+      repo.findStepExecutionById
+        .mockResolvedValueOnce(
+          makeExecution({
+            workflowStep: {
+              id: "step-5",
+              order: 5,
+              isOptional: false,
+              responsibleRoleId: "role-admin",
+              responsibleRole: { name: "Aprovação Final" },
+            },
+          }),
+        )
+        .mockResolvedValueOnce(makeExecution({ status: "APPROVED" }));
+      repo.findUserRoleIds.mockResolvedValue(["role-admin"]);
+      repo.findDefinitionById.mockResolvedValue({ id: "def-1", steps });
+      repo.countLgpdTriggers.mockResolvedValue(0);
+
+      await service.decideStep(makeUser(), "exec-1", { decision: "APPROVE" });
+
+      const inventoryCallOrder =
+        inventoryService.createFromApprovedAssessment.mock.invocationCallOrder[0]!;
+      const opinionCallOrder =
+        technicalOpinionService.generateForAssessment.mock.invocationCallOrder[0]!;
+      expect(inventoryCallOrder).toBeLessThan(opinionCallOrder);
+    });
+
     it("APPROVE final de avaliação CRITICAL posta alerta no canal de colaboração", async () => {
       repo.findStepExecutionById
         .mockResolvedValueOnce(
