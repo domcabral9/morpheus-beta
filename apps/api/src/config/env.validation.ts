@@ -20,6 +20,9 @@ const envSchema = z
     // codificado no QR Code do parecer técnico (Etapa 7). Sem protocolo/porta
     // fixos hardcoded porque isso muda entre dev/staging/produção.
     PUBLIC_API_URL: z.string().default("http://localhost:3001"),
+    // Base URL pública do app web — usada para montar o hyperlink do item de
+    // inventário vinculado, embutido no parecer técnico.
+    PUBLIC_WEB_URL: z.string().default("http://localhost:3000"),
     STORAGE_DIR: z.string().default("./storage"),
 
     JWT_ACCESS_SECRET: z.string().min(16, "JWT_ACCESS_SECRET deve ter ao menos 16 caracteres"),
