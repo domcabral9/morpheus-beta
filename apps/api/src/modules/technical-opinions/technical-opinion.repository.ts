@@ -7,6 +7,10 @@ const opinionContextAssessmentInclude = {
   responsible: { select: { id: true, name: true, email: true } },
   requester: { select: { id: true, name: true, email: true } },
   tenant: true,
+  /// Enriquecimento do parecer: Tier do fornecedor vinculado (conformidade)
+  /// e lista de anexos (nome/categoria/data - nunca o arquivo em si).
+  linkedVendor: { select: { name: true, currentTier: true, currentTierLabel: true } },
+  attachments: { select: { fileName: true, category: true, uploadedAt: true } },
 } satisfies Prisma.AssessmentInclude;
 
 export type OpinionContextAssessment = Prisma.AssessmentGetPayload<{
@@ -32,6 +36,9 @@ export type StepExecutionForOpinion = Prisma.WorkflowStepExecutionGetPayload<{
   include: typeof stepExecutionForOpinionInclude;
 }>;
 
+/// `question.weight`/`question.riskDimension` e `selectedOptions.questionOption.score` já vêm de
+/// graça aqui (campos escalares dos includes abaixo) - consumidos por `computeTopRiskFactors`
+/// (seção "Metodologia" do parecer), não só pela categoria/texto já usados.
 const answerForOpinionInclude = {
   question: { include: { category: true } },
   selectedOptions: { include: { questionOption: true } },
