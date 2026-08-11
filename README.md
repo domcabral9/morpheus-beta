@@ -14,7 +14,10 @@ adotado pela empresa e o fornecedor por trás dele. Do questionário de risco à
 1. Questionário de risco (perguntas ponderadas, vinculadas a controles de compliance).
 2. Matriz de decisão configurável (faixas de probabilidade × impacto → classificação de risco).
 3. Workflow de aprovação com etapas e responsáveis configuráveis por tenant.
-4. Parecer técnico em PDF, com QR Code de verificação.
+4. Parecer técnico em PDF, com QR Code de verificação, contexto executivo, metodologia do cálculo de
+   risco, conformidade do fornecedor, sinais de enriquecimento do item de inventário vinculado e
+   recomendações de reenvio quando reprovado - gerado de forma 100% determinística (templates sobre
+   dado real já persistido), sem nenhuma chamada a IA externa.
 5. Inventário de software homologado, com ciclo de revisão periódica. Itens cadastrados manualmente
    (fora da homologação) passam por um gate de aprovação próprio antes de entrar em produção.
 6. Dashboards de postura de conformidade, conformidade contra frameworks de segurança (ISO 27001/
@@ -290,7 +293,10 @@ by the company and the vendor behind it. From risk questionnaire to final decisi
 1. Risk questionnaire (weighted questions, linked to compliance controls).
 2. Configurable decision matrix (probability × impact ranges → risk classification).
 3. Approval workflow with configurable steps and responsible roles per tenant.
-4. Technical opinion (PDF report), with a verification QR code.
+4. Technical opinion (PDF report), with a verification QR code, executive context, an explanation of
+   the risk calculation methodology, vendor compliance, the linked inventory item's enrichment
+   signals, and resubmission recommendations when rejected - generated fully deterministically
+   (templates over already-persisted real data), with no external AI call whatsoever.
 5. Homologated software inventory, with periodic review cycle. Manually registered items (outside the
    homologation flow) go through a dedicated approval gate before going live.
 6. Compliance-posture dashboards, compliance against security frameworks (ISO 27001/27002, NIST CSF,
