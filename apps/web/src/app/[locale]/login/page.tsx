@@ -237,6 +237,7 @@ export default function LoginPage() {
                     variant="outline"
                     className="mt-4 w-full"
                     onClick={() => {
+                      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- cross-origin redirect to the API server, not an internal Next.js route
                       window.location.href = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/auth/saml/login`;
                     }}
                   >
