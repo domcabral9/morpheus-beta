@@ -38,7 +38,7 @@ describe("AuditLogService", () => {
       );
     });
 
-    it("nunca lança — uma falha ao gravar não pode derrubar a ação de negócio auditada", async () => {
+    it("nunca lança - uma falha ao gravar não pode derrubar a ação de negócio auditada", async () => {
       repository.create.mockRejectedValue(new Error("db indisponível"));
       await expect(
         service.record({ action: "CREATE", entityType: "Assessment" }),

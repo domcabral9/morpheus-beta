@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import type { SecurityEvent, SiemAdapter } from "./siem.interface";
 
 /**
- * Sem SIEM_WEBHOOK_URL configurado, `send()` só loga um aviso — mesmo padrão
+ * Sem SIEM_WEBHOOK_URL configurado, `send()` só loga um aviso - mesmo padrão
  * do SmtpEmailAdapter (Etapa 10): dev/CI não precisam de um SIEM de verdade
  * rodando. Chamador (AuditLogService) já trata qualquer erro daqui como
  * não-fatal.
@@ -20,7 +20,7 @@ export class WebhookSiemAdapter implements SiemAdapter {
   async send(event: SecurityEvent): Promise<void> {
     if (!this.webhookUrl) {
       this.logger.warn(
-        `SIEM_WEBHOOK_URL não configurado — evento ${event.action} ${event.entityType} não encaminhado (só logado).`,
+        `SIEM_WEBHOOK_URL não configurado: evento ${event.action} ${event.entityType} não encaminhado (só logado).`,
       );
       return;
     }

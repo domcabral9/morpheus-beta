@@ -41,7 +41,7 @@ const DECISION_TO_STATUS: Record<DecideStepDto["decision"], WorkflowStepStatus> 
 };
 
 // AuditAction não tem REQUEST_ADJUSTMENT/SKIP (enum genérico o suficiente
-// para outros domínios) — os dois caem em UPDATE, com a decisão exata
+// para outros domínios) - os dois caem em UPDATE, com a decisão exata
 // preservada em `metadata.decision`.
 const DECISION_TO_AUDIT_ACTION: Record<DecideStepDto["decision"], AuditAction> = {
   APPROVE: "APPROVE",
@@ -51,13 +51,13 @@ const DECISION_TO_AUDIT_ACTION: Record<DecideStepDto["decision"], AuditAction> =
 };
 
 // Criticidades que disparam alerta no canal de colaboração na aprovação
-// final — o time de segurança quer saber logo, sem depender de olhar o
+// final - o time de segurança quer saber logo, sem depender de olhar o
 // dashboard, quando algo de alto risco acaba de ser homologado.
 const COLLABORATION_ALERT_CRITICALITIES = new Set(["HIGH", "CRITICAL"]);
 
 /**
  * Motor de workflow configurável (Etapa 6). A definição (etapas, papel
- * responsável, SLA, opcional/condicional-LGPD) é dado, não código — o motor
+ * responsável, SLA, opcional/condicional-LGPD) é dado, não código - o motor
  * só sabe avançar/decidir contra o que estiver cadastrado em
  * WorkflowDefinition/WorkflowStep, mesmo espírito do motor de risco (Etapa 5).
  */
@@ -79,7 +79,7 @@ export class WorkflowService {
   /**
    * Inicia (ou reinicia, em caso de reenvio após ajuste) o fluxo de aprovação
    * de uma avaliação recém-submetida. Reaproveita a mesma instância 1:1 em
-   * vez de criar outra — reenvios voltam para a primeira etapa elegível,
+   * vez de criar outra - reenvios voltam para a primeira etapa elegível,
    * preservando o histórico das execuções anteriores (nenhuma é apagada).
    */
   async startWorkflow(tenantId: string, assessmentId: string): Promise<void> {

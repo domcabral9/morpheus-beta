@@ -1,6 +1,6 @@
 /**
  * Espelha as `key` de Permission seedadas em packages/database/prisma/seed.ts
- * — mantidas como constantes tipadas para não espalhar strings mágicas pelos
+ * - mantidas como constantes tipadas para não espalhar strings mágicas pelos
  * controllers. Se adicionar uma permissão nova, adicione nos dois lugares.
  */
 export const PERMISSIONS = {

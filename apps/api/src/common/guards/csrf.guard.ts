@@ -9,7 +9,7 @@ export const CSRF_HEADER_NAME = "x-csrf-token";
  * Double-submit cookie: exige que o valor do cookie (não-httpOnly, o
  * frontend lê via document.cookie) bata com um header enviado explicitamente
  * pelo JS. Um request forjado cross-site consegue fazer o browser mandar o
- * cookie sozinho, mas não consegue ler seu valor para replicar no header —
+ * cookie sozinho, mas não consegue ler seu valor para replicar no header -
  * `sameSite: "strict"` no cookie de refresh já bloqueia isso na prática,
  * este guard é defesa em profundidade sobre os dois endpoints que mutam
  * estado autenticados só por cookie (refresh, logout).

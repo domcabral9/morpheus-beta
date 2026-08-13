@@ -84,7 +84,7 @@ export class DashboardsRepository {
   /**
    * Um TechnicalOpinion só é emitido em decisão terminal (Etapa 7), e
    * REJECTED/APPROVED não voltam a ser editáveis hoje (sem reabertura ainda
-   * implementada) — então cada Assessment decidido tem no máximo um
+   * implementada) - então cada Assessment decidido tem no máximo um
    * TechnicalOpinion, o que torna esta consulta segura como base para
    * taxa de aprovação/qualidade/distribuição de classificação sem precisar
    * resolver "qual é a versão mais recente" manualmente.
@@ -130,7 +130,7 @@ export class DashboardsRepository {
     return rows.length;
   }
 
-  /** Catálogo global de controles com o framework — mesma consulta de `ControlsRepository.findControls`, sem filtro de tenant (não é dado tenant-scoped). */
+  /** Catálogo global de controles com o framework - mesma consulta de `ControlsRepository.findControls`, sem filtro de tenant (não é dado tenant-scoped). */
   findAllControlsWithFramework() {
     return this.prisma.control.findMany({
       select: {
@@ -146,7 +146,7 @@ export class DashboardsRepository {
   /**
    * Uma linha por software (`distinct` + `orderBy updatedAt desc` = a mais
    * recente do grupo, mesmo padrão `distinct`+`orderBy` já usado em
-   * `AssessmentsRepository`/`DashboardsRepository`), só as APPROVED — decisão
+   * `AssessmentsRepository`/`DashboardsRepository`), só as APPROVED - decisão
    * de escopo confirmada: dashboard de conformidade só considera a última
    * homologação aprovada de cada software, não rascunhos/rejeitadas.
    */
@@ -161,7 +161,7 @@ export class DashboardsRepository {
 
   /**
    * Mesma ideia, para fornecedor: uma linha por Vendor, a VendorAssessment
-   * COMPLETED mais recente — `COMPLETED` é o único status terminal de
+   * COMPLETED mais recente - `COMPLETED` é o único status terminal de
    * `VendorAssessment` (que não tem um "APPROVED" literal, ao contrário de
    * `Assessment`), tratado como equivalente para este filtro.
    */
@@ -176,10 +176,10 @@ export class DashboardsRepository {
 
   /**
    * Mesma consulta acima, mas escoada a um único fornecedor (visão
-   * "Fornecedor específico" do dashboard de conformidade) — `findFirst` em
+   * "Fornecedor específico" do dashboard de conformidade) - `findFirst` em
    * vez de `distinct`+`orderBy`, sem indireção desnecessária já que só
    * existe um sujeito possível. `vendorId` fora do tenant simplesmente não
-   * bate no `where` e devolve `null` — mesmo tratamento silencioso de
+   * bate no `where` e devolve `null` - mesmo tratamento silencioso de
    * "nada encontrado" já usado em filtros de busca no projeto, não um erro.
    */
   findLatestCompletedVendorAssessmentForVendor(tenantId: string, vendorId: string) {

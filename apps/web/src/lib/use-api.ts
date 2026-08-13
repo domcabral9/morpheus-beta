@@ -7,7 +7,7 @@ import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 /**
  * Wrapper de apiFetch já com o access token da sessão atual. Componentes de
  * página chamam `api.get("/assessments")` em vez de lidar com o token toda
- * hora — centraliza esse detalhe num único lugar.
+ * hora - centraliza esse detalhe num único lugar.
  */
 export function useApi() {
   const { accessToken } = useAuth();

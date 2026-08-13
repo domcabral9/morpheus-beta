@@ -4,7 +4,7 @@ import { IsBoolean, IsOptional, IsString, Matches, MinLength } from "class-valid
 const MM_DD_PATTERN = /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 // logoUrl não entra aqui de propósito: desde a Etapa de upload real, esse
-// campo é gerido só por POST /tenants/current/logo (multipart) — deixá-lo
+// campo é gerido só por POST /tenants/current/logo (multipart) - deixá-lo
 // editável via PATCH JSON permitiria sobrescrever uma chave de storage válida
 // com uma string arbitrária.
 export class UpdateTenantDto {

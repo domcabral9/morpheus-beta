@@ -18,12 +18,12 @@ import { SetUserPasswordDto } from "./dto/set-user-password.dto";
  * atribuição/remoção de papel e definição/reset de senha local. Criação e
  * definição de senha são ações desacopladas de propósito (`POST :id/password`
  * é chamada como segundo passo, tanto para dar a primeira senha de um
- * usuário novo quanto para resetar a de um já existente) — sem isso, um
+ * usuário novo quanto para resetar a de um já existente) - sem isso, um
  * usuário criado aqui só entra via SSO.
  *
  * Sem `@RequirePermissions` de classe: `list()` é usado como seletor de
  * usuário em outras telas (inventário, filtro de auditoria), então tem gate
- * próprio mais aberto — as demais rotas continuam exigindo `users:manage` de
+ * próprio mais aberto - as demais rotas continuam exigindo `users:manage` de
  * verdade.
  */
 @ApiTags("users")

@@ -11,7 +11,7 @@ import {
 } from "../generated/client";
 
 // `tsx prisma/seed.ts` pode ser chamado diretamente (via `pnpm seed`) ou como
-// subprocesso do `prisma migrate dev` — carregamos o .env explicitamente para
+// subprocesso do `prisma migrate dev` - carregamos o .env explicitamente para
 // funcionar nos dois casos, sem depender do processo pai já ter injetado.
 loadEnv({ path: path.resolve(__dirname, "../../../.env") });
 
@@ -22,12 +22,12 @@ const prisma = new PrismaClient({ adapter });
 // Seed de configuração (Etapa 2): tenants completos (RBAC, questionário,
 // biblioteca de controles, matriz de risco padrão, recomendações e fluxo de
 // aprovação padrão), mais um tenant minimalista só para testar isolamento
-// multi-tenant. Não cria nenhuma Assessment de exemplo — isso é melhor feito
+// multi-tenant. Não cria nenhuma Assessment de exemplo - isso é melhor feito
 // pela camada de serviço (Etapa 4) para não duplicar as regras de negócio
 // (cálculo de score, criação de versão, etc.) diretamente no seed.
 //
 // `seedFullTenant()` (mais abaixo) foi extraído de um bloco que antes existia
-// só para o tenant "demo" — permissões (catálogo global) e a biblioteca de
+// só para o tenant "demo" - permissões (catálogo global) e a biblioteca de
 // controles (também global, sem tenantId no schema) são seedadas uma única
 // vez em main(); tudo o resto (áreas, papéis, questionário, matriz de risco,
 // recomendações, workflow, usuários) é genuinamente tenantId-scoped e existe
@@ -66,7 +66,7 @@ const PERMISSIONS = [
 ] as const;
 
 // "platform:cross-tenant" fica de fora: é uma permissão de escopo (sai do
-// próprio tenant), não uma capacidade de administração dentro dele — dar
+// próprio tenant), não uma capacidade de administração dentro dele - dar
 // esse acesso a todo "Administrador" local, por engano, quebraria o
 // isolamento entre organizações. Concedida à parte, só à role de
 // super-admin definida abaixo.
@@ -101,10 +101,10 @@ const QUESTION_CATEGORIES = [
   "Dados Sensíveis",
 ];
 
-// Entidade normalizada (não texto livre) — ver comentário no schema sobre o
+// Entidade normalizada (não texto livre) - ver comentário no schema sobre o
 // modelo Area. Lista de departamentos comuns o suficiente para servir de
 // base real ao ranking de maturidade/adesão por área (gamificação, Etapa 9).
-// Mesma lista reaproveitada por todos os tenants — são nomes de
+// Mesma lista reaproveitada por todos os tenants - são nomes de
 // departamentos genéricos, não conteúdo específico da demo.
 const AREAS = [
   "Tecnologia da Informação",
@@ -151,16 +151,16 @@ const YES_NO = (yesScore: number, noScore: number) => [
 // Perguntas reais do processo paralelo em Google Forms ("SecOps - Softwares
 // Homologados"), fornecidas pelo usuário. Nome, versão, área responsável,
 // responsável técnico e criticidade do formulário original NÃO viram
-// pergunta aqui — já são campos estruturados em Assessment (permitem
+// pergunta aqui - já são campos estruturados em Assessment (permitem
 // filtrar/consultar sem parsear texto livre; ver decisão na Etapa 4).
-// Opções de múltipla escolha são valores de mercado razoáveis — ainda não
-// são as opções reais do formulário (o usuário vai enviar depois) — ajuste
+// Opções de múltipla escolha são valores de mercado razoáveis - ainda não
+// são as opções reais do formulário (o usuário vai enviar depois) - ajuste
 // pelo CRUD administrativo (/questionnaire/admin/*), não editando este seed.
-// Scores de opção na escala 0-5 (0 = sem risco, 5 = risco máximo) — mesma
+// Scores de opção na escala 0-5 (0 = sem risco, 5 = risco máximo) - mesma
 // escala usada pelo motor de risco (Etapa 5) para o score final 1-5,
 // alinhado ao processo já em produção da empresa (n8n: Homologado 4.0-5.0,
 // Aguardando Ajustes 3.0-3.9, Rejeitado <3.0). Mesmo conjunto de perguntas
-// reaproveitado por todos os tenants — é dado genérico de risk assessment,
+// reaproveitado por todos os tenants - é dado genérico de risk assessment,
 // não conteúdo específico de uma empresa demo.
 const seedQuestions: SeedQuestion[] = [
   {
@@ -293,7 +293,7 @@ const seedQuestions: SeedQuestion[] = [
   {
     category: "Segurança",
     text: "O Software utiliza autenticação Single Sign-On (SSO)?",
-    description: "SSO reduz risco (menos senhas isoladas espalhadas) — por isso 'Não' pesa mais aqui.",
+    description: "SSO reduz risco (menos senhas isoladas espalhadas) - por isso 'Não' pesa mais aqui.",
     weight: 6,
     type: "SINGLE_CHOICE",
     riskDimension: "PROBABILITY",
@@ -402,12 +402,12 @@ const seedQuestions: SeedQuestion[] = [
 ];
 
 // -----------------------------------------------------------------------------
-// Avaliação de risco de fornecedores (Vendor) — catálogo separado do
+// Avaliação de risco de fornecedores (Vendor) - catálogo separado do
 // questionário de software acima (ver nota de decisão no schema.prisma:
 // tierização é um score agregado 1D, não uma matriz probabilidade×impacto
 // 2D, então não há riskDimension/triggersLgpdReview aqui). Perguntas
 // inspiradas nas práticas de gestão de risco de cadeia de suprimentos do
-// NIST SP 800-161 — mesma escala 0-5 de risco cru por opção (0 = sem risco,
+// NIST SP 800-161 - mesma escala 0-5 de risco cru por opção (0 = sem risco,
 // 5 = risco máximo), invertida pelo RiskEngineService.computeScores (score
 // final: quanto maior, mais favorável) e reaproveitada por todos os tenants.
 // -----------------------------------------------------------------------------
@@ -632,11 +632,11 @@ const seedVendorQuestions: SeedVendorQuestion[] = [
 ];
 
 // Mesma escala 0-5 do totalScore (ver RiskEngineService.computeScores) e a
-// mesma filosofia de bandas de classificationDefs acima — Tier 1 = melhor
+// mesma filosofia de bandas de classificationDefs acima - Tier 1 = melhor
 // cenário (score alto), Tier 4 = pior (score baixo, acompanhamento mais
 // próximo). baseReassessmentMonths é o ponto de partida da cadência de
 // reavaliação, antes do ajuste por criticidade de negócio do fornecedor (ver
-// vendor-reassessment.util.ts, Fase 2) — editável pelo admin depois via
+// vendor-reassessment.util.ts, Fase 2) - editável pelo admin depois via
 // /admin/vendor-tier-config, não hardcoded na prática, só no seed inicial.
 const VENDOR_TIER_THRESHOLDS = [
   { tier: 1, label: "Baixo risco", color: "#16a34a", minScore: 4.0, maxScore: 5.0, baseReassessmentMonths: 12 },
@@ -653,7 +653,7 @@ const VENDOR_TIER_THRESHOLDS = [
 // Controls do CIS v8, os 14 capítulos do OWASP ASVS, os 10 itens do OWASP Top
 // 10), a lista abaixo é essa lista completa. Nos demais (ISO 27001/27002,
 // NIST CSF, LGPD, GDPR), é uma seleção dos itens mais relevantes para
-// avaliação de risco de software — o admin expande pelo CRUD futuro do
+// avaliação de risco de software - o admin expande pelo CRUD futuro do
 // catálogo caso precise de mais granularidade.
 const CONTROLS: Array<{
   frameworkCode: ControlFrameworkCode;
@@ -661,7 +661,7 @@ const CONTROLS: Array<{
   title: string;
   description: string;
 }> = [
-  // ISO/IEC 27001:2022 — cláusulas do Anexo A mais relevantes ao questionário
+  // ISO/IEC 27001:2022 - cláusulas do Anexo A mais relevantes ao questionário
   {
     frameworkCode: "ISO_27001",
     code: "A.9",
@@ -734,7 +734,7 @@ const CONTROLS: Array<{
     title: "Uso de criptografia",
     description: "Regras para uso eficaz de criptografia, incluindo gestão de chaves.",
   },
-  // ISO/IEC 27002 — os 4 temas de alto nível (guia de implementação, mesma
+  // ISO/IEC 27002 - os 4 temas de alto nível (guia de implementação, mesma
   // numeração do Anexo A 2022; granularidade de cláusula fica no ISO_27001)
   {
     frameworkCode: "ISO_27002",
@@ -760,7 +760,7 @@ const CONTROLS: Array<{
     title: "Controles tecnológicos",
     description: "Controle de acesso, criptografia, operações seguras, rede e desenvolvimento seguro.",
   },
-  // NIST Cybersecurity Framework 2.0 — as 6 funções (lista oficial completa)
+  // NIST Cybersecurity Framework 2.0 - as 6 funções (lista oficial completa)
   {
     frameworkCode: "NIST_CSF",
     code: "GV",
@@ -803,7 +803,7 @@ const CONTROLS: Array<{
     title: "Recover (Recuperar)",
     description: "Restauração de ativos e operações afetados por um incidente de cibersegurança.",
   },
-  // CIS Controls v8 — lista completa dos 18 controles de nível superior
+  // CIS Controls v8 - lista completa dos 18 controles de nível superior
   { frameworkCode: "CIS_V8", code: "1", title: "Inventory and Control of Enterprise Assets", description: "Gestão ativa de todos os ativos de hardware conectados à infraestrutura." },
   { frameworkCode: "CIS_V8", code: "2", title: "Inventory and Control of Software Assets", description: "Gestão ativa de todo o software na rede, autorizado e não autorizado." },
   { frameworkCode: "CIS_V8", code: "3", title: "Data Protection", description: "Processos e controles técnicos para identificar, classificar, reter, descartar e proteger dados." },
@@ -822,7 +822,7 @@ const CONTROLS: Array<{
   { frameworkCode: "CIS_V8", code: "16", title: "Application Software Security", description: "Gestão do ciclo de vida de segurança de software desenvolvido, hospedado ou adquirido." },
   { frameworkCode: "CIS_V8", code: "17", title: "Incident Response Management", description: "Estabelecimento de um programa para desenvolver e manter a capacidade de resposta a incidentes." },
   { frameworkCode: "CIS_V8", code: "18", title: "Penetration Testing", description: "Teste da eficácia e resiliência dos ativos empresariais por meio da identificação e exploração de fraquezas." },
-  // LGPD — artigos mais relevantes para avaliação de fornecedores/software
+  // LGPD - artigos mais relevantes para avaliação de fornecedores/software
   {
     frameworkCode: "LGPD",
     code: "Art. 46",
@@ -859,7 +859,7 @@ const CONTROLS: Array<{
     title: "Boas práticas e governança",
     description: "Adoção de regras de boas práticas e governança sobre condições de organização e procedimentos.",
   },
-  // GDPR — artigos equivalentes para operações com titulares na UE/EEE
+  // GDPR - artigos equivalentes para operações com titulares na UE/EEE
   {
     frameworkCode: "GDPR",
     code: "Art. 5",
@@ -896,7 +896,7 @@ const CONTROLS: Array<{
     title: "Data protection impact assessment",
     description: "Avaliação de impacto à proteção de dados quando o tratamento apresenta alto risco.",
   },
-  // OWASP ASVS 4.0 — lista completa dos 14 capítulos de nível superior
+  // OWASP ASVS 4.0 - lista completa dos 14 capítulos de nível superior
   { frameworkCode: "OWASP_ASVS", code: "V1", title: "Architecture, Design and Threat Modeling", description: "Requisitos de arquitetura, design seguro e modelagem de ameaças." },
   { frameworkCode: "OWASP_ASVS", code: "V2", title: "Authentication", description: "Requisitos de verificação de identidade e credenciais, incluindo MFA." },
   { frameworkCode: "OWASP_ASVS", code: "V3", title: "Session Management", description: "Requisitos de geração, proteção e encerramento de sessões." },
@@ -911,7 +911,7 @@ const CONTROLS: Array<{
   { frameworkCode: "OWASP_ASVS", code: "V12", title: "Files and Resources", description: "Requisitos de manipulação segura de arquivos e recursos." },
   { frameworkCode: "OWASP_ASVS", code: "V13", title: "API and Web Service", description: "Requisitos de segurança para APIs REST, SOAP e GraphQL." },
   { frameworkCode: "OWASP_ASVS", code: "V14", title: "Configuration", description: "Requisitos de configuração segura de build, dependências e infraestrutura." },
-  // OWASP Top 10 (2021) — lista completa
+  // OWASP Top 10 (2021) - lista completa
   { frameworkCode: "OWASP_TOP10", code: "A01", title: "Broken Access Control", description: "Falhas no controle de acesso que permitem ações fora do permitido ao usuário." },
   { frameworkCode: "OWASP_TOP10", code: "A02", title: "Cryptographic Failures", description: "Falhas relacionadas a criptografia que levam à exposição de dados sensíveis." },
   { frameworkCode: "OWASP_TOP10", code: "A03", title: "Injection", description: "Falhas de injeção, como SQL, NoSQL, OS e LDAP injection." },
@@ -924,7 +924,7 @@ const CONTROLS: Array<{
   { frameworkCode: "OWASP_TOP10", code: "A10", title: "Server-Side Request Forgery (SSRF)", description: "Falhas que permitem à aplicação buscar um recurso remoto sem validar a URL fornecida." },
 ];
 
-// Vínculo de perguntas do questionário aos controles que elas avaliam —
+// Vínculo de perguntas do questionário aos controles que elas avaliam -
 // substring único o bastante para não colidir com as perguntas de texto
 // livre "Caso exista X, como está implementado?" que citam o mesmo termo.
 const QUESTION_CONTROL_LINKS: Array<{ questionTextContains: string; controls: string[] }> = [
@@ -1010,12 +1010,12 @@ const VENDOR_QUESTION_CONTROL_LINKS: Array<{ questionTextContains: string; contr
 // --- Matriz de risco padrão (dados compartilhados por todos os tenants) ------
 // Escala 1-5, alinhada ao motor já em produção da empresa (n8n): quanto
 // MAIOR o score, mais SEGURO (mesma convenção do output de exemplo do n8n
-// — "risk_score: 4.1, risk_classification: Homologado"). probabilityScore/
-// impactScore/totalScore em RiskResult seguem essa mesma convenção — são
+// - "risk_score: 4.1, risk_classification: Homologado"). probabilityScore/
+// impactScore/totalScore em RiskResult seguem essa mesma convenção - são
 // scores de "segurança", não de "risco" cru (esse fica só na QuestionOption,
 // internamente, onde é mais intuitivo o admin configurar "quão arriscada é
 // esta resposta").
-// Rótulos em termos de probabilidade/impacto DE RISCO — por isso a ordem é
+// Rótulos em termos de probabilidade/impacto DE RISCO - por isso a ordem é
 // invertida em relação ao score de segurança: "Alta" (probabilidade/impacto
 // de risco) cai na faixa BAIXA do score de segurança, e vice-versa.
 const probabilityDefs = [
@@ -1028,7 +1028,7 @@ const impactDefs = [
   { label: "Médio", order: 2, minScore: 1.67, maxScore: 3.33 },
   { label: "Baixo", order: 3, minScore: 3.34, maxScore: 5 },
 ];
-// Faixas do score TOTAL (0-5) — é isso que o RiskEngine (Etapa 5) usa de
+// Faixas do score TOTAL (0-5) - é isso que o RiskEngine (Etapa 5) usa de
 // fato para decidir a classificação, não a grade abaixo (que é só para o
 // heatmap futuro, Etapa 9).
 const classificationDefs = [
@@ -1037,7 +1037,7 @@ const classificationDefs = [
   { label: "Homologado", order: 3, color: "#16a34a", minScore: 4.0, maxScore: 5.0 },
 ];
 // Grade 3x3 (probabilidade x impacto) -> classificação. Só alimenta o
-// heatmap (Etapa 9) — a decisão de aprovação vem do totalScore contra os
+// heatmap (Etapa 9) - a decisão de aprovação vem do totalScore contra os
 // thresholds de RiskClassification acima, não desta grade.
 const matrixGrid: Record<string, Record<string, string>> = {
   Baixa: { Baixo: "Homologado", Médio: "Homologado", Alto: "Aguardando Ajustes" },
@@ -1166,7 +1166,7 @@ async function seedFullTenant(params: SeedFullTenantParams) {
     create: { userId: regularUser.id, roleId: userRole.id },
   });
 
-  // O admin também acumula os papéis aprovadores do fluxo padrão — só para
+  // O admin também acumula os papéis aprovadores do fluxo padrão - só para
   // permitir demonstrar a cadeia completa de aprovação com um único login.
   // Nunca faça isso num tenant real (violaria a própria Separação de
   // Funções que o workflow existe para impor).
@@ -1179,7 +1179,7 @@ async function seedFullTenant(params: SeedFullTenantParams) {
     });
   }
 
-  // Só o tenant "demo" concede a role de super-admin de plataforma — menos
+  // Só o tenant "demo" concede a role de super-admin de plataforma - menos
   // contas com platform:cross-tenant reduz o raio de impacto dessa
   // credencial, sem necessidade real de repetir em todo tenant novo.
   if (grantSuperAdmin) {
@@ -1203,13 +1203,13 @@ async function seedFullTenant(params: SeedFullTenantParams) {
   }
 
   // Substituição completa: o seed é a fonte da verdade só até o CRUD
-  // administrativo (Etapa 4) existir de fato — depois disso, ajustes de
+  // administrativo (Etapa 4) existir de fato - depois disso, ajustes de
   // questionário devem ser feitos por lá, não reeditando este arquivo.
   // Seguro apagar em dev para os tenants novos (zion/matrix/machine-city):
   // são criados agora mesmo, não existe nenhuma Assessment/AssessmentAnswer
   // referenciando essas perguntas ainda. Para "demo", porém, um ambiente de
   // dev já usado manualmente (como o desta sessão) pode ter Assessments
-  // reais respondidas — o delete falharia com uma violação de FK. Nesse
+  // reais respondidas - o delete falharia com uma violação de FK. Nesse
   // caso, pula o reset (loop abaixo já é idempotente via `existing ?? create`
   // e reaproveita as perguntas existentes em vez de recriar).
   try {
@@ -1437,7 +1437,7 @@ async function seedFullTenant(params: SeedFullTenantParams) {
 
   // Mesmo raciocínio do bloco de Question acima: seguro apagar/recriar para
   // tenants novos, mas para "demo" um VendorAnswer real já existente
-  // impediria o delete (FK) — nesse caso pula o reset e reaproveita.
+  // impediria o delete (FK) - nesse caso pula o reset e reaproveita.
   try {
     await prisma.vendorQuestion.deleteMany({ where: { tenantId: tenant.id } });
   } catch (error) {
@@ -1528,13 +1528,13 @@ async function seedFullTenant(params: SeedFullTenantParams) {
 async function main() {
   // --- Segundo tenant (só para testar isolamento multi-tenant / super-admin) ---
   // Deliberadamente enxuto (sem questionário/matriz de risco/workflow
-  // próprios) — o objetivo aqui é só ter uma organização genuinamente
+  // próprios) - o objetivo aqui é só ter uma organização genuinamente
   // separada, com dado próprio, para verificar que a troca de contexto do
   // super-admin (POST /auth/switch-tenant) realmente isola dados entre
   // tenants. Roda antes dos tenants completos abaixo de propósito: aquela
   // seção reseta e recria as perguntas de cada tenant via deleteMany, o que
   // falha assim que existir alguma Assessment real respondida (ok em prod/
-  // primeira seed, mas comum num ambiente de dev já usado manualmente) — ao
+  // primeira seed, mas comum num ambiente de dev já usado manualmente) - ao
   // rodar antes, este bloco sempre é aplicado, mesmo se algum passo adiante
   // falhar.
   const tenant2 = await prisma.tenant.upsert({
@@ -1595,7 +1595,7 @@ async function main() {
   }
 
   // --- Tenants completos ---------------------------------------------------------
-  // Senha só para os usuários de demonstração — NUNCA usar esse padrão para
+  // Senha só para os usuários de demonstração - NUNCA usar esse padrão para
   // provisionar usuários reais (a Etapa 3 só usa isso no seed; criação de
   // usuário via API sempre gera hash a partir de senha informada pelo
   // próprio usuário).
@@ -1615,7 +1615,7 @@ async function main() {
     seedPasswordHash,
   });
 
-  // Temáticos ao nome do projeto (Morpheus/Matrix) — pedido explícito do
+  // Temáticos ao nome do projeto (Morpheus/Matrix) - pedido explícito do
   // usuário, para servir de organizações "secundárias" com login direto no
   // dropdown da tela de login (Etapa 2 do plano pós-#29), não só acessíveis
   // via super-admin switch-tenant como a demo2 acima. logoUrl aponta para os

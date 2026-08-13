@@ -4,7 +4,7 @@ import { Reflector } from "@nestjs/core";
 import { IS_PUBLIC_KEY } from "../decorators/public.decorator";
 
 /**
- * Registrado como guard global (ver app.module.ts, APP_GUARD) — toda rota é
+ * Registrado como guard global (ver app.module.ts, APP_GUARD) - toda rota é
  * protegida por padrão, a não ser que marcada com @Public(). Essa é a
  * inversão deliberada em relação a "aplicar guard rota por rota": esquecer
  * de proteger uma rota nova é o erro mais comum e mais caro em RBAC: aqui

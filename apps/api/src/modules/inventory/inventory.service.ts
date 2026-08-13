@@ -277,9 +277,9 @@ export class InventoryService {
   }
 
   /** Cadastro manual (`POST /inventory`) sempre nasce `PENDING_APPROVAL` e
-   * gera uma `InventoryApprovalRequest` — nunca vai direto pra `ACTIVE` (ver
+   * gera uma `InventoryApprovalRequest` - nunca vai direto pra `ACTIVE` (ver
    * fluxo de aprovação dedicado, `docs/changelog/2026-08.md`). `status` nunca
-   * vem do DTO — `CreateInventoryItemDto` não tem esse campo. */
+   * vem do DTO - `CreateInventoryItemDto` não tem esse campo. */
   async create(
     user: AuthenticatedUser,
     dto: CreateInventoryItemDto,
@@ -361,7 +361,7 @@ export class InventoryService {
     return mapItemDetail(refreshed ?? item);
   }
 
-  /** Fila de itens manuais aguardando decisão — só quem tem
+  /** Fila de itens manuais aguardando decisão - só quem tem
    * `assessments:approve` enxerga (rota gated no controller). */
   async listPendingApprovals(user: AuthenticatedUser) {
     const items = await this.approvalRepository.findPendingItems(user.tenantId);
@@ -453,7 +453,7 @@ export class InventoryService {
     return mapItemDetail(item);
   }
 
-  /** Só o criador original pode reenviar um item reprovado — espelho, do
+  /** Só o criador original pode reenviar um item reprovado - espelho, do
    * lado do reenvio, da checagem de auto-aprovação acima. */
   async resubmit(user: AuthenticatedUser, id: string): Promise<InventoryItemWithOpinion> {
     const existing = await this.getOwnedOrThrow(user.tenantId, id);
@@ -561,7 +561,7 @@ export class InventoryService {
   }
 
   /** Item precisa estar `PENDING_APPROVAL` e ter uma `InventoryApprovalRequest`
-   * viva pra approve/reject decidirem — cobre também a race de "já decidido
+   * viva pra approve/reject decidirem - cobre também a race de "já decidido
    * por outro aprovador nesse meio-tempo" (400, não um 200 silencioso). */
   private async getPendingApprovalOrThrow(tenantId: string, id: string) {
     const item = await this.getOwnedOrThrow(tenantId, id);

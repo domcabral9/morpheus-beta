@@ -5,7 +5,7 @@ import { ConfigService } from "@nestjs/config";
 /**
  * Checa SAML_ENABLED antes de delegar para o AuthGuard('saml') real. Sem
  * isso, a rota de início de login (redirect para o IdP) tentaria redirecionar
- * para um `entryPoint` inexistente quando o SSO está desabilitado — o
+ * para um `entryPoint` inexistente quando o SSO está desabilitado - o
  * SamlStrategy.validate() só protege o callback, não essa etapa inicial.
  */
 @Injectable()

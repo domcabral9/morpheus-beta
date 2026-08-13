@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// `z.coerce.boolean()` faz `Boolean(valor)` por baixo dos panos — qualquer
+// `z.coerce.boolean()` faz `Boolean(valor)` por baixo dos panos - qualquer
 // string não-vazia é truthy em JS, então `SAML_ENABLED=false` viraria `true`.
 // Este helper só aceita literalmente "true"/"false" (e vazio/ausente = false).
 const booleanFromEnv = (defaultValue: boolean) =>
@@ -16,11 +16,11 @@ const envSchema = z
     CORS_ORIGIN: z.string().default("http://localhost:3000"),
     DATABASE_URL: z.string().min(1, "DATABASE_URL é obrigatório"),
 
-    // Base URL pública da API — usada para montar o link de verificação
+    // Base URL pública da API - usada para montar o link de verificação
     // codificado no QR Code do parecer técnico (Etapa 7). Sem protocolo/porta
     // fixos hardcoded porque isso muda entre dev/staging/produção.
     PUBLIC_API_URL: z.string().default("http://localhost:3001"),
-    // Base URL pública do app web — usada para montar o hyperlink do item de
+    // Base URL pública do app web - usada para montar o hyperlink do item de
     // inventário vinculado, embutido no parecer técnico.
     PUBLIC_WEB_URL: z.string().default("http://localhost:3000"),
     STORAGE_DIR: z.string().default("./storage"),
@@ -31,7 +31,7 @@ const envSchema = z
     JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
     // Secret próprio (nunca o mesmo de access/refresh) para o token de
     // escopo limitado emitido entre "senha correta" e "código 2FA validado"
-    // — ver AuthService.issuePreAuthChallenge / PreAuthGuard.
+    // - ver AuthService.issuePreAuthChallenge / PreAuthGuard.
     JWT_PREAUTH_SECRET: z.string().min(16, "JWT_PREAUTH_SECRET deve ter ao menos 16 caracteres"),
     JWT_PREAUTH_EXPIRES_IN: z.string().default("5m"),
 
@@ -44,7 +44,7 @@ const envSchema = z
     // SamlStrategy) até existir seleção de tenant de verdade no fluxo SSO.
     SAML_TENANT_SLUG: z.string().optional(),
 
-    // SMTP (Etapa 10) — opcional de propósito: sem SMTP_HOST configurado, o
+    // SMTP (Etapa 10) - opcional de propósito: sem SMTP_HOST configurado, o
     // NotificationsService ainda grava a notificação em `Notification`
     // normalmente, só não tenta enviar e-mail (log avisando, nunca derruba
     // a ação de negócio que disparou a notificação).
@@ -55,25 +55,25 @@ const envSchema = z
     SMTP_PASSWORD: z.string().optional(),
     SMTP_FROM: z.string().default("Morpheus <no-reply@morpheus.local>"),
     // Dias de antecedência para marcar um item do inventário como
-    // PENDING_REVIEW e notificar o responsável (job diário — ver
+    // PENDING_REVIEW e notificar o responsável (job diário - ver
     // SoftwareReviewScheduler).
     INVENTORY_REVIEW_WARNING_DAYS: z.coerce.number().default(30),
 
     // Lidas diretamente de process.env em tracing.ts, antes do ConfigModule
-    // existir — declaradas aqui só para documentação e para o restante da
+    // existir - declaradas aqui só para documentação e para o restante da
     // aplicação conseguir lê-las via ConfigService se precisar. Sem
     // OTEL_EXPORTER_OTLP_ENDPOINT, os spans vão para o console (dev/CI não
     // precisam de um collector rodando).
     OTEL_SERVICE_NAME: z.string().default("morpheus-api"),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
 
-    // Rate limiting global (Etapa 14) — janela em ms e máximo de requisições
+    // Rate limiting global (Etapa 14) - janela em ms e máximo de requisições
     // por IP dentro dela. Endpoints sensíveis (login, refresh) têm limites
     // mais estritos via @Throttle() nos controllers.
     THROTTLE_TTL_MS: z.coerce.number().default(60_000),
     THROTTLE_LIMIT: z.coerce.number().default(100),
 
-    // Chave simétrica para o CryptoService (AES-256-GCM) — usada hoje para
+    // Chave simétrica para o CryptoService (AES-256-GCM) - usada hoje para
     // criptografar RefreshToken.ipAddress em repouso. Precisa ter exatamente
     // 32 bytes quando decodificada de base64 (chave de 256 bits).
     ENCRYPTION_KEY: z
@@ -83,7 +83,7 @@ const envSchema = z
         message: "ENCRYPTION_KEY deve ser uma chave de 256 bits (32 bytes) em base64",
       }),
 
-    // Arquitetura de adapters (Etapa 15) — todas opcionais de propósito:
+    // Arquitetura de adapters (Etapa 15) - todas opcionais de propósito:
     // sem a URL configurada, cada adapter só loga um aviso e segue (mesmo
     // padrão do SMTP_HOST). Nenhum SIEM/ITSM/ferramenta de colaboração real
     // é exigido para a aplicação funcionar em dev/CI.

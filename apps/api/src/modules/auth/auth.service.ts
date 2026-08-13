@@ -64,7 +64,7 @@ export class AuthService {
   /**
    * Resolve o slug informado no login (ex.: "demo") para o tenantId real.
    * Placeholder honesto até existir seleção de tenant de verdade na Web
-   * (subdomínio ou tela de escolha) — não esconde a multi-tenancy atrás de
+   * (subdomínio ou tela de escolha) - não esconde a multi-tenancy atrás de
    * um tenant default fixo no código.
    */
   async resolveTenantIdBySlug(slug: string): Promise<string> {
@@ -190,7 +190,7 @@ export class AuthService {
 
   /**
    * Reemite o access token com `tenantId` trocado, sem tocar o refresh
-   * token/cookie (esses continuam ligados à identidade de casa do ator —
+   * token/cookie (esses continuam ligados à identidade de casa do ator -
    * ver decisão de design no plano). `sub` nunca muda: a trilha de auditoria
    * das ações feitas "como" outro tenant continua atribuindo ao super-admin
    * real, não a uma identidade sintética.
@@ -216,7 +216,7 @@ export class AuthService {
       accessPayload = this.buildAccessPayload(user);
     } else {
       // Sessão trocada: o ator não é sócio real do tenant alvo (sem User row
-      // lá) — carrega o catálogo completo de permissões, equivalente a agir
+      // lá) - carrega o catálogo completo de permissões, equivalente a agir
       // como administrador de qualquer tenant para todos os efeitos práticos.
       const allPermissions = await this.prisma.permission.findMany({ select: { key: true } });
       accessPayload = {
@@ -271,7 +271,7 @@ export class AuthService {
       secret: this.accessSecret,
       // `expiresIn` do jsonwebtoken é tipado como um template literal de
       // durações (ex.: "15m"); nossa config vem de env var (string simples,
-      // validada em runtime pelo zod) — o cast documenta essa fronteira.
+      // validada em runtime pelo zod) - o cast documenta essa fronteira.
       expiresIn: this.accessExpiresIn as JwtSignOptions["expiresIn"],
     });
   }
@@ -299,7 +299,7 @@ export class AuthService {
         familyId,
         expiresAt: new Date(decoded.exp * 1000),
         userAgent: meta.userAgent,
-        // Criptografado em repouso (Etapa 14) — diferente de AuditLog.ipAddress
+        // Criptografado em repouso (Etapa 14) - diferente de AuditLog.ipAddress
         // (trilha de auditoria imutável, precisa ficar legível para
         // investigação/compliance), este é dado operacional de sessão sem
         // motivo para ficar em texto plano só de leitura direta no banco.

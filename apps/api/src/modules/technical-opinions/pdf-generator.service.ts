@@ -51,7 +51,7 @@ const EXPOSURE_STATE_LABELS: Record<string, string> = {
 
 /**
  * Renderiza o parecer técnico em PDF a partir de um payload já achatado
- * (ver OpinionPdfData) — sem acesso a banco, testável isoladamente. Layout
+ * (ver OpinionPdfData) - sem acesso a banco, testável isoladamente. Layout
  * deliberadamente simples (pdfkit não tem motor de tabelas nativo): blocos de
  * rótulo/valor e grades desenhadas com linhas, o suficiente para um
  * documento corporativo legível sem depender de um motor de renderização
@@ -301,7 +301,7 @@ export class PdfGeneratorService {
         .fontSize(11)
         .fillColor(COLORS.heading)
         .text(
-          `${step.stepName} (${step.responsibleRoleName}) — ${this.translateStepStatus(step.status)}`,
+          `${step.stepName} (${step.responsibleRoleName}) - ${this.translateStepStatus(step.status)}`,
         );
       const details: string[] = [];
       if (step.decidedByName) details.push(`Decidido por: ${step.decidedByName}`);

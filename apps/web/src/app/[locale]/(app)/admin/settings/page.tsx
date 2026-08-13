@@ -31,7 +31,7 @@ type SettingsFormValues = z.infer<typeof settingsSchema>;
 const MM_DD_REGEX = /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 // Validação condicional: as datas só precisam bater com o formato MM-DD
-// quando a janela está habilitada — desabilitada, os campos podem ficar
+// quando a janela está habilitada - desabilitada, os campos podem ficar
 // em branco sem travar o salvamento.
 const renewalWindowSchema = z
   .object({

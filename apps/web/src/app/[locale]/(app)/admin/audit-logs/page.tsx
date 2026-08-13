@@ -255,7 +255,7 @@ function AuditLogsContent() {
                           t("systemUser")
                         )}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{log.ipAddress ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{log.ipAddress ?? "-"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

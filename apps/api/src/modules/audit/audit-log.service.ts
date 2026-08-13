@@ -21,7 +21,7 @@ export class AuditLogService {
   ) {}
 
   /**
-   * Nunca lança — uma falha ao gravar auditoria não pode derrubar a ação de
+   * Nunca lança - uma falha ao gravar auditoria não pode derrubar a ação de
    * negócio sendo auditada. Erros viram só log de aplicação.
    */
   async record(input: RecordAuditLogInput): Promise<void> {
@@ -34,7 +34,7 @@ export class AuditLogService {
       );
     }
 
-    // Encaminhamento ao SIEM é independente da gravação local — uma falha
+    // Encaminhamento ao SIEM é independente da gravação local - uma falha
     // aqui não deve impedir (nem ser impedida por) o registro em AuditLog.
     try {
       await this.siemAdapter.send({

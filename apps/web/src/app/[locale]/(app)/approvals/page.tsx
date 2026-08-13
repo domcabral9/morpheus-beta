@@ -152,7 +152,7 @@ export default function ApprovalsPage() {
                                 {new Date(execution.slaDueAt).toLocaleDateString()}
                               </Badge>
                             ) : (
-                              <span className="text-muted-foreground">—</span>
+                              <span className="text-muted-foreground">-</span>
                             )}
                           </TableCell>
                           <TableCell className="text-right text-sm text-primary">

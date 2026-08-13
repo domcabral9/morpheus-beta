@@ -4,7 +4,7 @@ export interface MethodologyScorableAnswer {
   questionText: string;
   weight: number;
   riskDimension: MethodologyRiskDimension;
-  /** Score de risco cru da resposta, 0 (sem risco) a 5 (risco máximo) — mesma
+  /** Score de risco cru da resposta, 0 (sem risco) a 5 (risco máximo) - mesma
    * convenção de `RiskEngineService`/`AssessmentsService.resolveScorableAnswers`. */
   score: number;
 }
@@ -25,7 +25,7 @@ const DIMENSION_LABELS: Record<MethodologyRiskDimension, string> = {
  * (peso × score de risco por resposta, ver `AssessmentsService
  * .resolveScorableAnswers`/`RiskEngineService`) para identificar, dentre as
  * respostas já dadas nesta avaliação específica, quais mais pesaram no
- * resultado final — nunca fabricado, só ordenação de dado real já
+ * resultado final - nunca fabricado, só ordenação de dado real já
  * persistido. Usado na seção "Metodologia" do parecer técnico.
  */
 export function computeTopRiskFactors(

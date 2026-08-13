@@ -10,7 +10,7 @@ import { NotificationsService } from "../notifications/notifications.service";
  * notifica gestor + responsável técnico. Disparo por borda (edge-triggered):
  * como a consulta só olha itens ainda ACTIVE, um item já marcado
  * PENDING_REVIEW não é notificado de novo todo dia até alguém agir sobre
- * ele — sem precisar de um campo extra tipo "última notificação".
+ * ele - sem precisar de um campo extra tipo "última notificação".
  */
 @Injectable()
 export class InventoryReviewScheduler {

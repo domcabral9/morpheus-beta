@@ -7,7 +7,7 @@ import type { PendingTwoFactorUser } from "../../../common/interfaces/pending-tw
 
 /**
  * Verifica o token de escopo limitado emitido entre "senha correta" e
- * "código 2FA validado" — secret próprio (JWT_PREAUTH_SECRET), nunca o mesmo
+ * "código 2FA validado" - secret próprio (JWT_PREAUTH_SECRET), nunca o mesmo
  * de JwtStrategy (access token normal). Mesmo mecanismo de duas estratégias
  * Passport paralelas já usado para access/refresh, com um terceiro par.
  */

@@ -21,7 +21,7 @@ export class TenantsRepository {
     return this.prisma.tenant.findUnique({ where: { id } });
   }
 
-  // Só id/name/slug — o seletor de organização do super-admin não precisa (e
+  // Só id/name/slug - o seletor de organização do super-admin não precisa (e
   // não deve expor) logoUrl/securityTeamName/opinionNumberPrefix de outras orgs.
   findAllSummary(): Promise<TenantSummary[]> {
     return this.prisma.tenant.findMany({
@@ -34,7 +34,7 @@ export class TenantsRepository {
     return this.prisma.tenant.update({ where: { id }, data });
   }
 
-  // Nem id nem qualquer outro campo além de name/slug — este método alimenta
+  // Nem id nem qualquer outro campo além de name/slug - este método alimenta
   // o dropdown de organização da tela de login (pré-autenticação), então o
   // conjunto exposto tem que ser o mínimo absoluto.
   findAllPublicSummary(): Promise<TenantPublicSummary[]> {

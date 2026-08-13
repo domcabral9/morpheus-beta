@@ -7,15 +7,15 @@ import { AUDIT_KEY, AuditMetadata } from "../decorators/audit.decorator";
 import type { AuthenticatedUser } from "../interfaces/authenticated-user.interface";
 
 /**
- * Grava um AuditLog automaticamente para rotas marcadas com `@Audit()` — só
+ * Grava um AuditLog automaticamente para rotas marcadas com `@Audit()` - só
  * um no-op para as demais (metadata ausente).
  *
  * A prioridade de onde tirar o `entityId` depende da ação: em CREATE, o
  * param de rota costuma ser o ID do recurso PAI (ex.:
- * `POST /configs/:id/probability-levels` — `:id` é o config, não a faixa
+ * `POST /configs/:id/probability-levels`: `:id` é o config, não a faixa
  * recém-criada), então o corpo da resposta (`.id` da entidade criada) vem
  * primeiro. Em UPDATE/DELETE é o contrário: o param de rota é o próprio
- * recurso alvo (`:id`, ou o único param quando ele tem outro nome — ex.:
+ * recurso alvo (`:id`, ou o único param quando ele tem outro nome, ex.:
  * `:levelId`, `:cellId`), e o corpo pode nem existir (DELETE sem corpo).
  */
 @Injectable()

@@ -6,7 +6,7 @@ import { WebhookItsmAdapter } from "./itsm/webhook-itsm.adapter";
 import { COLLABORATION_ADAPTER } from "./collaboration/collaboration.interface";
 import { WebhookCollaborationAdapter } from "./collaboration/webhook-collaboration.adapter";
 
-/** Global como NotificationsModule/AuditLogModule — os três adapters são consumidos por outros módulos de negócio. */
+/** Global como NotificationsModule/AuditLogModule - os três adapters são consumidos por outros módulos de negócio. */
 @Global()
 @Module({
   providers: [

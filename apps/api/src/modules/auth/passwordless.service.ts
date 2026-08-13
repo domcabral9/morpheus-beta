@@ -49,7 +49,7 @@ export class PasswordlessService {
     );
     await this.notificationsService.sendRawEmail({
       to: user.email,
-      subject: "Seu código de login — Morpheus",
+      subject: "Seu código de login - Morpheus",
       html: `<p>Seu código de login é <strong>${code}</strong>. Ele expira em 10 minutos.</p>`,
     });
   }

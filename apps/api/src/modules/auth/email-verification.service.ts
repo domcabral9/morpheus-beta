@@ -21,7 +21,7 @@ export class EmailVerificationService {
     private readonly auditLogService: AuditLogService,
   ) {}
 
-  /** Autoatendimento (POST /auth/email/verify/request) — sempre gera e envia
+  /** Autoatendimento (POST /auth/email/verify/request) - sempre gera e envia
    * um código novo, mesmo que já exista um pendente (o findActiveCode da
    * Fase de confirmação sempre pega o mais recente, então pedidos repetidos
    * são seguros, não acumulam confusão sobre "qual código vale"). */
@@ -35,7 +35,7 @@ export class EmailVerificationService {
     );
     await this.notificationsService.sendRawEmail({
       to: actor.email,
-      subject: "Confirme seu e-mail — Morpheus",
+      subject: "Confirme seu e-mail - Morpheus",
       html: `<p>Seu código de verificação é <strong>${code}</strong>. Ele expira em 10 minutos.</p>`,
     });
   }

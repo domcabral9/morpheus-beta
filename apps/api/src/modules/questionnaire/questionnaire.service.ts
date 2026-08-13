@@ -123,7 +123,7 @@ export class QuestionnaireService {
     const usageCount = await this.questionnaireRepository.countAnswersUsingOption(optionId);
     if (usageCount > 0) {
       throw new BadRequestException(
-        "Esta opção já foi usada em respostas de avaliações e não pode ser removida — desative a pergunta em vez disso.",
+        "Esta opção já foi usada em respostas de avaliações e não pode ser removida: desative a pergunta em vez disso.",
       );
     }
     await this.questionnaireRepository.deleteOption(optionId);

@@ -7,7 +7,7 @@ import type { StorageAdapter } from "./storage.interface";
 /**
  * Implementação de dev/on-premises simples do StorageAdapter: grava em disco
  * sob `STORAGE_DIR`. Trocar para um adapter S3 em produção (Etapa 16) é só
- * implementar a mesma interface — nada que consome `StorageAdapter` muda.
+ * implementar a mesma interface - nada que consome `StorageAdapter` muda.
  */
 @Injectable()
 export class LocalDiskStorageAdapter implements StorageAdapter {

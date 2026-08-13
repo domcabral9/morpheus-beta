@@ -29,7 +29,7 @@ export class DashboardsController {
     return this.dashboardsService.getExecutiveDashboard(user.tenantId);
   }
 
-  /** Placar de maturidade por área — visível a qualquer usuário autenticado do tenant (gamificação). */
+  /** Placar de maturidade por área - visível a qualquer usuário autenticado do tenant (gamificação). */
   @Get("leaderboard")
   getLeaderboard(@CurrentUser() user: AuthenticatedUser) {
     return this.dashboardsService.getAreaLeaderboard(user.tenantId);

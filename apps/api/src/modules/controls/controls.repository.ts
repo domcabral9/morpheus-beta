@@ -20,7 +20,7 @@ export type ControlDetail = Prisma.ControlGetPayload<{
 
 /**
  * Catálogo global de frameworks/controles (ISO, NIST, CIS, LGPD, GDPR, OWASP)
- * — não é tenant-scoped: representa capacidades do sistema, mesmo conteúdo
+ * - não é tenant-scoped: representa capacidades do sistema, mesmo conteúdo
  * para qualquer tenant, como o catálogo de Permission.
  */
 @Injectable()

@@ -6,7 +6,7 @@ import type { EmailAdapter, EmailMessage } from "./email.interface";
 
 /**
  * Sem SMTP_HOST configurado, o transporte simplesmente não é criado e
- * `send()` só loga um aviso — dev/CI não precisam de um servidor SMTP de
+ * `send()` só loga um aviso - dev/CI não precisam de um servidor SMTP de
  * verdade para o resto da aplicação funcionar. `NotificationsService` já
  * trata qualquer erro daqui como não-fatal (mesmo padrão do
  * AuditLogService), então isso também cobre falhas reais de envio em
@@ -40,7 +40,7 @@ export class SmtpEmailAdapter implements EmailAdapter {
   async send(message: EmailMessage): Promise<void> {
     if (!this.transporter) {
       this.logger.warn(
-        `SMTP_HOST não configurado — e-mail para ${message.to} não enviado (só logado).`,
+        `SMTP_HOST não configurado: e-mail para ${message.to} não enviado (só logado).`,
       );
       return;
     }

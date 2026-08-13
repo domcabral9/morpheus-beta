@@ -6,8 +6,8 @@ import { NextResponse } from "next/server";
  * o endereço da API em uma única variável de ambiente do lado do servidor.
  *
  * Importante: usa `API_URL` (sem prefixo `NEXT_PUBLIC_`) de propósito. Next.js
- * faz *inline* de qualquer `process.env.NEXT_PUBLIC_*` em tempo de build —
- * inclusive em código server-only como este route handler — então um valor
+ * faz *inline* de qualquer `process.env.NEXT_PUBLIC_*` em tempo de build -
+ * inclusive em código server-only como este route handler - então um valor
  * com esse prefixo ficaria congelado com o padrão usado no build da imagem
  * Docker e nunca refletiria o `http://api:3001` injetado em runtime pelo
  * compose. Variáveis sem esse prefixo são lidas ao vivo de `process.env` a

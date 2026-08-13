@@ -36,11 +36,11 @@ export class NotificationsRepository {
   }
 
   /** Todos os usuários ativos do tenant que têm, por qualquer papel, a
-   * permissão informada — diferente de `findUsersByRole`, que resolve um
+   * permissão informada - diferente de `findUsersByRole`, que resolve um
    * único papel: aqui o conjunto de papéis que concede a permissão pode ser
    * >1 (ex.: `assessments:approve` hoje é concedido a 4 papéis diferentes),
    * e um único `findMany` já faz o dedupe se um usuário acumular mais de um
-   * desses papéis — evita notificar a mesma pessoa duas vezes. */
+   * desses papéis - evita notificar a mesma pessoa duas vezes. */
   findUsersByPermission(tenantId: string, permissionKey: string) {
     return this.prisma.user.findMany({
       where: {
