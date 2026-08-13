@@ -52,7 +52,7 @@ import { VerifyPasswordlessLoginDto } from "./dto/verify-passwordless-login.dto"
 
 const REFRESH_COOKIE_NAME = "morpheus_refresh_token";
 const REFRESH_COOKIE_PATH = "/auth";
-const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024; // 2MB — mesmo limite do logo do tenant
+const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024; // 2MB - mesmo limite do logo do tenant
 const ALLOWED_AVATAR_MIME_TYPES = new Set(["image/png", "image/jpeg"]);
 
 @ApiTags("auth")
@@ -68,12 +68,12 @@ export class AuthController {
   ) {}
 
   @Public()
-  // Alvo clássico de força bruta — bem mais estrito que o limite global.
+  // Alvo clássico de força bruta - bem mais estrito que o limite global.
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @UseGuards(LocalAuthGuard)
   @Post("login")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Login local (email/senha) — requer tenantSlug." })
+  @ApiOperation({ summary: "Login local (email/senha): requer tenantSlug." })
   @ApiBody({ type: LoginDto })
   async login(
     @Req() req: Request & { user: UserWithPermissions },
@@ -128,7 +128,7 @@ export class AuthController {
     };
   }
 
-  // Login passwordless (Fase 3) — fator primário alternativo ao par
+  // Login passwordless (Fase 3) - fator primário alternativo ao par
   // e-mail/senha, sem prompt de senha. Sempre responde no formato exato do
   // caso de sucesso, mesmo quando tenant/e-mail não existe, usuário está
   // inativo, e-mail não verificado ou o toggle de plataforma está desligado
@@ -176,7 +176,7 @@ export class AuthController {
 
   @Public()
   // Chamado automaticamente a cada carregamento de página (refresh
-  // silencioso) — mais folgado que login, mas ainda bem abaixo do limite
+  // silencioso) - mais folgado que login, mas ainda bem abaixo do limite
   // global para não virar um vetor de força bruta contra o cookie.
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @UseGuards(CsrfGuard)
@@ -220,7 +220,7 @@ export class AuthController {
   }
 
   // Autenticado via Bearer normal (sem @RequirePermissions: qualquer usuário
-  // gerencia a própria senha) — mesmo limite de força bruta do login, já que
+  // gerencia a própria senha) - mesmo limite de força bruta do login, já que
   // errar `currentPassword` repetidamente é a mesma classe de risco.
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Patch("password")
@@ -322,7 +322,7 @@ export class AuthController {
   }
 
   // Verificação de e-mail (autoatendimento, pré-requisito de login
-  // passwordless — Fase 3) — mesmo padrão de /auth/2fa/*: Bearer normal, sem
+  // passwordless - Fase 3) - mesmo padrão de /auth/2fa/*: Bearer normal, sem
   // @RequirePermissions (age só sobre @CurrentUser()), mesmo limite de força
   // bruta de um código adivinhável.
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -345,7 +345,7 @@ export class AuthController {
   }
 
   // Autenticado via Bearer normal (JwtAuthGuard + PermissionsGuard, ambos
-  // globais) — diferente de refresh/logout, não é o padrão cookie-only, então
+  // globais) - diferente de refresh/logout, não é o padrão cookie-only, então
   // não precisa de CsrfGuard. Não toca o refresh token/cookie: só reemite o
   // access token com `tenantId` trocado (ver AuthService.switchTenant).
   @RequirePermissions(PERMISSIONS.PLATFORM_CROSS_TENANT)
@@ -366,14 +366,14 @@ export class AuthController {
   @Public()
   @UseGuards(SamlAuthGuard)
   @Get("saml/login")
-  @ApiOperation({ summary: "Inicia o login SSO — redireciona para o Identity Provider." })
+  @ApiOperation({ summary: "Inicia o login SSO: redireciona para o Identity Provider." })
   samlLogin(): void {
     // O guard já redireciona para o entryPoint do IdP; nada a fazer aqui.
   }
 
   // Achado da revisão de segurança da Fase 7 do 2FA (ver CHANGELOG): a
   // suposição original aqui ("SSO-only nunca tem totpEnabled=true") estava
-  // errada — `findOrProvisionBySso` casa por e-mail quando não há
+  // errada - `findOrProvisionBySso` casa por e-mail quando não há
   // `ssoSubject` prévio, então uma conta com senha local + 2FA habilitado é
   // resolvida normalmente por aqui, e o login completaria sem pedir o
   // segundo fator. Bloqueado explicitamente: contas com 2FA habilitado não
@@ -400,7 +400,7 @@ export class AuthController {
     this.setCsrfCookie(res);
 
     // O IdP faz um POST direto do browser para cá (não é uma chamada XHR do
-    // frontend) — não há como devolver o access token no corpo da resposta
+    // frontend) - não há como devolver o access token no corpo da resposta
     // para o app React ler. Redireciona para uma página da Web que chama
     // POST /auth/refresh (o cookie httpOnly já foi setado acima) para obter
     // o primeiro access token pelo mesmo caminho de qualquer refresh normal.
@@ -432,7 +432,7 @@ export class AuthController {
   }
 
   /**
-   * Não-httpOnly de propósito — o frontend precisa ler o valor via
+   * Não-httpOnly de propósito - o frontend precisa ler o valor via
    * document.cookie para reenviá-lo no header X-CSRF-Token (double-submit
    * cookie, ver CsrfGuard). path "/" (não "/auth"): a página que lê o
    * cookie via JS pode estar em qualquer rota da Web, e Path restringe

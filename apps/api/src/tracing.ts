@@ -6,7 +6,7 @@ import { resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
 // Precisa rodar (e terminar de instrumentar os módulos) antes de qualquer
-// outro require deste processo — por isso main.ts importa este arquivo como
+// outro require deste processo - por isso main.ts importa este arquivo como
 // a primeiríssima linha, antes até de "reflect-metadata". Sem OTEL_EXPORTER_
 // OTLP_ENDPOINT configurado, os spans vão para o console (mesmo espírito do
 // SmtpEmailAdapter na Etapa 10: funciona sem infraestrutura extra em dev/CI,
@@ -22,7 +22,7 @@ const sdk = new NodeSDK({
     : new ConsoleSpanExporter(),
   instrumentations: [
     getNodeAutoInstrumentations({
-      // Ruído alto, pouco valor num monorepo pequeno — desliga só essas duas.
+      // Ruído alto, pouco valor num monorepo pequeno - desliga só essas duas.
       "@opentelemetry/instrumentation-fs": { enabled: false },
       "@opentelemetry/instrumentation-express": { enabled: false },
     }),

@@ -16,7 +16,7 @@ export function useHasAnyManagePermission(): boolean {
   return ADMIN_NAV_ITEMS.some((item) => user.permissions.includes(item.permission));
 }
 
-/** True se o usuário tiver `platform:cross-tenant` — controla se o seletor de
+/** True se o usuário tiver `platform:cross-tenant` - controla se o seletor de
  * organização e o banner de "visualizando outro tenant" aparecem na UI. */
 export function useIsSuperAdmin(): boolean {
   const { user } = useAuth();

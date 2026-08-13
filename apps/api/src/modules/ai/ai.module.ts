@@ -4,7 +4,7 @@ import { NullAiProvider } from "./null-ai.provider";
 
 /**
  * Não é @Global(): diferente dos adapters de integração (consumidos por
- * vários módulos de negócio já hoje), AiProvider ainda não tem consumidor —
+ * vários módulos de negócio já hoje), AiProvider ainda não tem consumidor -
  * um módulo futuro que precisar dele importa AiModule explicitamente.
  */
 @Module({

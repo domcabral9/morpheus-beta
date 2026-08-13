@@ -15,7 +15,7 @@ export class ApiError extends Error {
 }
 
 /**
- * Lê o cookie CSRF (não-httpOnly de propósito — ver AuthController no
+ * Lê o cookie CSRF (não-httpOnly de propósito - ver AuthController no
  * backend) para reenviá-lo como header. Double-submit cookie: só provamos
  * que fomos nós quem fez a chamada porque só JS same-site consegue ler este
  * valor via document.cookie.
@@ -28,7 +28,7 @@ function readCsrfToken(): string | null {
 
 type FetchOptions = RequestInit & { accessToken?: string };
 
-/** Monta headers/credentials comuns a `apiFetch`/`apiFetchBlob` — única fonte da lógica de
+/** Monta headers/credentials comuns a `apiFetch`/`apiFetchBlob` - única fonte da lógica de
  * auth/CSRF, pra nunca divergir entre as duas variantes. Quando `body` é `FormData` (upload
  * multipart), não força `Content-Type: application/json` - o browser precisa definir o seu
  * próprio boundary, e forçar o header aqui quebraria o upload. */
@@ -58,7 +58,7 @@ async function throwIfError(response: Response): Promise<void> {
 
 /**
  * Chama a API diretamente do browser (não via proxy da Web) com
- * `credentials: "include"` — necessário para o cookie httpOnly do refresh
+ * `credentials: "include"` - necessário para o cookie httpOnly do refresh
  * token ir e voltar. Funciona sem CORS extra porque localhost:3000 e
  * localhost:3001 são portas do mesmo "site" (SameSite considera só o domínio
  * registrável, não a porta).
@@ -72,13 +72,13 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
   }
 
   // Handlers que retornam void (ex.: remoção de opção, desvínculo de
-  // controle) não têm @HttpCode(204) explícito — o Nest responde 200 com
+  // controle) não têm @HttpCode(204) explícito - o Nest responde 200 com
   // corpo vazio. `response.json()` direto lançaria em cima de string vazia.
   const text = await response.text();
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
-/** Variante binária de `apiFetch` — pra respostas tipo imagem/PDF, onde `response.text()` +
+/** Variante binária de `apiFetch` - pra respostas tipo imagem/PDF, onde `response.text()` +
  * `JSON.parse` corromperia os bytes. Mesma lógica de auth/CSRF/erro, só o corpo de sucesso muda. */
 export async function apiFetchBlob(path: string, options: FetchOptions = {}): Promise<Blob> {
   const response = await fetch(`${API_URL}${path}`, buildRequestInit(options));

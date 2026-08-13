@@ -5,7 +5,7 @@ import { AuditLogService } from "./audit-log.service";
 
 /**
  * Global porque `AuditLogService` é usado por quase todo módulo de negócio
- * (auth, assessments, workflow, technical-opinions, CRUDs admin) — mesmo
+ * (auth, assessments, workflow, technical-opinions, CRUDs admin) - mesmo
  * raciocínio do PrismaModule: importar isso módulo a módulo seria só
  * cerimônia sem benefício real de encapsulamento.
  */

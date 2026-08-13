@@ -8,7 +8,7 @@ const IV_LENGTH_BYTES = 12; // recomendado para GCM (96 bits)
 /**
  * Criptografia simétrica em repouso (AES-256-GCM) para colunas que não
  * precisam ser buscáveis/indexadas mas também não devem ficar legíveis
- * direto no banco por qualquer um com acesso de leitura ao Postgres — ex.:
+ * direto no banco por qualquer um com acesso de leitura ao Postgres - ex.:
  * RefreshToken.ipAddress. Diferente de bcrypt/SHA-256 (usados em senha e
  * hash do próprio token): aqui a operação é reversível de propósito, porque
  * a aplicação eventualmente precisa mostrar o valor original (ex.: uma tela

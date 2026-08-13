@@ -11,14 +11,14 @@ export interface VendorTierResult {
 }
 
 /**
- * Encontra o tier cujo intervalo [minScore, maxScore] contém `score` —
+ * Encontra o tier cujo intervalo [minScore, maxScore] contém `score` -
  * paralelo ao `RiskEngineService.findBand`, mas não reaproveitado
  * diretamente porque `VendorTierThreshold` carrega campos que não cabem no
  * formato genérico `ScoreBand` (tier, label, baseReassessmentMonths). Mesmo
  * fallback defensivo: score fora de todas as faixas usa a mais próxima, pra
  * nunca derrubar a conclusão de uma avaliação por causa de uma configuração
  * de tier incompleta. Retorna `null` só quando não há threshold nenhum
- * configurado — cabe ao chamador decidir como reagir (config mal montada).
+ * configurado - cabe ao chamador decidir como reagir (config mal montada).
  */
 export function tierForScore(
   thresholds: VendorTierThresholdInput[],

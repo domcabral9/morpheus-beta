@@ -394,7 +394,7 @@ export function InventoryListView({ areas, users, canManage }: InventoryListView
                             {item.technicalOpinion.number}
                           </Link>
                         ) : (
-                          "—"
+                          "-"
                         )}
                       </TableCell>
                       <TableCell>

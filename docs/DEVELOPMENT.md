@@ -15,7 +15,7 @@ contratados pela empresa, do questionário ao parecer técnico em PDF.
 > roteiro original.
 
 Este arquivo é referência (stack, estrutura, como rodar) e fica enxuto de propósito. O histórico
-narrativo — decisões etapa por etapa, PRs, bugs encontrados e corrigidos, gotchas — vive em
+narrativo (decisões etapa por etapa, PRs, bugs encontrados e corrigidos, gotchas) vive em
 [`docs/CHANGELOG.md`](./CHANGELOG.md).
 
 ## Stack

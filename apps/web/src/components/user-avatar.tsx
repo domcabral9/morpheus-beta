@@ -14,7 +14,7 @@ export function getInitials(name: string | null | undefined): string {
 
 /**
  * Avatar de usuário com busca de imagem via blob (mesmo padrão do `AvatarCard`
- * de `/profile`). `avatarUrl` é o caminho já resolvido pelo chamador — próprio
+ * de `/profile`). `avatarUrl` é o caminho já resolvido pelo chamador - próprio
  * usuário sempre usa `/auth/avatar` (sem custo de checar `hasAvatar` antes,
  * só uma requisição por sessão); avatar de outro usuário usa
  * `/users/:id/avatar` só quando `hasAvatar` é true, pra não gastar uma

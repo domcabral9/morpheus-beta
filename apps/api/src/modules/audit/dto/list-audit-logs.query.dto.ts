@@ -36,12 +36,12 @@ export class ListAuditLogsQueryDto {
   @IsIn(AUDIT_ACTIONS)
   action?: (typeof AUDIT_ACTIONS)[number];
 
-  @ApiPropertyOptional({ description: "ISO 8601 — início do intervalo (inclusive)." })
+  @ApiPropertyOptional({ description: "ISO 8601: início do intervalo (inclusive)." })
   @IsOptional()
   @IsDateString()
   from?: string;
 
-  @ApiPropertyOptional({ description: "ISO 8601 — fim do intervalo (inclusive)." })
+  @ApiPropertyOptional({ description: "ISO 8601: fim do intervalo (inclusive)." })
   @IsOptional()
   @IsDateString()
   to?: string;

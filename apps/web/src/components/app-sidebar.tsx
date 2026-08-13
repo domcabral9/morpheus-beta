@@ -50,7 +50,7 @@ export function AppSidebar() {
   const visibleAdminItems = getVisibleNavItems(ADMIN_NAV_ITEMS, permissions);
   const adminActive = isNavItemActive(pathname, "/admin");
   // Sidebar colapsada (modo ícone) esconde SidebarMenuSub via CSS
-  // (group-data-[collapsible=icon]:hidden) — sem isso, "Administração" fica
+  // (group-data-[collapsible=icon]:hidden) - sem isso, "Administração" fica
   // clicável mas sem nenhuma forma de alcançar os sub-itens. Nesse estado a
   // seção vira um dropdown/flyout em vez do Collapsible inline.
   const adminAsFlyout = !isMobile && state === "collapsed";

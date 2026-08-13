@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * `<select>` nativo estilizado — não é o shadcn/ui Select (Radix), que exige
+ * `<select>` nativo estilizado - não é o shadcn/ui Select (Radix), que exige
  * bem mais peças (Trigger/Content/Item) do que este formulário precisa por
  * enquanto. Suficiente para listas curtas (área, criticidade, opções de
  * pergunta); se algum dropdown precisar de busca/virtualização depois, aí

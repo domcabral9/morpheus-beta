@@ -141,7 +141,7 @@ export class AssessmentsService {
   /**
    * Quando o analista escolhe um Vendor real no picker (decisão #3 do plano
    * de avaliação de fornecedores), grava/atualiza também o texto livre
-   * `vendor` com `Vendor.name` — snapshot denormalizado que evita mudar todo
+   * `vendor` com `Vendor.name` - snapshot denormalizado que evita mudar todo
    * lugar que hoje interpola `assessment.vendor` como string simples (PDF do
    * parecer, notificações, templates do RenewalScheduler).
    */

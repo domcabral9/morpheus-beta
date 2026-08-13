@@ -8,7 +8,7 @@ import type { UserWithPermissions } from "../../users/users.repository";
 
 // Config sintaticamente válida (nunca usada para validar uma resposta real)
 // para que `super()` nunca lance por falta de entryPoint/cert quando o SSO
-// está desabilitado — a rejeição acontece em verifyProfile(), de forma
+// está desabilitado - a rejeição acontece em verifyProfile(), de forma
 // explícita e com uma mensagem clara, não como um crash de bootstrap.
 const DISABLED_CONFIG = {
   issuer: "morpheus-saml-disabled",
@@ -39,7 +39,7 @@ export class SamlStrategy extends PassportStrategy(Strategy, "saml") {
     // A lib SAML exige dois callbacks no construtor (signon e logout); o
     // mixin PassportStrategy do Nest só sabe injetar automaticamente UM
     // (o último parâmetro, mapeado para `this.validate`). Por isso o signon
-    // é passado explicitamente aqui, chamando verifyProfile() nós mesmos —
+    // é passado explicitamente aqui, chamando verifyProfile() nós mesmos -
     // o logout (não implementado; sem endpoint de SLO) fica com o callback
     // que o mixin injeta sozinho, e nunca é de fato acionado.
     super(options, (profile: Profile | null, done: VerifiedCallback) => {
@@ -53,7 +53,7 @@ export class SamlStrategy extends PassportStrategy(Strategy, "saml") {
   }
 
   // Nunca chamado no fluxo real (o signon é resolvido explicitamente no
-  // callback passado ao super() acima) — existe só para satisfazer o método
+  // callback passado ao super() acima) - existe só para satisfazer o método
   // abstrato que o mixin PassportStrategy exige de toda estratégia.
   async validate(profile: Profile | null): Promise<UserWithPermissions> {
     return this.verifyProfile(profile);
@@ -73,7 +73,7 @@ export class SamlStrategy extends PassportStrategy(Strategy, "saml") {
     }
 
     // Ainda não há seleção de tenant por login SSO (subdomínio ou tela de
-    // escolha) — cada deploy do IdP atende a um único tenant, configurado
+    // escolha) - cada deploy do IdP atende a um único tenant, configurado
     // aqui. Documentado como limitação a resolver quando o multi-tenant de
     // verdade (Etapa futura) chegar ao SSO.
     const tenantSlug = this.configService.getOrThrow<string>("SAML_TENANT_SLUG");

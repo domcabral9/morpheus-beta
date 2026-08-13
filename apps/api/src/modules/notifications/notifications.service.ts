@@ -15,7 +15,7 @@ export interface NotifyInput {
 
 /**
  * Serviço genérico de notificação (Etapa 10): grava em `Notification` e
- * tenta enviar e-mail via `EmailAdapter` — usado tanto pelo workflow (Etapa
+ * tenta enviar e-mail via `EmailAdapter` - usado tanto pelo workflow (Etapa
  * 6: nova etapa/aprovação/reprovação/ajuste), pelo parecer técnico (Etapa 7:
  * emitido) quanto pela revisão periódica de inventário, em vez de cada
  * módulo reimplementar o próprio envio.
@@ -30,7 +30,7 @@ export class NotificationsService {
   ) {}
 
   /**
-   * Nunca lança — mesmo raciocínio do AuditLogService: uma falha ao
+   * Nunca lança - mesmo raciocínio do AuditLogService: uma falha ao
    * notificar (banco ou SMTP fora do ar) não pode derrubar a ação de negócio
    * que disparou a notificação.
    */
@@ -62,7 +62,7 @@ export class NotificationsService {
   }
 
   /** Notifica todo usuário ativo do tenant que tenha, por qualquer papel, a
-   * permissão informada — ver `NotificationsRepository.findUsersByPermission`
+   * permissão informada - ver `NotificationsRepository.findUsersByPermission`
    * pra por que isto é diferente de `notifyRole` (aqui o conjunto de papéis
    * concedendo a permissão pode ser >1). */
   async notifyPermissionHolders(

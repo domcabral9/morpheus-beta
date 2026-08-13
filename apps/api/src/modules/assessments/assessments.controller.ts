@@ -25,7 +25,7 @@ export class AssessmentsController {
   }
 
   // Sem @RequirePermissions: a visibilidade (própria vs. todas) depende dos
-  // dados, não é um simples "tem ou não tem a permissão X" — resolvida dentro
+  // dados, não é um simples "tem ou não tem a permissão X" - resolvida dentro
   // do service (ver assertCanView/findAllForUser).
   @Get()
   findAll(@CurrentUser() user: AuthenticatedUser, @Query() query: ListAssessmentsQueryDto) {

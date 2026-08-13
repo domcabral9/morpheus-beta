@@ -12,7 +12,7 @@ export function useIsMobile() {
     }
     mql.addEventListener("change", onChange)
     // Sincroniza o estado inicial com a media query assim que monta no
-    // cliente (window só existe aqui) — mesmo padrão de fetch-on-mount já
+    // cliente (window só existe aqui) - mesmo padrão de fetch-on-mount já
     // usado no restante do projeto.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)

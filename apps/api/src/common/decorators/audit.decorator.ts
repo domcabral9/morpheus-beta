@@ -9,7 +9,7 @@ export interface AuditMetadata {
 }
 
 /**
- * Marca uma rota para auditoria automática via `AuditInterceptor` — usar só
+ * Marca uma rota para auditoria automática via `AuditInterceptor` - usar só
  * quando ação e tipo de entidade são estáticos e conhecidos em tempo de
  * desenvolvimento (CRUDs simples). Eventos cuja ação real depende de dados
  * da requisição (ex.: decisão de workflow, login) chamam

@@ -14,11 +14,11 @@ export interface SecurityEvent {
 
 /**
  * Abstração de encaminhamento de eventos de segurança para um SIEM externo
- * (Splunk, Sentinel, Elastic Security...) — mesmo raciocínio do
+ * (Splunk, Sentinel, Elastic Security...) - mesmo raciocínio do
  * StorageAdapter (Etapa 7) e EmailAdapter (Etapa 10): a implementação
  * concreta (hoje um webhook HTTP genérico) fica isolada atrás desta
  * interface, então apontar para um SIEM de verdade não toca em quem chama
- * `send()`. Consumido por AuditLogService — todo evento que já vira AuditLog
+ * `send()`. Consumido por AuditLogService - todo evento que já vira AuditLog
  * também é encaminhado aqui, best-effort.
  */
 export interface SiemAdapter {

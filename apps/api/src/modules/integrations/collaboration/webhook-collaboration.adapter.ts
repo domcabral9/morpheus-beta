@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import type { CollaborationAdapter, CollaborationMessage } from "./collaboration.interface";
 
 /**
- * Sem COLLABORATION_WEBHOOK_URL configurado, só loga — mesmo padrão dos
+ * Sem COLLABORATION_WEBHOOK_URL configurado, só loga - mesmo padrão dos
  * demais adapters desta etapa. Formato do corpo (`{ text }`) é compatível
  * com o formato mínimo de incoming webhook do Slack e do Teams; um provedor
  * que exija outro formato troca só esta classe, não a interface.
@@ -20,7 +20,7 @@ export class WebhookCollaborationAdapter implements CollaborationAdapter {
   async postMessage(message: CollaborationMessage): Promise<void> {
     if (!this.webhookUrl) {
       this.logger.warn(
-        `COLLABORATION_WEBHOOK_URL não configurado — mensagem para #${message.channel} não postada (só logada).`,
+        `COLLABORATION_WEBHOOK_URL não configurado: mensagem para #${message.channel} não postada (só logada).`,
       );
       return;
     }

@@ -177,7 +177,7 @@ describe("TechnicalOpinionService", () => {
     it("tenta o próximo número se o candidato já existir (corrida)", async () => {
       // Simula uma corrida real: entre a primeira e a segunda tentativa, outro
       // parecer foi criado concorrentemente, então a contagem já subiu quando
-      // o retry acontece — é isso que empurra o candidato de 001 para 002.
+      // o retry acontece - é isso que empurra o candidato de 001 para 002.
       repo.countForTenantAndPeriod.mockResolvedValueOnce(0).mockResolvedValueOnce(1);
       repo.findByTenantAndNumber
         .mockResolvedValueOnce({ id: "existing" }) // 001 já existe

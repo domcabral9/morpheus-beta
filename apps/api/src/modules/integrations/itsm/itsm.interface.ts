@@ -14,7 +14,7 @@ export interface TicketResult {
 
 /**
  * Abstração de abertura de chamado num ITSM externo (ServiceNow, Jira
- * Service Management...) — mesmo raciocínio do SiemAdapter. Consumido por
+ * Service Management...) - mesmo raciocínio do SiemAdapter. Consumido por
  * WorkflowService quando uma avaliação é reprovada: abre um chamado de
  * acompanhamento em vez de só notificar o solicitante dentro do próprio
  * Morpheus.

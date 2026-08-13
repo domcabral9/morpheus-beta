@@ -109,7 +109,7 @@ export class InventoryRepository {
   }
 
   /** Cria o item já em `PENDING_APPROVAL` junto com sua
-   * `InventoryApprovalRequest` (1:1), atomicamente — evita um item órfão sem
+   * `InventoryApprovalRequest` (1:1), atomicamente - evita um item órfão sem
    * linha de aprovação se a segunda inserção falhar. Usado só pelo caminho
    * de cadastro manual (`POST /inventory`); `createFromApprovedAssessment`
    * continua usando `create()` acima, sem gate. */
@@ -312,7 +312,7 @@ export class InventoryRepository {
     });
   }
 
-  /** Itens ativos cuja revisão vence dentro da janela de aviso — usado pelo job diário. */
+  /** Itens ativos cuja revisão vence dentro da janela de aviso - usado pelo job diário. */
   findDueForReview(warningDate: Date) {
     return this.prisma.softwareInventoryItem.findMany({
       where: { status: "ACTIVE", nextReviewDate: { lte: warningDate } },

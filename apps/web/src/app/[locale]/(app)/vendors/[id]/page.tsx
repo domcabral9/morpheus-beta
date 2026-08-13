@@ -114,21 +114,21 @@ export default function VendorDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <Field label={t("fieldTaxId")} value={vendor.taxId ?? "—"} />
-                  <Field label={t("fieldContactName")} value={vendor.contactName ?? "—"} />
-                  <Field label={t("fieldContactEmail")} value={vendor.contactEmail ?? "—"} />
-                  <Field label={t("fieldContractReference")} value={vendor.contractReference ?? "—"} />
+                  <Field label={t("fieldTaxId")} value={vendor.taxId ?? "-"} />
+                  <Field label={t("fieldContactName")} value={vendor.contactName ?? "-"} />
+                  <Field label={t("fieldContactEmail")} value={vendor.contactEmail ?? "-"} />
+                  <Field label={t("fieldContractReference")} value={vendor.contractReference ?? "-"} />
                   <Field
                     label={t("fieldBusinessCriticality")}
-                    value={vendor.businessCriticality ? criticalityT(vendor.businessCriticality) : "—"}
+                    value={vendor.businessCriticality ? criticalityT(vendor.businessCriticality) : "-"}
                   />
                   <Field
                     label={t("fieldLastAssessedAt")}
-                    value={vendor.lastAssessedAt ? new Date(vendor.lastAssessedAt).toLocaleDateString() : "—"}
+                    value={vendor.lastAssessedAt ? new Date(vendor.lastAssessedAt).toLocaleDateString() : "-"}
                   />
                   <Field
                     label={t("fieldNextReviewDueAt")}
-                    value={vendor.nextReviewDueAt ? new Date(vendor.nextReviewDueAt).toLocaleDateString() : "—"}
+                    value={vendor.nextReviewDueAt ? new Date(vendor.nextReviewDueAt).toLocaleDateString() : "-"}
                   />
                 </div>
                 {vendor.notes && (
@@ -181,7 +181,7 @@ export default function VendorDetailPage() {
                             {assessment.tier && assessment.tierLabel ? (
                               <TierBadge tier={assessment.tier} label={assessment.tierLabel} />
                             ) : (
-                              "—"
+                              "-"
                             )}
                           </TableCell>
                           <TableCell className="text-muted-foreground">
@@ -201,7 +201,7 @@ export default function VendorDetailPage() {
                           <TableCell className="text-muted-foreground">
                             {assessment.completedAt
                               ? new Date(assessment.completedAt).toLocaleDateString()
-                              : "—"}
+                              : "-"}
                           </TableCell>
                         </TableRow>
                       ))}

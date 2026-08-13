@@ -7,7 +7,7 @@ import { useAuth } from "@/components/auth-provider";
 import { useRouter } from "@/i18n/navigation";
 
 /** Reforça, por seção, a permissão que o item de sub-navegação já usa para se
- * esconder — protege contra acesso direto pela URL sem a permissão certa. */
+ * esconder - protege contra acesso direto pela URL sem a permissão certa. */
 export function AdminSectionGate({
   permission,
   children,

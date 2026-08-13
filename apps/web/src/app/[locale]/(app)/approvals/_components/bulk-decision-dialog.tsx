@@ -90,7 +90,7 @@ export function BulkDecisionDialog({ executions, onOpenChange, onDecided }: Bulk
         <ul className="max-h-32 list-disc overflow-y-auto pl-5 text-sm text-muted-foreground">
           {executions.map((execution) => (
             <li key={execution.id}>
-              {execution.assessmentWorkflowInstance.assessment.softwareName} — {execution.workflowStep.name}
+              {execution.assessmentWorkflowInstance.assessment.softwareName} - {execution.workflowStep.name}
             </li>
           ))}
         </ul>

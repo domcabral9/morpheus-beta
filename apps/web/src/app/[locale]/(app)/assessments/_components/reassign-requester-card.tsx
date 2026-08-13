@@ -23,7 +23,7 @@ interface ReassignRequesterCardProps {
 }
 
 /** Só aparece pra quem tem `assessments:reopen` (papel "Administrador") numa
- * avaliação em `PENDING_RENEWAL` — cobre o caso do solicitante original ter
+ * avaliação em `PENDING_RENEWAL` - cobre o caso do solicitante original ter
  * saído da empresa (ver plano de renovação anual, Fase 5). Reatribuir troca
  * `requesterId`; só o novo solicitante consegue editar/reenviar depois. */
 export function ReassignRequesterCard({

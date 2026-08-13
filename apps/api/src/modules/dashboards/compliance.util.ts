@@ -8,7 +8,7 @@ export const COMPLIANCE_SCORE_THRESHOLD = 1;
 export interface ComplianceAnswerInput {
   type: "SCALE" | "SINGLE_CHOICE" | "MULTI_CHOICE" | "TEXT";
   scaleValue: number | null;
-  /** Scores das opções selecionadas (já resolvidos para número) — vazio se nenhuma. */
+  /** Scores das opções selecionadas (já resolvidos para número) - vazio se nenhuma. */
   selectedOptionScores: number[];
   /** IDs dos Control vinculados à pergunta desta resposta (QuestionControl/VendorQuestionControl). */
   controlIds: string[];
@@ -39,7 +39,7 @@ function resolveAnswerScore(answer: ComplianceAnswerInput): number | null {
  * "controle atendido" por sujeito, depois soma em contagens met/total por
  * controle. Regra confirmada com o usuário: quando um controle é avaliado por
  * mais de uma pergunta dentro do MESMO sujeito, TODAS as respostas vinculadas
- * precisam ser favoráveis (score <= threshold) para contar como atendido —
+ * precisam ser favoráveis (score <= threshold) para contar como atendido -
  * uma resposta desfavorável já derruba o veredito daquele sujeito para aquele
  * controle.
  */

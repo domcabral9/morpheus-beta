@@ -22,7 +22,7 @@ interface AuthContextValue {
 const AuthContext = React.createContext<AuthContextValue | null>(null);
 
 // sessionStorage (não cookie/localStorage, de propósito): tab-scoped, nunca
-// trafega pra rede, e some sozinho ao fechar a aba/navegador — combinado com
+// trafega pra rede, e some sozinho ao fechar a aba/navegador - combinado com
 // a limpeza explícita em login()/logout() abaixo, evita que o "tenant sendo
 // visto" de uma sessão vaze para outro usuário que faça login na mesma aba.
 const VIEWING_TENANT_STORAGE_KEY = "morpheus_viewing_tenant_id";
@@ -68,14 +68,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     // Restaura a sessão ao carregar a página: o access token vive só em
-    // memória (nunca em localStorage — reduz superfície de roubo via XSS),
+    // memória (nunca em localStorage - reduz superfície de roubo via XSS),
     // então some a cada reload. O cookie httpOnly do refresh token sobrevive
     // e permite obter um novo access token silenciosamente.
     apiFetch<AccessTokenResponse>("/auth/refresh", { method: "POST" })
       .then(async (tokens) => {
         const me = await loadUser(tokens.accessToken);
         // /auth/refresh sempre volta pro tenant de casa (não há como o
-        // refresh token "lembrar" uma sessão trocada) — se o usuário estava
+        // refresh token "lembrar" uma sessão trocada) - se o usuário estava
         // visualizando outro tenant antes do reload, reaplica a troca aqui.
         // Falha (permissão revogada, tenant excluído) não quebra o app: só
         // limpa o valor salvo e segue na sessão de casa já carregada.
@@ -126,10 +126,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [loadUser],
   );
 
-  // Passo 1 do login passwordless (Fase 4) — sempre resolve, mesmo pra
+  // Passo 1 do login passwordless (Fase 4) - sempre resolve, mesmo pra
   // tenant/e-mail inexistente ou conta inelegível: o backend nunca lança
   // aqui (contrato de anti-enumeração, ver PasswordlessService), então esta
-  // função também não ramifica por resultado — quem chama sempre avança pro
+  // função também não ramifica por resultado - quem chama sempre avança pro
   // passo de código.
   const requestPasswordlessLogin = React.useCallback(async (tenantSlug: string, email: string) => {
     sessionStorage.removeItem(VIEWING_TENANT_STORAGE_KEY);
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // Passo 2 — verifica o código e abre a sessão diretamente (o backend já
+  // Passo 2 - verifica o código e abre a sessão diretamente (o backend já
   // seta os cookies de refresh/CSRF nesta chamada, mesmo formato de
   // AccessTokenResponse que login()/verifyTwoFactor() já consomem).
   const verifyPasswordlessLogin = React.useCallback(

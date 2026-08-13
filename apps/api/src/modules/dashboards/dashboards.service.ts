@@ -12,7 +12,7 @@ const DECIDED_STATUSES = new Set(["APPROVED", "REJECTED"]);
 
 /**
  * Pesos do placar de maturidade por área (gamificação). Mantidos como
- * constantes nomeadas em vez de mais uma entidade configurável no admin —
+ * constantes nomeadas em vez de mais uma entidade configurável no admin -
  * ao contrário da matriz de risco (Etapa 5) ou do workflow (Etapa 6), isso é
  * um recurso de engajamento, não uma regra de negócio/compliance, então não
  * justifica o custo de outro CRUD administrativo. Qualidade pesa mais que
@@ -126,7 +126,7 @@ export class DashboardsService {
     };
   }
 
-  /** Placar de maturidade/adesão por área (gamificação) — combina volume, qualidade e taxa de aprovação. */
+  /** Placar de maturidade/adesão por área (gamificação) - combina volume, qualidade e taxa de aprovação. */
   async getAreaLeaderboard(tenantId: string): Promise<AreaLeaderboardEntry[]> {
     const [areas, submittedByArea, opinions] = await Promise.all([
       this.repository.findAllActiveAreas(tenantId),
@@ -148,7 +148,7 @@ export class DashboardsService {
     for (const opinion of opinions) {
       const { areaId, status } = opinion.assessmentVersion.assessment;
       const stat = statsByAreaId.get(areaId);
-      if (!stat) continue; // área inativa/removida — não entra no placar
+      if (!stat) continue; // área inativa/removida - não entra no placar
 
       const totalScore = opinion.assessmentVersion.riskResult?.totalScore;
       if (totalScore !== null && totalScore !== undefined) {
@@ -196,16 +196,16 @@ export class DashboardsService {
    * software + a última avaliação de fornecedor COMPLETED por fornecedor) o
    * atendem. "Atendido" por sujeito exige que TODAS as respostas vinculadas
    * àquele controle dentro do mesmo sujeito sejam favoráveis (ver
-   * `compliance.util.ts`) — decisão de escopo confirmada com o usuário.
+   * `compliance.util.ts`) - decisão de escopo confirmada com o usuário.
    */
   /**
    * `vendorId` presente = visão "Fornecedor específico" (decisão de escopo
    * confirmada com o usuário): mostra só o que a última VendorAssessment
-   * COMPLETED daquele fornecedor avalia, sem misturar sujeitos de software —
+   * COMPLETED daquele fornecedor avalia, sem misturar sujeitos de software -
    * "individual" significa os dados daquele fornecedor sozinho, não um
    * destaque dentro do agregado do tenant. `vendorId` de outro tenant (ou
    * fornecedor sem avaliação concluída) resulta silenciosamente em nenhum
-   * sujeito — todos os controles voltam como "nunca avaliado", não um erro.
+   * sujeito - todos os controles voltam como "nunca avaliado", não um erro.
    */
   async getComplianceOverview(
     tenantId: string,

@@ -226,7 +226,7 @@ export default function InventoryItemPage() {
               )}
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <Field label={t("fieldVersion")} value={item.version ?? "—"} />
+                <Field label={t("fieldVersion")} value={item.version ?? "-"} />
                 <Field
                   label={t("fieldUrl")}
                   value={
@@ -235,13 +235,13 @@ export default function InventoryItemPage() {
                         {item.url}
                       </a>
                     ) : (
-                      "—"
+                      "-"
                     )
                   }
                 />
                 <Field label={t("fieldCategory")} value={item.category} />
                 <Field label={t("fieldType")} value={t(`types.${item.type}`)} />
-                <Field label={t("fieldHostingProvider")} value={item.hostingProvider ?? "—"} />
+                <Field label={t("fieldHostingProvider")} value={item.hostingProvider ?? "-"} />
                 <Field label={t("fieldArea")} value={item.area.name} />
                 <Field
                   label={t("fieldManagerId")}
@@ -452,7 +452,7 @@ export default function InventoryItemPage() {
                           <Field label={t("exposureIp")} value={item.exposureData.ip} />
                           <Field
                             label={t("exposurePorts")}
-                            value={item.exposureData.ports.join(", ") || "—"}
+                            value={item.exposureData.ports.join(", ") || "-"}
                           />
                           <Field
                             label={t("exposureVulnerabilities")}
@@ -464,15 +464,15 @@ export default function InventoryItemPage() {
                           />
                           <Field
                             label={t("exposureTags")}
-                            value={item.exposureData.tags.join(", ") || "—"}
+                            value={item.exposureData.tags.join(", ") || "-"}
                           />
                           <Field
                             label={t("exposureCpes")}
-                            value={item.exposureData.cpes.join(", ") || "—"}
+                            value={item.exposureData.cpes.join(", ") || "-"}
                           />
                           <Field
                             label={t("exposureHostnames")}
-                            value={item.exposureData.hostnames.join(", ") || "—"}
+                            value={item.exposureData.hostnames.join(", ") || "-"}
                           />
                         </CollapsibleContent>
                       </Collapsible>

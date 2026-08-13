@@ -16,7 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
   }
 
   // O token já carrega tudo que a aplicação precisa por requisição (ver
-  // AuthService.issueTokenPair) — validate() só remodela o payload assinado
+  // AuthService.issueTokenPair) - validate() só remodela o payload assinado
   // para o formato usado pelos controllers, sem tocar o banco.
   validate(payload: AccessTokenPayload): AuthenticatedUser {
     return {

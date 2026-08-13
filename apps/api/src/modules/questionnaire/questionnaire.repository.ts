@@ -24,7 +24,7 @@ export type QuestionWithOptions = Prisma.QuestionGetPayload<{
   include: typeof questionWithOptionsInclude;
 }>;
 
-// Só para as telas administrativas (listagem/detalhe/vínculo de controles) —
+// Só para as telas administrativas (listagem/detalhe/vínculo de controles) -
 // o restante do sistema (responder questionário, engine de risco) usa
 // QuestionWithOptions e não precisa saber de biblioteca de controles.
 const questionAdminDetailInclude = {

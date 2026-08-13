@@ -16,7 +16,7 @@ import { UpsertCellDto } from "./dto/upsert-cell.dto";
 /**
  * CRUD administrativo da matriz de risco (Etapa 5). Mantido como módulo
  * separado do `risk-engine` (que fica só com o cálculo/leitura em tempo de
- * submissão) — administração e execução têm ciclos de mudança e permissões
+ * submissão) - administração e execução têm ciclos de mudança e permissões
  * diferentes (`risk-matrix:manage` vs. uso interno pelo motor).
  */
 @Injectable()
@@ -44,7 +44,7 @@ export class RiskMatrixService {
       name: dto.name,
       version: nextVersion,
       minApprovalScore: dto.minApprovalScore,
-      // Nasce inativa por padrão — o admin ativa explicitamente quando a
+      // Nasce inativa por padrão - o admin ativa explicitamente quando a
       // matriz estiver totalmente configurada (faixas + classificações),
       // evitando que o motor de risco use uma matriz incompleta.
       isActive: false,

@@ -16,7 +16,7 @@ interface FaqSection {
 
 /** Cada seção mapeia pra um bloco `Faq.sections.<key>` em i18n, com `title` +
  * um par `q<n>Question`/`q<n>Answer` por pergunta em `questionKeys`. Conteúdo
- * fixo (não dinâmico) — cobre os principais fluxos do sistema hoje; ganhar
+ * fixo (não dinâmico) - cobre os principais fluxos do sistema hoje; ganhar
  * uma pergunta nova é só adicionar a chave aqui e o texto em pt-BR/en. */
 const FAQ_SECTIONS: FaqSection[] = [
   { key: "assessments", icon: ClipboardList, questionKeys: ["q1", "q2", "q3", "q4"] },
