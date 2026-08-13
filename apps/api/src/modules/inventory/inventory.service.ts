@@ -194,7 +194,7 @@ export class InventoryService {
   }
 
   /** Vínculo manual (nunca auto-detectado por nome) com o catálogo local de
-   * frescor de versão - `eolProductId: null` desvincula. Rejeita um slug que
+   * ciclo de vida de versão - `eolProductId: null` desvincula. Rejeita um slug que
    * não existe no cache local em vez de gravar uma FK pra um produto
    * inexistente silenciosamente. */
   async linkEolProduct(
@@ -207,7 +207,9 @@ export class InventoryService {
     if (eolProductId !== null) {
       const product = await this.eolCatalogRepository.findBySlug(eolProductId);
       if (!product) {
-        throw new BadRequestException("Produto não encontrado no catálogo de frescor de versão.");
+        throw new BadRequestException(
+          "Produto não encontrado no catálogo de ciclo de vida de versão.",
+        );
       }
     }
 

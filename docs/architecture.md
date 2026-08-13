@@ -383,7 +383,7 @@ erDiagram
     USER ||--o{ NOTIFICATION : recebe
     SOFTWARE_INVENTORY_ITEM }o--o| VENDOR : "pode referenciar (fornecedor real, opcional)"
     SOFTWARE_INVENTORY_ITEM ||--o| INVENTORY_APPROVAL_REQUEST : "cadastro manual aguarda aprovação"
-    SOFTWARE_INVENTORY_ITEM }o--o| EOL_PRODUCT : "vínculo manual, opcional (frescor de versão)"
+    SOFTWARE_INVENTORY_ITEM }o--o| EOL_PRODUCT : "vínculo manual, opcional (ciclo de vida de versão)"
 
     SOFTWARE_INVENTORY_ITEM {
         string id PK
