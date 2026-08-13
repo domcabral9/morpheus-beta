@@ -40,7 +40,7 @@ function clamp(value: number, min: number, max: number): number {
 /**
  * Motor de risco: calcula os scores de probabilidade/impacto/total a partir
  * das respostas de uma avaliação e classifica o resultado contra a matriz
- * configurável do tenant. Sem regra fixa no código — pesos, faixas e
+ * configurável do tenant. Sem regra fixa no código - pesos, faixas e
  * classificações vêm todos de RiskMatrixConfig (parametrizável pelo admin),
  * conforme o requisito de "Motor de Regras" do sistema.
  */
@@ -48,7 +48,7 @@ function clamp(value: number, min: number, max: number): number {
 export class RiskEngineService {
   /**
    * Convenção: `score` de entrada é RISCO cru (0 = seguro, 5 = risco máximo)
-   * — mais intuitivo para o admin configurar "quão arriscada é esta
+   * - mais intuitivo para o admin configurar "quão arriscada é esta
    * resposta" na Etapa 4 (questionnaire admin). A saída inverte para SCORE
    * DE SEGURANÇA (0 a 5, quanto maior melhor), mesma convenção do motor n8n
    * já em produção na empresa (`risk_score: 4.1` = bom).
@@ -85,7 +85,7 @@ export class RiskEngineService {
     const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
     if (totalWeight === 0) {
       // Sem perguntas pontuáveis nesta dimensão (ex.: categoria só com
-      // perguntas TEXT) — não há base para presumir risco, trata como
+      // perguntas TEXT) - não há base para presumir risco, trata como
       // neutro/seguro em vez de derrubar o cálculo por divisão por zero.
       return 0;
     }
@@ -96,7 +96,7 @@ export class RiskEngineService {
   private findBand<T extends ScoreBand>(bands: T[], score: number): T {
     if (bands.length === 0) {
       throw new UnprocessableEntityException(
-        "A matriz de risco ativa não tem faixas configuradas — contate o administrador.",
+        "A matriz de risco ativa não tem faixas configuradas: contate o administrador.",
       );
     }
 
@@ -106,7 +106,7 @@ export class RiskEngineService {
     if (match) return match;
 
     // Fallback defensivo: score fora de todas as faixas configuradas (matriz
-    // mal configurada pelo admin, com gaps) — usa a faixa mais próxima em vez
+    // mal configurada pelo admin, com gaps) - usa a faixa mais próxima em vez
     // de derrubar o envio da avaliação por causa de uma configuração
     // incompleta da matriz.
     const sorted = [...bands].sort((a, b) => toNumber(a.minScore) - toNumber(b.minScore));

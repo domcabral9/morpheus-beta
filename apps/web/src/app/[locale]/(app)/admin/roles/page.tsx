@@ -83,7 +83,7 @@ function RolesAdminContent() {
                         {role.name}
                       </Link>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{role.description ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{role.description ?? "-"}</TableCell>
                     <TableCell className="text-muted-foreground">{role.permissionCount}</TableCell>
                     <TableCell className="text-muted-foreground">{role.userCount}</TableCell>
                     <TableCell>

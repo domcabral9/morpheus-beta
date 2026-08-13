@@ -69,7 +69,7 @@ export class UsersService {
   /**
    * Provisionamento just-in-time: a primeira vez que um usuário chega via
    * SAML com um NameID que ainda não existe localmente, criamos o registro
-   * na hora (sem senha local — o acesso continua sendo só via SSO). Evita
+   * na hora (sem senha local - o acesso continua sendo só via SSO). Evita
    * exigir que o admin cadastre manualmente todo mundo antes do primeiro
    * login corporativo.
    */

@@ -1,7 +1,7 @@
 export interface AuthenticatedUser {
   id: string;
   tenantId: string;
-  /** Tenant real do usuário — igual a `tenantId`, exceto numa sessão trocada
+  /** Tenant real do usuário - igual a `tenantId`, exceto numa sessão trocada
    * via /auth/switch-tenant (super-admin visualizando outro tenant). */
   homeTenantId: string;
   email: string;
@@ -33,7 +33,7 @@ export interface TenantSummary {
   slug: string;
 }
 
-/** Shape enxuto de GET /tenants/public (pré-autenticação) — sem `id` de propósito. */
+/** Shape enxuto de GET /tenants/public (pré-autenticação) - sem `id` de propósito. */
 export interface TenantPublicSummary {
   name: string;
   slug: string;

@@ -8,7 +8,7 @@ loadEnv({ path: path.resolve(__dirname, "../../.env") });
 
 // `prisma generate` (rodado durante o build da imagem Docker, antes do
 // container ter as env vars reais do docker-compose) não abre conexão
-// nenhuma — só lê o schema. Usamos um placeholder nesse cenário em vez do
+// nenhuma - só lê o schema. Usamos um placeholder nesse cenário em vez do
 // helper `env()` do Prisma, que lançaria erro e quebraria o build só por
 // causa de uma variável que essa etapa específica não usa de verdade.
 // `migrate`/`studio`/`seed`, que fazem conexão real, sempre têm o .env

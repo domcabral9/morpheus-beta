@@ -152,7 +152,7 @@ function StepsSection({
                 {step.order}. {step.name}
               </span>
               <span className="text-xs text-muted-foreground">
-                {t("step.fieldResponsibleRole")}: {roleNameById.get(step.responsibleRoleId) ?? "—"} ·{" "}
+                {t("step.fieldResponsibleRole")}: {roleNameById.get(step.responsibleRoleId) ?? "-"} ·{" "}
                 {t("step.fieldSlaHours")}: {step.slaHours}h
                 {step.isOptional && ` · ${t("step.fieldIsOptional")}`}
                 {step.requiresLgpd && ` · ${t("step.fieldRequiresLgpd")}`}

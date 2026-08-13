@@ -606,7 +606,7 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<"div"> & {
   showIcon?: boolean
 }) {
-  // Random width between 50 to 90% — cosmético (placeholder de loading), não
+  // Random width between 50 to 90% - cosmético (placeholder de loading), não
   // precisa ser determinístico entre renders.
   const width = React.useMemo(() => {
     // eslint-disable-next-line react-hooks/purity

@@ -57,7 +57,7 @@ const METHODOLOGY_SUMMARY =
  * (avaliação, versão, resultado de risco, histórico de workflow, respostas),
  * gera o número sequencial e o QR Code, manda montar o PDF e salva tudo.
  * Acionado pelo WorkflowService quando uma avaliação chega a um estado
- * terminal (APPROVED/REJECTED) — ver decideStep().
+ * terminal (APPROVED/REJECTED) - ver decideStep().
  */
 @Injectable()
 export class TechnicalOpinionService {
@@ -85,7 +85,7 @@ export class TechnicalOpinionService {
     const version = await this.repository.findLatestVersion(assessmentId);
     if (!version) {
       throw new UnprocessableEntityException(
-        "Avaliação sem nenhuma versão enviada — não é possível emitir parecer.",
+        "Avaliação sem nenhuma versão enviada: não é possível emitir parecer.",
       );
     }
 
@@ -247,7 +247,7 @@ export class TechnicalOpinionService {
   }
 
   /** Tela de gestão: reusa a mesma regra de `assertCanView`, mas como cláusula
-   * de listagem em vez de checar um parecer só — sem permissão nova. */
+   * de listagem em vez de checar um parecer só - sem permissão nova. */
   async findAllForTenant(user: AuthenticatedUser, query: ListTechnicalOpinionsQueryDto) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
@@ -306,9 +306,9 @@ export class TechnicalOpinionService {
   }
 
   /** `null` quando não há logo, ou quando o logo é um caminho estático do
-   * Next.js (não passa pelo StorageAdapter — ver `isStorageBackedLogo`). Uma
+   * Next.js (não passa pelo StorageAdapter - ver `isStorageBackedLogo`). Uma
    * falha de leitura (arquivo removido do storage, por exemplo) não deve
-   * derrubar a emissão do parecer inteiro — só cai para o cabeçalho sem logo. */
+   * derrubar a emissão do parecer inteiro - só cai para o cabeçalho sem logo. */
   private async resolveLogoBuffer(logoUrl: string | null): Promise<Buffer | null> {
     if (!logoUrl || !isStorageBackedLogo(logoUrl)) return null;
     try {

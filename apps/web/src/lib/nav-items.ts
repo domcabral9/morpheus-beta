@@ -17,7 +17,7 @@ export interface PrimaryNavItem {
   permission?: string;
 }
 
-/** Itens de topo da sidebar — visíveis a todo usuário autenticado, exceto onde `permission` filtra. */
+/** Itens de topo da sidebar - visíveis a todo usuário autenticado, exceto onde `permission` filtra. */
 export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
   { href: "/dashboard", labelKey: "home", icon: Home },
   { href: "/dashboards", labelKey: "dashboards", icon: LayoutDashboard },
@@ -25,7 +25,7 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
   { href: "/vendors", labelKey: "vendors", icon: Building2, permission: "vendors:view" },
   { href: "/approvals", labelKey: "approvals", icon: CheckCircle2, permission: "assessments:approve" },
   // Sem `permission`: visibilidade (própria vs. todas) é resolvida no backend
-  // via cláusula `where`, não por um gate de permissão fixo — ver
+  // via cláusula `where`, não por um gate de permissão fixo - ver
   // TechnicalOpinionService.findAllForTenant().
   { href: "/technical-opinions", labelKey: "technicalOpinions", icon: FileText },
   { href: "/faq", labelKey: "faq", icon: HelpCircle },
@@ -37,7 +37,7 @@ export interface AdminNavItem {
   permission: string;
 }
 
-/** Fonte única do grupo "Administração" da sidebar — usada pelo shell e pela página inicial
+/** Fonte única do grupo "Administração" da sidebar - usada pelo shell e pela página inicial
  * de /admin (cards). Cada seção nova (Etapas C a I do plano) entra aqui. */
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin/questionnaire", labelKey: "nav.questionnaire", permission: "questions:manage" },
@@ -64,7 +64,7 @@ export function isNavItemActive(pathname: string, href: string, exact = false): 
   return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** Filtra itens (primary ou admin) pelas permissões da sessão atual — mesma lógica reaproveitada
+/** Filtra itens (primary ou admin) pelas permissões da sessão atual - mesma lógica reaproveitada
  * pela sidebar e pela busca rápida (cmd-k), para as duas nunca divergirem sobre o que é visível. */
 export function getVisibleNavItems<T extends { permission?: string }>(
   items: T[],

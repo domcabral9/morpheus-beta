@@ -146,7 +146,7 @@ export function ComplianceDashboardView() {
                   : colorForCompliancePercentage(overallPosture),
             }}
           >
-            {overallPosture === null ? "—" : `${Math.round(overallPosture * 100)}%`}
+            {overallPosture === null ? "-" : `${Math.round(overallPosture * 100)}%`}
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("compliance.overallPostureHint", {
@@ -292,7 +292,7 @@ export function ComplianceDashboardView() {
                           aria-hidden="true"
                         />
                         {control.metPercentage === null
-                          ? "—"
+                          ? "-"
                           : `${Math.round(control.metPercentage * 100)}%`}
                       </span>
                     </td>

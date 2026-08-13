@@ -4,7 +4,7 @@ import type { Response } from "express";
 
 /**
  * Sem isto, uma exceção não tratada (bug num service, erro de driver do
- * Postgres etc.) chegaria ao Express cru — stack trace e mensagem interna
+ * Postgres etc.) chegaria ao Express cru - stack trace e mensagem interna
  * de volta pro cliente. HttpException (400/403/404/...) já formatadas pelos
  * controllers/services passam direto; qualquer outra coisa vira um 500
  * genérico na resposta, com o detalhe completo só no log estruturado.

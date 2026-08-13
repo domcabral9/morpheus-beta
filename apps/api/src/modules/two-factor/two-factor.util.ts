@@ -12,7 +12,7 @@ import { createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto
 const ISSUER = "Morpheus";
 const PERIOD_SECONDS = 30;
 const DIGITS = 6;
-// ±1 período (30s) de tolerância de relógio — absorve deriva razoável do
+// ±1 período (30s) de tolerância de relógio - absorve deriva razoável do
 // relógio do usuário sem abrir demais a janela de força bruta (o rate-limit
 // nas rotas que chamam verifyTotpCode já cobre esse ângulo).
 const COUNTER_TOLERANCE_STEPS = 1;
@@ -53,7 +53,7 @@ function base32Decode(encoded: string): Buffer {
   return Buffer.from(bytes);
 }
 
-/** HOTP, RFC 4226 — HMAC-SHA1 truncado dinamicamente em `digits` dígitos. */
+/** HOTP, RFC 4226 - HMAC-SHA1 truncado dinamicamente em `digits` dígitos. */
 function hotp(secret: Buffer, counter: number): string {
   const counterBuffer = Buffer.alloc(8);
   counterBuffer.writeBigUInt64BE(BigInt(counter));
@@ -75,7 +75,7 @@ function constantTimeEquals(a: string, b: string): boolean {
   return timingSafeEqual(bufA, bufB);
 }
 
-/** Secret de 160 bits (20 bytes), Base32-encoded — mesmo tamanho recomendado
+/** Secret de 160 bits (20 bytes), Base32-encoded - mesmo tamanho recomendado
  * pela RFC 6238 e usado por Google Authenticator/Authy/etc. */
 export function generateTotpSecret(): string {
   return base32Encode(randomBytes(20));
@@ -106,7 +106,7 @@ export function verifyTotpCode(secretBase32: string, code: string): boolean {
   return false;
 }
 
-// Sem 0/O/1/I — evita ambiguidade visual ao digitar um código de recuperação
+// Sem 0/O/1/I - evita ambiguidade visual ao digitar um código de recuperação
 // à mão a partir de uma tela/papel (alfabeto deliberadamente diferente do
 // Base32 padrão usado no secret acima, que precisa seguir RFC 4648 à risca).
 const BACKUP_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

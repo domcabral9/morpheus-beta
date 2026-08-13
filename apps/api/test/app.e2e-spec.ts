@@ -9,7 +9,7 @@ import { SanitizationPipe } from "../src/common/pipes/sanitization.pipe";
 
 /**
  * Teste e2e do caminho crítico completo, contra um Postgres real (não
- * mockado) — diferente dos *.spec.ts (unitários, repositórios sempre
+ * mockado) - diferente dos *.spec.ts (unitários, repositórios sempre
  * mockados). Replica o bootstrap essencial de main.ts (cookie-parser,
  * SanitizationPipe + ValidationPipe) porque o app aqui é criado via
  * Test.createTestingModule, não pela função bootstrap() real.
@@ -38,7 +38,7 @@ describe("Fluxo crítico (e2e)", () => {
 
   afterAll(async () => {
     // Best-effort: a limpeza não pode derrubar o resultado dos testes que já
-    // rodaram — se falhar, só avisa. Cascade cuida de answers/versions/
+    // rodaram - se falhar, só avisa. Cascade cuida de answers/versions/
     // workflow instance/step executions/risk results/technical opinion.
     if (createdAssessmentId) {
       try {
@@ -117,7 +117,7 @@ describe("Fluxo crítico (e2e)", () => {
         .expect(201);
 
       // Admin acumula todos os papéis aprovadores do fluxo padrão no tenant
-      // demo (ver comentário no seed) — decide cada etapa até o fluxo fechar.
+      // demo (ver comentário no seed) - decide cada etapa até o fluxo fechar.
       await decideEveryStepUntilClosed(server, approverToken, createdAssessmentId);
 
       const finalAssessment = await request(server)
@@ -191,5 +191,5 @@ async function decideEveryStepUntilClosed(
       .send({ decision: "APPROVE" })
       .expect(201);
   }
-  throw new Error(`Fluxo não fechou após ${MAX_STEPS} decisões — possível loop.`);
+  throw new Error(`Fluxo não fechou após ${MAX_STEPS} decisões: possível loop.`);
 }

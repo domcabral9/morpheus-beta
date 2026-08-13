@@ -27,7 +27,7 @@ export class InventoryApprovalRepository {
     });
   }
 
-  /** Fila de aprovadores — itens `PENDING_APPROVAL`, mais antigos primeiro
+  /** Fila de aprovadores - itens `PENDING_APPROVAL`, mais antigos primeiro
    * (mesmo espírito de fila do `/workflow/inbox`). Reaproveita `itemDetailInclude`,
    * que já traz `approvalRequest` (com `requester`) selecionado. */
   findPendingItems(tenantId: string): Promise<InventoryItemDetail[]> {

@@ -140,7 +140,7 @@ export class TechnicalOpinionRepository {
     });
   }
 
-  /** Respostas atuais, agrupadas por categoria — seguro usar dados "ao vivo" aqui
+  /** Respostas atuais, agrupadas por categoria - seguro usar dados "ao vivo" aqui
    * porque a avaliação fica travada para edição (EDITABLE_STATUSES) desde o
    * envio, então elas já refletem exatamente a versão sendo decidida. */
   findAnswers(assessmentId: string): Promise<AnswerForOpinion[]> {
@@ -182,7 +182,7 @@ export class TechnicalOpinionRepository {
     });
   }
 
-  /** Usado pela verificação pública (via QR Code) — não expõe tenantId, só o slug. */
+  /** Usado pela verificação pública (via QR Code) - não expõe tenantId, só o slug. */
   findByTenantSlugAndNumber(tenantSlug: string, number: string) {
     return this.prisma.technicalOpinion.findFirst({
       where: { number, tenant: { slug: tenantSlug } },

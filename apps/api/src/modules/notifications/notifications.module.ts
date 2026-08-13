@@ -5,7 +5,7 @@ import { NotificationsController } from "./notifications.controller";
 import { NotificationsRepository } from "./notifications.repository";
 import { NotificationsService } from "./notifications.service";
 
-/** Global como AuditLogModule/PrismaModule — usado por praticamente todo módulo de negócio. */
+/** Global como AuditLogModule/PrismaModule - usado por praticamente todo módulo de negócio. */
 @Global()
 @Module({
   controllers: [NotificationsController],

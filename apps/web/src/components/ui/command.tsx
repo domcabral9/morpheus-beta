@@ -7,7 +7,7 @@ import { SearchIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-/** Remove acentos antes de comparar — sem isso, digitar "papeis" não encontra "Papéis"
+/** Remove acentos antes de comparar - sem isso, digitar "papeis" não encontra "Papéis"
  * (o filtro padrão do cmdk é sensível a diacríticos). */
 function stripDiacritics(value: string): string {
   return value.normalize("NFD").replace(/\p{Diacritic}/gu, "");

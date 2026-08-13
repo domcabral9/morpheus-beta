@@ -10,7 +10,7 @@ export interface AiCompletionResult {
 }
 
 /**
- * Provider Pattern para IA (Etapa 15) — mesma forma dos adapters de
+ * Provider Pattern para IA (Etapa 15) - mesma forma dos adapters de
  * integração desta etapa (interface + token + implementação trocável), mas
  * deliberadamente sem consumidor de negócio ainda: o roteiro pede "apenas
  * estrutura/interfaces" para este item. NullAiProvider prova que a

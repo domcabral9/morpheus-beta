@@ -133,7 +133,7 @@ export function VendorListView({ canManage }: VendorListViewProps) {
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {vendor.businessCriticality ? criticalityT(vendor.businessCriticality) : "—"}
+                        {vendor.businessCriticality ? criticalityT(vendor.businessCriticality) : "-"}
                       </TableCell>
                       <TableCell>
                         {vendor.currentTier && vendor.currentTierLabel ? (
@@ -143,10 +143,10 @@ export function VendorListView({ canManage }: VendorListViewProps) {
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {vendor.lastAssessedAt ? new Date(vendor.lastAssessedAt).toLocaleDateString() : "—"}
+                        {vendor.lastAssessedAt ? new Date(vendor.lastAssessedAt).toLocaleDateString() : "-"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {vendor.nextReviewDueAt ? new Date(vendor.nextReviewDueAt).toLocaleDateString() : "—"}
+                        {vendor.nextReviewDueAt ? new Date(vendor.nextReviewDueAt).toLocaleDateString() : "-"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{vendor._count.assessments}</TableCell>
                     </TableRow>

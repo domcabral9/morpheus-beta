@@ -14,7 +14,7 @@ export interface TenantLogo {
   contentType: string;
 }
 
-/** `logoUrl` começando com "/" é um caminho estático do Next.js (seed de demo) —
+/** `logoUrl` começando com "/" é um caminho estático do Next.js (seed de demo) -
  * não passa pelo StorageAdapter. Reaproveitado por `TechnicalOpinionService`
  * para decidir se vale a pena tentar embutir o logo no PDF gerado. */
 export function isStorageBackedLogo(logoUrl: string): boolean {

@@ -5,7 +5,7 @@ import type { CreateTicketInput, ItsmAdapter, TicketResult } from "./itsm.interf
 
 /**
  * Sem ITSM_WEBHOOK_URL configurado, gera um id local (`local-<uuid>`) e só
- * loga — mesmo padrão do WebhookSiemAdapter. Quem chama `createTicket()`
+ * loga - mesmo padrão do WebhookSiemAdapter. Quem chama `createTicket()`
  * decide se o retorno é usado (ex.: guardado em metadata de auditoria) ou
  * apenas descartado.
  */
@@ -24,7 +24,7 @@ export class WebhookItsmAdapter implements ItsmAdapter {
     if (!this.webhookUrl) {
       const ticketId = `local-${randomUUID()}`;
       this.logger.warn(
-        `ITSM_WEBHOOK_URL não configurado — chamado "${input.title}" não aberto de verdade (id local ${ticketId}).`,
+        `ITSM_WEBHOOK_URL não configurado: chamado "${input.title}" não aberto de verdade (id local ${ticketId}).`,
       );
       return { ticketId };
     }

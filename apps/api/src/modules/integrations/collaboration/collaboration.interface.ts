@@ -7,7 +7,7 @@ export interface CollaborationMessage {
 
 /**
  * Abstração de postagem em ferramenta de colaboração (Slack, Microsoft
- * Teams...) via webhook de entrada — mesmo raciocínio do SiemAdapter/
+ * Teams...) via webhook de entrada - mesmo raciocínio do SiemAdapter/
  * ItsmAdapter. Diferente de NotificationsService (Etapa 10), que notifica
  * usuários individuais dentro do próprio Morpheus: isto é para alertar um
  * canal/equipe inteira sobre eventos de alto risco, fora da aplicação.

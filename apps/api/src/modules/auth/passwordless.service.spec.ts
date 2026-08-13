@@ -74,7 +74,7 @@ describe("PasswordlessService", () => {
     service = moduleRef.get(PasswordlessService);
   });
 
-  describe("requestLogin — anti-enumeração: nunca lança, nunca gera código quando inelegível", () => {
+  describe("requestLogin - anti-enumeração: nunca lança, nunca gera código quando inelegível", () => {
     it("toggle de plataforma desligado", async () => {
       passwordlessPolicyService.getPolicy.mockResolvedValue({ enabled: false });
       await service.requestLogin("demo", "ana@example.com");

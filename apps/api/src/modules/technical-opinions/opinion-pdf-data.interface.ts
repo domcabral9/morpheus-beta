@@ -1,5 +1,5 @@
 /**
- * Payload já achatado/pronto para renderização — o gerador de PDF (pdfkit)
+ * Payload já achatado/pronto para renderização - o gerador de PDF (pdfkit)
  * não conhece Prisma nem consulta banco, só recebe dados simples. Mantém a
  * lógica de layout testável isoladamente, mesmo padrão de separação já usado
  * no motor de risco (cálculo puro vs. persistência).
@@ -39,10 +39,10 @@ export interface OpinionPdfVendorCompliance {
 }
 
 /** Só presente para avaliações aprovadas (o item de inventário não existe
- * para reprovações) — ver decisão de reordenar `createFromApprovedAssessment`
+ * para reprovações) - ver decisão de reordenar `createFromApprovedAssessment`
  * antes de `generateForAssessment` em `workflow.service.ts`. Os 3 estados
  * refletem o instante exato da emissão do parecer, quase sempre "não
- * verificado" (checagens acontecem depois) — por isso o hyperlink `url`
+ * verificado" (checagens acontecem depois) - por isso o hyperlink `url`
  * aponta para o item vivo, onde o estado atual sempre pode ser conferido. */
 export interface OpinionPdfInventoryItem {
   url: string;
@@ -62,7 +62,7 @@ export interface OpinionPdfMethodology {
 }
 
 /** Presente só para REJECTED ou quando há ao menos uma etapa
- * ADJUSTMENT_REQUESTED com comentário real — nunca fabricado quando não há
+ * ADJUSTMENT_REQUESTED com comentário real - nunca fabricado quando não há
  * motivo registrado por um aprovador de verdade. */
 export interface OpinionPdfRecommendations {
   reasons: string[];
@@ -78,7 +78,7 @@ export interface OpinionPdfData {
 
   tenantName: string;
   securityTeamName: string;
-  /** Já resolvido para bytes antes de chegar aqui — o gerador de PDF não faz
+  /** Já resolvido para bytes antes de chegar aqui - o gerador de PDF não faz
    * I/O (nem de disco, nem de rede) para buscar o logo, só desenha o que
    * recebeu. `null` = sem logo configurado, ou logo é um caminho estático do
    * Next.js em vez de uma chave de StorageAdapter (ver
@@ -110,7 +110,7 @@ export interface OpinionPdfData {
   approvalHistory: OpinionPdfApprovalStep[];
 
   /** Resumo executivo montado por template (nome do software + fornecedor +
-   * justificativa de uso literal) — determinístico, sem geração probabilística
+   * justificativa de uso literal) - determinístico, sem geração probabilística
    * (ver decisão de não depender de LLM externa neste parecer). */
   executiveContext: string;
   vendorCompliance: OpinionPdfVendorCompliance;

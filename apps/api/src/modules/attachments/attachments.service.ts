@@ -43,7 +43,7 @@ export class AttachmentsService {
 
     // Chave inclui timestamp: cada versão fica em um objeto próprio no
     // storage (nunca sobrescreve a anterior), mesmo espírito de
-    // AssessmentVersion — histórico completo, não só o arquivo mais recente.
+    // AssessmentVersion - histórico completo, não só o arquivo mais recente.
     const parentId = dto.assessmentId ?? dto.inventoryItemId;
     const storageKey = `attachments/${user.tenantId}/${parentId}/${Date.now()}-${file.originalname}`;
     await this.storage.save(storageKey, file.buffer);

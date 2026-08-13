@@ -1,4 +1,4 @@
-// Morpheus — schema Prisma
+// Morpheus - schema Prisma
 // Etapa 2: modelagem de dados completa.
 //
 // Convenções adotadas neste schema:
@@ -9,10 +9,10 @@
 //   tenants.
 // - Identificadores de enum em inglês, sem acentos (ex.: `LOW`, não `BAIXA`).
 //   A tradução dos rótulos fica na camada de app (i18n já configurado na
-//   Etapa 1) — evita reescrever o enum sempre que um idioma for adicionado.
+//   Etapa 1) - evita reescrever o enum sempre que um idioma for adicionado.
 // - Tabelas mapeadas para snake_case plural via @@map; colunas ficam em
 //   camelCase (Prisma sempre cita identificadores no Postgres).
-// - Toda tabela tenant-scoped tem @@index([tenantId]) — é o filtro mais
+// - Toda tabela tenant-scoped tem @@index([tenantId]): é o filtro mais
 //   comum de todas as queries do sistema.
 
 generator client {
@@ -23,7 +23,7 @@ generator client {
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
-// A partir do Prisma 7, a `url` de conexão não é mais lida daqui — ela é
+// A partir do Prisma 7, a `url` de conexão não é mais lida daqui: ela é
 // resolvida via prisma.config.ts (datasource.url) para os comandos de CLI
 // (migrate/studio) e passada explicitamente ao `PrismaClient` em runtime.
 datasource db {
@@ -43,15 +43,15 @@ model Tenant {
   updatedAt DateTime @updatedAt
 
   /// Logo exibido no cabeçalho do parecer técnico em PDF (Etapa 7) e na UI.
-  /// Opcional — sem logo configurado, o cabeçalho usa só texto. Dois formatos
+  /// Opcional - sem logo configurado, o cabeçalho usa só texto. Dois formatos
   /// possíveis nesta coluna (o prefixo decide qual): começando com "/" é um
   /// caminho estático servido pelo Next.js (ex.: seed de demo, não passa pela
   /// API); sem "/" é uma chave de StorageAdapter (upload real via
   /// POST /tenants/current/logo, lida via GET /tenants/current/logo). O PDF só
-  /// embute logos do segundo tipo — não acopla o gerador de PDF (pacote da
+  /// embute logos do segundo tipo - não acopla o gerador de PDF (pacote da
   /// API) ao filesystem do app Next.js.
   logoUrl                    String?
-  /// Nome da equipe exibido como autora do parecer (ex.: "SecOps"). Opcional —
+  /// Nome da equipe exibido como autora do parecer (ex.: "SecOps"). Opcional -
   /// sem valor configurado, usa um rótulo genérico ("Equipe de Segurança da
   /// Informação").
   securityTeamName           String?
@@ -102,7 +102,7 @@ model Tenant {
 
 /// Catálogo global de capacidades do sistema (ex.: "assessments:approve").
 /// Não é tenant-scoped: é o mesmo conjunto de permissões possíveis para
-/// qualquer tenant — o que varia por tenant é quais Roles têm quais Permissions.
+/// qualquer tenant - o que varia por tenant é quais Roles têm quais Permissions.
 model Permission {
   id          String   @id @default(cuid())
   key         String   @unique
@@ -160,15 +160,15 @@ model User {
   passwordHash      String?
   /// NameID retornado pelo Identity Provider SAML.
   ssoSubject        String?
-  /// Secret TOTP ativo, criptografado (CryptoService/AES-256-GCM — nunca em claro,
+  /// Secret TOTP ativo, criptografado (CryptoService/AES-256-GCM - nunca em claro,
   /// nunca hash, porque o servidor precisa lê-lo de volta a cada verificação).
   /// Null enquanto totpEnabled for false.
   totpSecret        String?
   /// Secret gerado por POST /auth/2fa/setup, ainda não confirmado por um código
-  /// válido — nunca promovido a totpSecret sem POST /auth/2fa/enable ter sucesso.
+  /// válido - nunca promovido a totpSecret sem POST /auth/2fa/enable ter sucesso.
   totpPendingSecret String?
   totpEnabled       Boolean   @default(false)
-  /// Prova formal e persistente de posse do e-mail cadastrado — pré-requisito
+  /// Prova formal e persistente de posse do e-mail cadastrado - pré-requisito
   /// pra login passwordless (POST /auth/passwordless/*). Setado só por
   /// EmailVerificationService.confirmVerification, nunca como efeito
   /// colateral implícito de um login bem-sucedido.
@@ -217,7 +217,7 @@ model UserRole {
 }
 
 /// Refresh tokens são persistidos (hash, nunca o valor puro) para permitir
-/// revogação real — logout, rotação a cada uso e detecção de reuso (se um
+/// revogação real - logout, rotação a cada uso e detecção de reuso (se um
 /// token já rotacionado for apresentado de novo, é sinal de token roubado;
 /// a Etapa 3 usa isso para revogar toda a família). Sem essa tabela, JWT de
 /// refresh só poderia expirar sozinho, nunca ser invalidado antes da hora.
@@ -226,7 +226,7 @@ model RefreshToken {
   userId       String
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokenHash    String    @unique
-  /// Agrupa a cadeia de tokens rotacionados a partir do mesmo login — permite
+  /// Agrupa a cadeia de tokens rotacionados a partir do mesmo login - permite
   /// revogar a família inteira de uma vez ao detectar reuso.
   familyId     String
   expiresAt    DateTime
@@ -241,9 +241,9 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-/// Códigos de recuperação de 2FA — 10 por usuário, gerados só na confirmação do
+/// Códigos de recuperação de 2FA - 10 por usuário, gerados só na confirmação do
 /// enrollment ou em regeneração explícita. Hash individual (bcrypt), uso único
-/// (usedAt marcado no consumo) — nunca lidos em claro depois de gerados.
+/// (usedAt marcado no consumo) - nunca lidos em claro depois de gerados.
 model TwoFactorBackupCode {
   id        String    @id @default(cuid())
   userId    String
@@ -261,7 +261,7 @@ enum OneTimeCodePurpose {
   PASSWORDLESS_LOGIN
 }
 
-/// Código numérico de uso único, hash SHA-256 (não bcrypt — expiração curta +
+/// Código numérico de uso único, hash SHA-256 (não bcrypt - expiração curta +
 /// throttle já cobrem o risco de força bruta, mesmo raciocínio já aplicado ao
 /// hash de refresh token). Tabela compartilhada pelos dois propósitos (não
 /// duas tabelas) porque a forma é idêntica; `purpose` discrimina qual fluxo
@@ -286,7 +286,7 @@ model OneTimeCode {
 // Configuração de plataforma (cross-tenant)
 // =============================================================================
 
-/// Política de complexidade de senha, plataforma inteira (cross-tenant) — não
+/// Política de complexidade de senha, plataforma inteira (cross-tenant) - não
 /// existe por Tenant, ao contrário de tudo mais configurável no sistema.
 /// Singleton por id fixo ("singleton"): nunca existe um `create` genérico
 /// para este model, só `upsert` sobre esse id constante.
@@ -297,7 +297,7 @@ model PlatformPasswordPolicy {
   requireLowercase Boolean  @default(true)
   requireDigit     Boolean  @default(true)
   requireSymbol    Boolean  @default(true)
-  /// Só para exibição ("quem mexeu por último") — sem FK de propósito: esta
+  /// Só para exibição ("quem mexeu por último") - sem FK de propósito: esta
   /// linha precisa sempre existir mesmo que o usuário citado seja excluído.
   updatedByUserId  String?
   updatedAt        DateTime @updatedAt
@@ -306,7 +306,7 @@ model PlatformPasswordPolicy {
   @@map("platform_password_policies")
 }
 
-/// Exige (ou não) 2FA de todo usuário local, plataforma inteira — mesmo padrão
+/// Exige (ou não) 2FA de todo usuário local, plataforma inteira - mesmo padrão
 /// singleton de PlatformPasswordPolicy. Nesta primeira entrega é um nudge: não
 /// bloqueia login, só sinaliza em GET /auth/profile (ver plano/CHANGELOG).
 model PlatformTwoFactorPolicy {
@@ -320,7 +320,7 @@ model PlatformTwoFactorPolicy {
 }
 
 /// Habilita (ou não) o login passwordless (código por e-mail) pra plataforma
-/// inteira — mesmo padrão singleton de PlatformPasswordPolicy/
+/// inteira - mesmo padrão singleton de PlatformPasswordPolicy/
 /// PlatformTwoFactorPolicy. Só usuários com User.emailVerified=true ficam
 /// elegíveis mesmo com o toggle ligado (ver plano/CHANGELOG).
 model PlatformPasswordlessPolicy {
@@ -369,7 +369,7 @@ model PlatformIntegrationsPolicy {
 /// Entidade normalizada (não texto livre) de propósito: além de exibir em
 /// formulários, "área" é a chave de agrupamento de métricas do dashboard
 /// executivo ("Média de risco por área") e do placar de maturidade/adesão
-/// por área (gamificação, Etapa 9) — texto livre deixaria "TI" e "T.I."
+/// por área (gamificação, Etapa 9) - texto livre deixaria "TI" e "T.I."
 /// virarem áreas diferentes num ranking.
 model Area {
   id        String   @id @default(cuid())
@@ -401,7 +401,7 @@ enum QuestionType {
 
 /// Em qual eixo do motor de risco a pergunta pesa. Sem essa marcação não há
 /// como o motor separar "probabilidade" de "impacto" a partir de um único
-/// questionário — ver nota de decisão em RiskMatrixConfig.
+/// questionário: ver nota de decisão em RiskMatrixConfig.
 enum RiskDimension {
   PROBABILITY
   IMPACT
@@ -416,7 +416,7 @@ model QuestionCategory {
   description String?
   order       Int      @default(0)
   /// Soft delete: categorias com perguntas já respondidas não podem ser
-  /// removidas de verdade sem quebrar o histórico de avaliações — desativar
+  /// removidas de verdade sem quebrar o histórico de avaliações - desativar
   /// só as tira de novos questionários.
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -444,7 +444,7 @@ model Question {
   order         Int              @default(0)
   isActive      Boolean          @default(true)
   /// false para perguntas condicionais (ex.: "como o MFA está implementado?",
-  /// só relevante se a pergunta anterior de MFA foi "Sim") — a validação de
+  /// só relevante se a pergunta anterior de MFA foi "Sim") - a validação de
   /// completude no envio da avaliação não as exige.
   isRequired    Boolean          @default(true)
   createdAt     DateTime         @default(now())
@@ -460,7 +460,7 @@ model Question {
 }
 
 /// Uma pergunta do tipo booleano é modelada como SINGLE_CHOICE com duas
-/// opções ("Sim"/"Não"), cada uma com seu próprio `score` — evita um tipo
+/// opções ("Sim"/"Não"), cada uma com seu próprio `score` - evita um tipo
 /// BOOLEAN à parte e mantém o motor de risco uniforme para qualquer pergunta
 /// de escolha.
 model QuestionOption {
@@ -473,7 +473,7 @@ model QuestionOption {
   score              Decimal  @db.Decimal(5, 2)
   order              Int      @default(0)
   /// Se marcada nesta opção (ex.: "Sim" em "processa dados pessoais?"), sinaliza
-  /// que a avaliação envolve LGPD — usado pelo workflow (Etapa 6) para decidir
+  /// que a avaliação envolve LGPD - usado pelo workflow (Etapa 6) para decidir
   /// se a etapa do DPO (`WorkflowStep.requiresLgpd`) entra no fluxo. Mesma ideia
   /// de gatilho parametrizável já usada em `Recommendation.triggerOptionId`, em
   /// vez de casar por texto da pergunta.
@@ -531,7 +531,7 @@ model Control {
 }
 
 /// Vincula perguntas do questionário aos controles de segurança que elas
-/// avaliam — usado no parecer técnico para informar quais controles foram
+/// avaliam - usado no parecer técnico para informar quais controles foram
 /// atendidos e quais precisam de mitigação.
 model QuestionControl {
   questionId String
@@ -544,7 +544,7 @@ model QuestionControl {
 }
 
 /// Mesmo vínculo de `QuestionControl`, para o questionário de avaliação de
-/// fornecedor — tabela de junção separada porque `VendorQuestion` é um
+/// fornecedor - tabela de junção separada porque `VendorQuestion` é um
 /// catálogo distinto de `Question` (score 1D de tierização, não a matriz
 /// probabilidade×impacto do software), mas aponta pro mesmo `Control`
 /// compartilhado - um controle pode ser avaliado tanto por uma pergunta de
@@ -565,7 +565,7 @@ model VendorQuestionControl {
 
 /// Configuração de uma matriz de risco. Tenant-scoped e versionada
 /// (`version`) porque o admin pode "alterar pesos, impacto, probabilidade,
-/// score mínimo de aprovação" a qualquer momento — sem isso, mudar a matriz
+/// score mínimo de aprovação" a qualquer momento - sem isso, mudar a matriz
 /// reescreveria silenciosamente o critério usado em avaliações já aprovadas.
 /// Apenas uma config pode estar `isActive` por tenant; as demais são histórico.
 model RiskMatrixConfig {
@@ -575,7 +575,7 @@ model RiskMatrixConfig {
   name             String
   version          Int      @default(1)
   isActive         Boolean  @default(true)
-  /// Score mínimo (mesma escala de RiskClassification — ex.: 1 a 5) para
+  /// Score mínimo (mesma escala de RiskClassification - ex.: 1 a 5) para
   /// aprovação automática/recomendada.
   minApprovalScore Decimal  @db.Decimal(5, 2)
   createdAt        DateTime @default(now())
@@ -638,9 +638,9 @@ model RiskClassification {
   order              Int
   color              String
   recommendationText String?
-  /// Faixa do `totalScore` (score geral, mesma escala do resto da matriz —
+  /// Faixa do `totalScore` (score geral, mesma escala do resto da matriz -
   /// ex.: 1 a 5) que resulta nesta classificação. É o que a Etapa 5 usa de
-  /// fato para decidir Homologado/Aguardando Ajustes/Rejeitado — mais simples
+  /// fato para decidir Homologado/Aguardando Ajustes/Rejeitado - mais simples
   /// e auditável do que derivar a decisão da célula da matriz 2D, que fica
   /// reservada para visualização (heatmap, Etapa 9).
   minScore           Decimal          @db.Decimal(5, 2)
@@ -654,7 +654,7 @@ model RiskClassification {
 }
 
 /// Célula da matriz probabilidade × impacto → classificação. É o que torna a
-/// matriz de fato uma "matriz" (grade 2D) e não só dois thresholds somados —
+/// matriz de fato uma "matriz" (grade 2D) e não só dois thresholds somados -
 /// permite, por exemplo, que probabilidade Alta + impacto Baixo dê um
 /// resultado diferente de probabilidade Baixa + impacto Alto.
 model RiskMatrixCell {
@@ -757,7 +757,7 @@ model WorkflowStep {
 }
 
 /// Uma execução do WorkflowDefinition para um Assessment específico. 1:1 com
-/// Assessment — reaberturas reiniciam/avançam a mesma instância em vez de
+/// Assessment - reaberturas reiniciam/avançam a mesma instância em vez de
 /// criar outra, mantendo um único histórico de decisões por avaliação.
 model AssessmentWorkflowInstance {
   id                   String                 @id @default(cuid())
@@ -816,7 +816,7 @@ enum AssessmentStatus {
   REJECTED
   REOPENED
   /// Validade de 1 ano da homologação venceu (ou antecipou por causa da janela
-  /// de fechamento anual — ver RenewalScheduler) e o ciclo de renovação foi
+  /// de fechamento anual - ver RenewalScheduler) e o ciclo de renovação foi
   /// aberto: reabre a MESMA AssessmentWorkflowInstance (não cria uma
   /// Assessment nova), com um prazo (`renewalDueAt`) pra reenviar e ser
   /// aprovada de novo antes que a área trave novas submissões.
@@ -838,16 +838,16 @@ model Assessment {
   area                  Area             @relation(fields: [areaId], references: [id])
   criticality           Criticality
   justification         String
-  /// Quem criou a avaliação — nunca pode ser quem a aprova (Separação de Funções).
+  /// Quem criou a avaliação - nunca pode ser quem a aprova (Separação de Funções).
   requesterId           String
   requester             User             @relation("AssessmentRequester", fields: [requesterId], references: [id])
   status                AssessmentStatus @default(DRAFT)
   /// Referência a um ticket externo (Jira/ServiceNow/etc.) vinculado a esta
-  /// avaliação. Texto livre — o sistema não integra com nenhuma ferramenta de
+  /// avaliação. Texto livre - o sistema não integra com nenhuma ferramenta de
   /// tickets específica, só registra a referência para o parecer técnico.
   linkedTicket          String?
   /// SHA-256 do instalador/binário do software avaliado, informado pelo
-  /// solicitante (ex.: resultado de uma verificação em VirusTotal). Opcional —
+  /// solicitante (ex.: resultado de uma verificação em VirusTotal). Opcional -
   /// nem todo software avaliado é um instalável (SaaS, por exemplo). Snapshot
   /// copiado para TechnicalOpinion.hash no momento da emissão do parecer.
   installerFileHash     String?
@@ -861,7 +861,7 @@ model Assessment {
   /// Mesma lógica de `hasRiskAnalysis`, mas para a cláusula de segurança da
   /// informação assinada com o fornecedor.
   hasInfoSecClause      Boolean          @default(false)
-  /// Prazo (data+hora) pra resolver um ciclo de renovação em andamento — nulo
+  /// Prazo (data+hora) pra resolver um ciclo de renovação em andamento - nulo
   /// exceto durante `status = PENDING_RENEWAL`. Já vem ajustado pela janela de
   /// fechamento anual do tenant (ver RenewalScheduler); vencido sem aprovação,
   /// o item de inventário vinculado vira EXPIRED e a área trava novas
@@ -896,7 +896,7 @@ model Assessment {
 
 /// Resposta a uma pergunta. `textValue`/`scaleValue` cobrem os tipos TEXT e
 /// SCALE; SINGLE_CHOICE/MULTI_CHOICE usam AssessmentAnswerOption. Um único
-/// registro por (assessment, question) — a resposta é sobrescrita enquanto a
+/// registro por (assessment, question) - a resposta é sobrescrita enquanto a
 /// avaliação está aberta; o histórico "antes da edição" vive em
 /// AssessmentVersion.snapshotJson, não aqui.
 model AssessmentAnswer {
@@ -928,7 +928,7 @@ model AssessmentAnswerOption {
   @@map("assessment_answer_options")
 }
 
-/// Snapshot imutável de uma versão da avaliação. Nunca é sobrescrito —
+/// Snapshot imutável de uma versão da avaliação. Nunca é sobrescrito -
 /// cada alteração relevante (envio, ajuste solicitado, reabertura) gera uma
 /// nova linha (v1.0, v1.1, v2.0, ...), conforme exigido no requisito de
 /// versionamento.
@@ -953,7 +953,7 @@ model AssessmentVersion {
 }
 
 /// Resultado do motor de risco para uma versão específica da avaliação.
-/// 1:1 com AssessmentVersion (nunca recalculado in-place — uma nova versão
+/// 1:1 com AssessmentVersion (nunca recalculado in-place - uma nova versão
 /// gera um novo RiskResult).
 model RiskResult {
   id                   String             @id @default(cuid())
@@ -1266,11 +1266,11 @@ enum InventoryStatus {
   ACTIVE
   PENDING_REVIEW
   /// Item de entrada manual (POST /inventory) aguardando decisão do fluxo de
-  /// aprovação dedicado (`InventoryApprovalRequest`) — não conta como ativo/
+  /// aprovação dedicado (`InventoryApprovalRequest`) - não conta como ativo/
   /// homologado. Itens vindos de Assessment aprovada nunca passam por este
   /// status (já foram revisados no workflow de homologação).
   PENDING_APPROVAL
-  /// Reprovado pelo fluxo de aprovação de item manual — editável e
+  /// Reprovado pelo fluxo de aprovação de item manual - editável e
   /// reenviável só pelo criador original (ver InventoryApprovalRequest).
   REJECTED
   EXPIRED
@@ -1309,17 +1309,17 @@ enum ReputationCheckSource {
 
 /// Criado automaticamente quando uma Assessment é aprovada (`assessmentId`
 /// setado), ou via cadastro manual direto (`POST /inventory`, `assessmentId`
-/// nulo) — este último passa pelo gate de `InventoryApprovalRequest` antes de
+/// nulo) - este último passa pelo gate de `InventoryApprovalRequest` antes de
 /// virar `ACTIVE` (ver enum `InventoryStatus`). Itens manuais cadastrados
 /// antes desta feature existir foram mantidos `ACTIVE` sem aprovação
-/// retroativa (`createdById` nulo neles) — só itens novos passam pelo gate.
+/// retroativa (`createdById` nulo neles) - só itens novos passam pelo gate.
 model SoftwareInventoryItem {
   id                            String                 @id @default(cuid())
   tenantId                      String
   tenant                        Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assessmentId                  String?
   assessment                    Assessment?            @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
-  /// Quem submeteu via cadastro manual (POST /inventory) — nulo para itens
+  /// Quem submeteu via cadastro manual (POST /inventory) - nulo para itens
   /// vindos de Assessment aprovada e para itens manuais legados anteriores a
   /// esta feature. Não confundir com `managerId`/`technicalResponsibleId`
   /// (donos de negócio do ativo, não quem o cadastrou).
@@ -1338,7 +1338,7 @@ model SoftwareInventoryItem {
   category                      String
   type                          SoftwareType
   /// Onde o ativo está hospedado (ex.: "AWS", "Google Cloud", "Magalu Cloud",
-  /// "Datacenter próprio"). Texto livre — a lista de provedores muda com o
+  /// "Datacenter próprio"). Texto livre - a lista de provedores muda com o
   /// tempo e travar isso em enum geraria migration a cada novo provedor
   /// contratado. Alimenta o corte "Cloud x Local" do dashboard executivo,
   /// que é uma dimensão diferente de `type` (SaaS x On-Premises).
@@ -1462,12 +1462,12 @@ model EolProduct {
 }
 
 /// Aprovação humana dedicada a itens de inventário criados manualmente
-/// (POST /inventory, fora da homologação via Assessment) — mecanismo
+/// (POST /inventory, fora da homologação via Assessment) - mecanismo
 /// separado e enxuto, não uma generalização de AssessmentWorkflowInstance/
 /// WorkflowStepExecution (reusar o motor de workflow exigiria torná-lo
 /// polimórfico, invasivo demais pra um passo único fixo). Uma linha por item
 /// (`inventoryItemId` único) reaproveitada e resetada a cada ciclo
-/// reprovação->reenvio — o histórico de decisões vive em AuditLog
+/// reprovação->reenvio - o histórico de decisões vive em AuditLog
 /// (entityType "InventoryApprovalRequest"), esta linha só reflete o estado
 /// vigente.
 model InventoryApprovalRequest {
@@ -1491,12 +1491,12 @@ model InventoryApprovalRequest {
   @@map("inventory_approval_requests")
 }
 
-/// Links externos de documentação (Jira, Swagger/OpenAPI, Postman, etc.) —
+/// Links externos de documentação (Jira, Swagger/OpenAPI, Postman, etc.) -
 /// pensado sobretudo para itens do tipo API_INTEGRATION, que não são tão
 /// "palpáveis" quanto um SaaS com URL de login. Não restrito por `type` no
 /// schema: um item de outro tipo também pode ganhar um link no futuro sem
 /// precisar de migration nova. Substituição completa a cada update (mesmo
-/// padrão de `RolePermission.setPermissions`) — não há necessidade de editar
+/// padrão de `RolePermission.setPermissions`) - não há necessidade de editar
 /// um link individual, só a lista inteira do item.
 model InventoryDocumentationLink {
   id              String                @id @default(cuid())
@@ -1530,7 +1530,7 @@ enum AttachmentCategory {
 }
 
 /// FKs próprias por entidade (em vez de um par genérico relatedType/relatedId)
-/// para manter integridade referencial real no banco — mais previsível para
+/// para manter integridade referencial real no banco - mais previsível para
 /// um sistema corporativo do que um polimorfismo sem constraint.
 model Attachment {
   id              String                 @id @default(cuid())
@@ -1593,7 +1593,7 @@ enum AuditAction {
 }
 
 /// `userId` e `tenantId` opcionais para sobreviver à exclusão do usuário/tenant
-/// sem perder a trilha de auditoria (onDelete: SetNull) — auditoria não pode
+/// sem perder a trilha de auditoria (onDelete: SetNull) - auditoria não pode
 /// ser um efeito colateral apagável.
 model AuditLog {
   id         String      @id @default(cuid())
@@ -1634,7 +1634,7 @@ enum NotificationType {
   /// Reavaliação periódica de um fornecedor venceu (ver VendorReassessmentScheduler).
   VENDOR_REASSESSMENT_DUE
   /// Item de inventário manual enviado (ou reenviado) para o fluxo de
-  /// aprovação dedicado — notifica quem tem `assessments:approve`. Desfechos
+  /// aprovação dedicado - notifica quem tem `assessments:approve`. Desfechos
   /// (aprovado/reprovado) reaproveitam APPROVAL/REJECTION acima.
   INVENTORY_APPROVAL_REQUESTED
 }

@@ -12,7 +12,7 @@ const DIGIT_PATTERN = /[0-9]/;
 const SYMBOL_PATTERN = /[^A-Za-z0-9]/;
 
 /**
- * Função pura, sem banco — mesmo padrão de `vendor-tier.util.ts`. Retorna as
+ * Função pura, sem banco - mesmo padrão de `vendor-tier.util.ts`. Retorna as
  * mensagens (pt-BR) das regras violadas; array vazio = senha válida. Regras
  * são runtime-configuráveis (`PlatformPasswordPolicy`), por isso a validação
  * não pode ser um `@Matches` estático no DTO.

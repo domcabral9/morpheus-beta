@@ -28,7 +28,7 @@ const ALLOWED_LOGO_MIME_TYPES = new Set(["image/png", "image/jpeg"]);
 /**
  * Escopo mínimo desta etapa (Etapa I do plano pós-roteiro): ver e editar os
  * três campos de identidade visual/nomenclatura do parecer técnico
- * (`logoUrl`, `securityTeamName`, `opinionNumberPrefix`) — os únicos campos
+ * (`logoUrl`, `securityTeamName`, `opinionNumberPrefix`) - os únicos campos
  * do Tenant pensados para serem configuráveis pelo admin. `name`/`slug` não
  * entram aqui (mudar o slug quebraria login de todo mundo do tenant).
  */
@@ -39,7 +39,7 @@ export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
   // Sobrepõe o @RequirePermissions(SYSTEM_CONFIGURE) de classe acima (guard
-  // usa getAllAndOverride: metadado de método vence o de classe) — só
+  // usa getAllAndOverride: metadado de método vence o de classe) - só
   // super-admin lista todas as organizações, mesmo que não tenha
   // system:configure em nenhuma delas.
   @RequirePermissions(PERMISSIONS.PLATFORM_CROSS_TENANT)
@@ -53,7 +53,7 @@ export class TenantsController {
   // SYSTEM_CONFIGURE de classe (mesmo mecanismo do listAll acima, só que
   // zerando a exigência em vez de trocar por outra). Em um SaaS de produção
   // real isso vaza o nome de todos os clientes para qualquer visitante não
-  // autenticado — aceito aqui porque este é um projeto de portfólio/demo,
+  // autenticado - aceito aqui porque este é um projeto de portfólio/demo,
   // não uma base de clientes pagantes real. Retorna só name/slug (nunca
   // id) para manter a superfície exposta no mínimo necessário.
   @Public()

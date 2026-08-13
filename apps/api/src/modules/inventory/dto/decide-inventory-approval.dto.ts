@@ -9,7 +9,7 @@ export class ApproveInventoryApprovalDto {
 }
 
 export class RejectInventoryApprovalDto {
-  @ApiProperty({ description: "Motivo da reprovação — obrigatório, exibido ao criador do item." })
+  @ApiProperty({ description: "Motivo da reprovação: obrigatório, exibido ao criador do item." })
   @IsString()
   @MinLength(1)
   notes!: string;

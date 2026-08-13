@@ -56,7 +56,7 @@ const pinoHttpOptions: PinoHttpOptions = {
       validate: validateEnv,
       // Em dev, `nest start` roda com cwd = apps/api; a raiz do monorepo tem
       // o único .env real. Em produção (Docker), os envs vêm do compose e
-      // este arquivo simplesmente não existe — ConfigModule ignora e usa
+      // este arquivo simplesmente não existe - ConfigModule ignora e usa
       // process.env normalmente.
       envFilePath: join(__dirname, "..", "..", "..", ".env"),
     }),
@@ -108,13 +108,13 @@ const pinoHttpOptions: PinoHttpOptions = {
     // até rotas @Public() (login, refresh) contra força bruta, sem depender
     // de autenticação já ter acontecido.
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    // Protegido por padrão em toda a aplicação — rotas ficam públicas só com
+    // Protegido por padrão em toda a aplicação - rotas ficam públicas só com
     // @Public() explícito (ver common/decorators/public.decorator.ts).
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     // Roda depois do JwtAuthGuard (ordem de registro = ordem de execução):
     // precisa de request.user já populado para checar @RequirePermissions().
     { provide: APP_GUARD, useClass: PermissionsGuard },
-    // No-op para rotas sem @Audit() — ver common/decorators/audit.decorator.ts.
+    // No-op para rotas sem @Audit() - ver common/decorators/audit.decorator.ts.
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
     // Última linha de defesa: nenhuma exceção não tratada deve vazar stack
     // trace/mensagem interna na resposta HTTP.

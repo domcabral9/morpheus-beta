@@ -14,7 +14,7 @@ export class TechnicalOpinionController {
 
   // Sem @RequirePermissions: a visibilidade (própria vs. todas) depende dos
   // permissions do usuário, resolvida dentro do service (mesmo padrão do
-  // GET /assessments — ver findAllForTenant).
+  // GET /assessments - ver findAllForTenant).
   @Get()
   list(@CurrentUser() user: AuthenticatedUser, @Query() query: ListTechnicalOpinionsQueryDto) {
     return this.technicalOpinionService.findAllForTenant(user, query);
@@ -43,7 +43,7 @@ export class TechnicalOpinionController {
     res.send(buffer);
   }
 
-  /** Página de verificação pública apontada pelo QR Code — sem autenticação de propósito. */
+  /** Página de verificação pública apontada pelo QR Code - sem autenticação de propósito. */
   @Public()
   @Get("verify/:tenantSlug/:number")
   verify(@Param("tenantSlug") tenantSlug: string, @Param("number") number: string) {

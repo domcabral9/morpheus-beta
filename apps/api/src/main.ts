@@ -1,5 +1,5 @@
 // Precisa ser o primeiro require do processo, antes de qualquer outro módulo
-// (inclusive reflect-metadata) — a auto-instrumentação do OpenTelemetry só
+// (inclusive reflect-metadata) - a auto-instrumentação do OpenTelemetry só
 // consegue interceptar módulos (http, express, pg) que ainda não foram
 // carregados quando ela roda. Ver comentário completo em tracing.ts.
 import "./tracing";

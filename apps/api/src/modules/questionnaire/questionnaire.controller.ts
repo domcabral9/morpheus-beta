@@ -19,7 +19,7 @@ import { LinkControlDto } from "./dto/link-control.dto";
 export class QuestionnaireController {
   constructor(private readonly questionnaireService: QuestionnaireService) {}
 
-  /** Usado pela tela de resposta ao questionário — só perguntas/categorias ativas. */
+  /** Usado pela tela de resposta ao questionário - só perguntas/categorias ativas. */
   @Get("categories")
   getCategories(@CurrentUser() user: AuthenticatedUser) {
     return this.questionnaireService.getCategories(user.tenantId);

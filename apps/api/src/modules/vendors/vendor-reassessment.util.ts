@@ -14,7 +14,7 @@ const MAX_MONTHS = 12;
  * Cadência de reavaliação de fornecedor (decisão #5 do plano de avaliação de
  * fornecedores): intervalo base do tier (`VendorTierThreshold.
  * baseReassessmentMonths`, configurável por tenant) ajustado por um
- * multiplicador FIXO no código de criticidade de negócio do fornecedor —
+ * multiplicador FIXO no código de criticidade de negócio do fornecedor -
  * simplificação deliberada pra v1, evita duplicar uma segunda matriz inteira
  * só pra isso. Resultado sempre clampado entre 3 e 12 meses, mesmo com
  * criticidade ausente (trata como MEDIUM, multiplicador neutro 1.0).

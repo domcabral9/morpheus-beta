@@ -5,7 +5,7 @@ import { RiskEngineService, ScorableAnswer } from "./risk-engine.service";
 
 /**
  * Orquestra o motor de risco (puro/testável em RiskEngineService) com a
- * persistência (RiskEngineRepository) — separação deliberada para manter o
+ * persistência (RiskEngineRepository) - separação deliberada para manter o
  * cálculo em si livre de dependências de banco.
  */
 @Injectable()

@@ -36,9 +36,9 @@ function flattenPermissions(user: UserWithRoles): UserWithPermissions {
   return { ...rest, permissionKeys: [...keys] };
 }
 
-// --- Administração (users:manage) — visualização + atribuição de papéis ------------
+// --- Administração (users:manage) - visualização + atribuição de papéis ------------
 // `select` explícito, não `include`: a tela administrativa não deve nunca ver
-// `passwordHash`/`ssoSubject` de outro usuário — só os campos realmente
+// `passwordHash`/`ssoSubject` de outro usuário - só os campos realmente
 // exibidos na tela (nome, e-mail, status, último login, papéis).
 const userAdminSelect = {
   id: true,
@@ -54,7 +54,7 @@ const userAdminSelect = {
 
 export type UserAdminRaw = Prisma.UserGetPayload<{ select: typeof userAdminSelect }>;
 
-// --- Autoatendimento (perfil) — GET/PATCH /auth/profile, /auth/avatar --------------
+// --- Autoatendimento (perfil) - GET/PATCH /auth/profile, /auth/avatar --------------
 // `passwordHash` entra aqui só pra o service computar `hasLocalPassword` (booleano);
 // nunca sai do repository como hash cru, mesma disciplina do `userAdminSelect` acima.
 const ownProfileSelect = {
