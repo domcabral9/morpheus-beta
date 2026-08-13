@@ -25,7 +25,7 @@ interface EolProductComboboxProps {
   onChange: (value: InventoryEolProduct) => void;
 }
 
-/** Combobox de vínculo com o catálogo local de frescor de versão
+/** Combobox de vínculo com o catálogo local de ciclo de vida de versão
  * (endoflife.date, sincronizado à noite - ver EolCatalogScheduler). Sem ramo
  * de texto livre/criação, ao contrário do VendorCombobox: precisa ser
  * sempre um match confirmado do catálogo (nunca auto-detectado por nome). */

@@ -394,21 +394,21 @@
     "linkVendorNeedsRealVendor": "Select a registered vendor or register a new one - free text does not start an ART.",
     "linkVendorStarting": "Linking and starting the assessment...",
     "linkVendorError": "Could not link the vendor.",
-    "eolFreshnessTitle": "Version freshness",
-    "eolFreshnessNoneLinked": "No product linked in the version-freshness catalog.",
-    "eolFreshnessLinkButton": "Link product",
-    "eolFreshnessChangeButton": "Change link",
+    "eolLifecycleTitle": "Version lifecycle",
+    "eolLifecycleNoneLinked": "No product linked in the version-lifecycle catalog.",
+    "eolLifecycleLinkButton": "Link product",
+    "eolLifecycleChangeButton": "Change link",
     "eolComboboxPlaceholder": "Select a product",
     "eolComboboxSearchPlaceholder": "Search the catalog...",
     "eolComboboxEmpty": "No product found in the local catalog.",
-    "eolLinkDialogTitle": "Link to the version-freshness catalog",
+    "eolLinkDialogTitle": "Link to the version-lifecycle catalog",
     "eolLinkDialogHint": "Search for the matching product in the catalog (synced nightly from endoflife.date) - the link is manual, no automatic name detection.",
     "eolLinkSaving": "Linking...",
     "eolLinkError": "Could not link the product.",
-    "freshness": {
+    "lifecycle": {
       "up-to-date": "Up to date",
       "outdated": "Outdated",
-      "unknown": "Unknown freshness"
+      "unknown": "Unknown lifecycle"
     },
     "reputationTitle": "Threat reputation",
     "reputationLastChecked": "Last checked via {source} on {date}",
@@ -925,7 +925,7 @@
     "integrationsApiKeyHint": "Never shown back once saved. Leave blank to keep the currently configured key.",
     "integrationsFieldVirusTotalEnabled": "Enable reputation checks (VirusTotal)",
     "integrationsFieldDailyBudget": "Daily call budget",
-    "integrationsFieldEndoflifeEnabled": "Enable version freshness checks (endoflife.date)",
+    "integrationsFieldEndoflifeEnabled": "Enable version lifecycle checks (endoflife.date)",
     "integrationsFieldInternetDbEnabled": "Enable external exposure checks (Shodan InternetDB)"
   },
   "PasswordPolicyHint": {

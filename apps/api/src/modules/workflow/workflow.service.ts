@@ -437,7 +437,7 @@ export class WorkflowService {
       await this.workflowRepository.updateAssessmentStatus(assessment.id, "APPROVED");
       // Ordem importa: o item de inventário precisa existir ANTES do parecer
       // ser gerado, porque o parecer traz um hyperlink pro item + o estado
-      // atual dos sinais de enriquecimento (frescor/reputação/exposição) -
+      // atual dos sinais de enriquecimento (ciclo de vida/reputação/exposição) -
       // sem essa ordem, o parecer nasceria sem nada pra linkar/enriquecer.
       await this.inventoryService.createFromApprovedAssessment(assessment.tenantId, {
         id: assessment.id,

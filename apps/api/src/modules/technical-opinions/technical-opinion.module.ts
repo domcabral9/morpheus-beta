@@ -8,7 +8,7 @@ import { PdfGeneratorService } from "./pdf-generator.service";
 
 @Module({
   // InventoryModule: enriquecimento do parecer lê o item de inventário
-  // recém-criado (frescor/reputação/exposição) - ver TechnicalOpinionService
+  // recém-criado (ciclo de vida/reputação/exposição) - ver TechnicalOpinionService
   // .generateForAssessment. Sem risco de import circular (InventoryModule só
   // importa PlatformPolicyModule/AttachmentsModule/StorageModule).
   imports: [StorageModule, InventoryModule],

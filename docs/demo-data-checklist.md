@@ -18,7 +18,7 @@ amostras usadas tanto para navegação manual quanto para os screenshots do port
 3. **Coerência de narrativa entre entidades.** Os dados precisam contar uma história plausível
    através de `Inventory` ↔ `Vendor` ↔ `Assessment` - um item vinculado a um fornecedor deve ter um
    tier condizente, uma avaliação aprovada deve corresponder a um item ativo no inventário, etc. Não
-   forçar um sinal (ex. frescor de versão) num item onde isso não faz sentido de verdade (ex.
+   forçar um sinal (ex. ciclo de vida de versão) num item onde isso não faz sentido de verdade (ex.
    software SaaS sem versão pública) - "sem sinal"/"desconhecido" também é um estado real e vale a
    pena representar.
 4. **Confirmar impacto nos dashboards, não só na tela de detalhe do item alterado.** Depois de
