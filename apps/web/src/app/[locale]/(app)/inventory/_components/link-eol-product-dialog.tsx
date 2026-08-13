@@ -17,7 +17,7 @@ interface LinkEolProductDialogProps {
   onLinked: (item: InventoryItemDetail) => void;
 }
 
-/** Vínculo manual com o catálogo local de frescor de versão - ação isolada
+/** Vínculo manual com o catálogo local de ciclo de vida de versão - ação isolada
  * (endpoint próprio, `PATCH .../eol-link`), não bundlada no formulário geral
  * de edição do item, mesmo padrão de `LinkVendorDialog`. */
 export function LinkEolProductDialog({

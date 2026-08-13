@@ -244,7 +244,7 @@ describe("InventoryService", () => {
     });
   });
 
-  describe("frescor de versão (eolProduct/freshness)", () => {
+  describe("ciclo de vida de versão (eolProduct/freshness)", () => {
     it("achata eolProduct pra {slug,name} e nunca expõe cycles cru", async () => {
       repo.findById.mockResolvedValue({
         id: "item-1",

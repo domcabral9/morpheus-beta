@@ -14,7 +14,7 @@ export const itemDetailInclude = {
     select: { id: true, name: true, currentTier: true, currentTierLabel: true },
   },
   // `cycles` (bruto, da API do endoflife.date) vem só pro service computar
-  // o veredito de frescor - nunca repassado cru pro cliente (ver
+  // o veredito de ciclo de vida - nunca repassado cru pro cliente (ver
   // InventoryService, hop-flatten igual ao já feito com `technicalOpinion`).
   eolProduct: {
     select: { slug: true, name: true, cycles: true },

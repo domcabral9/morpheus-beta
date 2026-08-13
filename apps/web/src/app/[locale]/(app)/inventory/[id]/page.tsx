@@ -350,13 +350,13 @@ export default function InventoryItemPage() {
               )}
 
               <div className="mt-4 flex flex-col gap-2 border-t pt-4">
-                <span className="text-xs text-muted-foreground">{t("eolFreshnessTitle")}</span>
+                <span className="text-xs text-muted-foreground">{t("eolLifecycleTitle")}</span>
                 {!item.eolProduct && (
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-sm text-muted-foreground">{t("eolFreshnessNoneLinked")}</span>
+                    <span className="text-sm text-muted-foreground">{t("eolLifecycleNoneLinked")}</span>
                     {canManage && (
                       <Button size="sm" variant="outline" onClick={() => setLinkEolOpen(true)}>
-                        {t("eolFreshnessLinkButton")}
+                        {t("eolLifecycleLinkButton")}
                       </Button>
                     )}
                   </div>
@@ -367,7 +367,7 @@ export default function InventoryItemPage() {
                     <FreshnessBadge state={item.freshness} />
                     {canManage && (
                       <Button size="sm" variant="outline" onClick={() => setLinkEolOpen(true)}>
-                        {t("eolFreshnessChangeButton")}
+                        {t("eolLifecycleChangeButton")}
                       </Button>
                     )}
                   </div>

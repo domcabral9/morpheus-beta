@@ -33,7 +33,7 @@ const ATTACHMENT_CATEGORY_LABELS: Record<string, string> = {
 const FRESHNESS_STATE_LABELS: Record<string, string> = {
   "up-to-date": "Versão em dia",
   outdated: "Versão desatualizada",
-  unknown: "Frescor desconhecido",
+  unknown: "Ciclo de vida desconhecido",
 };
 
 const REPUTATION_STATE_LABELS: Record<string, string> = {
@@ -195,7 +195,7 @@ export class PdfGeneratorService {
     doc.fillColor(COLORS.text).fontSize(10);
     this.keyValue(
       doc,
-      "Frescor de versão",
+      "Ciclo de vida da versão",
       FRESHNESS_STATE_LABELS[data.inventoryItem.freshnessState] ??
         data.inventoryItem.freshnessState,
     );

@@ -335,7 +335,7 @@ model PlatformPasswordlessPolicy {
 
 /// Config de plataforma (super-admin, cross-tenant) pras integrações
 /// externas de enriquecimento de inventário - VirusTotal (reputação de
-/// ameaça) e endoflife.date (frescor de versão). Mesmo padrão singleton das
+/// ameaça) e endoflife.date (ciclo de vida de versão). Mesmo padrão singleton das
 /// 3 policies acima, com um desvio deliberado: `GET` nunca devolve
 /// `virusTotalApiKeyEncrypted` (nem cru nem decriptografado) - o service
 /// mapeia pra uma forma mascarada (`hasVirusTotalApiKey: boolean`) antes de
@@ -1443,10 +1443,10 @@ model EnrichmentDailyBudget {
 
 /// Cache local do catálogo do endoflife.date (~462 produtos), sincronizado à
 /// noite (EolCatalogScheduler) - itens de inventário só leem este cache pra
-/// vincular/comparar frescor de versão, nunca chamam o endoflife.date
+/// vincular/comparar ciclo de vida de versão, nunca chamam o endoflife.date
 /// diretamente (evita martelar um terceiro a cada keystroke de autocomplete
 /// de cada usuário de cada tenant). `cycles` fica bruto (JSON, não uma linha
-/// por ciclo) de propósito: a comparação de frescor é deliberadamente
+/// por ciclo) de propósito: a comparação de ciclo de vida é deliberadamente
 /// conservadora (ver InventoryEolFreshnessUtil) e não precisa de query
 /// relacional sobre ciclos individuais.
 model EolProduct {

@@ -394,21 +394,21 @@
     "linkVendorNeedsRealVendor": "Selecione um fornecedor cadastrado ou cadastre um novo - texto livre não inicia uma ART.",
     "linkVendorStarting": "Vinculando e iniciando a avaliação...",
     "linkVendorError": "Não foi possível vincular o fornecedor.",
-    "eolFreshnessTitle": "Frescor de versão",
-    "eolFreshnessNoneLinked": "Nenhum produto vinculado no catálogo de frescor de versão.",
-    "eolFreshnessLinkButton": "Vincular produto",
-    "eolFreshnessChangeButton": "Trocar vínculo",
+    "eolLifecycleTitle": "Ciclo de vida da versão",
+    "eolLifecycleNoneLinked": "Nenhum produto vinculado no catálogo de ciclo de vida de versão.",
+    "eolLifecycleLinkButton": "Vincular produto",
+    "eolLifecycleChangeButton": "Trocar vínculo",
     "eolComboboxPlaceholder": "Selecione um produto",
     "eolComboboxSearchPlaceholder": "Buscar no catálogo...",
     "eolComboboxEmpty": "Nenhum produto encontrado no catálogo local.",
-    "eolLinkDialogTitle": "Vincular ao catálogo de frescor de versão",
+    "eolLinkDialogTitle": "Vincular ao catálogo de ciclo de vida de versão",
     "eolLinkDialogHint": "Busque o produto correspondente no catálogo (sincronizado à noite via endoflife.date) - o vínculo é manual, sem detecção automática por nome.",
     "eolLinkSaving": "Vinculando...",
     "eolLinkError": "Não foi possível vincular o produto.",
-    "freshness": {
+    "lifecycle": {
       "up-to-date": "Versão em dia",
       "outdated": "Versão desatualizada",
-      "unknown": "Frescor desconhecido"
+      "unknown": "Ciclo de vida desconhecido"
     },
     "reputationTitle": "Reputação de ameaça",
     "reputationLastChecked": "Última checagem via {source} em {date}",
@@ -925,7 +925,7 @@
     "integrationsApiKeyHint": "Nunca é exibida de volta depois de salva. Deixe em branco para manter a chave já configurada.",
     "integrationsFieldVirusTotalEnabled": "Habilitar checagem de reputação (VirusTotal)",
     "integrationsFieldDailyBudget": "Orçamento diário de chamadas",
-    "integrationsFieldEndoflifeEnabled": "Habilitar checagem de frescor de versão (endoflife.date)",
+    "integrationsFieldEndoflifeEnabled": "Habilitar checagem de ciclo de vida de versão (endoflife.date)",
     "integrationsFieldInternetDbEnabled": "Habilitar checagem de exposição externa (Shodan InternetDB)"
   },
   "PasswordPolicyHint": {

@@ -24,7 +24,7 @@ adotado pela empresa e o fornecedor por trás dele. Do questionário de risco à
    27002, NIST CSF, CIS Controls v8, LGPD, GDPR, OWASP ASVS/Top 10) e placar de maturidade por área.
 7. Avaliação de risco de fornecedores, com questionário inspirado no NIST SP 800-161, pontuação
    automática e Tiers de monitoramento com cadência de reavaliação configurável.
-8. Enriquecimento automático do inventário: frescor de versão (endoflife.date) e reputação de ameaça
+8. Enriquecimento automático do inventário: ciclo de vida de versão (endoflife.date) e reputação de ameaça
    (VirusTotal) - configurável pelo super-admin, nunca bloqueia a leitura do inventário se o
    terceiro estiver indisponível.
 
@@ -80,11 +80,11 @@ avaliado ou está com reavaliação vencida/próxima.
 Além dos sinais autodeclarados (ART, cláusula de segurança da informação), cada item do inventário
 pode ganhar três sinais automáticos, consultados sob demanda ou por uma varredura noturna. A checagem
 de reputação de ameaça soma o clique manual e a varredura num único orçamento diário compartilhado,
-pra nunca estourar a cota gratuita do VirusTotal, mesmo somando cliques de vários usuários; frescor de
-versão e exposição externa consultam APIs públicas sem chave, sem esse teto - só um ritmo interno
+pra nunca estourar a cota gratuita do VirusTotal, mesmo somando cliques de vários usuários; ciclo de
+vida de versão e exposição externa consultam APIs públicas sem chave, sem esse teto - só um ritmo interno
 responsável para não martelar o terceiro:
 
-- **Frescor de versão**: vínculo manual com o catálogo do [endoflife.date](https://endoflife.date/)
+- **Ciclo de vida de versão**: vínculo manual com o catálogo do [endoflife.date](https://endoflife.date/)
   (sincronizado localmente todo dia) - compara a versão cadastrada do item contra o ciclo de release
   correspondente e classifica "em dia" ou "desatualizada". A comparação é deliberadamente
   conservadora: sem um match exato de ciclo, o resultado é "desconhecido", nunca um veredito
@@ -106,9 +106,9 @@ mesma premissa de resiliência do resto do sistema, a indisponibilidade de qualq
 compromete a leitura normal do inventário: os dados exibidos vêm sempre do último resultado já salvo,
 nunca de uma chamada ao vivo durante a navegação.
 
-| Frescor de versão no detalhe do item | Reputação de ameaça no detalhe do item |
+| Ciclo de vida de versão no detalhe do item | Reputação de ameaça no detalhe do item |
 | --- | --- |
-| ![Frescor de versão](./docs/screenshots/inventory-freshness.png) | ![Reputação de ameaça](./docs/screenshots/inventory-reputation.png) |
+| ![Ciclo de vida de versão](./docs/screenshots/inventory-freshness.png) | ![Reputação de ameaça](./docs/screenshots/inventory-reputation.png) |
 
 | Exposição externa no detalhe do item |
 | --- |
@@ -303,7 +303,7 @@ by the company and the vendor behind it. From risk questionnaire to final decisi
    CIS Controls v8, LGPD, GDPR, OWASP ASVS/Top 10), and a maturity leaderboard by area.
 7. Vendor risk assessment, with a questionnaire inspired by NIST SP 800-161, automatic scoring, and
    monitoring Tiers with configurable reassessment cadence.
-8. Automatic inventory enrichment: version freshness (endoflife.date) and threat reputation
+8. Automatic inventory enrichment: version lifecycle (endoflife.date) and threat reputation
    (VirusTotal) - configurable by the super-admin, never blocks inventory reads if the third party
    is unavailable.
 
@@ -358,11 +358,11 @@ overdue/upcoming reassessment.
 Beyond the self-declared signals (ART, information security clause), every inventory item can carry
 three automatic signals, checked on demand or by a nightly sweep. The threat reputation check pools
 manual clicks and the sweep into a single shared daily budget, so it never exceeds VirusTotal's
-free-tier cap even counting clicks from multiple users; version freshness and external exposure query
+free-tier cap even counting clicks from multiple users; version lifecycle and external exposure query
 free, keyless public APIs with no such cap - just an internal responsible pace so the third party
 isn't hammered:
 
-- **Version freshness**: a manual link to the [endoflife.date](https://endoflife.date/) catalog
+- **Version lifecycle**: a manual link to the [endoflife.date](https://endoflife.date/) catalog
   (synced locally every day) - compares the item's registered version against the matching release
   cycle and classifies it "up to date" or "outdated". The comparison is deliberately conservative:
   without an exact cycle match, the result is "unknown", never a risky guess.
@@ -384,9 +384,9 @@ following the same resilience premise as the rest of the system, any one of them
 never compromises normal inventory reads: the data shown always comes from the last saved result,
 never a live call made while browsing.
 
-| Version freshness on the item detail page | Threat reputation on the item detail page |
+| Version lifecycle on the item detail page | Threat reputation on the item detail page |
 | --- | --- |
-| ![Version freshness](./docs/screenshots/inventory-freshness-en.png) | ![Threat reputation](./docs/screenshots/inventory-reputation-en.png) |
+| ![Version lifecycle](./docs/screenshots/inventory-freshness-en.png) | ![Threat reputation](./docs/screenshots/inventory-reputation-en.png) |
 
 | External exposure on the item detail page |
 | --- |

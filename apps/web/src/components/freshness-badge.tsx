@@ -10,5 +10,5 @@ function freshnessVariant(state: FreshnessState): "success" | "destructive" | "s
 
 export function FreshnessBadge({ state }: { state: FreshnessState }) {
   const t = useTranslations("Inventory");
-  return <Badge variant={freshnessVariant(state)}>{t(`freshness.${state}`)}</Badge>;
+  return <Badge variant={freshnessVariant(state)}>{t(`lifecycle.${state}`)}</Badge>;
 }
