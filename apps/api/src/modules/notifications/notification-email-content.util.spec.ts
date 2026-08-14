@@ -106,10 +106,11 @@ describe("renderNotificationEmailContent", () => {
   });
 
   it("renders VENDOR_REASSESSMENT_DUE_PERFORMER_INACTIVE mentioning the inactive performer", () => {
-    const { body } = renderNotificationEmailContent(
-      "VENDOR_REASSESSMENT_DUE_PERFORMER_INACTIVE",
-      { vendorName: "DocuSign Inc.", tier: 2, tierLabel: "Risco moderado" },
-    );
+    const { body } = renderNotificationEmailContent("VENDOR_REASSESSMENT_DUE_PERFORMER_INACTIVE", {
+      vendorName: "DocuSign Inc.",
+      tier: 2,
+      tierLabel: "Risco moderado",
+    });
     expect(body).toContain("inativo");
   });
 

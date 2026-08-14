@@ -58,7 +58,10 @@ describe("NotificationsService", () => {
         expect.objectContaining({ userId: "user-1", type: "NEW_REQUEST", data: input.data }),
       );
       expect(emailAdapter.send).toHaveBeenCalledWith(
-        expect.objectContaining({ to: "ana@example.com", subject: expect.stringContaining("Excel") }),
+        expect.objectContaining({
+          to: "ana@example.com",
+          subject: expect.stringContaining("Excel"),
+        }),
       );
     });
 

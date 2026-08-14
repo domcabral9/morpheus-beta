@@ -1,5 +1,3 @@
-import type { NotificationType } from "@morpheus/database";
-
 /**
  * Formato de `data` por `NotificationType` - único lugar do backend que
  * conhece a forma exata de cada tipo (o frontend duplica isto em
@@ -20,7 +18,11 @@ export interface NotificationDataByType {
   RENEWAL_REQUESTER_REASSIGNED: { softwareName: string; vendor: string };
   RENEWAL_OVERDUE: { itemName: string; vendor: string };
   VENDOR_REASSESSMENT_DUE: { vendorName: string; tier: number; tierLabel: string };
-  VENDOR_REASSESSMENT_DUE_PERFORMER_INACTIVE: { vendorName: string; tier: number; tierLabel: string };
+  VENDOR_REASSESSMENT_DUE_PERFORMER_INACTIVE: {
+    vendorName: string;
+    tier: number;
+    tierLabel: string;
+  };
   INVENTORY_APPROVAL_REQUESTED: { itemName: string };
   INVENTORY_ITEM_APPROVED: { itemName: string };
   INVENTORY_ITEM_REJECTED: { itemName: string; reason: string };

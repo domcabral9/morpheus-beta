@@ -6,7 +6,9 @@ import {
   renderNotificationEmailContent,
 } from "./notification-email-content.util";
 
-export interface NotifyInput<T extends keyof NotificationDataByType = keyof NotificationDataByType> {
+export interface NotifyInput<
+  T extends keyof NotificationDataByType = keyof NotificationDataByType,
+> {
   tenantId: string;
   userId: string;
   type: T;
@@ -57,9 +59,7 @@ export class NotificationsService {
     data: Omit<NotifyInput<T>, "tenantId" | "userId">,
   ): Promise<void> {
     const users = await this.repository.findUsersByRole(roleId);
-    await Promise.all(
-      users.map((user) => this.notify<T>({ ...data, tenantId, userId: user.id })),
-    );
+    await Promise.all(users.map((user) => this.notify<T>({ ...data, tenantId, userId: user.id })));
   }
 
   /** Notifica todo usuário ativo do tenant que tenha, por qualquer papel, a
@@ -72,9 +72,7 @@ export class NotificationsService {
     data: Omit<NotifyInput<T>, "tenantId" | "userId">,
   ): Promise<void> {
     const users = await this.repository.findUsersByPermission(tenantId, permissionKey);
-    await Promise.all(
-      users.map((user) => this.notify<T>({ ...data, tenantId, userId: user.id })),
-    );
+    await Promise.all(users.map((user) => this.notify<T>({ ...data, tenantId, userId: user.id })));
   }
 
   /**
