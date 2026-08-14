@@ -1,0 +1,12 @@
+# Força LF no checkout para todo arquivo de texto, independente do
+# core.autocrlf de cada máquina - sem isto, um checkout Windows com
+# core.autocrlf=true (padrão do instalador do Git for Windows) grava CRLF em
+# disco enquanto o blob no git continua LF, e o ESLint/Prettier (que exigem
+# LF, sem endOfLine configurado em .prettierrc.json) reprovam cada linha de
+# cada arquivo. Mesma intenção já declarada em .editorconfig
+# (end_of_line = lf), só que aplicada no nível do git, não do editor.
+* text=auto eol=lf
+
+# Binários - nunca normalizar.
+*.png binary
+*.ico binary
