@@ -27,6 +27,9 @@ adotado pela empresa e o fornecedor por trás dele. Do questionário de risco à
 8. Enriquecimento automático do inventário: ciclo de vida de versão (endoflife.date) e reputação de ameaça
    (VirusTotal) - configurável pelo super-admin, nunca bloqueia a leitura do inventário se o
    terceiro estiver indisponível.
+9. Central de notificações (sino no cabeçalho + histórico paginado), com conteúdo localizado em
+   PT-BR/EN - cada notificação carrega dados estruturados, não texto fixo, então o mesmo evento
+   aparece no idioma de quem está lendo.
 
 Um efeito direto disso: como toda nova contratação passa por um canal único e fica registrada num
 inventário central, o processo também fortalece a governança corporativa e reduz Shadow IT - o
@@ -223,6 +226,10 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | --- | --- |
 | ![Administração - papéis](./docs/screenshots/admin-papeis.png) | ![Políticas de plataforma](./docs/screenshots/admin-platform-policy.png) |
 
+| Central de notificações - dropdown | Central de notificações - histórico |
+| --- | --- |
+| ![Notificações - dropdown](./docs/screenshots/notifications-dropdown.png) | ![Notificações - histórico](./docs/screenshots/notifications-page.png) |
+
 ## Stack
 
 | Camada          | Tecnologia                                                             |
@@ -306,6 +313,9 @@ by the company and the vendor behind it. From risk questionnaire to final decisi
 8. Automatic inventory enrichment: version lifecycle (endoflife.date) and threat reputation
    (VirusTotal) - configurable by the super-admin, never blocks inventory reads if the third party
    is unavailable.
+9. Notification center (header bell + paginated history), with localized PT-BR/EN content - each
+   notification carries structured data, not fixed text, so the same event renders in whichever
+   language the reader is using.
 
 A direct side effect: since every new acquisition goes through a single channel and lands in a
 central inventory, the process also strengthens corporate governance and reduces Shadow IT - the
@@ -497,6 +507,10 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | Admin - role management | Platform policies (super-admin) |
 | --- | --- |
 | ![Admin - roles](./docs/screenshots/admin-papeis-en.png) | ![Platform policies](./docs/screenshots/admin-platform-policy-en.png) |
+
+| Notification center - dropdown | Notification center - history |
+| --- | --- |
+| ![Notifications - dropdown](./docs/screenshots/notifications-dropdown-en.png) | ![Notifications - history](./docs/screenshots/notifications-page-en.png) |
 
 ## Stack
 
