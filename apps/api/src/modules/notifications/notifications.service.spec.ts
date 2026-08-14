@@ -9,8 +9,11 @@ describe("NotificationsService", () => {
     create: jest.Mock;
     findUserContact: jest.Mock;
     findUsersByRole: jest.Mock;
+    findUsersByPermission: jest.Mock;
     findForUser: jest.Mock;
     markAsRead: jest.Mock;
+    countUnread: jest.Mock;
+    markAllAsRead: jest.Mock;
   };
   let emailAdapter: { send: jest.Mock };
 
@@ -21,8 +24,11 @@ describe("NotificationsService", () => {
         .fn()
         .mockResolvedValue({ id: "user-1", name: "Ana", email: "ana@example.com", isActive: true }),
       findUsersByRole: jest.fn(),
+      findUsersByPermission: jest.fn(),
       findForUser: jest.fn(),
       markAsRead: jest.fn(),
+      countUnread: jest.fn(),
+      markAllAsRead: jest.fn(),
     };
     emailAdapter = { send: jest.fn().mockResolvedValue(undefined) };
 
@@ -42,16 +48,20 @@ describe("NotificationsService", () => {
       tenantId: "tenant-1",
       userId: "user-1",
       type: "NEW_REQUEST" as const,
-      title: "Título",
-      body: "Corpo",
+      data: { softwareName: "Excel", stepName: "Aprovação jurídica" },
     };
 
-    it("grava a notificação e envia e-mail para um usuário ativo", async () => {
+    it("grava a notificação (type+data) e envia e-mail renderizado para um usuário ativo", async () => {
       await service.notify(input);
 
-      expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ userId: "user-1" }));
+      expect(repo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "user-1", type: "NEW_REQUEST", data: input.data }),
+      );
       expect(emailAdapter.send).toHaveBeenCalledWith(
-        expect.objectContaining({ to: "ana@example.com", subject: "Título" }),
+        expect.objectContaining({
+          to: "ana@example.com",
+          subject: expect.stringContaining("Excel"),
+        }),
       );
     });
 
@@ -91,8 +101,7 @@ describe("NotificationsService", () => {
 
       await service.notifyRole("tenant-1", "role-1", {
         type: "NEW_REQUEST",
-        title: "Nova etapa",
-        body: "Corpo",
+        data: { softwareName: "Excel", stepName: "Nova etapa" },
       });
 
       expect(repo.create).toHaveBeenCalledTimes(2);
@@ -104,10 +113,48 @@ describe("NotificationsService", () => {
       repo.findUsersByRole.mockResolvedValue([]);
       await service.notifyRole("tenant-1", "role-1", {
         type: "NEW_REQUEST",
-        title: "X",
-        body: "Y",
+        data: { softwareName: "X", stepName: "Y" },
       });
       expect(repo.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("notifyPermissionHolders", () => {
+    it("notifica todo usuário ativo que tenha a permissão, com dedupe do repository", async () => {
+      repo.findUsersByPermission.mockResolvedValue([
+        { id: "user-1", name: "Ana", email: "ana@example.com" },
+      ]);
+      repo.findUserContact.mockResolvedValue({
+        id: "user-1",
+        name: "Ana",
+        email: "ana@example.com",
+        isActive: true,
+      });
+
+      await service.notifyPermissionHolders("tenant-1", "assessments:approve", {
+        type: "INVENTORY_APPROVAL_REQUESTED",
+        data: { itemName: "Legacy ERP" },
+      });
+
+      expect(repo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "INVENTORY_APPROVAL_REQUESTED" }),
+      );
+    });
+  });
+
+  describe("countUnread", () => {
+    it("delega ao repository", async () => {
+      repo.countUnread.mockResolvedValue(3);
+      await expect(service.countUnread("user-1")).resolves.toBe(3);
+      expect(repo.countUnread).toHaveBeenCalledWith("user-1");
+    });
+  });
+
+  describe("markAllAsRead", () => {
+    it("delega ao repository", async () => {
+      repo.markAllAsRead.mockResolvedValue({ count: 5 });
+      await expect(service.markAllAsRead("user-1")).resolves.toEqual({ count: 5 });
+      expect(repo.markAllAsRead).toHaveBeenCalledWith("user-1");
     });
   });
 });

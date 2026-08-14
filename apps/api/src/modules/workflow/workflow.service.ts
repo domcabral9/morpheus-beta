@@ -131,8 +131,10 @@ export class WorkflowService {
     const assessment = await this.workflowRepository.findAssessmentContext(assessmentId);
     await this.notificationsService.notifyRole(tenantId, firstStep.responsibleRoleId, {
       type: "NEW_REQUEST",
-      title: `Nova avaliação para análise: ${assessment?.softwareName ?? assessmentId}`,
-      body: `A avaliação "${assessment?.softwareName ?? assessmentId}" está aguardando sua análise na etapa "${firstStep.name}".`,
+      data: {
+        softwareName: assessment?.softwareName ?? assessmentId,
+        stepName: firstStep.name,
+      },
       relatedEntityType: "Assessment",
       relatedEntityId: assessmentId,
     });
@@ -193,8 +195,7 @@ export class WorkflowService {
         tenantId: user.tenantId,
         userId: assessment.requesterId,
         type: "REJECTION",
-        title: `Avaliação reprovada: ${assessment.softwareName}`,
-        body: `Sua avaliação "${assessment.softwareName}" foi reprovada na etapa "${execution.workflowStep.name}".`,
+        data: { softwareName: assessment.softwareName, stepName: execution.workflowStep.name },
         relatedEntityType: "Assessment",
         relatedEntityId: assessment.id,
       });
@@ -224,8 +225,7 @@ export class WorkflowService {
         tenantId: user.tenantId,
         userId: assessment.requesterId,
         type: "ADJUSTMENT_REQUEST",
-        title: `Ajuste solicitado: ${assessment.softwareName}`,
-        body: `A etapa "${execution.workflowStep.name}" pediu ajustes na avaliação "${assessment.softwareName}". Revise e reenvie.`,
+        data: { softwareName: assessment.softwareName, stepName: execution.workflowStep.name },
         relatedEntityType: "Assessment",
         relatedEntityId: assessment.id,
       });
@@ -424,8 +424,7 @@ export class WorkflowService {
       });
       await this.notificationsService.notifyRole(assessment.tenantId, next.responsibleRoleId, {
         type: "NEW_REQUEST",
-        title: `Nova avaliação para análise: ${assessment.softwareName}`,
-        body: `A avaliação "${assessment.softwareName}" está aguardando sua análise na etapa "${next.name}".`,
+        data: { softwareName: assessment.softwareName, stepName: next.name },
         relatedEntityType: "Assessment",
         relatedEntityId: assessment.id,
       });
@@ -462,8 +461,7 @@ export class WorkflowService {
         tenantId: assessment.tenantId,
         userId: assessment.requesterId,
         type: "APPROVAL",
-        title: `Avaliação homologada: ${assessment.softwareName}`,
-        body: `Sua avaliação "${assessment.softwareName}" foi homologada. O parecer técnico já está disponível.`,
+        data: { softwareName: assessment.softwareName },
         relatedEntityType: "Assessment",
         relatedEntityId: assessment.id,
       });

@@ -6,8 +6,7 @@ export interface CreateNotificationInput {
   tenantId: string;
   userId: string;
   type: NotificationType;
-  title: string;
-  body: string;
+  data: Record<string, unknown>;
   relatedEntityType?: string;
   relatedEntityId?: string;
 }
@@ -16,8 +15,17 @@ export interface CreateNotificationInput {
 export class NotificationsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: CreateNotificationInput) {
-    return this.prisma.notification.create({ data });
+  create(input: CreateNotificationInput) {
+    return this.prisma.notification.create({
+      data: {
+        tenantId: input.tenantId,
+        userId: input.userId,
+        type: input.type,
+        data: input.data as Prisma.InputJsonValue,
+        relatedEntityType: input.relatedEntityType,
+        relatedEntityId: input.relatedEntityId,
+      },
+    });
   }
 
   findUserContact(userId: string) {
@@ -75,6 +83,17 @@ export class NotificationsRepository {
   markAsRead(id: string, userId: string) {
     return this.prisma.notification.updateMany({
       where: { id, userId },
+      data: { isRead: true },
+    });
+  }
+
+  countUnread(userId: string): Promise<number> {
+    return this.prisma.notification.count({ where: { userId, isRead: false } });
+  }
+
+  markAllAsRead(userId: string) {
+    return this.prisma.notification.updateMany({
+      where: { userId, isRead: false },
       data: { isRead: true },
     });
   }

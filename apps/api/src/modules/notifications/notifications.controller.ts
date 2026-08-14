@@ -18,8 +18,20 @@ export class NotificationsController {
     return { items, total, page, pageSize };
   }
 
+  @Get("unread-count")
+  async unreadCount(@CurrentUser() user: AuthenticatedUser) {
+    const count = await this.notificationsService.countUnread(user.id);
+    return { count };
+  }
+
   @Patch(":id/read")
   markAsRead(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.notificationsService.markAsRead(id, user.id);
+  }
+
+  @Patch("read-all")
+  async markAllAsRead(@CurrentUser() user: AuthenticatedUser) {
+    const { count } = await this.notificationsService.markAllAsRead(user.id);
+    return { count };
   }
 }

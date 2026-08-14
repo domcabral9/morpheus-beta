@@ -304,7 +304,7 @@ describe("AssessmentsService", () => {
         expect.objectContaining({
           tenantId: "tenant-1",
           userId: "user-2",
-          type: "RENEWAL_PENDING",
+          type: "RENEWAL_REQUESTER_REASSIGNED",
         }),
       );
       expect(result.requesterId).toBe("user-2");
