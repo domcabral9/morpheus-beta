@@ -61,6 +61,7 @@
     "toggleSidebarLabel": "Toggle sidebar",
     "localeSwitcherLabel": "Language",
     "themeToggleLabel": "Toggle theme",
+    "notificationBellLabel": "Notifications",
     "signOut": "Sign out",
     "changePassword": "Change password",
     "profile": "My profile",
@@ -1350,6 +1351,82 @@
       "optionDeleteConfirmTitle": "Remove this option?",
       "optionDeleteConfirmDescription": "Options already used in assessment answers cannot be removed - deactivate the question instead.",
       "optionDeleteConfirmAction": "Remove"
+    }
+  },
+  "Notifications": {
+    "dropdownTitle": "Notifications",
+    "loading": "Loading...",
+    "emptyState": "No notifications yet.",
+    "markAllReadButton": "Mark all as read",
+    "viewAllLink": "View all",
+    "title": "Notifications",
+    "subtitle": "Full history of your notifications.",
+    "cardTitle": "All",
+    "loadError": "Could not load notifications.",
+    "paginationPrevious": "Previous",
+    "paginationNext": "Next",
+    "paginationPageOf": "Page {current} of {total}",
+    "messages": {
+      "NEW_REQUEST": {
+        "title": "New assessment for review",
+        "body": "\"{softwareName}\" is awaiting your review at the \"{stepName}\" step."
+      },
+      "APPROVAL": {
+        "title": "Assessment approved",
+        "body": "Your assessment \"{softwareName}\" was approved. The technical opinion is now available."
+      },
+      "REJECTION": {
+        "title": "Assessment rejected",
+        "body": "Your assessment \"{softwareName}\" was rejected at the \"{stepName}\" step."
+      },
+      "ADJUSTMENT_REQUEST": {
+        "title": "Adjustment requested",
+        "body": "The \"{stepName}\" step requested changes to \"{softwareName}\". Review and resubmit."
+      },
+      "HOMOLOGATION_EXPIRING": {
+        "title": "Review due",
+        "body": "\"{itemName}\" ({vendor}) has a periodic review due on {nextReviewDate}."
+      },
+      "OPINION_ISSUED": {
+        "title": "Technical opinion issued",
+        "body": "Technical opinion no. {number} for \"{softwareName}\" ({classificationLabel}) is now available."
+      },
+      "RENEWAL_PENDING": {
+        "title": "Renewal pending",
+        "body": "The approval for \"{itemName}\" ({vendor}) expired and entered a renewal cycle. Deadline: {deadline}."
+      },
+      "RENEWAL_PENDING_REQUESTER_INACTIVE": {
+        "title": "Renewal pending (requester inactive)",
+        "body": "\"{itemName}\" ({vendor}) entered a renewal cycle, but the original requester is inactive. Reassign a new requester. Deadline: {deadline}."
+      },
+      "RENEWAL_REQUESTER_REASSIGNED": {
+        "title": "You were assigned as requester",
+        "body": "An Administrator assigned you as the requester for the renewal of \"{softwareName}\" ({vendor}). Review and resubmit."
+      },
+      "RENEWAL_OVERDUE": {
+        "title": "Renewal overdue",
+        "body": "The renewal deadline for \"{itemName}\" ({vendor}) passed without resolution. The area is blocked for new assessments."
+      },
+      "VENDOR_REASSESSMENT_DUE": {
+        "title": "Reassessment due",
+        "body": "The risk reassessment for vendor \"{vendorName}\" (Tier {tier} · {tierLabel}) is due. Start a new assessment."
+      },
+      "VENDOR_REASSESSMENT_DUE_PERFORMER_INACTIVE": {
+        "title": "Reassessment due",
+        "body": "The reassessment for \"{vendorName}\" (Tier {tier} · {tierLabel}) is due. The previous performer is inactive - start a new assessment or reassign."
+      },
+      "INVENTORY_APPROVAL_REQUESTED": {
+        "title": "New item awaiting approval",
+        "body": "\"{itemName}\" was submitted for manual inventory approval."
+      },
+      "INVENTORY_ITEM_APPROVED": {
+        "title": "Inventory item approved",
+        "body": "Your manual entry for \"{itemName}\" was approved and is now active in inventory."
+      },
+      "INVENTORY_ITEM_REJECTED": {
+        "title": "Inventory item rejected",
+        "body": "Your manual entry for \"{itemName}\" was rejected. Reason: {reason}"
+      }
     }
   }
 }

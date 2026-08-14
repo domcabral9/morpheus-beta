@@ -61,6 +61,7 @@
     "toggleSidebarLabel": "Alternar barra lateral",
     "localeSwitcherLabel": "Idioma",
     "themeToggleLabel": "Alternar tema",
+    "notificationBellLabel": "Notificações",
     "signOut": "Sair",
     "changePassword": "Trocar senha",
     "profile": "Meu perfil",
@@ -1350,6 +1351,82 @@
       "optionDeleteConfirmTitle": "Remover esta opção?",
       "optionDeleteConfirmDescription": "Opções já usadas em respostas de avaliações não podem ser removidas: desative a pergunta em vez disso.",
       "optionDeleteConfirmAction": "Remover"
+    }
+  },
+  "Notifications": {
+    "dropdownTitle": "Notificações",
+    "loading": "Carregando...",
+    "emptyState": "Nenhuma notificação por aqui.",
+    "markAllReadButton": "Marcar tudo como lido",
+    "viewAllLink": "Ver todas",
+    "title": "Notificações",
+    "subtitle": "Histórico completo das suas notificações.",
+    "cardTitle": "Todas",
+    "loadError": "Não foi possível carregar as notificações.",
+    "paginationPrevious": "Anterior",
+    "paginationNext": "Próxima",
+    "paginationPageOf": "Página {current} de {total}",
+    "messages": {
+      "NEW_REQUEST": {
+        "title": "Nova avaliação para análise",
+        "body": "\"{softwareName}\" está aguardando sua análise na etapa \"{stepName}\"."
+      },
+      "APPROVAL": {
+        "title": "Avaliação homologada",
+        "body": "Sua avaliação \"{softwareName}\" foi homologada. O parecer técnico já está disponível."
+      },
+      "REJECTION": {
+        "title": "Avaliação reprovada",
+        "body": "Sua avaliação \"{softwareName}\" foi reprovada na etapa \"{stepName}\"."
+      },
+      "ADJUSTMENT_REQUEST": {
+        "title": "Ajuste solicitado",
+        "body": "A etapa \"{stepName}\" pediu ajustes na avaliação \"{softwareName}\". Revise e reenvie."
+      },
+      "HOMOLOGATION_EXPIRING": {
+        "title": "Revisão pendente",
+        "body": "O item \"{itemName}\" ({vendor}) está com a revisão periódica vencendo em {nextReviewDate}."
+      },
+      "OPINION_ISSUED": {
+        "title": "Parecer técnico emitido",
+        "body": "O parecer técnico nº {number} de \"{softwareName}\" ({classificationLabel}) já está disponível."
+      },
+      "RENEWAL_PENDING": {
+        "title": "Renovação pendente",
+        "body": "A homologação de \"{itemName}\" ({vendor}) venceu e entrou em ciclo de renovação. Prazo: {deadline}."
+      },
+      "RENEWAL_PENDING_REQUESTER_INACTIVE": {
+        "title": "Renovação pendente (solicitante inativo)",
+        "body": "\"{itemName}\" ({vendor}) entrou em ciclo de renovação, mas o solicitante original está inativo. Reatribua um novo solicitante. Prazo: {deadline}."
+      },
+      "RENEWAL_REQUESTER_REASSIGNED": {
+        "title": "Você foi designado solicitante",
+        "body": "Um Administrador te atribuiu como solicitante da renovação de \"{softwareName}\" ({vendor}). Revise e reenvie."
+      },
+      "RENEWAL_OVERDUE": {
+        "title": "Renovação vencida",
+        "body": "O prazo de renovação de \"{itemName}\" ({vendor}) venceu sem resolução. A área está bloqueada para novas avaliações."
+      },
+      "VENDOR_REASSESSMENT_DUE": {
+        "title": "Reavaliação pendente",
+        "body": "A reavaliação de risco do fornecedor \"{vendorName}\" (Tier {tier} · {tierLabel}) venceu. Inicie uma nova avaliação."
+      },
+      "VENDOR_REASSESSMENT_DUE_PERFORMER_INACTIVE": {
+        "title": "Reavaliação pendente",
+        "body": "A reavaliação de \"{vendorName}\" (Tier {tier} · {tierLabel}) venceu. O responsável pela última avaliação está inativo - inicie uma nova avaliação ou reatribua."
+      },
+      "INVENTORY_APPROVAL_REQUESTED": {
+        "title": "Novo item aguardando aprovação",
+        "body": "\"{itemName}\" foi enviado para aprovação de cadastro manual no inventário."
+      },
+      "INVENTORY_ITEM_APPROVED": {
+        "title": "Item de inventário aprovado",
+        "body": "Seu cadastro manual de \"{itemName}\" foi aprovado e já está ativo no inventário."
+      },
+      "INVENTORY_ITEM_REJECTED": {
+        "title": "Item de inventário reprovado",
+        "body": "Seu cadastro manual de \"{itemName}\" foi reprovado. Motivo: {reason}"
+      }
     }
   }
 }

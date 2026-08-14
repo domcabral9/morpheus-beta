@@ -8,6 +8,7 @@ import { useRequireAuth } from "@/lib/use-require-auth";
 import { AppSidebar } from "@/components/app-sidebar";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notification-bell";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { CommandPalette } from "@/components/command-palette";
 import { Separator } from "@/components/ui/separator";
@@ -60,6 +61,7 @@ export function AppShell({
             </button>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <NotificationBell label={t("notificationBellLabel")} />
             <LocaleSwitcher label={t("localeSwitcherLabel")} />
             <ThemeToggle label={t("themeToggleLabel")} />
           </div>
