@@ -441,6 +441,9 @@ erDiagram
         string id PK
         string userId FK
         string type
+        json data "nullable, params de interpolacao i18n"
+        string title "nullable, legado pre-migracao bilingue"
+        string body "nullable, legado pre-migracao bilingue"
         bool isRead
     }
 ```

@@ -48,15 +48,14 @@ export class RenewalScheduler {
         renewalCycleStartedAt: now,
       });
 
-      const deadlineLabel = vencimentoEfetivo.toLocaleDateString("pt-BR");
+      const deadline = vencimentoEfetivo.toISOString();
       const requester = assessment.requester;
       if (requester.isActive) {
         await this.notificationsService.notify({
           tenantId: item.tenantId,
           userId: requester.id,
           type: "RENEWAL_PENDING",
-          title: `Renovação pendente: ${item.name}`,
-          body: `A homologação de "${item.name}" (${item.vendor}) venceu e entrou em ciclo de renovação. Prazo para revisar e reenviar: ${deadlineLabel}.`,
+          data: { itemName: item.name, vendor: item.vendor, deadline },
           relatedEntityType: "Assessment",
           relatedEntityId: assessment.id,
         });
@@ -66,9 +65,8 @@ export class RenewalScheduler {
         const adminRole = await this.repository.findAdministradorRoleId(item.tenantId);
         if (adminRole) {
           await this.notificationsService.notifyRole(item.tenantId, adminRole.id, {
-            type: "RENEWAL_PENDING",
-            title: `Renovação pendente (solicitante inativo): ${item.name}`,
-            body: `A homologação de "${item.name}" (${item.vendor}) entrou em ciclo de renovação, mas o solicitante original está inativo. Reatribua um novo solicitante. Prazo: ${deadlineLabel}.`,
+            type: "RENEWAL_PENDING_REQUESTER_INACTIVE",
+            data: { itemName: item.name, vendor: item.vendor, deadline },
             relatedEntityType: "Assessment",
             relatedEntityId: assessment.id,
           });
@@ -117,8 +115,7 @@ export class RenewalScheduler {
           tenantId: item.tenantId,
           userId,
           type: "RENEWAL_OVERDUE",
-          title: `Renovação vencida: ${item.name}`,
-          body: `O prazo de renovação de "${item.name}" (${item.vendor}) venceu sem resolução. A área está bloqueada para novas avaliações até que a renovação seja concluída.`,
+          data: { itemName: item.name, vendor: item.vendor },
           relatedEntityType: "SoftwareInventoryItem",
           relatedEntityId: item.id,
         });
@@ -128,8 +125,7 @@ export class RenewalScheduler {
       if (adminRole) {
         await this.notificationsService.notifyRole(item.tenantId, adminRole.id, {
           type: "RENEWAL_OVERDUE",
-          title: `Renovação vencida: ${item.name}`,
-          body: `O prazo de renovação de "${item.name}" (${item.vendor}) venceu sem resolução. A área está bloqueada para novas avaliações.`,
+          data: { itemName: item.name, vendor: item.vendor },
           relatedEntityType: "SoftwareInventoryItem",
           relatedEntityId: item.id,
         });

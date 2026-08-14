@@ -306,9 +306,8 @@ export class AssessmentsService {
     await this.notificationsService.notify({
       tenantId: user.tenantId,
       userId: dto.newRequesterId,
-      type: "RENEWAL_PENDING",
-      title: `Você foi designado solicitante da renovação: ${updated.softwareName}`,
-      body: `Um Administrador te atribuiu como solicitante do ciclo de renovação de "${updated.softwareName}" (${updated.vendor}). Revise e reenvie a avaliação.`,
+      type: "RENEWAL_REQUESTER_REASSIGNED",
+      data: { softwareName: updated.softwareName, vendor: updated.vendor },
       relatedEntityType: "Assessment",
       relatedEntityId: id,
     });

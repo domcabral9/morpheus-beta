@@ -140,7 +140,7 @@ describe("RenewalScheduler", () => {
     expect(notificationsService.notifyRole).toHaveBeenCalledWith(
       "tenant-1",
       "admin-role-1",
-      expect.objectContaining({ type: "RENEWAL_PENDING" }),
+      expect.objectContaining({ type: "RENEWAL_PENDING_REQUESTER_INACTIVE" }),
     );
   });
 
