@@ -42,8 +42,11 @@ export class InventoryReviewScheduler {
           tenantId: item.tenantId,
           userId,
           type: "HOMOLOGATION_EXPIRING",
-          title: `Revisão pendente: ${item.name}`,
-          body: `O item "${item.name}" (${item.vendor}) está com a revisão periódica vencendo em ${item.nextReviewDate.toLocaleDateString("pt-BR")}. Revise a homologação.`,
+          data: {
+            itemName: item.name,
+            vendor: item.vendor,
+            nextReviewDate: item.nextReviewDate.toISOString(),
+          },
           relatedEntityType: "SoftwareInventoryItem",
           relatedEntityId: item.id,
         });

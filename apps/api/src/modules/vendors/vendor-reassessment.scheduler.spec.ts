@@ -97,7 +97,7 @@ describe("VendorReassessmentScheduler", () => {
     expect(notificationsService.notifyRole).toHaveBeenCalledWith(
       "tenant-1",
       "admin-role-1",
-      expect.objectContaining({ type: "VENDOR_REASSESSMENT_DUE" }),
+      expect.objectContaining({ type: "VENDOR_REASSESSMENT_DUE_PERFORMER_INACTIVE" }),
     );
     expect(repo.markReassessmentNotified).toHaveBeenCalledWith("vendor-1", expect.any(Date));
   });
@@ -111,7 +111,7 @@ describe("VendorReassessmentScheduler", () => {
     expect(notificationsService.notifyRole).toHaveBeenCalledWith(
       "tenant-1",
       "admin-role-1",
-      expect.objectContaining({ type: "VENDOR_REASSESSMENT_DUE" }),
+      expect.objectContaining({ type: "VENDOR_REASSESSMENT_DUE_PERFORMER_INACTIVE" }),
     );
   });
 

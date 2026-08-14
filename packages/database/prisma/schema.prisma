@@ -1620,34 +1620,63 @@ model AuditLog {
 // =============================================================================
 
 enum NotificationType {
+  /// Assessment submetida/avançou de etapa - notifica quem responde pela próxima etapa.
   NEW_REQUEST
+  /// Assessment homologada (aprovação final do workflow).
   APPROVAL
+  /// Assessment reprovada numa etapa do workflow.
   REJECTION
   ADJUSTMENT_REQUEST
   HOMOLOGATION_EXPIRING
+  /// Nunca produzido por nenhum código hoje - achado da auditoria de capacidade
+  /// órfã (item 5), decisão de remover/reativar ainda em aberto. Não usado
+  /// pela feature de notificações UI/bilíngue.
   NEW_COMMENT
   OPINION_ISSUED
-  /// Ciclo de renovação anual começou (ou o solicitante foi reatribuído).
+  /// Ciclo de renovação anual começou, solicitante original ainda ativo.
   RENEWAL_PENDING
+  /// Mesmo gatilho de RENEWAL_PENDING, mas o solicitante original está
+  /// inativo - notifica o papel Administrador em vez do solicitante.
+  RENEWAL_PENDING_REQUESTER_INACTIVE
+  /// Administrador reatribuiu manualmente o solicitante de um ciclo de renovação.
+  RENEWAL_REQUESTER_REASSIGNED
   /// Prazo de renovação venceu sem resolução - item virou EXPIRED, área bloqueada.
   RENEWAL_OVERDUE
-  /// Reavaliação periódica de um fornecedor venceu (ver VendorReassessmentScheduler).
+  /// Reavaliação periódica de um fornecedor venceu, avaliador da última ART ainda ativo.
   VENDOR_REASSESSMENT_DUE
+  /// Mesmo gatilho de VENDOR_REASSESSMENT_DUE, mas o avaliador está inativo -
+  /// notifica o papel Administrador em vez dele.
+  VENDOR_REASSESSMENT_DUE_PERFORMER_INACTIVE
   /// Item de inventário manual enviado (ou reenviado) para o fluxo de
   /// aprovação dedicado - notifica quem tem `assessments:approve`. Desfechos
-  /// (aprovado/reprovado) reaproveitam APPROVAL/REJECTION acima.
+  /// usam INVENTORY_ITEM_APPROVED/INVENTORY_ITEM_REJECTED abaixo, não
+  /// APPROVAL/REJECTION (esses ficam só para Assessment).
   INVENTORY_APPROVAL_REQUESTED
+  /// Item de inventário manual aprovado no fluxo de aprovação dedicado.
+  INVENTORY_ITEM_APPROVED
+  /// Item de inventário manual reprovado no fluxo de aprovação dedicado.
+  INVENTORY_ITEM_REJECTED
 }
 
 model Notification {
-  id                String           @id @default(cuid())
-  tenantId          String
-  tenant            Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId            String
-  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type              NotificationType
-  title             String
-  body              String
+  id       String           @id @default(cuid())
+  tenantId String
+  tenant   Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type     NotificationType
+  /// Parâmetros estruturados de interpolação (ex. {softwareName, stepName}),
+  /// um formato por NotificationType - renderizado no client via next-intl,
+  /// mesmo padrão de round-trip (escrita/leitura tipada via cast) já usado em
+  /// SoftwareInventoryItem.exposureRawData. Nulo só em linhas legadas
+  /// pré-migração, que caem no fallback title/body abaixo.
+  data     Json?
+  /// Legado - conteúdo fixo em PT-BR, só para linhas anteriores à migração
+  /// para o modelo type+data bilíngue. Notificações novas não gravam mais
+  /// aqui (ficam null); o frontend usa como fallback de exibição quando
+  /// `data` for nulo.
+  title             String?
+  body              String?
   isRead            Boolean          @default(false)
   relatedEntityType String?
   relatedEntityId   String?

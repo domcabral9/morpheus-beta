@@ -201,8 +201,7 @@ export class TechnicalOpinionService {
       tenantId,
       userId: assessment.requester.id,
       type: "OPINION_ISSUED",
-      title: `Parecer técnico emitido: ${assessment.softwareName}`,
-      body: `O parecer técnico nº ${number} da avaliação "${assessment.softwareName}" (${classificationLabel}) já está disponível para download.`,
+      data: { softwareName: assessment.softwareName, number, classificationLabel },
       relatedEntityType: "TechnicalOpinion",
       relatedEntityId: opinion.id,
     });

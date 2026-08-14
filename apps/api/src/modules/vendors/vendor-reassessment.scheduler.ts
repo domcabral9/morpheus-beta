@@ -39,8 +39,11 @@ export class VendorReassessmentScheduler {
           tenantId: vendor.tenantId,
           userId: performer.id,
           type: "VENDOR_REASSESSMENT_DUE",
-          title: `Reavaliação pendente: ${vendor.name}`,
-          body: `A reavaliação de risco do fornecedor "${vendor.name}" (Tier ${vendor.currentTier} · ${vendor.currentTierLabel}) venceu. Inicie uma nova avaliação.`,
+          data: {
+            vendorName: vendor.name,
+            tier: vendor.currentTier as number,
+            tierLabel: vendor.currentTierLabel as string,
+          },
           relatedEntityType: "Vendor",
           relatedEntityId: vendor.id,
         });
@@ -51,9 +54,12 @@ export class VendorReassessmentScheduler {
         const adminRole = await this.repository.findAdministradorRoleId(vendor.tenantId);
         if (adminRole) {
           await this.notificationsService.notifyRole(vendor.tenantId, adminRole.id, {
-            type: "VENDOR_REASSESSMENT_DUE",
-            title: `Reavaliação pendente: ${vendor.name}`,
-            body: `A reavaliação de risco do fornecedor "${vendor.name}" (Tier ${vendor.currentTier} · ${vendor.currentTierLabel}) venceu. O responsável pela última avaliação está inativo - inicie uma nova avaliação ou reatribua.`,
+            type: "VENDOR_REASSESSMENT_DUE_PERFORMER_INACTIVE",
+            data: {
+              vendorName: vendor.name,
+              tier: vendor.currentTier as number,
+              tierLabel: vendor.currentTierLabel as string,
+            },
             relatedEntityType: "Vendor",
             relatedEntityId: vendor.id,
           });

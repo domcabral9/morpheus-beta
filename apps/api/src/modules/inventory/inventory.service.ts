@@ -405,9 +405,8 @@ export class InventoryService {
     await this.notificationsService.notify({
       tenantId: user.tenantId,
       userId: approvalRequest.requesterId,
-      type: "APPROVAL",
-      title: `Item de inventário aprovado: ${item.name}`,
-      body: `Seu cadastro manual de "${item.name}" foi aprovado e já está ativo no inventário.`,
+      type: "INVENTORY_ITEM_APPROVED",
+      data: { itemName: item.name },
       relatedEntityType: "SoftwareInventoryItem",
       relatedEntityId: id,
     });
@@ -445,9 +444,8 @@ export class InventoryService {
     await this.notificationsService.notify({
       tenantId: user.tenantId,
       userId: approvalRequest.requesterId,
-      type: "REJECTION",
-      title: `Item de inventário reprovado: ${item.name}`,
-      body: `Seu cadastro manual de "${item.name}" foi reprovado. Motivo: ${dto.notes}`,
+      type: "INVENTORY_ITEM_REJECTED",
+      data: { itemName: item.name, reason: dto.notes },
       relatedEntityType: "SoftwareInventoryItem",
       relatedEntityId: id,
     });
@@ -583,8 +581,7 @@ export class InventoryService {
       PERMISSIONS.ASSESSMENTS_APPROVE,
       {
         type: "INVENTORY_APPROVAL_REQUESTED",
-        title: `Novo item de inventário aguardando aprovação: ${itemName}`,
-        body: `"${itemName}" foi enviado para aprovação de cadastro manual no inventário.`,
+        data: { itemName },
         relatedEntityType: "SoftwareInventoryItem",
         relatedEntityId: itemId,
       },

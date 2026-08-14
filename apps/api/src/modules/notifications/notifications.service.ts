@@ -1,14 +1,18 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
-import { NotificationType } from "@morpheus/database";
 import { EMAIL_ADAPTER, EmailAdapter } from "./email.interface";
 import { NotificationsRepository } from "./notifications.repository";
+import {
+  NotificationDataByType,
+  renderNotificationEmailContent,
+} from "./notification-email-content.util";
 
-export interface NotifyInput {
+export interface NotifyInput<
+  T extends keyof NotificationDataByType = keyof NotificationDataByType,
+> {
   tenantId: string;
   userId: string;
-  type: NotificationType;
-  title: string;
-  body: string;
+  type: T;
+  data: NotificationDataByType[T];
   relatedEntityType?: string;
   relatedEntityId?: string;
 }
@@ -34,16 +38,13 @@ export class NotificationsService {
    * notificar (banco ou SMTP fora do ar) não pode derrubar a ação de negócio
    * que disparou a notificação.
    */
-  async notify(input: NotifyInput): Promise<void> {
+  async notify<T extends keyof NotificationDataByType>(input: NotifyInput<T>): Promise<void> {
     try {
       await this.repository.create(input);
       const user = await this.repository.findUserContact(input.userId);
       if (user?.isActive) {
-        await this.emailAdapter.send({
-          to: user.email,
-          subject: input.title,
-          html: `<p>${input.body}</p>`,
-        });
+        const { subject, body } = renderNotificationEmailContent(input.type, input.data);
+        await this.emailAdapter.send({ to: user.email, subject, html: `<p>${body}</p>` });
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -52,26 +53,26 @@ export class NotificationsService {
   }
 
   /** Notifica todos os usuários ativos que hoje possuem o papel informado. */
-  async notifyRole(
+  async notifyRole<T extends keyof NotificationDataByType>(
     tenantId: string,
     roleId: string,
-    data: Omit<NotifyInput, "tenantId" | "userId">,
+    data: Omit<NotifyInput<T>, "tenantId" | "userId">,
   ): Promise<void> {
     const users = await this.repository.findUsersByRole(roleId);
-    await Promise.all(users.map((user) => this.notify({ ...data, tenantId, userId: user.id })));
+    await Promise.all(users.map((user) => this.notify<T>({ ...data, tenantId, userId: user.id })));
   }
 
   /** Notifica todo usuário ativo do tenant que tenha, por qualquer papel, a
    * permissão informada - ver `NotificationsRepository.findUsersByPermission`
    * pra por que isto é diferente de `notifyRole` (aqui o conjunto de papéis
    * concedendo a permissão pode ser >1). */
-  async notifyPermissionHolders(
+  async notifyPermissionHolders<T extends keyof NotificationDataByType>(
     tenantId: string,
     permissionKey: string,
-    data: Omit<NotifyInput, "tenantId" | "userId">,
+    data: Omit<NotifyInput<T>, "tenantId" | "userId">,
   ): Promise<void> {
     const users = await this.repository.findUsersByPermission(tenantId, permissionKey);
-    await Promise.all(users.map((user) => this.notify({ ...data, tenantId, userId: user.id })));
+    await Promise.all(users.map((user) => this.notify<T>({ ...data, tenantId, userId: user.id })));
   }
 
   /**
@@ -95,5 +96,13 @@ export class NotificationsService {
 
   markAsRead(id: string, userId: string) {
     return this.repository.markAsRead(id, userId);
+  }
+
+  countUnread(userId: string) {
+    return this.repository.countUnread(userId);
+  }
+
+  markAllAsRead(userId: string) {
+    return this.repository.markAllAsRead(userId);
   }
 }

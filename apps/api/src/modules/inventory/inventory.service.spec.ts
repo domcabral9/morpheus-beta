@@ -618,7 +618,7 @@ describe("InventoryService", () => {
         expect.objectContaining({ action: "APPROVE", entityType: "InventoryApprovalRequest" }),
       );
       expect(notificationsService.notify).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: "user-2", type: "APPROVAL" }),
+        expect.objectContaining({ userId: "user-2", type: "INVENTORY_ITEM_APPROVED" }),
       );
     });
 
@@ -644,8 +644,10 @@ describe("InventoryService", () => {
       expect(notificationsService.notify).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: "user-2",
-          type: "REJECTION",
-          body: expect.stringContaining("Fornecedor sem contrato vigente"),
+          type: "INVENTORY_ITEM_REJECTED",
+          data: expect.objectContaining({
+            reason: expect.stringContaining("Fornecedor sem contrato vigente"),
+          }),
         }),
       );
     });
