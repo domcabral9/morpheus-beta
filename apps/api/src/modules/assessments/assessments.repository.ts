@@ -26,7 +26,7 @@ export type AnswerWithOptions = Prisma.AssessmentAnswerGetPayload<{
 }>;
 
 const versionWithDetailsInclude = {
-  createdBy: { select: { id: true, name: true, email: true } },
+  createdBy: { select: { id: true, name: true, email: true, avatarPath: true } },
   riskResult: { include: { riskClassification: true } },
   technicalOpinion: true,
 } satisfies Prisma.AssessmentVersionInclude;
