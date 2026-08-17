@@ -28,9 +28,10 @@ uma linha do que aconteceu.
   inventário (frescor de versão via endoflife.date + reputação de ameaça via VirusTotal, Fases 1-8,
   fecha o backlog, inclui um novo checklist padrão de dados de demonstração adotado até o fim do
   projeto), enriquecimento do parecer técnico (Contexto/Metodologia/Conformidade/Recomendações,
-  determinístico, Fases 1-4), `.gitattributes` novo forçando LF no checkout, e início do arco de
-  notificações (sino + página + conteúdo bilíngue - Fase 1 de 4, backend: modelo `type`+`data`
-  estruturado substituindo strings fixas em português, 2 endpoints novos).
+  determinístico, Fases 1-4), `.gitattributes` novo forçando LF no checkout, arco completo de
+  notificações (sino + página + conteúdo bilíngue, Fases 1-4), correção de screenshots quebrados/
+  regressão de tema claro no portfólio (com estrutura permanente de captura criada em resposta), e
+  histórico de versões da avaliação exposto na UI (item 2 da auditoria de capacidade órfã).
 - [**Julho**](./changelog/2026-07.md): Construção inicial do produto (roteiro técnico Etapas 1-16 +
   plano pós-roteiro Etapas A-I), multi-tenancy e administração avançada, backlog pós-uso, renovação
   anual de homologação, avaliação de risco de fornecedores, vínculo Inventory↔Vendor, SSDLC/CI, e

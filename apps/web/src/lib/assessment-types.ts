@@ -74,6 +74,22 @@ export interface AssessmentDetail extends AssessmentSummary {
   versions: Array<{ id: string; versionLabel: string; createdAt: string }>;
 }
 
+/** Item de `GET /assessments/:id/versions` - linha do tempo de submissões
+ * (uma por envio/reenvio/renovação), com o score e o parecer daquele
+ * momento específico, nunca recalculados retroativamente. */
+export interface AssessmentVersionDetail {
+  id: string;
+  versionLabel: string;
+  changeReason: string | null;
+  createdAt: string;
+  createdBy: { id: string; name: string; email: string; hasAvatar: boolean };
+  riskResult: {
+    totalScore: string;
+    riskClassification: { label: string };
+  } | null;
+  technicalOpinion: { id: string; number: string; classificationLabel: string } | null;
+}
+
 export interface AssessmentAnswer {
   id: string;
   questionId: string;
