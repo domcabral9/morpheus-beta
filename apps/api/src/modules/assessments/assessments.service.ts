@@ -22,7 +22,6 @@ import {
   AssessmentsRepository,
   AssessmentDetail,
   AnswerWithOptions,
-  VersionWithDetails,
 } from "./assessments.repository";
 import { CreateAssessmentDto } from "./dto/create-assessment.dto";
 import { UpdateAssessmentDto } from "./dto/update-assessment.dto";
@@ -251,10 +250,14 @@ export class AssessmentsService {
     return updated;
   }
 
-  async getVersionHistory(user: AuthenticatedUser, id: string): Promise<VersionWithDetails[]> {
+  async getVersionHistory(user: AuthenticatedUser, id: string) {
     const assessment = await this.getOwnedOrThrow(user.tenantId, id);
     this.assertCanView(user, assessment);
-    return this.assessmentsRepository.findVersionsWithDetails(id);
+    const versions = await this.assessmentsRepository.findVersionsWithDetails(id);
+    return versions.map((version) => ({
+      ...version,
+      createdBy: withHasAvatar(version.createdBy),
+    }));
   }
 
   /**

@@ -23,6 +23,7 @@ import type {
 } from "@/lib/assessment-types";
 import type { UserOption } from "@/lib/user-picker-types";
 import { WorkflowHistorySection } from "../_components/workflow-history-section";
+import { VersionHistorySection } from "../_components/version-history-section";
 import { ReassignRequesterCard } from "../_components/reassign-requester-card";
 
 type LocalAnswer = { textValue?: string; scaleValue?: number; selectedOptionIds?: string[] };
@@ -222,6 +223,8 @@ export default function AssessmentDetailPage() {
             )}
 
             <WorkflowHistorySection assessmentId={assessment.id} />
+
+            <VersionHistorySection assessmentId={assessment.id} />
 
             <h2 className="text-lg font-semibold tracking-tight">{t("questionnaire")}</h2>
 

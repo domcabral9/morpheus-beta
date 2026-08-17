@@ -556,15 +556,32 @@ describe("AssessmentsService", () => {
       );
     });
 
-    it("devolve a linha do tempo de versões para quem pode visualizar", async () => {
+    it("devolve a linha do tempo de versões para quem pode visualizar, sem vazar avatarPath cru", async () => {
       repo.findById.mockResolvedValue(makeAssessment());
       repo.findVersionsWithDetails.mockResolvedValue([
-        { id: "v1", versionLabel: "v1.0", riskResult: null, technicalOpinion: null },
+        {
+          id: "v1",
+          versionLabel: "v1.0",
+          createdBy: {
+            id: "user-1",
+            name: "Fulano",
+            email: "fulano@morpheus.demo",
+            avatarPath: "avatars/user-1.png",
+          },
+          riskResult: null,
+          technicalOpinion: null,
+        } as never,
       ]);
 
       const result = await service.getVersionHistory(makeUser(), "assessment-1");
 
       expect(result).toHaveLength(1);
+      expect(result[0]!.createdBy).toEqual({
+        id: "user-1",
+        name: "Fulano",
+        email: "fulano@morpheus.demo",
+        hasAvatar: true,
+      });
       expect(repo.findVersionsWithDetails).toHaveBeenCalledWith("assessment-1");
     });
   });
