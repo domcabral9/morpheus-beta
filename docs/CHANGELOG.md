@@ -30,8 +30,10 @@ uma linha do que aconteceu.
   projeto), enriquecimento do parecer técnico (Contexto/Metodologia/Conformidade/Recomendações,
   determinístico, Fases 1-4), `.gitattributes` novo forçando LF no checkout, arco completo de
   notificações (sino + página + conteúdo bilíngue, Fases 1-4), correção de screenshots quebrados/
-  regressão de tema claro no portfólio (com estrutura permanente de captura criada em resposta), e
-  histórico de versões da avaliação exposto na UI (item 2 da auditoria de capacidade órfã).
+  regressão de tema claro no portfólio (com estrutura permanente de captura criada em resposta),
+  histórico de versões da avaliação exposto na UI (item 2 da auditoria de capacidade órfã), e novos
+  critérios de auditoria externa no assessment de software (SOC 2, ISO 27001, DPIA/LGPD, Fases 1-5),
+  com painel de reaproveitamento na ART do fornecedor pra não pedir o mesmo documento de novo.
 - [**Julho**](./changelog/2026-07.md): Construção inicial do produto (roteiro técnico Etapas 1-16 +
   plano pós-roteiro Etapas A-I), multi-tenancy e administração avançada, backlog pós-uso, renovação
   anual de homologação, avaliação de risco de fornecedores, vínculo Inventory↔Vendor, SSDLC/CI, e
