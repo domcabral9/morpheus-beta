@@ -376,7 +376,47 @@ describe("WorkflowService", () => {
         ).resolves.toBeDefined();
       });
 
-      it("não bloqueia SKIP mesmo com fornecedor incompleto (pular etapa opcional não é aprovar)", async () => {
+      it("bloqueia SKIP quando o fornecedor vinculado está incompleto (achado da revisão de segurança: SKIP na última etapa elegível finaliza a avaliação como APPROVED do mesmo jeito que APPROVE)", async () => {
+        repo.findStepExecutionById.mockResolvedValueOnce(
+          makeExecution({
+            workflowStep: {
+              id: "step-4",
+              order: 4,
+              isOptional: true,
+              responsibleRoleId: "role-juridico",
+              responsibleRole: { name: "Jurídico" },
+            },
+            assessmentWorkflowInstance: {
+              workflowDefinitionId: "def-1",
+              assessment: {
+                id: "assessment-1",
+                tenantId: "tenant-1",
+                requesterId: "requester-1",
+                softwareName: "Sistema X",
+                status: "IN_REVIEW",
+                vendorId: "vendor-1",
+                linkedVendor: {
+                  id: "vendor-1",
+                  name: "Fornecedor Teste",
+                  legalName: null,
+                  taxId: null,
+                  businessCriticality: null,
+                },
+              },
+            },
+          }),
+        );
+        repo.findUserRoleIds.mockResolvedValue(["role-juridico"]);
+
+        await expect(
+          service.decideStep(makeUser(), "exec-1", { decision: "SKIP" }),
+        ).rejects.toMatchObject({
+          response: expect.objectContaining({ error: "VENDOR_DATA_INCOMPLETE" }),
+        });
+        expect(repo.updateStepExecution).not.toHaveBeenCalled();
+      });
+
+      it("aceita SKIP normalmente quando o fornecedor vinculado está completo", async () => {
         repo.findStepExecutionById
           .mockResolvedValueOnce(
             makeExecution({
@@ -399,9 +439,9 @@ describe("WorkflowService", () => {
                   linkedVendor: {
                     id: "vendor-1",
                     name: "Fornecedor Teste",
-                    legalName: null,
-                    taxId: null,
-                    businessCriticality: null,
+                    legalName: "Fornecedor Teste Ltda",
+                    taxId: "12.345.678/0001-90",
+                    businessCriticality: "MEDIUM",
                   },
                 },
               },
