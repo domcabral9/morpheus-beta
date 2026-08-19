@@ -861,6 +861,16 @@ model Assessment {
   /// Mesma lógica de `hasRiskAnalysis`, mas para a cláusula de segurança da
   /// informação assinada com o fornecedor.
   hasInfoSecClause      Boolean          @default(false)
+  /// Mesma lógica de `hasRiskAnalysis`, para o Relatório SOC 2 - ao contrário
+  /// de `hasRiskAnalysis`/`hasInfoSecClause`, este campo é enforced: se
+  /// `true`, `AssessmentsService.submit()` exige que já exista um
+  /// `Attachment` desta avaliação com `category: SOC2_REPORT` antes de
+  /// permitir o envio (a categoria já existia no enum, mas nunca teve
+  /// nenhuma regra de negócio ligada a ela até aqui).
+  hasSoc2Report         Boolean          @default(false)
+  /// Mesma lógica de `hasSoc2Report`, para o certificado ISO 27001
+  /// (`AttachmentCategory.ISO27001_CERTIFICATE`).
+  hasIso27001Certificate Boolean         @default(false)
   /// Prazo (data+hora) pra resolver um ciclo de renovação em andamento - nulo
   /// exceto durante `status = PENDING_RENEWAL`. Já vem ajustado pela janela de
   /// fechamento anual do tenant (ver RenewalScheduler); vencido sem aprovação,
