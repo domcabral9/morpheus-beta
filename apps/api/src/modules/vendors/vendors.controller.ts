@@ -66,6 +66,13 @@ export class VendorsController {
     return this.vendorsService.getVendorHistory(user, id);
   }
 
+  /** Painel de reaproveitamento na ART: avaliações de Software deste
+   * fornecedor que já declararam SOC 2/ISO 27001. */
+  @Get(":id/compliance-evidence")
+  getComplianceEvidence(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.vendorsService.getComplianceEvidence(user, id);
+  }
+
   @Get(":id/assessments/:assessmentId")
   getAssessment(
     @CurrentUser() user: AuthenticatedUser,

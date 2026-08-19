@@ -77,6 +77,19 @@ export class CreateAssessmentDto {
   })
   @IsBoolean()
   hasInfoSecClause!: boolean;
+
+  @ApiProperty({
+    description:
+      "Existe Relatório SOC 2? Declaração do solicitante - se true, um anexo na categoria SOC2_REPORT é exigido antes do envio para análise.",
+  })
+  @IsBoolean()
+  hasSoc2Report!: boolean;
+
+  @ApiProperty({
+    description: "Mesma regra de `hasSoc2Report`, para o certificado ISO 27001.",
+  })
+  @IsBoolean()
+  hasIso27001Certificate!: boolean;
 }
 
 export { CRITICALITY_VALUES };

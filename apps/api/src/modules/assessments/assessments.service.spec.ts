@@ -10,6 +10,7 @@ import { WorkflowService } from "../workflow/workflow.service";
 import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { VendorsService } from "../vendors/vendors.service";
+import { AttachmentsRepository } from "../attachments/attachments.repository";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 
 function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
@@ -73,10 +74,11 @@ describe("AssessmentsService", () => {
   let usersService: { findById: jest.Mock };
   let questionnaireService: { getCategories: jest.Mock };
   let riskEvaluationService: { evaluate: jest.Mock };
-  let workflowService: { startWorkflow: jest.Mock };
+  let workflowService: { startWorkflow: jest.Mock; involvesLgpd: jest.Mock };
   let auditLogService: { record: jest.Mock };
   let notificationsService: { notify: jest.Mock };
   let vendorsService: { findByIdForTenant: jest.Mock };
+  let attachmentsRepository: { findMany: jest.Mock };
 
   beforeEach(async () => {
     repo = {
@@ -100,10 +102,14 @@ describe("AssessmentsService", () => {
     };
     questionnaireService = { getCategories: jest.fn().mockResolvedValue([]) };
     riskEvaluationService = { evaluate: jest.fn().mockResolvedValue({ id: "risk-result-1" }) };
-    workflowService = { startWorkflow: jest.fn().mockResolvedValue(undefined) };
+    workflowService = {
+      startWorkflow: jest.fn().mockResolvedValue(undefined),
+      involvesLgpd: jest.fn().mockResolvedValue(false),
+    };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
     notificationsService = { notify: jest.fn().mockResolvedValue(undefined) };
     vendorsService = { findByIdForTenant: jest.fn() };
+    attachmentsRepository = { findMany: jest.fn().mockResolvedValue([]) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -117,6 +123,7 @@ describe("AssessmentsService", () => {
         { provide: AuditLogService, useValue: auditLogService },
         { provide: NotificationsService, useValue: notificationsService },
         { provide: VendorsService, useValue: vendorsService },
+        { provide: AttachmentsRepository, useValue: attachmentsRepository },
       ],
     }).compile();
 
@@ -496,6 +503,57 @@ describe("AssessmentsService", () => {
           entityId: "assessment-1",
         }),
       );
+    });
+  });
+
+  describe("submit (evidência de conformidade: SOC 2/ISO 27001/DPIA)", () => {
+    it("bloqueia envio se hasSoc2Report=true e nenhum anexo SOC2_REPORT existir", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ hasSoc2Report: true } as never));
+
+      await expect(service.submit(makeUser(), "assessment-1")).rejects.toThrow(BadRequestException);
+      expect(repo.createVersion).not.toHaveBeenCalled();
+    });
+
+    it("permite envio se hasSoc2Report=true e o anexo SOC2_REPORT já existir", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ hasSoc2Report: true } as never));
+      repo.update.mockResolvedValue(makeAssessment({ status: "IN_REVIEW" } as never));
+      attachmentsRepository.findMany.mockResolvedValue([{ category: "SOC2_REPORT" }]);
+
+      const result = await service.submit(makeUser(), "assessment-1");
+      expect(result.status).toBe("IN_REVIEW");
+    });
+
+    it("bloqueia envio se hasIso27001Certificate=true e nenhum anexo ISO27001_CERTIFICATE existir", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ hasIso27001Certificate: true } as never));
+      attachmentsRepository.findMany.mockResolvedValue([{ category: "SOC2_REPORT" }]);
+
+      await expect(service.submit(makeUser(), "assessment-1")).rejects.toThrow(BadRequestException);
+    });
+
+    it("bloqueia envio se a avaliação envolve LGPD e nenhum anexo DPIA existir", async () => {
+      repo.findById.mockResolvedValue(makeAssessment());
+      workflowService.involvesLgpd.mockResolvedValue(true);
+
+      await expect(service.submit(makeUser(), "assessment-1")).rejects.toThrow(BadRequestException);
+      expect(repo.createVersion).not.toHaveBeenCalled();
+    });
+
+    it("permite envio se a avaliação envolve LGPD e o anexo DPIA já existir", async () => {
+      repo.findById.mockResolvedValue(makeAssessment());
+      repo.update.mockResolvedValue(makeAssessment({ status: "IN_REVIEW" } as never));
+      workflowService.involvesLgpd.mockResolvedValue(true);
+      attachmentsRepository.findMany.mockResolvedValue([{ category: "DPIA" }]);
+
+      const result = await service.submit(makeUser(), "assessment-1");
+      expect(result.status).toBe("IN_REVIEW");
+    });
+
+    it("não bloqueia o caminho feliz de hoje (nenhum critério declarado, LGPD não envolvida)", async () => {
+      repo.findById.mockResolvedValue(makeAssessment());
+      repo.update.mockResolvedValue(makeAssessment({ status: "IN_REVIEW" } as never));
+
+      const result = await service.submit(makeUser(), "assessment-1");
+      expect(result.status).toBe("IN_REVIEW");
     });
   });
 

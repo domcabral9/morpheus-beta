@@ -110,6 +110,7 @@ describe("VendorsService", () => {
     updateAssessment: jest.Mock;
     findAssessmentById: jest.Mock;
     replaceAnswers: jest.Mock;
+    findComplianceEvidence: jest.Mock;
   };
   let auditLogService: { record: jest.Mock };
 
@@ -133,6 +134,7 @@ describe("VendorsService", () => {
         .mockImplementation((id, data) => Promise.resolve({ id, ...data })),
       findAssessmentById: jest.fn(),
       replaceAnswers: jest.fn().mockResolvedValue(undefined),
+      findComplianceEvidence: jest.fn().mockResolvedValue([]),
     };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
 
@@ -157,6 +159,34 @@ describe("VendorsService", () => {
     it("retorna o fornecedor quando encontrado", async () => {
       repo.findById.mockResolvedValue(VENDOR);
       await expect(service.getVendor(makeUser(), "vendor-1")).resolves.toEqual(VENDOR);
+    });
+  });
+
+  describe("getComplianceEvidence", () => {
+    it("lança NotFoundException quando o fornecedor não existe no tenant (isolamento)", async () => {
+      repo.findById.mockResolvedValue(null);
+      await expect(
+        service.getComplianceEvidence(makeUser(), "vendor-de-outro-tenant"),
+      ).rejects.toThrow(NotFoundException);
+      expect(repo.findComplianceEvidence).not.toHaveBeenCalled();
+    });
+
+    it("devolve as avaliações de software com SOC 2/ISO 27001 declarados para o fornecedor", async () => {
+      repo.findById.mockResolvedValue(VENDOR);
+      const evidence = [
+        {
+          id: "assessment-1",
+          softwareName: "Confluence Cloud",
+          hasSoc2Report: true,
+          hasIso27001Certificate: false,
+        },
+      ];
+      repo.findComplianceEvidence.mockResolvedValue(evidence);
+
+      const result = await service.getComplianceEvidence(makeUser(), "vendor-1");
+
+      expect(repo.findComplianceEvidence).toHaveBeenCalledWith("tenant-1", "vendor-1");
+      expect(result).toEqual(evidence);
     });
   });
 
