@@ -50,6 +50,8 @@ export default function NewAssessmentPage() {
   const [justification, setJustification] = React.useState("");
   const [hasRiskAnalysis, setHasRiskAnalysis] = React.useState(false);
   const [hasInfoSecClause, setHasInfoSecClause] = React.useState(false);
+  const [hasSoc2Report, setHasSoc2Report] = React.useState(false);
+  const [hasIso27001Certificate, setHasIso27001Certificate] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [duplicateMatch, setDuplicateMatch] = React.useState<InventoryDuplicateMatch | null>(null);
@@ -124,6 +126,8 @@ export default function NewAssessmentPage() {
         justification,
         hasRiskAnalysis,
         hasInfoSecClause,
+        hasSoc2Report,
+        hasIso27001Certificate,
       });
       router.push(`/assessments/${created.id}`);
     } catch (err) {
@@ -255,7 +259,28 @@ export default function NewAssessmentPage() {
                     {t("hasInfoSecClauseLabel")}
                   </Label>
                 </div>
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="hasSoc2Report"
+                    checked={hasSoc2Report}
+                    onCheckedChange={(checked) => setHasSoc2Report(checked === true)}
+                  />
+                  <Label htmlFor="hasSoc2Report" className="font-normal">
+                    {t("hasSoc2ReportLabel")}
+                  </Label>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="hasIso27001Certificate"
+                    checked={hasIso27001Certificate}
+                    onCheckedChange={(checked) => setHasIso27001Certificate(checked === true)}
+                  />
+                  <Label htmlFor="hasIso27001Certificate" className="font-normal">
+                    {t("hasIso27001CertificateLabel")}
+                  </Label>
+                </div>
                 <p className="text-xs text-muted-foreground">{t("vendorComplianceHint")}</p>
+                <p className="text-xs text-muted-foreground">{t("complianceEvidenceHint")}</p>
               </div>
 
               <div className="flex flex-col gap-2">

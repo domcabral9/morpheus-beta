@@ -143,6 +143,34 @@ export function DecisionDialog({ execution, onOpenChange, onDecided }: DecisionD
                   : t("no")}
               </Badge>
             </span>
+            <span className="flex items-center gap-2">
+              {t("hasSoc2Report")}
+              <Badge
+                variant={
+                  execution.assessmentWorkflowInstance.assessment.hasSoc2Report
+                    ? "success"
+                    : "destructive"
+                }
+              >
+                {execution.assessmentWorkflowInstance.assessment.hasSoc2Report
+                  ? t("yes")
+                  : t("no")}
+              </Badge>
+            </span>
+            <span className="flex items-center gap-2">
+              {t("hasIso27001Certificate")}
+              <Badge
+                variant={
+                  execution.assessmentWorkflowInstance.assessment.hasIso27001Certificate
+                    ? "success"
+                    : "destructive"
+                }
+              >
+                {execution.assessmentWorkflowInstance.assessment.hasIso27001Certificate
+                  ? t("yes")
+                  : t("no")}
+              </Badge>
+            </span>
             {vendorTier && (
               <span className="flex items-center gap-2">
                 {t("vendorTierLabel")}

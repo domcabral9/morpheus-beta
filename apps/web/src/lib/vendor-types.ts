@@ -112,3 +112,13 @@ export interface VendorAssessmentDetail extends VendorAssessmentSummary {
   vendor: VendorSummary;
   answers: VendorAnswer[];
 }
+
+/** Item de `GET /vendors/:id/compliance-evidence` - avaliação de Software
+ * deste fornecedor que já declarou SOC 2/ISO 27001 (com anexo validado no
+ * envio), pra não pedir o mesmo documento de novo numa ART. */
+export interface VendorComplianceEvidence {
+  id: string;
+  softwareName: string;
+  hasSoc2Report: boolean;
+  hasIso27001Certificate: boolean;
+}

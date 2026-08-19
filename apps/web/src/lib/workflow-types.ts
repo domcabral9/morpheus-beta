@@ -42,6 +42,8 @@ export interface InboxStepExecution {
       requester: { id: string; name: string; hasAvatar: boolean };
       hasRiskAnalysis: boolean;
       hasInfoSecClause: boolean;
+      hasSoc2Report: boolean;
+      hasIso27001Certificate: boolean;
       vendorId: string | null;
       linkedVendor: {
         id: string;
