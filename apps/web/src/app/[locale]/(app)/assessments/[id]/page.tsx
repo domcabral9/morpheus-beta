@@ -13,6 +13,8 @@ import { Link } from "@/i18n/navigation";
 import { AssessmentStatusBadge } from "@/components/assessment-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { QuestionnaireForm } from "@/components/questionnaire-form";
 import { AttachmentsPanel } from "@/components/attachments-panel";
@@ -42,6 +44,8 @@ export default function AssessmentDetailPage() {
   const [assessment, setAssessment] = React.useState<AssessmentDetail | null>(null);
   const [categories, setCategories] = React.useState<QuestionCategory[] | null>(null);
   const [answers, setAnswers] = React.useState<Record<string, LocalAnswer>>({});
+  const [hasSoc2Report, setHasSoc2Report] = React.useState(false);
+  const [hasIso27001Certificate, setHasIso27001Certificate] = React.useState(false);
   const [tenantUsers, setTenantUsers] = React.useState<UserOption[]>([]);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
@@ -56,6 +60,8 @@ export default function AssessmentDetailPage() {
       api.get<AssessmentAnswer[]>(`/assessments/${params.id}/answers`),
     ]);
     setAssessment(assessmentResult);
+    setHasSoc2Report(assessmentResult.hasSoc2Report);
+    setHasIso27001Certificate(assessmentResult.hasIso27001Certificate);
     setCategories(categoriesResult);
     const initial: Record<string, LocalAnswer> = {};
     for (const answer of answersResult) {
@@ -108,12 +114,19 @@ export default function AssessmentDetailPage() {
     };
   }
 
+  function complianceEvidencePayload() {
+    return { hasSoc2Report, hasIso27001Certificate };
+  }
+
   async function handleSave() {
     setActionError(null);
     setActionMessage(null);
     setSaving(true);
     try {
-      await api.put(`/assessments/${params.id}/answers`, buildPayload());
+      await Promise.all([
+        api.put(`/assessments/${params.id}/answers`, buildPayload()),
+        api.patch(`/assessments/${params.id}`, complianceEvidencePayload()),
+      ]);
       setActionMessage(t("saveSuccess"));
     } catch (err) {
       setActionError(err instanceof ApiError ? err.message : t("saveError"));
@@ -127,7 +140,10 @@ export default function AssessmentDetailPage() {
     setActionMessage(null);
     setSubmitting(true);
     try {
-      await api.put(`/assessments/${params.id}/answers`, buildPayload());
+      await Promise.all([
+        api.put(`/assessments/${params.id}/answers`, buildPayload()),
+        api.patch(`/assessments/${params.id}`, complianceEvidencePayload()),
+      ]);
       const updated = await api.post<AssessmentDetail>(`/assessments/${params.id}/submit`);
       setAssessment(updated);
       setActionMessage(t("submitSuccess"));
@@ -195,6 +211,49 @@ export default function AssessmentDetailPage() {
                     {assessment.hasInfoSecClause ? t("yes") : t("no")}
                   </Badge>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">{t("hasSoc2Report")}: </span>
+                  {isEditable ? (
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="hasSoc2Report"
+                        checked={hasSoc2Report}
+                        onCheckedChange={(checked) => setHasSoc2Report(checked === true)}
+                      />
+                      <Label htmlFor="hasSoc2Report" className="font-normal">
+                        {t("yes")}
+                      </Label>
+                    </div>
+                  ) : (
+                    <Badge variant={assessment.hasSoc2Report ? "success" : "destructive"}>
+                      {assessment.hasSoc2Report ? t("yes") : t("no")}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">{t("hasIso27001Certificate")}: </span>
+                  {isEditable ? (
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="hasIso27001Certificate"
+                        checked={hasIso27001Certificate}
+                        onCheckedChange={(checked) => setHasIso27001Certificate(checked === true)}
+                      />
+                      <Label htmlFor="hasIso27001Certificate" className="font-normal">
+                        {t("yes")}
+                      </Label>
+                    </div>
+                  ) : (
+                    <Badge variant={assessment.hasIso27001Certificate ? "success" : "destructive"}>
+                      {assessment.hasIso27001Certificate ? t("yes") : t("no")}
+                    </Badge>
+                  )}
+                </div>
+                {isEditable && (
+                  <p className="text-xs text-muted-foreground sm:col-span-2">
+                    {t("complianceEvidenceHint")}
+                  </p>
+                )}
                 <div className="sm:col-span-2">
                   <span className="text-muted-foreground">{t("justification")}: </span>
                   {assessment.justification}
