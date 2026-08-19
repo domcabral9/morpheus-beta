@@ -32,6 +32,8 @@ export interface OpinionPdfAttachment {
 export interface OpinionPdfVendorCompliance {
   hasRiskAnalysis: boolean;
   hasInfoSecClause: boolean;
+  hasSoc2Report: boolean;
+  hasIso27001Certificate: boolean;
   /** `tier`/`tierLabel` nulos quando o fornecedor está vinculado mas ainda
    * não tem nenhuma avaliação de risco concluída (`Vendor.currentTier`
    * nasce nulo). */

@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsIn, IsOptional, IsString, IsUrl, Matches, MinLength } from "class-validator";
+import { IsBoolean, IsIn, IsOptional, IsString, IsUrl, Matches, MinLength } from "class-validator";
 import { CRITICALITY_VALUES } from "./create-assessment.dto";
 
 const SHA256_HEX_PATTERN = /^[a-fA-F0-9]{64}$/;
@@ -67,4 +67,17 @@ export class UpdateAssessmentDto {
     message: "installerFileHash deve ser um SHA-256 hexadecimal válido",
   })
   installerFileHash?: string;
+
+  @ApiPropertyOptional({
+    description:
+      "Diferente de hasRiskAnalysis/hasInfoSecClause, este campo é editável após a criação - o anexo de evidência só pode existir depois que a avaliação já tem um id.",
+  })
+  @IsOptional()
+  @IsBoolean()
+  hasSoc2Report?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  hasIso27001Certificate?: boolean;
 }

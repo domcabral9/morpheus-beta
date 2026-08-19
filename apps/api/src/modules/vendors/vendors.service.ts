@@ -64,6 +64,14 @@ export class VendorsService {
     return this.repository.findForTracking(user.tenantId, new Date(), TRACKING_DUE_SOON_DAYS);
   }
 
+  /** Painel de reaproveitamento na ART: avaliações de Software deste
+   * fornecedor que já declararam SOC 2/ISO 27001, pra não pedir o mesmo
+   * documento de novo. */
+  async getComplianceEvidence(user: AuthenticatedUser, id: string) {
+    await this.getVendor(user, id);
+    return this.repository.findComplianceEvidence(user.tenantId, id);
+  }
+
   createVendor(user: AuthenticatedUser, dto: CreateVendorDto) {
     return this.repository.create({
       tenantId: user.tenantId,

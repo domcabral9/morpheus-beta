@@ -82,6 +82,15 @@ export class WorkflowService {
    * vez de criar outra - reenvios voltam para a primeira etapa elegível,
    * preservando o histórico das execuções anteriores (nenhuma é apagada).
    */
+  /**
+   * Mesmo sinal usado internamente por `startWorkflow` pra decidir se a etapa
+   * do DPO entra no fluxo - exposto publicamente pro gate de evidência de
+   * DPIA em `AssessmentsService.submit()`, sem duplicar a query.
+   */
+  async involvesLgpd(assessmentId: string): Promise<boolean> {
+    return (await this.workflowRepository.countLgpdTriggers(assessmentId)) > 0;
+  }
+
   async startWorkflow(tenantId: string, assessmentId: string): Promise<void> {
     const definition = await this.workflowRepository.findActiveDefaultDefinition(tenantId);
     if (!definition) {
@@ -95,7 +104,7 @@ export class WorkflowService {
       );
     }
 
-    const involvesLgpd = (await this.workflowRepository.countLgpdTriggers(assessmentId)) > 0;
+    const involvesLgpd = await this.involvesLgpd(assessmentId);
     const firstStep = this.firstEligibleStep(definition.steps, involvesLgpd);
     if (!firstStep) {
       throw new UnprocessableEntityException(

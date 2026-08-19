@@ -156,6 +156,12 @@ export class PdfGeneratorService {
       "Cláusula de segurança da informação",
       data.vendorCompliance.hasInfoSecClause ? "Sim" : "Não",
     );
+    this.keyValue(doc, "Relatório SOC 2", data.vendorCompliance.hasSoc2Report ? "Sim" : "Não");
+    this.keyValue(
+      doc,
+      "Certificado ISO 27001",
+      data.vendorCompliance.hasIso27001Certificate ? "Sim" : "Não",
+    );
     if (data.vendorCompliance.linkedVendor) {
       const { name, tier, tierLabel } = data.vendorCompliance.linkedVendor;
       const tierText =
