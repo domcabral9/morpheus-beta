@@ -97,6 +97,23 @@ export class VendorsService {
     return this.repository.findById(tenantId, id);
   }
 
+  /** Usado pelo AssessmentsService pra decidir se um fornecedor criado junto
+   * com uma Assessment em rascunho ainda está órfão o suficiente pra ser
+   * excluído junto (ver `AssessmentsService.resolveOrphanVendor`). */
+  countVendorAssessments(vendorId: string): Promise<number> {
+    return this.repository.countAssessments(vendorId);
+  }
+
+  /** Hard delete de verdade - não é o toggle `isActive`. Só chamado quando o
+   * chamador já confirmou que o fornecedor nunca foi usado em lugar nenhum
+   * (nenhuma outra Assessment, nenhuma VendorAssessment) - re-verifica posse
+   * de tenant antes de apagar, mesma defesa em profundidade já usada em
+   * `getVendor`. */
+  async removeVendor(user: AuthenticatedUser, id: string): Promise<void> {
+    await this.getVendor(user, id);
+    await this.repository.remove(id);
+  }
+
   async getVendorHistory(user: AuthenticatedUser, vendorId: string) {
     await this.getVendor(user, vendorId);
     const history = await this.repository.findAssessmentHistory(user.tenantId, vendorId);
