@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination } from "@/components/ui/pagination";
-import type { PaginatedVendors } from "@/lib/vendor-types";
+import { isVendorComplete, type PaginatedVendors } from "@/lib/vendor-types";
 import { TierBadge } from "@/components/tier-badge";
 import { VendorFormDialog } from "./vendor-form-dialog";
 
@@ -129,6 +129,11 @@ export function VendorListView({ canManage }: VendorListViewProps) {
                         {!vendor.isActive && (
                           <Badge variant="outline" className="ml-2 text-[10px]">
                             {t("inactiveBadge")}
+                          </Badge>
+                        )}
+                        {!isVendorComplete(vendor) && (
+                          <Badge variant="secondary" className="ml-2 text-[10px]">
+                            {t("incompleteBadge")}
                           </Badge>
                         )}
                       </TableCell>

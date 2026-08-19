@@ -104,6 +104,8 @@
     "yes": "Yes",
     "no": "No",
     "vendorComplianceReminder": "Self-declared by the requester - confirm the document exists outside the system before approving.",
+    "vendorDataIncompleteWarning": "This vendor's registration is incomplete (missing legal name, tax ID, or business criticality) - approval will be blocked until it's completed.",
+    "vendorDataIncompleteLink": "Complete registration",
     "decisionLabel": "Decision",
     "decisions": {
       "APPROVE": "Approve",
@@ -1192,7 +1194,19 @@
     "reassignSubmit": "Reassign",
     "reassignSubmitting": "Reassigning...",
     "reassignSuccess": "Requester reassigned.",
-    "reassignError": "Could not reassign the requester."
+    "reassignError": "Could not reassign the requester.",
+    "deleteDraftButton": "Delete draft",
+    "deleteDialogTitle": "Delete draft",
+    "deleteDialogDescription": "This action cannot be undone. The assessment and its answers will be permanently deleted.",
+    "deleteLoading": "Checking...",
+    "deleteLoadError": "Could not check this deletion.",
+    "deleteVendorChoiceLabel": "This vendor was created alongside this assessment and isn't used anywhere else yet. What would you like to do?",
+    "deleteAssessmentOnly": "Delete only the assessment",
+    "deleteAssessmentAndVendor": "Delete the assessment and the vendor \"{name}\"",
+    "deleteConfirm": "Delete",
+    "deleting": "Deleting...",
+    "deleteSuccess": "Draft deleted.",
+    "deleteError": "Could not delete this assessment."
   },
   "Vendors": {
     "title": "Vendors",
@@ -1221,6 +1235,7 @@
     "searchPlaceholder": "Search by name...",
     "empty": "No vendors registered yet.",
     "inactiveBadge": "Inactive",
+    "incompleteBadge": "Incomplete registration",
     "neverAssessed": "Never assessed",
     "columnName": "Name",
     "columnCriticality": "Criticality",
@@ -1447,6 +1462,14 @@
       "INVENTORY_ITEM_REJECTED": {
         "title": "Inventory item rejected",
         "body": "Your manual entry for \"{itemName}\" was rejected. Reason: {reason}"
+      },
+      "VENDOR_DATA_INCOMPLETE": {
+        "title": "Assessment pending - update vendor data",
+        "body": "The assessment \"{softwareName}\" is awaiting approval, but the vendor \"{vendorName}\" has an incomplete registration. Complete it in /vendors to unblock approval."
+      },
+      "VENDOR_DATA_INCOMPLETE_BLOCKS_APPROVAL": {
+        "title": "Assessment awaiting vendor data",
+        "body": "The assessment \"{softwareName}\" cannot be approved because the vendor \"{vendorName}\" has an incomplete registration."
       }
     }
   }
