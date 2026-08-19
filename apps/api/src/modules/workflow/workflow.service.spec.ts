@@ -305,6 +305,118 @@ describe("WorkflowService", () => {
       );
     });
 
+    describe("gate de completude cadastral do fornecedor", () => {
+      function makeExecutionWithVendor(vendor: Record<string, unknown> | null) {
+        return makeExecution({
+          assessmentWorkflowInstance: {
+            workflowDefinitionId: "def-1",
+            assessment: {
+              id: "assessment-1",
+              tenantId: "tenant-1",
+              requesterId: "requester-1",
+              softwareName: "Sistema X",
+              status: "IN_REVIEW",
+              vendorId: vendor ? "vendor-1" : null,
+              linkedVendor: vendor,
+            },
+          },
+        });
+      }
+
+      it("bloqueia APPROVE quando o fornecedor vinculado está incompleto", async () => {
+        repo.findStepExecutionById.mockResolvedValue(
+          makeExecutionWithVendor({
+            id: "vendor-1",
+            name: "Fornecedor Teste",
+            legalName: null,
+            taxId: null,
+            businessCriticality: null,
+          }),
+        );
+        repo.findUserRoleIds.mockResolvedValue(["role-gestor"]);
+
+        await expect(
+          service.decideStep(makeUser(), "exec-1", { decision: "APPROVE" }),
+        ).rejects.toMatchObject({
+          response: expect.objectContaining({ error: "VENDOR_DATA_INCOMPLETE" }),
+        });
+        expect(repo.updateStepExecution).not.toHaveBeenCalled();
+      });
+
+      it("aceita APPROVE quando o fornecedor vinculado está completo", async () => {
+        repo.findStepExecutionById
+          .mockResolvedValueOnce(
+            makeExecutionWithVendor({
+              id: "vendor-1",
+              name: "Fornecedor Teste",
+              legalName: "Fornecedor Teste Ltda",
+              taxId: "12.345.678/0001-90",
+              businessCriticality: "MEDIUM",
+            }),
+          )
+          .mockResolvedValueOnce(makeExecutionWithVendor(null));
+        repo.findUserRoleIds.mockResolvedValue(["role-gestor"]);
+        repo.findDefinitionById.mockResolvedValue({ steps });
+
+        await expect(
+          service.decideStep(makeUser(), "exec-1", { decision: "APPROVE" }),
+        ).resolves.toBeDefined();
+        expect(repo.updateStepExecution).toHaveBeenCalled();
+      });
+
+      it("aceita APPROVE normalmente quando não há fornecedor vinculado (vendorId nulo)", async () => {
+        repo.findStepExecutionById
+          .mockResolvedValueOnce(makeExecutionWithVendor(null))
+          .mockResolvedValueOnce(makeExecutionWithVendor(null));
+        repo.findUserRoleIds.mockResolvedValue(["role-gestor"]);
+        repo.findDefinitionById.mockResolvedValue({ steps });
+
+        await expect(
+          service.decideStep(makeUser(), "exec-1", { decision: "APPROVE" }),
+        ).resolves.toBeDefined();
+      });
+
+      it("não bloqueia SKIP mesmo com fornecedor incompleto (pular etapa opcional não é aprovar)", async () => {
+        repo.findStepExecutionById
+          .mockResolvedValueOnce(
+            makeExecution({
+              workflowStep: {
+                id: "step-4",
+                order: 4,
+                isOptional: true,
+                responsibleRoleId: "role-juridico",
+                responsibleRole: { name: "Jurídico" },
+              },
+              assessmentWorkflowInstance: {
+                workflowDefinitionId: "def-1",
+                assessment: {
+                  id: "assessment-1",
+                  tenantId: "tenant-1",
+                  requesterId: "requester-1",
+                  softwareName: "Sistema X",
+                  status: "IN_REVIEW",
+                  vendorId: "vendor-1",
+                  linkedVendor: {
+                    id: "vendor-1",
+                    name: "Fornecedor Teste",
+                    legalName: null,
+                    taxId: null,
+                    businessCriticality: null,
+                  },
+                },
+              },
+            }),
+          )
+          .mockResolvedValueOnce(makeExecutionWithVendor(null));
+        repo.findUserRoleIds.mockResolvedValue(["role-juridico"]);
+        repo.findDefinitionById.mockResolvedValue({ steps });
+
+        await expect(
+          service.decideStep(makeUser(), "exec-1", { decision: "SKIP" }),
+        ).resolves.toBeDefined();
+      });
+    });
+
     it("REJECT encerra a instância e reprova a avaliação", async () => {
       repo.findStepExecutionById
         .mockResolvedValueOnce(makeExecution())

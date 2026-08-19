@@ -138,6 +138,26 @@ describe("renderNotificationEmailContent", () => {
     expect(body).toContain("Falta documentação de contrato");
   });
 
+  it("renders VENDOR_DATA_INCOMPLETE mentioning the software and vendor names", () => {
+    const { subject, body } = renderNotificationEmailContent("VENDOR_DATA_INCOMPLETE", {
+      softwareName: "Sistema X",
+      vendorName: "Fornecedor Teste",
+    });
+    expect(subject).toContain("Sistema X");
+    expect(body).toContain("Fornecedor Teste");
+    expect(body).toContain("incompleto");
+  });
+
+  it("renders VENDOR_DATA_INCOMPLETE_BLOCKS_APPROVAL mentioning the software and vendor names", () => {
+    const { subject, body } = renderNotificationEmailContent(
+      "VENDOR_DATA_INCOMPLETE_BLOCKS_APPROVAL",
+      { softwareName: "Sistema X", vendorName: "Fornecedor Teste" },
+    );
+    expect(subject).toContain("Sistema X");
+    expect(body).toContain("Fornecedor Teste");
+    expect(body).toContain("bloqueada");
+  });
+
   it("falls back to a generic message for the dead NEW_COMMENT type", () => {
     const { subject, body } = renderNotificationEmailContent("NEW_COMMENT", {});
     expect(subject).toBeTruthy();

@@ -26,6 +26,8 @@ export interface NotificationDataByType {
   INVENTORY_APPROVAL_REQUESTED: { itemName: string };
   INVENTORY_ITEM_APPROVED: { itemName: string };
   INVENTORY_ITEM_REJECTED: { itemName: string; reason: string };
+  VENDOR_DATA_INCOMPLETE: { softwareName: string; vendorName: string };
+  VENDOR_DATA_INCOMPLETE_BLOCKS_APPROVAL: { softwareName: string; vendorName: string };
 }
 
 /**
@@ -118,6 +120,16 @@ export function renderNotificationEmailContent<T extends keyof NotificationDataB
       return {
         subject: `Item de inventário reprovado: ${d.itemName}`,
         body: `Seu cadastro manual de "${d.itemName}" foi reprovado. Motivo: ${d.reason}`,
+      };
+    case "VENDOR_DATA_INCOMPLETE":
+      return {
+        subject: `Avaliação pendente - atualize dados do fornecedor: ${d.softwareName}`,
+        body: `A avaliação "${d.softwareName}" está aguardando aprovação, mas o cadastro do fornecedor "${d.vendorName}" está incompleto (falta Razão Social, CNPJ ou Criticidade). Complete o cadastro em /vendors para desbloquear a aprovação.`,
+      };
+    case "VENDOR_DATA_INCOMPLETE_BLOCKS_APPROVAL":
+      return {
+        subject: `Avaliação aguardando dados do fornecedor: ${d.softwareName}`,
+        body: `A avaliação "${d.softwareName}" não pode ser aprovada porque o cadastro do fornecedor "${d.vendorName}" está incompleto. A aprovação fica bloqueada até que o solicitante ou um administrador complete o cadastro.`,
       };
     case "NEW_COMMENT":
     default:
