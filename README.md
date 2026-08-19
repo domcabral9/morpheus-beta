@@ -78,6 +78,12 @@ avaliado ou está com reavaliação vencida/próxima.
 | --- | --- |
 | ![ART do fornecedor](./docs/screenshots/inventory-item-art.png) | ![Acompanhamento de fornecedores](./docs/screenshots/vendors-acompanhamento.png) |
 
+Além do par original (ART, cláusula de segurança da informação), a avaliação de software também pode
+declarar Relatório SOC 2 e certificado ISO 27001 - diferente do par original, essas duas exigem um
+anexo real na categoria correspondente antes do envio, não são só uma marcação de confiança. Quando uma
+avaliação de SaaS já aponta um desses documentos, a ART do mesmo fornecedor mostra um painel de
+reaproveitamento, evitando pedir o mesmo relatório de novo.
+
 ## Enriquecimento de inventário (metodologia)
 
 Além dos sinais autodeclarados (ART, cláusula de segurança da informação), cada item do inventário
@@ -362,6 +368,12 @@ overdue/upcoming reassessment.
 | Vendor ART on the item detail page | Vendor tracking |
 | --- | --- |
 | ![Vendor ART](./docs/screenshots/inventory-item-art-en.png) | ![Vendor tracking](./docs/screenshots/vendors-acompanhamento-en.png) |
+
+Beyond the original pair (ART, information security clause), a software assessment can also declare a
+SOC 2 report and an ISO 27001 certificate - unlike the original pair, these two require a real
+attachment in the matching category before submission, not just a trust checkbox. When a SaaS
+assessment already points to one of those documents, the same vendor's ART shows a reuse panel, so the
+same report isn't requested again.
 
 ## Inventory enrichment (methodology)
 
