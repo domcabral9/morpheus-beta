@@ -5,6 +5,7 @@ import { QuestionnaireModule } from "../questionnaire/questionnaire.module";
 import { RiskEngineModule } from "../risk-engine/risk-engine.module";
 import { WorkflowModule } from "../workflow/workflow.module";
 import { VendorsModule } from "../vendors/vendors.module";
+import { AttachmentsModule } from "../attachments/attachments.module";
 import { AssessmentsController } from "./assessments.controller";
 import { AssessmentsRepository } from "./assessments.repository";
 import { AssessmentsService } from "./assessments.service";
@@ -17,6 +18,7 @@ import { AssessmentsService } from "./assessments.service";
     RiskEngineModule,
     WorkflowModule,
     VendorsModule,
+    AttachmentsModule,
   ],
   controllers: [AssessmentsController],
   providers: [AssessmentsRepository, AssessmentsService],

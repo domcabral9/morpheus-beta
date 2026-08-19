@@ -148,6 +148,8 @@ export class TechnicalOpinionService {
       vendorCompliance: {
         hasRiskAnalysis: assessment.hasRiskAnalysis,
         hasInfoSecClause: assessment.hasInfoSecClause,
+        hasSoc2Report: assessment.hasSoc2Report,
+        hasIso27001Certificate: assessment.hasIso27001Certificate,
         linkedVendor: assessment.linkedVendor
           ? {
               name: assessment.linkedVendor.name,

@@ -194,6 +194,16 @@ describe("WorkflowService", () => {
     });
   });
 
+  describe("involvesLgpd", () => {
+    it("reflete countLgpdTriggers > 0 (usado pelo gate de evidência de DPIA em AssessmentsService)", async () => {
+      repo.countLgpdTriggers.mockResolvedValue(0);
+      await expect(service.involvesLgpd("assessment-1")).resolves.toBe(false);
+
+      repo.countLgpdTriggers.mockResolvedValue(2);
+      await expect(service.involvesLgpd("assessment-1")).resolves.toBe(true);
+    });
+  });
+
   describe("decideStep", () => {
     function makeExecution(overrides: Record<string, unknown> = {}) {
       return {

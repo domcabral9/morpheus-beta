@@ -84,6 +84,23 @@ export class VendorsRepository {
     return this.prisma.vendor.findFirst({ where: { id, tenantId } });
   }
 
+  /** Avaliações de Software deste fornecedor que já declararam SOC 2/ISO
+   * 27001 (com anexo obrigatório validado em `AssessmentsService.submit()`)
+   * - alimenta o painel de reaproveitamento na ART do fornecedor, pra não
+   * pedir o mesmo documento de novo. Só metadado, o anexo em si continua
+   * vivendo na Assessment de origem. */
+  findComplianceEvidence(tenantId: string, vendorId: string) {
+    return this.prisma.assessment.findMany({
+      where: {
+        tenantId,
+        vendorId,
+        OR: [{ hasSoc2Report: true }, { hasIso27001Certificate: true }],
+      },
+      select: { id: true, softwareName: true, hasSoc2Report: true, hasIso27001Certificate: true },
+      orderBy: { softwareName: "asc" },
+    });
+  }
+
   /** Tela "Acompanhamento" - 3 baldes, sem o filtro `reassessmentNotifiedAt`
    * (esse é só pra idempotência do job de notificação, ver
    * `findDueForReassessment` abaixo). Sempre `isActive: true`. */

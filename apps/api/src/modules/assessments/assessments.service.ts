@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { AssessmentStatus } from "@morpheus/database";
+import { AssessmentStatus, AttachmentCategory } from "@morpheus/database";
 import { PERMISSIONS } from "../../common/constants/permissions";
 import { withHasAvatar } from "../../common/utils/avatar.util";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
@@ -18,6 +18,7 @@ import { WorkflowService } from "../workflow/workflow.service";
 import { AuditLogService } from "../audit/audit-log.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { VendorsService } from "../vendors/vendors.service";
+import { AttachmentsRepository, AttachmentDetail } from "../attachments/attachments.repository";
 import {
   AssessmentsRepository,
   AssessmentDetail,
@@ -48,6 +49,7 @@ export class AssessmentsService {
     private readonly auditLogService: AuditLogService,
     private readonly notificationsService: NotificationsService,
     private readonly vendorsService: VendorsService,
+    private readonly attachmentsRepository: AttachmentsRepository,
   ) {}
 
   async create(user: AuthenticatedUser, dto: CreateAssessmentDto): Promise<AssessmentDetail> {
@@ -73,6 +75,8 @@ export class AssessmentsService {
       installerFileHash: dto.installerFileHash,
       hasRiskAnalysis: dto.hasRiskAnalysis,
       hasInfoSecClause: dto.hasInfoSecClause,
+      hasSoc2Report: dto.hasSoc2Report,
+      hasIso27001Certificate: dto.hasIso27001Certificate,
       requesterId: user.id,
       status: "DRAFT",
     });
@@ -194,6 +198,12 @@ export class AssessmentsService {
     const answers = await this.assessmentsRepository.findAnswers(id);
 
     this.assertQuestionnaireComplete(questions, answers);
+
+    const [involvesLgpd, attachments] = await Promise.all([
+      this.workflowService.involvesLgpd(id),
+      this.attachmentsRepository.findMany({ tenantId: user.tenantId, assessmentId: id }),
+    ]);
+    this.assertComplianceEvidence(assessment, attachments, involvesLgpd);
 
     const versionLabel = await this.nextVersionLabel(id);
 
@@ -406,6 +416,38 @@ export class AssessmentsService {
     if (missing.length > 0) {
       throw new BadRequestException(
         `Existem perguntas obrigatórias sem resposta: ${missing.join("; ")}`,
+      );
+    }
+  }
+
+  /**
+   * Fecha a lacuna de `AttachmentCategory.SOC2_REPORT`/`ISO27001_CERTIFICATE`/`DPIA`
+   * existirem no schema sem nenhum enforcement até aqui - se declarado (ou, no
+   * caso de DPIA, se a avaliação envolve LGPD), exige que o anexo
+   * correspondente já tenha sido enviado antes do envio para análise.
+   */
+  private assertComplianceEvidence(
+    assessment: Pick<AssessmentDetail, "hasSoc2Report" | "hasIso27001Certificate">,
+    attachments: AttachmentDetail[],
+    involvesLgpd: boolean,
+  ): void {
+    const hasCategory = (category: AttachmentCategory) =>
+      attachments.some((attachment) => attachment.category === category);
+
+    const missing: string[] = [];
+    if (assessment.hasSoc2Report && !hasCategory("SOC2_REPORT")) {
+      missing.push("Relatório SOC 2 declarado, mas sem anexo na categoria correspondente");
+    }
+    if (assessment.hasIso27001Certificate && !hasCategory("ISO27001_CERTIFICATE")) {
+      missing.push("Certificado ISO 27001 declarado, mas sem anexo na categoria correspondente");
+    }
+    if (involvesLgpd && !hasCategory("DPIA")) {
+      missing.push("Avaliação envolve dados pessoais (LGPD) e exige um anexo de DPIA");
+    }
+
+    if (missing.length > 0) {
+      throw new BadRequestException(
+        `Existe evidência de conformidade pendente: ${missing.join("; ")}.`,
       );
     }
   }

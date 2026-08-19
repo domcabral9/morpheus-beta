@@ -31,6 +31,8 @@ function makeData(qrCodePng: Buffer, overrides: Partial<OpinionPdfData> = {}): O
     vendorCompliance: {
       hasRiskAnalysis: true,
       hasInfoSecClause: true,
+      hasSoc2Report: false,
+      hasIso27001Certificate: false,
       linkedVendor: { name: "Fornecedor X", tier: 1, tierLabel: "Baixo risco" },
     },
     attachments: [
