@@ -71,6 +71,11 @@ export interface AssessmentDetail extends AssessmentSummary {
   responsibleId: string;
   hasRiskAnalysis: boolean;
   hasInfoSecClause: boolean;
+  /** Declaração + anexo obrigatório (categoria `SOC2_REPORT`/`ISO27001_CERTIFICATE`,
+   * validado no envio) - diferente de `hasRiskAnalysis`/`hasInfoSecClause`,
+   * editável mesmo após a criação. */
+  hasSoc2Report: boolean;
+  hasIso27001Certificate: boolean;
   versions: Array<{ id: string; versionLabel: string; createdAt: string }>;
 }
 

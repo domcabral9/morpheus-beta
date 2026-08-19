@@ -45,6 +45,8 @@ const stepExecutionDetailInclude = {
           status: true,
           hasRiskAnalysis: true,
           hasInfoSecClause: true,
+          hasSoc2Report: true,
+          hasIso27001Certificate: true,
           vendorId: true,
           linkedVendor: {
             select: { id: true, name: true, currentTier: true, currentTierLabel: true },
@@ -224,6 +226,8 @@ export class WorkflowRepository {
                 requester: { select: { id: true, name: true, avatarPath: true } },
                 hasRiskAnalysis: true,
                 hasInfoSecClause: true,
+                hasSoc2Report: true,
+                hasIso27001Certificate: true,
                 vendorId: true,
                 linkedVendor: {
                   select: { id: true, name: true, currentTier: true, currentTierLabel: true },

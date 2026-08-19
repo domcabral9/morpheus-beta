@@ -16,6 +16,7 @@ import type { VendorAssessmentDetail, VendorQuestionCategory } from "@/lib/vendo
 import { TierBadge } from "@/components/tier-badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { QuestionnaireForm } from "@/components/questionnaire-form";
+import { ComplianceEvidencePanel } from "../../../_components/compliance-evidence-panel";
 
 type LocalAnswer = { textValue?: string; scaleValue?: number; selectedOptionIds?: string[] };
 
@@ -160,6 +161,8 @@ export default function VendorAssessmentPage() {
               )}
             </CardContent>
           </Card>
+
+          <ComplianceEvidencePanel vendorId={params.id} />
 
           {!isEditable && assessment.status === "COMPLETED" && (
             <p className="rounded-md border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
