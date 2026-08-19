@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
@@ -11,6 +22,7 @@ import { UpdateAssessmentDto } from "./dto/update-assessment.dto";
 import { SubmitAnswersDto } from "./dto/submit-answers.dto";
 import { ListAssessmentsQueryDto } from "./dto/list-assessments.query.dto";
 import { ReassignRenewalRequesterDto } from "./dto/reassign-renewal-requester.dto";
+import { DeleteAssessmentDto } from "./dto/delete-assessment.dto";
 
 @ApiTags("assessments")
 @Controller("assessments")
@@ -92,5 +104,28 @@ export class AssessmentsController {
   @Post(":id/submit")
   submit(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.assessmentsService.submit(user, id);
+  }
+
+  // Diz ao frontend, antes de abrir o dialog de confirmação, se deve
+  // oferecer a opção "excluir o fornecedor também" - ver
+  // AssessmentsService.resolveOrphanVendor.
+  @RequirePermissions(PERMISSIONS.ASSESSMENTS_EDIT_OWN)
+  @Get(":id/deletion-info")
+  getDeletionInfo(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.assessmentsService.getDeletionInfo(user, id);
+  }
+
+  // Sem @Audit(): o service grava o log manualmente (precisa condicionar o
+  // metadata a se o fornecedor foi apagado junto), mesmo motivo de
+  // reassignRenewalRequester.
+  @RequirePermissions(PERMISSIONS.ASSESSMENTS_EDIT_OWN)
+  @Delete(":id")
+  @HttpCode(204)
+  async remove(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") id: string,
+    @Body() dto: DeleteAssessmentDto,
+  ) {
+    await this.assessmentsService.deleteAssessment(user, id, dto);
   }
 }

@@ -69,6 +69,8 @@ describe("AssessmentsService", () => {
     findVersionsWithDetails: jest.Mock;
     isAreaBlocked: jest.Mock;
     findBlockedAreaIds: jest.Mock;
+    remove: jest.Mock;
+    countOtherAssessmentsForVendor: jest.Mock;
   };
   let areasService: { findAllActive: jest.Mock };
   let usersService: { findById: jest.Mock };
@@ -77,7 +79,11 @@ describe("AssessmentsService", () => {
   let workflowService: { startWorkflow: jest.Mock; involvesLgpd: jest.Mock };
   let auditLogService: { record: jest.Mock };
   let notificationsService: { notify: jest.Mock };
-  let vendorsService: { findByIdForTenant: jest.Mock };
+  let vendorsService: {
+    findByIdForTenant: jest.Mock;
+    countVendorAssessments: jest.Mock;
+    removeVendor: jest.Mock;
+  };
   let attachmentsRepository: { findMany: jest.Mock };
 
   beforeEach(async () => {
@@ -93,6 +99,8 @@ describe("AssessmentsService", () => {
       findVersionsWithDetails: jest.fn().mockResolvedValue([]),
       isAreaBlocked: jest.fn().mockResolvedValue(false),
       findBlockedAreaIds: jest.fn().mockResolvedValue([]),
+      remove: jest.fn().mockResolvedValue(undefined),
+      countOtherAssessmentsForVendor: jest.fn().mockResolvedValue(0),
     };
     areasService = { findAllActive: jest.fn().mockResolvedValue([{ id: "area-1" }]) };
     usersService = {
@@ -108,7 +116,11 @@ describe("AssessmentsService", () => {
     };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
     notificationsService = { notify: jest.fn().mockResolvedValue(undefined) };
-    vendorsService = { findByIdForTenant: jest.fn() };
+    vendorsService = {
+      findByIdForTenant: jest.fn(),
+      countVendorAssessments: jest.fn().mockResolvedValue(0),
+      removeVendor: jest.fn().mockResolvedValue(undefined),
+    };
     attachmentsRepository = { findMany: jest.fn().mockResolvedValue([]) };
 
     const moduleRef = await Test.createTestingModule({
@@ -641,6 +653,136 @@ describe("AssessmentsService", () => {
         hasAvatar: true,
       });
       expect(repo.findVersionsWithDetails).toHaveBeenCalledWith("assessment-1");
+    });
+  });
+
+  describe("getDeletionInfo / deleteAssessment (exclusão de rascunho)", () => {
+    it("getDeletionInfo rejeita quem não é o solicitante", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ requesterId: "outro-user" } as never));
+      await expect(service.getDeletionInfo(makeUser(), "assessment-1")).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it("getDeletionInfo rejeita avaliação fora de DRAFT", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ status: "PENDING_ADJUSTMENT" } as never));
+      await expect(service.getDeletionInfo(makeUser(), "assessment-1")).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it("getDeletionInfo devolve orphanVendor null quando não há fornecedor vinculado", async () => {
+      repo.findById.mockResolvedValue(
+        makeAssessment({ vendorId: null, linkedVendor: null } as never),
+      );
+      const result = await service.getDeletionInfo(makeUser(), "assessment-1");
+      expect(result).toEqual({ orphanVendor: null });
+    });
+
+    it("getDeletionInfo devolve orphanVendor null quando o fornecedor foi criado por outro usuário", async () => {
+      repo.findById.mockResolvedValue(
+        makeAssessment({
+          vendorId: "vendor-1",
+          linkedVendor: { id: "vendor-1", name: "Teste", createdById: "outro-user" },
+        } as never),
+      );
+      const result = await service.getDeletionInfo(makeUser(), "assessment-1");
+      expect(result).toEqual({ orphanVendor: null });
+      expect(repo.countOtherAssessmentsForVendor).not.toHaveBeenCalled();
+    });
+
+    it("getDeletionInfo devolve orphanVendor null quando o fornecedor já está em uso em outra Assessment", async () => {
+      repo.findById.mockResolvedValue(
+        makeAssessment({
+          vendorId: "vendor-1",
+          linkedVendor: { id: "vendor-1", name: "Teste", createdById: "user-requester" },
+        } as never),
+      );
+      repo.countOtherAssessmentsForVendor.mockResolvedValue(1);
+      const result = await service.getDeletionInfo(makeUser(), "assessment-1");
+      expect(result).toEqual({ orphanVendor: null });
+    });
+
+    it("getDeletionInfo devolve orphanVendor null quando o fornecedor já tem uma VendorAssessment (ART)", async () => {
+      repo.findById.mockResolvedValue(
+        makeAssessment({
+          vendorId: "vendor-1",
+          linkedVendor: { id: "vendor-1", name: "Teste", createdById: "user-requester" },
+        } as never),
+      );
+      vendorsService.countVendorAssessments.mockResolvedValue(1);
+      const result = await service.getDeletionInfo(makeUser(), "assessment-1");
+      expect(result).toEqual({ orphanVendor: null });
+    });
+
+    it("getDeletionInfo devolve o fornecedor quando genuinamente órfão", async () => {
+      repo.findById.mockResolvedValue(
+        makeAssessment({
+          vendorId: "vendor-1",
+          linkedVendor: { id: "vendor-1", name: "Teste", createdById: "user-requester" },
+        } as never),
+      );
+      const result = await service.getDeletionInfo(makeUser(), "assessment-1");
+      expect(result).toEqual({ orphanVendor: { id: "vendor-1", name: "Teste" } });
+    });
+
+    it("deleteAssessment exclui a avaliação e não mexe no fornecedor quando deleteVendor não é pedido", async () => {
+      repo.findById.mockResolvedValue(
+        makeAssessment({
+          vendorId: "vendor-1",
+          linkedVendor: { id: "vendor-1", name: "Teste", createdById: "user-requester" },
+        } as never),
+      );
+
+      await service.deleteAssessment(makeUser(), "assessment-1", {});
+
+      expect(repo.remove).toHaveBeenCalledWith("assessment-1");
+      expect(vendorsService.removeVendor).not.toHaveBeenCalled();
+    });
+
+    it("deleteAssessment exclui o fornecedor junto quando pedido e ele é órfão", async () => {
+      repo.findById.mockResolvedValue(
+        makeAssessment({
+          vendorId: "vendor-1",
+          linkedVendor: { id: "vendor-1", name: "Teste", createdById: "user-requester" },
+        } as never),
+      );
+
+      await service.deleteAssessment(makeUser(), "assessment-1", { deleteVendor: true });
+
+      expect(repo.remove).toHaveBeenCalledWith("assessment-1");
+      expect(vendorsService.removeVendor).toHaveBeenCalledWith(makeUser(), "vendor-1");
+    });
+
+    it("deleteAssessment ignora deleteVendor:true (sem falhar) quando o fornecedor não é mais órfão", async () => {
+      repo.findById.mockResolvedValue(
+        makeAssessment({
+          vendorId: "vendor-1",
+          linkedVendor: { id: "vendor-1", name: "Teste", createdById: "user-requester" },
+        } as never),
+      );
+      repo.countOtherAssessmentsForVendor.mockResolvedValue(1);
+
+      await service.deleteAssessment(makeUser(), "assessment-1", { deleteVendor: true });
+
+      expect(repo.remove).toHaveBeenCalledWith("assessment-1");
+      expect(vendorsService.removeVendor).not.toHaveBeenCalled();
+    });
+
+    it("deleteAssessment rejeita quem não é o solicitante", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ requesterId: "outro-user" } as never));
+      await expect(service.deleteAssessment(makeUser(), "assessment-1", {})).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(repo.remove).not.toHaveBeenCalled();
+    });
+
+    it("deleteAssessment rejeita avaliação fora de DRAFT", async () => {
+      repo.findById.mockResolvedValue(makeAssessment({ status: "PENDING_RENEWAL" } as never));
+      await expect(service.deleteAssessment(makeUser(), "assessment-1", {})).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(repo.remove).not.toHaveBeenCalled();
     });
   });
 });
