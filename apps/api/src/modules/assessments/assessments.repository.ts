@@ -98,6 +98,20 @@ export class AssessmentsRepository {
     return this.prisma.assessment.update({ where: { id }, data, include: assessmentDetailInclude });
   }
 
+  async remove(id: string): Promise<void> {
+    await this.prisma.assessment.delete({ where: { id } });
+  }
+
+  /** Quantas outras Assessment (além de `excludeAssessmentId`) apontam pra
+   * esse `vendorId` - usado pra decidir se um fornecedor criado junto com uma
+   * avaliação em rascunho ainda está "órfão" o suficiente pra ser excluído
+   * junto (ver `AssessmentsService.resolveOrphanVendor`). */
+  countOtherAssessmentsForVendor(vendorId: string, excludeAssessmentId: string): Promise<number> {
+    return this.prisma.assessment.count({
+      where: { vendorId, id: { not: excludeAssessmentId } },
+    });
+  }
+
   findAnswers(assessmentId: string): Promise<AnswerWithOptions[]> {
     return this.prisma.assessmentAnswer.findMany({
       where: { assessmentId },

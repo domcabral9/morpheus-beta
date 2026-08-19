@@ -111,6 +111,8 @@ describe("VendorsService", () => {
     findAssessmentById: jest.Mock;
     replaceAnswers: jest.Mock;
     findComplianceEvidence: jest.Mock;
+    remove: jest.Mock;
+    countAssessments: jest.Mock;
   };
   let auditLogService: { record: jest.Mock };
 
@@ -135,6 +137,8 @@ describe("VendorsService", () => {
       findAssessmentById: jest.fn(),
       replaceAnswers: jest.fn().mockResolvedValue(undefined),
       findComplianceEvidence: jest.fn().mockResolvedValue([]),
+      remove: jest.fn().mockResolvedValue(undefined),
+      countAssessments: jest.fn().mockResolvedValue(0),
     };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
 
@@ -159,6 +163,28 @@ describe("VendorsService", () => {
     it("retorna o fornecedor quando encontrado", async () => {
       repo.findById.mockResolvedValue(VENDOR);
       await expect(service.getVendor(makeUser(), "vendor-1")).resolves.toEqual(VENDOR);
+    });
+  });
+
+  describe("removeVendor", () => {
+    it("lança NotFoundException quando o fornecedor não existe no tenant", async () => {
+      repo.findById.mockResolvedValue(null);
+      await expect(service.removeVendor(makeUser(), "unknown")).rejects.toThrow(NotFoundException);
+      expect(repo.remove).not.toHaveBeenCalled();
+    });
+
+    it("apaga o fornecedor quando encontrado no tenant do usuário", async () => {
+      repo.findById.mockResolvedValue(VENDOR);
+      await service.removeVendor(makeUser(), "vendor-1");
+      expect(repo.remove).toHaveBeenCalledWith("vendor-1");
+    });
+  });
+
+  describe("countVendorAssessments", () => {
+    it("delega pro repository", async () => {
+      repo.countAssessments.mockResolvedValue(2);
+      await expect(service.countVendorAssessments("vendor-1")).resolves.toBe(2);
+      expect(repo.countAssessments).toHaveBeenCalledWith("vendor-1");
     });
   });
 

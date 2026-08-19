@@ -147,6 +147,19 @@ export class VendorsRepository {
     return this.prisma.vendor.update({ where: { id }, data });
   }
 
+  async remove(id: string): Promise<void> {
+    await this.prisma.vendor.delete({ where: { id } });
+  }
+
+  /** Quantas VendorAssessment (ART) - rascunho ou concluída - existem pra
+   * esse fornecedor. Usado, junto de
+   * `AssessmentsRepository.countOtherAssessmentsForVendor`, pra decidir se um
+   * fornecedor é genuinamente órfão o suficiente pra ser excluído junto com
+   * a Assessment que o criou (ver `AssessmentsService.resolveOrphanVendor`). */
+  countAssessments(vendorId: string): Promise<number> {
+    return this.prisma.vendorAssessment.count({ where: { vendorId } });
+  }
+
   findAssessmentHistory(tenantId: string, vendorId: string) {
     return this.prisma.vendorAssessment.findMany({
       where: { tenantId, vendorId },

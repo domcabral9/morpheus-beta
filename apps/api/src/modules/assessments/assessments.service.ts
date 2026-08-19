@@ -29,6 +29,7 @@ import { UpdateAssessmentDto } from "./dto/update-assessment.dto";
 import { SubmitAnswersDto } from "./dto/submit-answers.dto";
 import { ListAssessmentsQueryDto } from "./dto/list-assessments.query.dto";
 import { ReassignRenewalRequesterDto } from "./dto/reassign-renewal-requester.dto";
+import { DeleteAssessmentDto } from "./dto/delete-assessment.dto";
 import type { QuestionWithOptions } from "../questionnaire/questionnaire.repository";
 
 const EDITABLE_STATUSES: AssessmentStatus[] = ["DRAFT", "PENDING_ADJUSTMENT", "PENDING_RENEWAL"];
@@ -328,6 +329,57 @@ export class AssessmentsService {
     return updated;
   }
 
+  /**
+   * "Desfazer" uma avaliação em rascunho antes de enviá-la (achado
+   * 2026-08-19: testando o formulário, o usuário criou uma avaliação e um
+   * fornecedor de teste com o mesmo nome, e não havia como excluir nenhum
+   * dos dois). Devolve se o fornecedor vinculado (se houver) está órfão o
+   * suficiente pra também ser oferecido pra exclusão - ver
+   * `resolveOrphanVendor`.
+   */
+  async getDeletionInfo(
+    user: AuthenticatedUser,
+    id: string,
+  ): Promise<{ orphanVendor: { id: string; name: string } | null }> {
+    const assessment = await this.assertDraftOwnedByRequester(user, id);
+    const orphanVendor = await this.resolveOrphanVendor(user, assessment);
+    return { orphanVendor };
+  }
+
+  async deleteAssessment(
+    user: AuthenticatedUser,
+    id: string,
+    dto: DeleteAssessmentDto,
+  ): Promise<void> {
+    const assessment = await this.assertDraftOwnedByRequester(user, id);
+
+    // Reavalia do zero - nunca confia que o client chamou getDeletionInfo
+    // antes, nem que nada mudou desde então.
+    const orphanVendor = dto.deleteVendor ? await this.resolveOrphanVendor(user, assessment) : null;
+
+    await this.assessmentsRepository.remove(assessment.id);
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "DELETE",
+      entityType: "Assessment",
+      entityId: assessment.id,
+      metadata: { softwareName: assessment.softwareName, vendorDeletedTogether: !!orphanVendor },
+    });
+
+    if (orphanVendor) {
+      await this.vendorsService.removeVendor(user, orphanVendor.id);
+      await this.auditLogService.record({
+        tenantId: user.tenantId,
+        userId: user.id,
+        action: "DELETE",
+        entityType: "Vendor",
+        entityId: orphanVendor.id,
+        metadata: { name: orphanVendor.name, reason: "orphan_after_draft_assessment_deletion" },
+      });
+    }
+  }
+
   // --- Helpers ------------------------------------------------------------------
 
   private async getOwnedOrThrow(tenantId: string, id: string): Promise<AssessmentDetail> {
@@ -337,6 +389,51 @@ export class AssessmentsService {
       throw new ForbiddenException("Avaliação de outro tenant.");
     }
     return assessment;
+  }
+
+  /** Checagem própria pra exclusão - não reaproveita `assertCanEdit`
+   * porque o conjunto de status permitido é deliberadamente mais estreito
+   * (só `DRAFT`, não `EDITABLE_STATUSES` inteiro): `PENDING_ADJUSTMENT`/
+   * `PENDING_RENEWAL` já têm histórico de workflow associado - não é
+   * "desfazer uma criação", é uma avaliação real em andamento. */
+  private async assertDraftOwnedByRequester(
+    user: AuthenticatedUser,
+    id: string,
+  ): Promise<AssessmentDetail> {
+    const assessment = await this.getOwnedOrThrow(user.tenantId, id);
+    if (assessment.requesterId !== user.id) {
+      throw new ForbiddenException("Só quem criou a avaliação pode excluí-la.");
+    }
+    if (!hasPermission(user, PERMISSIONS.ASSESSMENTS_EDIT_OWN)) {
+      throw new ForbiddenException("Sem permissão para excluir avaliações.");
+    }
+    if (assessment.status !== "DRAFT") {
+      throw new BadRequestException(
+        `Avaliação em status "${assessment.status}" não pode ser excluída.`,
+      );
+    }
+    return assessment;
+  }
+
+  /** Um fornecedor só é oferecido/excluído junto com a avaliação quando
+   * TODAS as condições valem: quem excluir foi quem criou o fornecedor, e
+   * ele nunca foi usado em lugar nenhum (nenhuma outra Assessment, nenhuma
+   * VendorAssessment/ART - rascunho ou concluída). Derivado sempre na hora,
+   * sem nenhum campo de rastreamento novo. */
+  private async resolveOrphanVendor(
+    user: AuthenticatedUser,
+    assessment: AssessmentDetail,
+  ): Promise<{ id: string; name: string } | null> {
+    const vendor = assessment.linkedVendor;
+    if (!vendor || vendor.createdById !== user.id) return null;
+
+    const [otherAssessments, vendorAssessments] = await Promise.all([
+      this.assessmentsRepository.countOtherAssessmentsForVendor(vendor.id, assessment.id),
+      this.vendorsService.countVendorAssessments(vendor.id),
+    ]);
+    if (otherAssessments > 0 || vendorAssessments > 0) return null;
+
+    return { id: vendor.id, name: vendor.name };
   }
 
   private assertCanView(user: AuthenticatedUser, assessment: AssessmentDetail): void {
