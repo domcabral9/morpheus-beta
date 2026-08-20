@@ -183,14 +183,24 @@ export class WorkflowService {
       throw new BadRequestException("Esta etapa não é opcional e não pode ser pulada.");
     }
 
-    // Gate de completude cadastral do fornecedor (achado 2026-08-19): não
-    // bloqueia submit()/criação, só a decisão de aprovação - `SKIP` não é
-    // bloqueado (pular uma etapa opcional não é "aprovar com base em dado
-    // ruim"). Só se aplica quando há um Vendor real vinculado.
-    if (dto.decision === "APPROVE" && assessment.vendorId && assessment.linkedVendor) {
+    // Gate de completude cadastral do fornecedor (achado 2026-08-19, e um
+    // segundo achado na revisão de segurança da Fase 4 no mesmo dia): não
+    // bloqueia submit()/criação, só uma decisão que possa levar a avaliação a
+    // ser aprovada. `SKIP` entra aqui também - a checagem original só cobria
+    // `APPROVE`, mas `SKIP` cai no mesmo branch que `advanceToNextStep()`
+    // (`else` abaixo) e, quando é a última etapa elegível, finaliza a
+    // avaliação como `APPROVED` exatamente como um `APPROVE` faria -
+    // ignorar `SKIP` aqui deixava um jeito direto de aprovar com fornecedor
+    // incompleto só escolhendo "pular" em vez de "aprovar" na última etapa.
+    // Só se aplica quando há um Vendor real vinculado.
+    if (
+      (dto.decision === "APPROVE" || dto.decision === "SKIP") &&
+      assessment.vendorId &&
+      assessment.linkedVendor
+    ) {
       if (!isVendorComplete(assessment.linkedVendor)) {
         throw new BadRequestException({
-          message: `O cadastro do fornecedor "${assessment.linkedVendor.name}" está incompleto (falta Razão Social, CNPJ ou Criticidade) - complete o cadastro em /vendors antes de aprovar.`,
+          message: `O cadastro do fornecedor "${assessment.linkedVendor.name}" está incompleto (falta Razão Social, CNPJ ou Criticidade) - complete o cadastro em /vendors antes de aprovar ou pular esta etapa.`,
           error: "VENDOR_DATA_INCOMPLETE",
         });
       }
