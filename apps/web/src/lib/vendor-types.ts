@@ -143,3 +143,12 @@ export interface VendorComplianceEvidence {
   hasSoc2Report: boolean;
   hasIso27001Certificate: boolean;
 }
+
+/** Resposta de `GET /vendors/:id/deletion-info` - `canDelete` só `true`
+ * quando as 3 contagens são zero ao mesmo tempo (achado 2026-08-20). */
+export interface VendorDeletionInfo {
+  canDelete: boolean;
+  inventoryCount: number;
+  assessmentCount: number;
+  vendorAssessmentCount: number;
+}
