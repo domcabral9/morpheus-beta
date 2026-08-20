@@ -1,5 +1,5 @@
 import { Test } from "@nestjs/testing";
-import { NotFoundException, UnprocessableEntityException } from "@nestjs/common";
+import { ConflictException, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
 import { VendorsService } from "./vendors.service";
 import { VendorsRepository } from "./vendors.repository";
 import { RiskEngineService } from "../risk-engine/risk-engine.service";
@@ -113,6 +113,7 @@ describe("VendorsService", () => {
     findComplianceEvidence: jest.Mock;
     remove: jest.Mock;
     countAssessments: jest.Mock;
+    countLinkedRecords: jest.Mock;
   };
   let auditLogService: { record: jest.Mock };
 
@@ -139,6 +140,9 @@ describe("VendorsService", () => {
       findComplianceEvidence: jest.fn().mockResolvedValue([]),
       remove: jest.fn().mockResolvedValue(undefined),
       countAssessments: jest.fn().mockResolvedValue(0),
+      countLinkedRecords: jest
+        .fn()
+        .mockResolvedValue({ inventoryCount: 0, assessmentCount: 0, vendorAssessmentCount: 0 }),
     };
     auditLogService = { record: jest.fn().mockResolvedValue(undefined) };
 
@@ -185,6 +189,89 @@ describe("VendorsService", () => {
       repo.countAssessments.mockResolvedValue(2);
       await expect(service.countVendorAssessments("vendor-1")).resolves.toBe(2);
       expect(repo.countAssessments).toHaveBeenCalledWith("vendor-1");
+    });
+  });
+
+  describe("getDeletionInfo", () => {
+    it("lança NotFoundException quando o fornecedor não existe no tenant", async () => {
+      repo.findById.mockResolvedValue(null);
+      await expect(service.getDeletionInfo(makeUser(), "unknown")).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it("canDelete: true quando as 3 contagens são zero", async () => {
+      repo.findById.mockResolvedValue(VENDOR);
+      repo.countLinkedRecords.mockResolvedValue({
+        inventoryCount: 0,
+        assessmentCount: 0,
+        vendorAssessmentCount: 0,
+      });
+      await expect(service.getDeletionInfo(makeUser(), "vendor-1")).resolves.toEqual({
+        canDelete: true,
+        inventoryCount: 0,
+        assessmentCount: 0,
+        vendorAssessmentCount: 0,
+      });
+    });
+
+    it.each([
+      { inventoryCount: 1, assessmentCount: 0, vendorAssessmentCount: 0 },
+      { inventoryCount: 0, assessmentCount: 1, vendorAssessmentCount: 0 },
+      { inventoryCount: 0, assessmentCount: 0, vendorAssessmentCount: 1 },
+      { inventoryCount: 2, assessmentCount: 1, vendorAssessmentCount: 3 },
+    ])("canDelete: false quando qualquer contagem é > 0 (%o)", async (counts) => {
+      repo.findById.mockResolvedValue(VENDOR);
+      repo.countLinkedRecords.mockResolvedValue(counts);
+      const result = await service.getDeletionInfo(makeUser(), "vendor-1");
+      expect(result.canDelete).toBe(false);
+    });
+  });
+
+  describe("deleteVendor", () => {
+    it("lança NotFoundException quando o fornecedor não existe no tenant, sem chamar remove", async () => {
+      repo.findById.mockResolvedValue(null);
+      await expect(service.deleteVendor(makeUser(), "unknown")).rejects.toThrow(NotFoundException);
+      expect(repo.remove).not.toHaveBeenCalled();
+    });
+
+    it("apaga e audita quando as 3 contagens são zero", async () => {
+      repo.findById.mockResolvedValue(VENDOR);
+      repo.countLinkedRecords.mockResolvedValue({
+        inventoryCount: 0,
+        assessmentCount: 0,
+        vendorAssessmentCount: 0,
+      });
+      await service.deleteVendor(makeUser(), "vendor-1");
+      expect(repo.remove).toHaveBeenCalledWith("vendor-1");
+      expect(auditLogService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "DELETE", entityType: "Vendor", entityId: "vendor-1" }),
+      );
+    });
+
+    it("lança ConflictException VENDOR_HAS_ACTIVE_LINKS e não apaga quando qualquer contagem é > 0 (reverifica sempre, não confia num GET anterior)", async () => {
+      repo.findById.mockResolvedValue(VENDOR);
+      repo.countLinkedRecords.mockResolvedValue({
+        inventoryCount: 1,
+        assessmentCount: 0,
+        vendorAssessmentCount: 0,
+      });
+      await expect(service.deleteVendor(makeUser(), "vendor-1")).rejects.toMatchObject({
+        response: expect.objectContaining({ error: "VENDOR_HAS_ACTIVE_LINKS" }),
+      });
+      expect(repo.remove).not.toHaveBeenCalled();
+      expect(auditLogService.record).not.toHaveBeenCalled();
+    });
+
+    it("lança ConflictException também quando só há VendorAssessment (ART) vinculada", async () => {
+      repo.findById.mockResolvedValue(VENDOR);
+      repo.countLinkedRecords.mockResolvedValue({
+        inventoryCount: 0,
+        assessmentCount: 0,
+        vendorAssessmentCount: 1,
+      });
+      await expect(service.deleteVendor(makeUser(), "vendor-1")).rejects.toThrow(ConflictException);
+      expect(repo.remove).not.toHaveBeenCalled();
     });
   });
 

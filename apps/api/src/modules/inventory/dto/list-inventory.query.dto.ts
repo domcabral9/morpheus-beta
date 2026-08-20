@@ -22,6 +22,13 @@ export class ListInventoryQueryDto {
   @IsString()
   areaId?: string;
 
+  @ApiPropertyOptional({
+    description: "Filtra por fornecedor vinculado (FK real, não o snapshot em texto).",
+  })
+  @IsOptional()
+  @IsString()
+  vendorId?: string;
+
   @ApiPropertyOptional({ enum: SOFTWARE_TYPES })
   @IsOptional()
   @IsIn(SOFTWARE_TYPES)
