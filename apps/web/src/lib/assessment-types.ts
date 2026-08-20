@@ -79,6 +79,13 @@ export interface AssessmentDetail extends AssessmentSummary {
   versions: Array<{ id: string; versionLabel: string; createdAt: string }>;
 }
 
+/** Resposta de `GET /assessments/:id/deletion-info` - diz se um fornecedor
+ * vinculado seria excluído junto (só quando genuinamente órfão) caso a
+ * avaliação em rascunho seja excluída. */
+export interface AssessmentDeletionInfo {
+  orphanVendor: { id: string; name: string } | null;
+}
+
 /** Item de `GET /assessments/:id/versions` - linha do tempo de submissões
  * (uma por envio/reenvio/renovação), com o score e o parecer daquele
  * momento específico, nunca recalculados retroativamente. */

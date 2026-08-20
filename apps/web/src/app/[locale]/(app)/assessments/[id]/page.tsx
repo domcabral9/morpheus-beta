@@ -9,7 +9,7 @@ import { useRequireAuth } from "@/lib/use-require-auth";
 import { useApi } from "@/lib/use-api";
 import { usePermission } from "@/lib/use-permission";
 import { ApiError } from "@/lib/api-client";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { AssessmentStatusBadge } from "@/components/assessment-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import type { UserOption } from "@/lib/user-picker-types";
 import { WorkflowHistorySection } from "../_components/workflow-history-section";
 import { VersionHistorySection } from "../_components/version-history-section";
 import { ReassignRequesterCard } from "../_components/reassign-requester-card";
+import { DeleteDraftDialog } from "../_components/delete-draft-dialog";
 
 type LocalAnswer = { textValue?: string; scaleValue?: number; selectedOptionIds?: string[] };
 
@@ -38,10 +39,12 @@ export default function AssessmentDetailPage() {
   const params = useParams<{ id: string }>();
   const user = useRequireAuth();
   const api = useApi();
+  const router = useRouter();
   const canReassignRequester = usePermission("assessments:reopen");
   const canViewAllAssessments = usePermission("assessments:view-all");
 
   const [assessment, setAssessment] = React.useState<AssessmentDetail | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [categories, setCategories] = React.useState<QuestionCategory[] | null>(null);
   const [answers, setAnswers] = React.useState<Record<string, LocalAnswer>>({});
   const [hasSoc2Report, setHasSoc2Report] = React.useState(false);
@@ -98,6 +101,11 @@ export default function AssessmentDetailPage() {
   const canUploadAttachments =
     Boolean(assessment) &&
     (assessment!.requesterId === user.id || canViewAllAssessments);
+
+  const canDeleteDraft =
+    Boolean(assessment) &&
+    assessment!.status === "DRAFT" &&
+    assessment!.requesterId === user.id;
 
   function setAnswer(questionId: string, value: LocalAnswer) {
     setAnswers((prev) => ({ ...prev, [questionId]: { ...prev[questionId], ...value } }));
@@ -174,7 +182,18 @@ export default function AssessmentDetailPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>{assessment.softwareName}</CardTitle>
-                <AssessmentStatusBadge status={assessment.status} />
+                <div className="flex items-center gap-2">
+                  <AssessmentStatusBadge status={assessment.status} />
+                  {canDeleteDraft && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setDeleteDialogOpen(true)}
+                    >
+                      {t("deleteDraftButton")}
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
                 <div>
@@ -310,6 +329,15 @@ export default function AssessmentDetailPage() {
                   {submitting ? t("submitting") : t("submitButton")}
                 </Button>
               </div>
+            )}
+
+            {canDeleteDraft && (
+              <DeleteDraftDialog
+                assessmentId={assessment.id}
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onDeleted={() => router.push("/dashboard")}
+              />
             )}
           </>
         )}

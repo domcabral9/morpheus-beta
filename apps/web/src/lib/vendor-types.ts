@@ -25,6 +25,27 @@ export interface VendorSummary {
 
 export type VendorDetail = VendorSummary;
 
+/** Espelha `isVendorComplete` do backend (`vendor-completeness.util.ts`) -
+ * Nome + Razão Social + CNPJ + Criticidade, só presença. Obrigatório pro
+ * fornecedor contar como "ativo e vivo" em `/vendors` e pra desbloquear a
+ * decisão de aprovação no workflow, mas nunca bloqueia iniciar uma
+ * homologação nova. */
+export interface VendorCompletenessInput {
+  name: string;
+  legalName: string | null;
+  taxId: string | null;
+  businessCriticality: string | null;
+}
+
+export function isVendorComplete(vendor: VendorCompletenessInput): boolean {
+  return (
+    !!vendor.name?.trim() &&
+    !!vendor.legalName?.trim() &&
+    !!vendor.taxId?.trim() &&
+    !!vendor.businessCriticality
+  );
+}
+
 export interface VendorListItem extends VendorSummary {
   _count: { assessments: number };
 }

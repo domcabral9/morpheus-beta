@@ -104,6 +104,8 @@
     "yes": "Sim",
     "no": "Não",
     "vendorComplianceReminder": "Declarado pelo solicitante: confirme a existência do documento fora do sistema antes de aprovar.",
+    "vendorDataIncompleteWarning": "O cadastro deste fornecedor está incompleto (falta Razão Social, CNPJ ou Criticidade) - a aprovação ficará bloqueada até que seja completado.",
+    "vendorDataIncompleteLink": "Completar cadastro",
     "decisionLabel": "Decisão",
     "decisions": {
       "APPROVE": "Aprovar",
@@ -1192,7 +1194,19 @@
     "reassignSubmit": "Reatribuir",
     "reassignSubmitting": "Reatribuindo...",
     "reassignSuccess": "Solicitante reatribuído.",
-    "reassignError": "Não foi possível reatribuir o solicitante."
+    "reassignError": "Não foi possível reatribuir o solicitante.",
+    "deleteDraftButton": "Excluir rascunho",
+    "deleteDialogTitle": "Excluir rascunho",
+    "deleteDialogDescription": "Esta ação não pode ser desfeita. A avaliação e suas respostas serão excluídas permanentemente.",
+    "deleteLoading": "Verificando...",
+    "deleteLoadError": "Não foi possível verificar esta exclusão.",
+    "deleteVendorChoiceLabel": "O fornecedor foi cadastrado junto com esta avaliação e ainda não é usado em nenhum outro lugar. O que deseja fazer?",
+    "deleteAssessmentOnly": "Excluir apenas a avaliação",
+    "deleteAssessmentAndVendor": "Excluir a avaliação e o fornecedor \"{name}\"",
+    "deleteConfirm": "Excluir",
+    "deleting": "Excluindo...",
+    "deleteSuccess": "Rascunho excluído.",
+    "deleteError": "Não foi possível excluir esta avaliação."
   },
   "Vendors": {
     "title": "Fornecedores",
@@ -1221,6 +1235,7 @@
     "searchPlaceholder": "Buscar por nome...",
     "empty": "Nenhum fornecedor cadastrado.",
     "inactiveBadge": "Inativo",
+    "incompleteBadge": "Cadastro incompleto",
     "neverAssessed": "Nunca avaliado",
     "columnName": "Nome",
     "columnCriticality": "Criticidade",
@@ -1447,6 +1462,14 @@
       "INVENTORY_ITEM_REJECTED": {
         "title": "Item de inventário reprovado",
         "body": "Seu cadastro manual de \"{itemName}\" foi reprovado. Motivo: {reason}"
+      },
+      "VENDOR_DATA_INCOMPLETE": {
+        "title": "Avaliação pendente - atualize dados do fornecedor",
+        "body": "A avaliação \"{softwareName}\" está aguardando aprovação, mas o cadastro do fornecedor \"{vendorName}\" está incompleto. Complete o cadastro em /vendors para desbloquear a aprovação."
+      },
+      "VENDOR_DATA_INCOMPLETE_BLOCKS_APPROVAL": {
+        "title": "Avaliação aguardando dados do fornecedor",
+        "body": "A avaliação \"{softwareName}\" não pode ser aprovada porque o cadastro do fornecedor \"{vendorName}\" está incompleto."
       }
     }
   }

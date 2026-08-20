@@ -9,7 +9,9 @@ import { toast } from "sonner";
 
 import { useApi } from "@/lib/use-api";
 import { ApiError } from "@/components/auth-provider";
+import { Link } from "@/i18n/navigation";
 import { UserAvatar } from "@/components/user-avatar";
+import { isVendorComplete } from "@/lib/vendor-types";
 import type { InboxStepExecution, WorkflowDecision } from "@/lib/workflow-types";
 import {
   Dialog,
@@ -68,6 +70,7 @@ export function DecisionDialog({ execution, onOpenChange, onDecided }: DecisionD
     linkedVendor?.currentTier != null && linkedVendor.currentTierLabel != null
       ? { tier: linkedVendor.currentTier, label: linkedVendor.currentTierLabel }
       : null;
+  const vendorDataIncomplete = Boolean(linkedVendor) && !isVendorComplete(linkedVendor!);
 
   async function onSubmit(values: DecisionFormValues) {
     if (!execution) return;
@@ -179,6 +182,14 @@ export function DecisionDialog({ execution, onOpenChange, onDecided }: DecisionD
             )}
           </div>
           <p className="text-xs text-muted-foreground">{t("vendorComplianceReminder")}</p>
+          {vendorDataIncomplete && (
+            <p className="rounded-md border border-destructive/50 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+              {t("vendorDataIncompleteWarning")}{" "}
+              <Link href={`/vendors/${linkedVendor!.id}`} className="underline">
+                {t("vendorDataIncompleteLink")}
+              </Link>
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">

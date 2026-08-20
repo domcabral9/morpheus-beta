@@ -33,8 +33,12 @@ export function useApi() {
           accessToken: accessToken ?? undefined,
           body: body !== undefined ? JSON.stringify(body) : undefined,
         }),
-      delete: <T,>(path: string) =>
-        apiFetch<T>(path, { method: "DELETE", accessToken: accessToken ?? undefined }),
+      delete: <T,>(path: string, body?: unknown) =>
+        apiFetch<T>(path, {
+          method: "DELETE",
+          accessToken: accessToken ?? undefined,
+          body: body !== undefined ? JSON.stringify(body) : undefined,
+        }),
       postForm: <T,>(path: string, formData: FormData) =>
         apiFetch<T>(path, { method: "POST", accessToken: accessToken ?? undefined, body: formData }),
       getBlob: (path: string) => apiFetchBlob(path, { accessToken: accessToken ?? undefined }),
