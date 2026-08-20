@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { VendorAssessmentSummary, VendorDetail } from "@/lib/vendor-types";
+import { isVendorComplete, type VendorAssessmentSummary, type VendorDetail } from "@/lib/vendor-types";
 import { TierBadge } from "@/components/tier-badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { VendorFormDialog } from "../_components/vendor-form-dialog";
@@ -105,6 +105,9 @@ export default function VendorDetailPage() {
                     <Badge variant="outline">{t("neverAssessed")}</Badge>
                   )}
                   {!vendor.isActive && <Badge variant="outline">{t("inactiveBadge")}</Badge>}
+                  {!isVendorComplete(vendor) && (
+                    <Badge variant="secondary">{t("incompleteBadge")}</Badge>
+                  )}
                   {canManage && (
                     <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
                       {t("editButton")}

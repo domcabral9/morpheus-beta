@@ -50,6 +50,9 @@ export interface InboxStepExecution {
         name: string;
         currentTier: number | null;
         currentTierLabel: string | null;
+        legalName: string | null;
+        taxId: string | null;
+        businessCriticality: string | null;
       } | null;
     };
   };
