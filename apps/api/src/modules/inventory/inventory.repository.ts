@@ -65,6 +65,7 @@ export interface InventoryFilterParams {
   search?: string;
   status?: InventoryStatus;
   areaId?: string;
+  vendorId?: string;
   type?: SoftwareType;
   criticality?: Criticality;
   origin?: "HOMOLOGATED" | "MANUAL";
@@ -80,6 +81,7 @@ function buildWhereClause(params: InventoryFilterParams): Prisma.SoftwareInvento
       : {}),
     ...(params.status ? { status: params.status } : {}),
     ...(params.areaId ? { areaId: params.areaId } : {}),
+    ...(params.vendorId ? { vendorId: params.vendorId } : {}),
     ...(params.type ? { type: params.type } : {}),
     ...(params.criticality ? { criticality: params.criticality } : {}),
     ...(params.origin === "HOMOLOGATED" ? { assessmentId: { not: null } } : {}),

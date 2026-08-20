@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from "@nestjs/common";
 import type { AuthenticatedUser } from "../../common/interfaces/authenticated-user.interface";
 import { RiskEngineService, ScorableAnswer } from "../risk-engine/risk-engine.service";
 import { AuditLogService } from "../audit/audit-log.service";
@@ -112,6 +117,59 @@ export class VendorsService {
   async removeVendor(user: AuthenticatedUser, id: string): Promise<void> {
     await this.getVendor(user, id);
     await this.repository.remove(id);
+  }
+
+  /** Exclusão de fornecedor a partir de `/vendors` (achado 2026-08-20) - só
+   * quando genuinamente órfão: zero item de inventário, zero Assessment
+   * (qualquer status) e zero VendorAssessment/ART vinculados. Checagem mais
+   * ampla que `resolveOrphanVendor` (que não olha inventário e exige posse do
+   * fornecedor pelo usuário) - aqui qualquer usuário com `vendors:manage`
+   * pode excluir qualquer fornecedor órfão do tenant, não só o que criou. */
+  async getDeletionInfo(
+    user: AuthenticatedUser,
+    id: string,
+  ): Promise<{
+    canDelete: boolean;
+    inventoryCount: number;
+    assessmentCount: number;
+    vendorAssessmentCount: number;
+  }> {
+    await this.getVendor(user, id);
+    const counts = await this.repository.countLinkedRecords(id);
+    const canDelete =
+      counts.inventoryCount === 0 &&
+      counts.assessmentCount === 0 &&
+      counts.vendorAssessmentCount === 0;
+    return { canDelete, ...counts };
+  }
+
+  /** Reverifica as 3 contagens do zero - nunca confia numa chamada anterior a
+   * `getDeletionInfo` (proteção contra corrida: algo pode ter sido vinculado
+   * entre as duas chamadas). Sem parâmetro de "confirmado" - não há nenhuma
+   * escolha de negócio a fazer aqui, diferente de `AssessmentsService
+   * .deleteAssessment` (que tem a opção legítima `deleteVendor`). */
+  async deleteVendor(user: AuthenticatedUser, id: string): Promise<void> {
+    const vendor = await this.getVendor(user, id);
+    const counts = await this.repository.countLinkedRecords(id);
+    if (
+      counts.inventoryCount > 0 ||
+      counts.assessmentCount > 0 ||
+      counts.vendorAssessmentCount > 0
+    ) {
+      throw new ConflictException({
+        message: `Este fornecedor está vinculado a ${counts.inventoryCount} item(ns) de inventário, ${counts.assessmentCount} avaliação(ões) de software e ${counts.vendorAssessmentCount} avaliação(ões) de fornecedor - não pode ser excluído.`,
+        error: "VENDOR_HAS_ACTIVE_LINKS",
+      });
+    }
+    await this.repository.remove(id);
+    await this.auditLogService.record({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: "DELETE",
+      entityType: "Vendor",
+      entityId: id,
+      metadata: { name: vendor.name },
+    });
   }
 
   async getVendorHistory(user: AuthenticatedUser, vendorId: string) {

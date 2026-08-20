@@ -242,6 +242,12 @@ describe("InventoryService", () => {
       await service.list(makeUser(), { search: "Contract" } as never);
       expect(repo.findMany).toHaveBeenCalledWith(expect.objectContaining({ search: "Contract" }));
     });
+
+    it("repassa vendorId pro repository (filtro do redirect de fornecedor bloqueado)", async () => {
+      repo.findMany.mockResolvedValue({ items: [], total: 0 });
+      await service.list(makeUser(), { vendorId: "vendor-1" } as never);
+      expect(repo.findMany).toHaveBeenCalledWith(expect.objectContaining({ vendorId: "vendor-1" }));
+    });
   });
 
   describe("ciclo de vida de versão (eolProduct/freshness)", () => {
