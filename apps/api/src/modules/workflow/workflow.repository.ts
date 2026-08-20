@@ -49,7 +49,15 @@ const stepExecutionDetailInclude = {
           hasIso27001Certificate: true,
           vendorId: true,
           linkedVendor: {
-            select: { id: true, name: true, currentTier: true, currentTierLabel: true },
+            select: {
+              id: true,
+              name: true,
+              currentTier: true,
+              currentTierLabel: true,
+              legalName: true,
+              taxId: true,
+              businessCriticality: true,
+            },
           },
         },
       },
@@ -230,7 +238,15 @@ export class WorkflowRepository {
                 hasIso27001Certificate: true,
                 vendorId: true,
                 linkedVendor: {
-                  select: { id: true, name: true, currentTier: true, currentTierLabel: true },
+                  select: {
+                    id: true,
+                    name: true,
+                    currentTier: true,
+                    currentTierLabel: true,
+                    legalName: true,
+                    taxId: true,
+                    businessCriticality: true,
+                  },
                 },
               },
             },
@@ -238,6 +254,22 @@ export class WorkflowRepository {
         },
       },
       orderBy: { createdAt: "asc" },
+    });
+  }
+
+  /** Toda etapa `IN_PROGRESS` cuja `Assessment` tem um `Vendor` real
+   * vinculado - usada pelo `VendorDataGateScheduler` (varredura cross-tenant,
+   * mesmo padrão de todo outro scheduler diário deste projeto: a query já
+   * abrange todos os tenants, o `tenantId` vem embutido em cada linha).
+   * Filtro de completude em si roda em memória via `isVendorComplete`, não
+   * aqui - mais simples que expressar "algum campo string vazio" em `where`. */
+  findInProgressStepsWithVendorLinked(): Promise<StepExecutionDetail[]> {
+    return this.prisma.workflowStepExecution.findMany({
+      where: {
+        status: "IN_PROGRESS",
+        assessmentWorkflowInstance: { assessment: { vendorId: { not: null } } },
+      },
+      include: stepExecutionDetailInclude,
     });
   }
 }

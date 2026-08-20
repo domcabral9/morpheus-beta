@@ -17,6 +17,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { InventoryService } from "../inventory/inventory.service";
 import { TechnicalOpinionService } from "../technical-opinions/technical-opinion.service";
 import { ITSM_ADAPTER, ItsmAdapter } from "../integrations/itsm/itsm.interface";
+import { isVendorComplete } from "../vendors/vendor-completeness.util";
 import {
   COLLABORATION_ADAPTER,
   CollaborationAdapter,
@@ -180,6 +181,19 @@ export class WorkflowService {
 
     if (dto.decision === "SKIP" && !execution.workflowStep.isOptional) {
       throw new BadRequestException("Esta etapa não é opcional e não pode ser pulada.");
+    }
+
+    // Gate de completude cadastral do fornecedor (achado 2026-08-19): não
+    // bloqueia submit()/criação, só a decisão de aprovação - `SKIP` não é
+    // bloqueado (pular uma etapa opcional não é "aprovar com base em dado
+    // ruim"). Só se aplica quando há um Vendor real vinculado.
+    if (dto.decision === "APPROVE" && assessment.vendorId && assessment.linkedVendor) {
+      if (!isVendorComplete(assessment.linkedVendor)) {
+        throw new BadRequestException({
+          message: `O cadastro do fornecedor "${assessment.linkedVendor.name}" está incompleto (falta Razão Social, CNPJ ou Criticidade) - complete o cadastro em /vendors antes de aprovar.`,
+          error: "VENDOR_DATA_INCOMPLETE",
+        });
+      }
     }
 
     await this.workflowRepository.updateStepExecution(execution.id, {
