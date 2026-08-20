@@ -160,6 +160,23 @@ export class VendorsRepository {
     return this.prisma.vendorAssessment.count({ where: { vendorId } });
   }
 
+  /** As 3 contagens que definem se um fornecedor é órfão o suficiente pra
+   * ser excluído de verdade (achado 2026-08-20) - qualquer status em todas,
+   * método próprio e independente de `countAssessments` (que continua só a
+   * serviço de `resolveOrphanVendor`, com sua própria semântica). */
+  async countLinkedRecords(vendorId: string): Promise<{
+    inventoryCount: number;
+    assessmentCount: number;
+    vendorAssessmentCount: number;
+  }> {
+    const [inventoryCount, assessmentCount, vendorAssessmentCount] = await Promise.all([
+      this.prisma.softwareInventoryItem.count({ where: { vendorId } }),
+      this.prisma.assessment.count({ where: { vendorId } }),
+      this.prisma.vendorAssessment.count({ where: { vendorId } }),
+    ]);
+    return { inventoryCount, assessmentCount, vendorAssessmentCount };
+  }
+
   findAssessmentHistory(tenantId: string, vendorId: string) {
     return this.prisma.vendorAssessment.findMany({
       where: { tenantId, vendorId },

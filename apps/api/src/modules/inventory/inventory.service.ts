@@ -115,6 +115,7 @@ export class InventoryService {
       search: query.search,
       status: query.status,
       areaId: query.areaId,
+      vendorId: query.vendorId,
       type: query.type,
       criticality: query.criticality,
       origin: query.origin,

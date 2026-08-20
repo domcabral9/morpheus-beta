@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { RequirePermissions } from "../../common/decorators/require-permissions.decorator";
@@ -64,6 +64,22 @@ export class VendorsController {
   @Get(":id/assessments")
   history(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.vendorsService.getVendorHistory(user, id);
+  }
+
+  /** Contagens que decidem se o fornecedor pode ser excluído a partir de
+   * `/vendors` - o DELETE abaixo sempre reverifica sozinho, nunca confia
+   * nesta chamada anterior. */
+  @RequirePermissions(PERMISSIONS.VENDORS_MANAGE)
+  @Get(":id/deletion-info")
+  getDeletionInfo(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.vendorsService.getDeletionInfo(user, id);
+  }
+
+  @RequirePermissions(PERMISSIONS.VENDORS_MANAGE)
+  @Delete(":id")
+  @HttpCode(204)
+  async remove(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    await this.vendorsService.deleteVendor(user, id);
   }
 
   /** Painel de reaproveitamento na ART: avaliações de Software deste
