@@ -5,11 +5,17 @@ import { InventoryModule } from "../inventory/inventory.module";
 import { WorkflowController } from "./workflow.controller";
 import { WorkflowRepository } from "./workflow.repository";
 import { WorkflowService } from "./workflow.service";
+import { VendorDataGateScheduler } from "./vendor-data-gate.scheduler";
 
 @Module({
   imports: [TechnicalOpinionModule, InventoryModule],
   controllers: [WorkflowController],
-  providers: [WorkflowRepository, WorkflowService, SeparationOfDutiesService],
+  providers: [
+    WorkflowRepository,
+    WorkflowService,
+    SeparationOfDutiesService,
+    VendorDataGateScheduler,
+  ],
   exports: [WorkflowService],
 })
 export class WorkflowModule {}

@@ -1666,6 +1666,14 @@ enum NotificationType {
   INVENTORY_ITEM_APPROVED
   /// Item de inventário manual reprovado no fluxo de aprovação dedicado.
   INVENTORY_ITEM_REJECTED
+  /// Fornecedor vinculado à avaliação tem cadastro incompleto (falta Razão
+  /// Social/CNPJ/Criticidade) - notifica o solicitante, varredura diária
+  /// enquanto a avaliação estiver parada numa etapa de aprovação nessa
+  /// condição (ver VendorDataGateScheduler).
+  VENDOR_DATA_INCOMPLETE
+  /// Mesmo gatilho de VENDOR_DATA_INCOMPLETE, mas pro papel responsável pela
+  /// etapa atual - explica por que a decisão de aprovação está bloqueada.
+  VENDOR_DATA_INCOMPLETE_BLOCKS_APPROVAL
 }
 
 model Notification {
