@@ -208,6 +208,23 @@ onde fica o histórico de cada janela) em [`docs/security.md`](./security.md); d
 foi montado (incluindo dois bugs reais que a primeira execução do CI pegou) no
 [`CHANGELOG.md`](./CHANGELOG.md).
 
+## Fluxo de PR
+
+Ritmo padrão para qualquer mudança, de uma fase pequena a um arco completo de feature: branch →
+implementar → validar (`lint`/`typecheck`/`test`/`build` do(s) pacote(s) tocado(s)) → `gh pr create`
+→ **aguardar confirmação explícita de merge** (nunca mesclar proativamente, mesmo com CI verde) →
+merge → sincronizar `main`. Reforça a seção de CI acima: a confirmação de merge é sempre verbal, não
+existe segundo revisor humano fixo neste projeto.
+
+**Ordem de merge quando várias PRs estão abertas ao mesmo tempo**: mesclar sempre a mais antiga
+primeiro, na ordem em que foram abertas - nunca a mais nova só porque o CI dela terminou primeiro.
+Isso importa de verdade quando fases sucessivas de um mesmo arco dependem do código já mesclado da
+fase anterior estar em `main`.
+
+**Não travar esperando o CI de uma PR terminar antes de começar a próxima fase** - iniciar o
+branch/implementação da fase seguinte enquanto o CI da fase atual ainda roda é normal; só a ordem de
+*merge* precisa respeitar a regra acima, não a ordem de *início* do trabalho.
+
 ## Dados de demonstração (tenant `demo`)
 
 Ao criar/editar amostras no tenant `demo` (dados usados pra navegação manual e pros screenshots do
