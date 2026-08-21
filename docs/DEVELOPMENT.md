@@ -225,6 +225,17 @@ fase anterior estar em `main`.
 branch/implementação da fase seguinte enquanto o CI da fase atual ainda roda é normal; só a ordem de
 *merge* precisa respeitar a regra acima, não a ordem de *início* do trabalho.
 
+**Não empilhar PRs quando dá pra evitar.** Uma PR empilhada (base = branch de outra PR ainda não
+mesclada, não `main`) parece natural quando uma fase depende do código de outra ainda não mesclada,
+mas o GitHub **não retargeta automaticamente** a PR dependente quando a branch base é apagada depois
+que a PR de baixo mescla - ele fecha a PR de cima **sem mesclar**, e uma PR fechada não pode mais ser
+reaberta nem ter a base trocada via API. Preferir branches independentes contra `main` por fase
+sempre que a fase seguinte só precisa do código anterior pra ser *testada*, não pra ser *escrita*
+(o que cobre a maioria dos casos - dá pra escrever o código de uma fase de frontend, por exemplo,
+sabendo o formato de um endpoint que ainda não subiu). Se empilhar for realmente necessário,
+**retargetar a base da PR de cima pra `main` enquanto ela ainda está aberta, antes de apagar a
+branch base** - nunca depois.
+
 ## Dados de demonstração (tenant `demo`)
 
 Ao criar/editar amostras no tenant `demo` (dados usados pra navegação manual e pros screenshots do
