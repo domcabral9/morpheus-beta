@@ -53,6 +53,7 @@ interface Filters {
   search: string;
   status: string;
   areaId: string;
+  vendorId: string;
   type: string;
   criticality: string;
   origin: string;
@@ -64,6 +65,7 @@ const EMPTY_FILTERS: Filters = {
   search: "",
   status: ALL_VALUE,
   areaId: ALL_VALUE,
+  vendorId: ALL_VALUE,
   type: ALL_VALUE,
   criticality: ALL_VALUE,
   origin: ALL_VALUE,
@@ -76,6 +78,7 @@ function buildQuery(filters: Filters, page: number): string {
   if (filters.search.trim()) params.set("search", filters.search.trim());
   if (filters.status !== ALL_VALUE) params.set("status", filters.status);
   if (filters.areaId !== ALL_VALUE) params.set("areaId", filters.areaId);
+  if (filters.vendorId !== ALL_VALUE) params.set("vendorId", filters.vendorId);
   if (filters.type !== ALL_VALUE) params.set("type", filters.type);
   if (filters.criticality !== ALL_VALUE) params.set("criticality", filters.criticality);
   if (filters.origin !== ALL_VALUE) params.set("origin", filters.origin);
@@ -90,14 +93,27 @@ interface InventoryListViewProps {
   areas: Area[];
   users: UserOption[];
   canManage: boolean;
+  /** Preenchidos quando a tela chega via redirect de "ver softwares
+   * vinculados" (dialog de exclusão bloqueada em `/vendors/:id`). */
+  initialVendorId?: string;
+  initialVendorName?: string;
 }
 
-export function InventoryListView({ areas, users, canManage }: InventoryListViewProps) {
+export function InventoryListView({
+  areas,
+  users,
+  canManage,
+  initialVendorId,
+  initialVendorName,
+}: InventoryListViewProps) {
   const t = useTranslations("Inventory");
   const criticalityT = useTranslations("Criticality");
   const api = useApi();
 
-  const [filters, setFilters] = React.useState<Filters>(EMPTY_FILTERS);
+  const [filters, setFilters] = React.useState<Filters>(() => ({
+    ...EMPTY_FILTERS,
+    vendorId: initialVendorId ?? ALL_VALUE,
+  }));
   const [searchInput, setSearchInput] = React.useState("");
   const [page, setPage] = React.useState(1);
   const [data, setData] = React.useState<PaginatedInventory | null>(null);
@@ -189,6 +205,22 @@ export function InventoryListView({ areas, users, canManage }: InventoryListView
           </div>
         </CardHeader>
         <CardContent>
+          {filters.vendorId !== ALL_VALUE && (
+            <div className="mb-4 flex items-center gap-2">
+              <Badge variant="secondary" className="gap-1">
+                {t("filteredByVendor", { name: initialVendorName ?? t("filteredByVendorUnknown") })}
+                <button
+                  type="button"
+                  onClick={() => updateFilter("vendorId", ALL_VALUE)}
+                  aria-label={t("filteredByVendorClear")}
+                  className="ml-1"
+                >
+                  ×
+                </button>
+              </Badge>
+            </div>
+          )}
+
           <div className="mb-4 flex flex-col gap-2">
             <span className="text-xs text-muted-foreground">{t("searchLabel")}</span>
             <Input

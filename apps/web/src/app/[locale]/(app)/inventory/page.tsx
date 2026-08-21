@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { useRequireAuth } from "@/lib/use-require-auth";
@@ -17,6 +18,9 @@ export default function InventoryPage() {
   const user = useRequireAuth();
   const api = useApi();
   const canManage = usePermission("inventory:manage");
+  const searchParams = useSearchParams();
+  const initialVendorId = searchParams.get("vendorId") ?? undefined;
+  const initialVendorName = searchParams.get("vendorName") ?? undefined;
 
   const [areas, setAreas] = React.useState<Area[]>([]);
   const [users, setUsers] = React.useState<UserOption[]>([]);
@@ -47,7 +51,13 @@ export default function InventoryPage() {
         </TabsList>
 
         <TabsContent value="list">
-          <InventoryListView areas={areas} users={users} canManage={canManage} />
+          <InventoryListView
+            areas={areas}
+            users={users}
+            canManage={canManage}
+            initialVendorId={initialVendorId}
+            initialVendorName={initialVendorName}
+          />
         </TabsContent>
         <TabsContent value="overview">
           <InventoryDashboardView areas={areas} />
