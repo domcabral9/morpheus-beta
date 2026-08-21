@@ -148,6 +148,43 @@ seed aplicado - precisa do ambiente de desenvolvimento local já de pé (passos 
 pnpm --filter @morpheus/api test:e2e
 ```
 
+## Problemas conhecidos do ambiente de desenvolvimento
+
+### O dev server da API pode cair sozinho (`nest start --watch`)
+
+Sintoma: a porta 3001 para de responder, ou o processo node desaparece do sistema sem nenhum erro
+no terminal - às vezes some entre uma pausa e a retomada do trabalho, sem nenhum comando explícito
+de shutdown. Causa raiz ainda não confirmada (hipóteses: processo em segundo plano encerrado quando
+a máquina suspende, Docker Desktop reiniciando, o watch mode travando depois de muitos ciclos de
+recompilação numa sessão longa) - o que segue é o procedimento de detecção/recuperação, não uma
+correção da causa.
+
+**Detecção**: antes de confiar em qualquer teste via curl/Playwright contra a API, confirmar que ela
+está respondendo:
+
+```bash
+curl -s http://localhost:3001/health
+```
+
+Um segundo sintoma relacionado, mais sutil: o processo pode estar de pé mas servindo um build antigo
+(`node dist/main.js` em vez do modo watch `nest start --watch`) - nesse caso a porta responde
+normalmente, mas rotas de features recentes (mescladas depois que esse processo antigo subiu) dão
+404 mesmo estando corretas no código. Antes de confiar num teste, checar o command-line real do
+processo:
+
+```powershell
+Get-CimInstance Win32_Process -Filter "ProcessId=<pid>" | Select-Object CommandLine
+```
+
+`dist/main`/`next start` na saída = build parado no tempo, não código ao vivo.
+
+**Recuperação**: matar o processo e reiniciar em modo watch.
+
+```bash
+pnpm --filter @morpheus/api dev
+pnpm --filter @morpheus/web dev
+```
+
 ## CI e proteção do `main`
 
 Todo PR (e todo push em `main`) roda `.github/workflows/ci.yml`: `pnpm turbo run typecheck` /
