@@ -185,6 +185,13 @@ pnpm --filter @morpheus/api dev
 pnpm --filter @morpheus/web dev
 ```
 
+### Cache do Turbopack pode servir 404 falso numa rota que existe de verdade
+
+Sintoma: uma rota presente no disco (confirmável em `app-paths-manifest.json`) devolve 404 genuíno
+do Next.js, geralmente logo depois de uma troca de branch com o `next dev` já rodando. Não é um bug
+de código - é o cache `apps/web/.next` desatualizado/corrompido. Fix: `rm -rf apps/web/.next` e
+reiniciar o dev server.
+
 ## CI e proteção do `main`
 
 Todo PR (e todo push em `main`) roda `.github/workflows/ci.yml`: `pnpm turbo run typecheck` /
