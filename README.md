@@ -289,12 +289,14 @@ README ou de documentação escrita à mão.
 - [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md) - referência enxuta: stack, estrutura, como rodar,
   CI/proteção do `main`.
 - [`docs/CHANGELOG.md`](./docs/CHANGELOG.md) - histórico de decisões etapa a etapa/PR a PR, mantido
-  de propósito como um diário de bordo técnico (não só uma lista de features prontas): trade-offs
-  considerados, bugs reais encontrados e como foram corrigidos.
+  de propósito como um diário de bordo técnico: trade-offs considerados, bugs reais encontrados e como
+  foram corrigidos.
 - [`docs/architecture.md`](./docs/architecture.md) - diagramas de modelo de dados e topologia de
   deploy.
 - [`docs/security.md`](./docs/security.md) - SSDLC: CI, branch protection, Dependabot e o processo
   de revisão semanal de vulnerabilidades.
+- [`docs/style-guide.md`](./docs/style-guide.md) - convenções de escrita aplicadas a todo texto do
+  projeto.
 - [`infra/terraform/README.md`](./infra/terraform/README.md) - estratégia de deploy em produção.
 
 ## Contato
@@ -590,11 +592,12 @@ depending on this README or hand-written documentation.
 - [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md) - lean reference: stack, structure, how to run,
   CI/`main` branch protection.
 - [`docs/CHANGELOG.md`](./docs/CHANGELOG.md) - stage-by-stage/PR-by-PR decision log, deliberately
-  kept as a technical logbook (not just a feature list): trade-offs considered, real bugs found and
-  how they were fixed.
+  kept as a technical logbook: trade-offs considered, real bugs found and how they were fixed.
 - [`docs/architecture.md`](./docs/architecture.md) - data model and deployment topology diagrams.
 - [`docs/security.md`](./docs/security.md) - SSDLC: CI, branch protection, Dependabot, and the
   weekly vulnerability-review process (Portuguese).
+- [`docs/style-guide.md`](./docs/style-guide.md) - writing conventions applied to all project text
+  (Portuguese).
 - [`infra/terraform/README.md`](./infra/terraform/README.md) - production deployment strategy.
 
 ## Contact
