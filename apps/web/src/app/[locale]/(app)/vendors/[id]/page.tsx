@@ -17,6 +17,7 @@ import { isVendorComplete, type VendorAssessmentSummary, type VendorDetail } fro
 import { TierBadge } from "@/components/tier-badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { VendorFormDialog } from "../_components/vendor-form-dialog";
+import { DeleteVendorDialog } from "../_components/delete-vendor-dialog";
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -40,6 +41,7 @@ export default function VendorDetailPage() {
   const [history, setHistory] = React.useState<VendorAssessmentSummary[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [editOpen, setEditOpen] = React.useState(false);
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [startingAssessment, setStartingAssessment] = React.useState(false);
 
   const load = React.useCallback(() => {
@@ -111,6 +113,11 @@ export default function VendorDetailPage() {
                   {canManage && (
                     <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
                       {t("editButton")}
+                    </Button>
+                  )}
+                  {canManage && (
+                    <Button size="sm" variant="destructive" onClick={() => setDeleteOpen(true)}>
+                      {t("deleteButton")}
                     </Button>
                   )}
                 </div>
@@ -227,6 +234,16 @@ export default function VendorDetailPage() {
             setVendor(saved);
             setEditOpen(false);
           }}
+        />
+      )}
+
+      {vendor && canManage && (
+        <DeleteVendorDialog
+          vendorId={vendor.id}
+          vendorName={vendor.name}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          onDeleted={() => router.push("/vendors")}
         />
       )}
     </>
