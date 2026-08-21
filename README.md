@@ -74,6 +74,14 @@ qualquer item do inventário é possível ver a ART do fornecedor vinculado (ou 
 não existir), e a aba "Acompanhamento" em Fornecedores dá uma visão consolidada de quem nunca foi
 avaliado ou está com reavaliação vencida/próxima.
 
+O cadastro mínimo de um fornecedor (nome + criticidade) pode ser feito às pressas durante a criação
+de uma avaliação, mas um badge "Cadastro incompleto" sinaliza em `/vendors` sempre que faltar Razão
+Social ou CNPJ - e a decisão de aprovação de uma avaliação vinculada a esse fornecedor fica bloqueada
+até o cadastro ser completado, sem nunca travar o início da homologação em si. Um administrador pode
+excluir um fornecedor pela tela de detalhe, mas só quando ele for genuinamente órfão (sem nenhum
+software de inventário, avaliação ou ART vinculados) - se houver qualquer vínculo ativo, o sistema
+mostra exatamente quais são e oferece um atalho direto para os softwares vinculados.
+
 | ART do fornecedor no detalhe do item | Acompanhamento de fornecedores |
 | --- | --- |
 | ![ART do fornecedor](./docs/screenshots/inventory-item-art.png) | ![Acompanhamento de fornecedores](./docs/screenshots/vendors-acompanhamento.png) |
@@ -224,6 +232,10 @@ Processo completo (camadas de risco, histórico de cada janela) em
 | --- | --- |
 | ![Fornecedores - lista](./docs/screenshots/vendors-lista.png) | ![Fornecedores - detalhe](./docs/screenshots/vendors-detalhe.png) |
 
+| Exclusão de fornecedor - bloqueada por vínculo ativo |
+| --- |
+| ![Exclusão bloqueada](./docs/screenshots/vendors-exclusao-bloqueada.png) |
+
 | Avaliação de fornecedor - quem realizou | Auditoria - quem fez o quê |
 | --- | --- |
 | ![Avaliação - realizada por](./docs/screenshots/vendors-avaliacao-realizada-por.png) | ![Auditoria](./docs/screenshots/admin-auditoria.png) |
@@ -364,6 +376,14 @@ The vendor behind an already-homologated piece of software is traceable too: fro
 item's detail page you can see the linked vendor's ART (or start one, if it doesn't exist yet), and
 the "Tracking" tab under Vendors gives a consolidated view of who's never been assessed or has an
 overdue/upcoming reassessment.
+
+A vendor's minimum registration (name + criticality) can be rushed through while creating an
+assessment, but an "Incomplete registration" badge flags it in `/vendors` whenever the legal name or
+tax ID is missing - and the approval decision on any assessment linked to that vendor stays blocked
+until the registration is completed, without ever blocking the homologation itself from starting. An
+administrator can delete a vendor from its detail page, but only when it's genuinely orphaned (no
+linked inventory software, assessment, or ART) - if there's any active link, the system shows exactly
+what they are and offers a direct shortcut to the linked software.
 
 | Vendor ART on the item detail page | Vendor tracking |
 | --- | --- |
@@ -511,6 +531,10 @@ Full process (risk tiers, per-window history) in [`docs/security.md`](./docs/sec
 | Vendors - list with tiering | Vendors - detail |
 | --- | --- |
 | ![Vendors - list](./docs/screenshots/vendors-lista-en.png) | ![Vendors - detail](./docs/screenshots/vendors-detalhe-en.png) |
+
+| Vendor deletion - blocked by an active link |
+| --- |
+| ![Deletion blocked](./docs/screenshots/vendors-exclusao-bloqueada-en.png) |
 
 | Vendor assessment - who performed it | Audit log - who did what |
 | --- | --- |
