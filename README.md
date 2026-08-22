@@ -297,6 +297,8 @@ README ou de documentação escrita à mão.
   de revisão semanal de vulnerabilidades.
 - [`docs/style-guide.md`](./docs/style-guide.md) - convenções de escrita aplicadas a todo texto do
   projeto.
+- [`docs/portfolio.md`](./docs/portfolio.md) - quando uma mudança justifica atualizar screenshots
+  curados/README, separado da documentação técnica.
 - [`infra/terraform/README.md`](./infra/terraform/README.md) - estratégia de deploy em produção.
 
 ## Contato
@@ -598,6 +600,8 @@ depending on this README or hand-written documentation.
   weekly vulnerability-review process (Portuguese).
 - [`docs/style-guide.md`](./docs/style-guide.md) - writing conventions applied to all project text
   (Portuguese).
+- [`docs/portfolio.md`](./docs/portfolio.md) - when a change justifies updating curated
+  screenshots/README, separate from technical documentation (Portuguese).
 - [`infra/terraform/README.md`](./infra/terraform/README.md) - production deployment strategy.
 
 ## Contact
