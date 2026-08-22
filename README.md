@@ -300,6 +300,8 @@ README ou de documentação escrita à mão.
 - [`docs/portfolio.md`](./docs/portfolio.md) - quando uma mudança justifica atualizar screenshots
   curados/README, separado da documentação técnica.
 - [`infra/terraform/README.md`](./infra/terraform/README.md) - estratégia de deploy em produção.
+- [`CLAUDE.md`](./CLAUDE.md) - carregado automaticamente por qualquer sessão do Claude Code neste
+  repositório; aponta pros documentos acima em vez de duplicá-los.
 
 ## Contato
 
@@ -603,6 +605,8 @@ depending on this README or hand-written documentation.
 - [`docs/portfolio.md`](./docs/portfolio.md) - when a change justifies updating curated
   screenshots/README, separate from technical documentation (Portuguese).
 - [`infra/terraform/README.md`](./infra/terraform/README.md) - production deployment strategy.
+- [`CLAUDE.md`](./CLAUDE.md) - auto-loaded by any Claude Code session in this repo; points to the
+  docs above instead of duplicating them.
 
 ## Contact
 
