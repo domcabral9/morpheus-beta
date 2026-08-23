@@ -303,6 +303,12 @@ README ou de documentação escrita à mão.
 - [`CLAUDE.md`](./CLAUDE.md) - carregado automaticamente por qualquer sessão do Claude Code neste
   repositório; aponta pros documentos acima em vez de duplicá-los.
 
+## Licença
+
+[MIT](./LICENSE) - código aberto, uso livre inclusive comercial, mantendo o aviso de copyright.
+Reflete o enquadramento educacional/portfólio do projeto: o objetivo é servir de referência e
+demonstrar trabalho, não restringir reuso.
+
 ## Contato
 
 [LinkedIn](https://www.linkedin.com/in/domcabral/) - domcabral@proton.me
@@ -607,6 +613,12 @@ depending on this README or hand-written documentation.
 - [`infra/terraform/README.md`](./infra/terraform/README.md) - production deployment strategy.
 - [`CLAUDE.md`](./CLAUDE.md) - auto-loaded by any Claude Code session in this repo; points to the
   docs above instead of duplicating them.
+
+## License
+
+[MIT](./LICENSE) - open source, free use including commercial, with copyright notice preserved.
+Reflects the project's educational/portfolio framing: the goal is to serve as a reference and
+demonstrate work, not to restrict reuse.
 
 ## Contact
 
