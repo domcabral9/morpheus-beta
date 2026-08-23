@@ -169,13 +169,6 @@ export class TechnicalOpinionRepository {
     return this.prisma.technicalOpinion.findUnique({ where: { assessmentVersionId } });
   }
 
-  findLatestForAssessment(assessmentId: string) {
-    return this.prisma.technicalOpinion.findFirst({
-      where: { assessmentVersion: { assessmentId } },
-      orderBy: { issuedAt: "desc" },
-    });
-  }
-
   findByTenantAndNumber(tenantId: string, number: string) {
     return this.prisma.technicalOpinion.findUnique({
       where: { tenantId_number: { tenantId, number } },

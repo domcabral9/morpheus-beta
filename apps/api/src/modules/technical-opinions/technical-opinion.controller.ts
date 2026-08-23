@@ -20,14 +20,6 @@ export class TechnicalOpinionController {
     return this.technicalOpinionService.findAllForTenant(user, query);
   }
 
-  @Get("assessments/:assessmentId")
-  getLatestForAssessment(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param("assessmentId") assessmentId: string,
-  ) {
-    return this.technicalOpinionService.getLatestForAssessment(user, assessmentId);
-  }
-
   @Get(":id/download")
   async download(
     @CurrentUser() user: AuthenticatedUser,

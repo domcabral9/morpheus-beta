@@ -35,7 +35,7 @@ export const itemDetailInclude = {
   // Parecer técnico da homologação que originou este item, quando existir -
   // itens de entrada manual (`assessmentId` nulo) nunca têm um. Pega só a
   // versão mais recente da avaliação (`take: 1`) - mesma noção de "o parecer
-  // vigente" já usada em `TechnicalOpinionRepository.findLatestForAssessment`.
+  // vigente" que orienta o restante do módulo de pareceres.
   assessment: {
     select: {
       versions: {
