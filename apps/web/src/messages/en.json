@@ -280,7 +280,9 @@
       "vendorQuestionnaire": "Vendor questionnaire",
       "vendorQuestionnaireDescription": "Categories, questions, and options used in vendor risk assessment.",
       "platformPolicy": "Platform policies",
-      "platformPolicyDescription": "Password rules and 2FA enforcement for the whole platform. Visible only to super-admins."
+      "platformPolicyDescription": "Password rules and 2FA enforcement for the whole platform. Visible only to super-admins.",
+      "sampleData": "Sample data",
+      "sampleDataDescription": "Management of ephemeral test data created by super-admins. Visible only to super-admins."
     }
   },
   "AuditLogs": {
@@ -319,6 +321,35 @@
       "REOPEN": "Reopen",
       "SUBMIT": "Submit",
       "SWITCH_TENANT": "Tenant switch"
+    }
+  },
+  "AdminSampleData": {
+    "title": "Sample data",
+    "subtitle": "Management of ephemeral test data created by super-admins - distinct from the permanent portfolio samples.",
+    "listTitle": "Records marked as sample",
+    "loadError": "Could not load sample data.",
+    "empty": "No sample data found.",
+    "columnType": "Type",
+    "columnName": "Name",
+    "columnTenant": "Organization",
+    "columnCreatedBy": "Created by",
+    "columnCreatedAt": "Created at",
+    "columnActions": "Actions",
+    "unknownCreator": "Unknown",
+    "deleteButton": "Delete",
+    "deleting": "Deleting...",
+    "deleteSuccess": "Sample data deleted.",
+    "deleteError": "Could not delete the sample data.",
+    "deleteConfirmTitle": "Delete sample data?",
+    "deleteConfirmDescription": "\"{name}\" will be permanently deleted. This action cannot be undone.",
+    "cancel": "Cancel",
+    "paginationPrevious": "Previous",
+    "paginationNext": "Next",
+    "paginationPageOf": "Page {current} of {total}",
+    "entityTypes": {
+      "vendor": "Vendor",
+      "inventory-item": "Inventory item",
+      "assessment": "Assessment"
     }
   },
   "Inventory": {
@@ -389,6 +420,7 @@
     "hasInfoSecClauseLabel": "Information security clause",
     "vendorComplianceHint": "Required even for manual entries - declared by whoever registers the item.",
     "vendorComplianceInheritedHint": "Inherited from the homologation assessment - editable only by reopening the original assessment.",
+    "fieldIsSampleData": "Sample data - super-admin",
     "vendorArtTitle": "Vendor ART",
     "vendorArtNoneLinked": "No vendor linked.",
     "vendorArtLinkButton": "Link vendor",
@@ -1126,6 +1158,7 @@
     "hasIso27001CertificateLabel": "Is there an ISO 27001 certificate?",
     "vendorComplianceHint": "Self-declared - the approver may ask for proof outside the system before deciding.",
     "complianceEvidenceHint": "For SaaS systems, the report is usually the vendor's own. For internally-deployed systems (even third-party), responsibility falls on whoever maintains the deployment. If checked, the matching attachment is required before submitting for review.",
+    "fieldIsSampleData": "Sample data - super-admin",
     "submit": "Create and continue to the questionnaire",
     "submitting": "Creating...",
     "cancel": "Cancel",
@@ -1269,6 +1302,7 @@
     "fieldBusinessCriticalityPlaceholder": "Select",
     "fieldBusinessCriticalityNone": "Not set",
     "fieldIsActive": "Vendor active",
+    "fieldIsSampleData": "Sample data - super-admin",
     "fieldLastAssessedAt": "Last assessed",
     "fieldNextReviewDueAt": "Next review",
     "historyTitle": "Assessment history",

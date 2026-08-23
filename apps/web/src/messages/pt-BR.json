@@ -280,7 +280,9 @@
       "vendorQuestionnaire": "Questionário de fornecedores",
       "vendorQuestionnaireDescription": "Categorias, perguntas e opções usadas na avaliação de risco de fornecedores.",
       "platformPolicy": "Políticas de plataforma",
-      "platformPolicyDescription": "Regras de senha e exigência de 2FA para toda a plataforma. Visível só para super-admin."
+      "platformPolicyDescription": "Regras de senha e exigência de 2FA para toda a plataforma. Visível só para super-admin.",
+      "sampleData": "Dados de amostra",
+      "sampleDataDescription": "Gestão de dado de teste efêmero criado por super-admin. Visível só para super-admin."
     }
   },
   "AuditLogs": {
@@ -319,6 +321,35 @@
       "REOPEN": "Reabertura",
       "SUBMIT": "Envio",
       "SWITCH_TENANT": "Troca de organização"
+    }
+  },
+  "AdminSampleData": {
+    "title": "Dados de amostra",
+    "subtitle": "Gestão de dado de teste efêmero criado por super-admin - diferente das amostras permanentes de portfólio.",
+    "listTitle": "Registros marcados como amostra",
+    "loadError": "Não foi possível carregar os dados de amostra.",
+    "empty": "Nenhum dado de amostra encontrado.",
+    "columnType": "Tipo",
+    "columnName": "Nome",
+    "columnTenant": "Organização",
+    "columnCreatedBy": "Criado por",
+    "columnCreatedAt": "Criado em",
+    "columnActions": "Ações",
+    "unknownCreator": "Desconhecido",
+    "deleteButton": "Excluir",
+    "deleting": "Excluindo...",
+    "deleteSuccess": "Dado de amostra excluído.",
+    "deleteError": "Não foi possível excluir o dado de amostra.",
+    "deleteConfirmTitle": "Excluir dado de amostra?",
+    "deleteConfirmDescription": "\"{name}\" será excluído permanentemente. Essa ação não pode ser desfeita.",
+    "cancel": "Cancelar",
+    "paginationPrevious": "Anterior",
+    "paginationNext": "Próxima",
+    "paginationPageOf": "Página {current} de {total}",
+    "entityTypes": {
+      "vendor": "Fornecedor",
+      "inventory-item": "Item de inventário",
+      "assessment": "Avaliação"
     }
   },
   "Inventory": {
@@ -389,6 +420,7 @@
     "hasInfoSecClauseLabel": "Cláusula de segurança da informação",
     "vendorComplianceHint": "Obrigatório mesmo para entrada manual - declaração de quem cadastra o item.",
     "vendorComplianceInheritedHint": "Herdado da avaliação de homologação - editável só reabrindo a avaliação original.",
+    "fieldIsSampleData": "Dado de amostra (sample) - super-admin",
     "vendorArtTitle": "ART do fornecedor",
     "vendorArtNoneLinked": "Nenhum fornecedor vinculado.",
     "vendorArtLinkButton": "Vincular fornecedor",
@@ -1126,6 +1158,7 @@
     "hasIso27001CertificateLabel": "Existe certificado ISO 27001?",
     "vendorComplianceHint": "Declaração própria: o aprovador poderá pedir a comprovação fora do sistema antes de decidir.",
     "complianceEvidenceHint": "Para sistemas SaaS, o relatório costuma ser do próprio fornecedor. Para sistemas implantados internamente (mesmo de terceiros), a responsabilidade é de quem mantém o deployment. Se marcado, o anexo correspondente é exigido antes do envio para análise.",
+    "fieldIsSampleData": "Dado de amostra (sample) - super-admin",
     "submit": "Criar e continuar para o questionário",
     "submitting": "Criando...",
     "cancel": "Cancelar",
@@ -1269,6 +1302,7 @@
     "fieldBusinessCriticalityPlaceholder": "Selecione",
     "fieldBusinessCriticalityNone": "Não definida",
     "fieldIsActive": "Fornecedor ativo",
+    "fieldIsSampleData": "Dado de amostra (sample) - super-admin",
     "fieldLastAssessedAt": "Última avaliação",
     "fieldNextReviewDueAt": "Próxima revisão",
     "historyTitle": "Histórico de avaliações",

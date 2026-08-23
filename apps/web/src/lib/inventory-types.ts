@@ -171,6 +171,8 @@ export interface InventoryItemFormValues {
   hasRiskAnalysis: boolean;
   hasInfoSecClause: boolean;
   documentationLinks: { label: string; url: string }[];
+  /** Só relevante na criação (super-admin) - nunca editável depois. */
+  isSampleData?: boolean;
 }
 
 export interface InventoryListFilters {

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { useApi } from "@/lib/use-api";
 import { ApiError } from "@/components/auth-provider";
+import { useIsSuperAdmin } from "@/lib/use-permission";
 import type { VendorDetail, VendorFormValues } from "@/lib/vendor-types";
 import {
   Dialog,
@@ -43,6 +44,7 @@ const vendorFormSchema = z.object({
   notes: z.string().optional(),
   businessCriticality: z.enum(CRITICALITY_VALUES).optional(),
   isActive: z.boolean().optional(),
+  isSampleData: z.boolean().optional(),
 });
 
 type VendorDialogProps = {
@@ -55,6 +57,7 @@ export function VendorFormDialog({ mode, vendor, open, onOpenChange, onSaved }: 
   const t = useTranslations("Vendors");
   const criticalityT = useTranslations("Criticality");
   const api = useApi();
+  const isSuperAdmin = useIsSuperAdmin();
 
   const defaultValues: VendorFormValues = vendor
     ? {
@@ -173,6 +176,25 @@ export function VendorFormDialog({ mode, vendor, open, onOpenChange, onSaved }: 
             <Label htmlFor="notes">{t("fieldNotes")}</Label>
             <Textarea id="notes" rows={3} {...register("notes")} />
           </div>
+
+          {mode === "create" && isSuperAdmin && (
+            <Controller
+              control={control}
+              name="isSampleData"
+              render={({ field }) => (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="isSampleData"
+                    checked={field.value ?? false}
+                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                  />
+                  <Label htmlFor="isSampleData" className="font-normal">
+                    {t("fieldIsSampleData")}
+                  </Label>
+                </div>
+              )}
+            />
+          )}
 
           {mode === "edit" && (
             <Controller
