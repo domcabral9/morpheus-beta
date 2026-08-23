@@ -28,6 +28,7 @@ const TIER_CONFIG_ACTIVE = {
   id: "tier-config-1",
   tenantId: "tenant-1",
   name: "Config Padrão",
+  version: 1,
   isActive: true,
   thresholds: [
     {
@@ -111,6 +112,10 @@ describe("VendorsService", () => {
     findAssessmentHistory: jest.Mock;
     findActiveTierConfig: jest.Mock;
     findTierConfigById: jest.Mock;
+    listTierConfigs: jest.Mock;
+    createTierConfig: jest.Mock;
+    activateTierConfig: jest.Mock;
+    upsertThreshold: jest.Mock;
     createAssessment: jest.Mock;
     updateAssessment: jest.Mock;
     findAssessmentById: jest.Mock;
@@ -134,6 +139,14 @@ describe("VendorsService", () => {
       findAssessmentHistory: jest.fn(),
       findActiveTierConfig: jest.fn(),
       findTierConfigById: jest.fn(),
+      listTierConfigs: jest.fn().mockResolvedValue([]),
+      createTierConfig: jest
+        .fn()
+        .mockImplementation((data) => Promise.resolve({ id: "tier-config-new", ...data })),
+      activateTierConfig: jest
+        .fn()
+        .mockImplementation((tenantId, id) => Promise.resolve({ id, isActive: true })),
+      upsertThreshold: jest.fn().mockResolvedValue(undefined),
       createAssessment: jest
         .fn()
         .mockImplementation((data) => Promise.resolve({ id: "va-new", ...data })),
@@ -467,6 +480,88 @@ describe("VendorsService", () => {
         "va-1",
         expect.objectContaining({ tier: 4, tierLabel: "Risco crítico", totalScore: 0 }),
       );
+    });
+  });
+
+  describe("getTierConfig", () => {
+    it("lança 404 quando a config não existe no tenant", async () => {
+      repo.findTierConfigById.mockResolvedValue(null);
+      await expect(service.getTierConfig(makeUser(), "tier-config-x")).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it("devolve a config quando encontrada", async () => {
+      repo.findTierConfigById.mockResolvedValue(TIER_CONFIG_ACTIVE);
+      const result = await service.getTierConfig(makeUser(), "tier-config-1");
+      expect(result).toBe(TIER_CONFIG_ACTIVE);
+    });
+  });
+
+  describe("createTierConfig", () => {
+    it("nasce version 1 quando é a primeira config do tenant, sem clonar nada", async () => {
+      repo.listTierConfigs.mockResolvedValue([]);
+      repo.findTierConfigById.mockResolvedValue({ id: "tier-config-new", thresholds: [] });
+      await service.createTierConfig(makeUser(), { name: "Config Padrão" });
+
+      expect(repo.createTierConfig).toHaveBeenCalledWith(
+        expect.objectContaining({ version: 1, isActive: false }),
+      );
+      expect(repo.upsertThreshold).not.toHaveBeenCalled();
+    });
+
+    it("incrementa a partir da maior version existente", async () => {
+      repo.listTierConfigs.mockResolvedValue([
+        { ...TIER_CONFIG_ACTIVE, version: 1, isActive: false },
+        { ...TIER_CONFIG_ACTIVE, id: "tier-config-2", version: 3, isActive: true },
+      ]);
+      repo.findTierConfigById.mockResolvedValue({ id: "tier-config-new", thresholds: [] });
+      await service.createTierConfig(makeUser(), { name: "Config Nova" });
+
+      expect(repo.createTierConfig).toHaveBeenCalledWith(expect.objectContaining({ version: 4 }));
+    });
+
+    it("clona os thresholds da config ativa pra versão nova", async () => {
+      repo.listTierConfigs.mockResolvedValue([TIER_CONFIG_ACTIVE]);
+      repo.findTierConfigById.mockResolvedValue({ id: "tier-config-new", thresholds: [] });
+
+      await service.createTierConfig(makeUser(), { name: "Config Nova" });
+
+      expect(repo.upsertThreshold).toHaveBeenCalledTimes(TIER_CONFIG_ACTIVE.thresholds.length);
+      expect(repo.upsertThreshold).toHaveBeenCalledWith(
+        "tier-config-new",
+        1,
+        expect.objectContaining({ label: "Baixo risco" }),
+      );
+    });
+
+    it("ativa imediatamente quando dto.activate é true", async () => {
+      repo.listTierConfigs.mockResolvedValue([]);
+      await service.createTierConfig(makeUser(), { name: "Config Nova", activate: true });
+      expect(repo.activateTierConfig).toHaveBeenCalledWith("tenant-1", "tier-config-new");
+    });
+  });
+
+  describe("activateTierConfig", () => {
+    it("lança 404 quando a config não existe no tenant", async () => {
+      repo.findTierConfigById.mockResolvedValue(null);
+      await expect(service.activateTierConfig(makeUser(), "tier-config-x")).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it("rejeita ativar uma config sem nenhum threshold", async () => {
+      repo.findTierConfigById.mockResolvedValue({ ...TIER_CONFIG_ACTIVE, thresholds: [] });
+      await expect(service.activateTierConfig(makeUser(), "tier-config-1")).rejects.toThrow(
+        "A configuração precisa de ao menos um tier definido antes de ser ativada.",
+      );
+      expect(repo.activateTierConfig).not.toHaveBeenCalled();
+    });
+
+    it("ativa quando há ao menos um threshold", async () => {
+      repo.findTierConfigById.mockResolvedValue(TIER_CONFIG_ACTIVE);
+      await service.activateTierConfig(makeUser(), "tier-config-1");
+      expect(repo.activateTierConfig).toHaveBeenCalledWith("tenant-1", "tier-config-1");
     });
   });
 });
