@@ -10,6 +10,7 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { useApi } from "@/lib/use-api";
 import { ApiError } from "@/components/auth-provider";
+import { useIsSuperAdmin } from "@/lib/use-permission";
 import type { Area } from "@/lib/assessment-types";
 import type { UserOption } from "@/lib/user-picker-types";
 import { VendorCombobox, type VendorComboboxValue } from "@/components/vendor-combobox";
@@ -73,6 +74,7 @@ const itemFormSchema = z.object({
   hasRiskAnalysis: z.boolean(),
   hasInfoSecClause: z.boolean(),
   documentationLinks: z.array(documentationLinkSchema),
+  isSampleData: z.boolean().optional(),
 });
 
 function toDateInputValue(iso: string): string {
@@ -95,6 +97,7 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
   const t = useTranslations("Inventory");
   const criticalityT = useTranslations("Criticality");
   const api = useApi();
+  const isSuperAdmin = useIsSuperAdmin();
 
   const defaultValues: InventoryItemFormValues = item
     ? {
@@ -226,10 +229,11 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
     // histórico da homologação original, não editável depois de criado (só
     // `nextReviewDate`, o ciclo de revisão, muda com o tempo). Mandar essa
     // chave num PATCH é rejeitado pelo ValidationPipe (`forbidNonWhitelisted`).
-    const { homologationDate, hasRiskAnalysis, hasInfoSecClause, ...editableValues } = values;
+    const { homologationDate, hasRiskAnalysis, hasInfoSecClause, isSampleData, ...editableValues } =
+      values;
     const payload = {
       ...editableValues,
-      ...(item ? {} : { homologationDate: toIsoDate(homologationDate) }),
+      ...(item ? {} : { homologationDate: toIsoDate(homologationDate), isSampleData }),
       // Somente leitura quando o item vem de homologação (ver comentário no
       // schema/DTO): omitir por completo, não só "não deixar editar" - o
       // ValidationPipe rejeita o PATCH inteiro se esses campos chegarem numa
@@ -476,6 +480,25 @@ export function ItemFormDialog({ mode, item, areas, users, open, onOpenChange, o
                 })}
               </p>
             </div>
+          )}
+
+          {mode === "create" && isSuperAdmin && (
+            <Controller
+              control={control}
+              name="isSampleData"
+              render={({ field }) => (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="isSampleData"
+                    checked={field.value ?? false}
+                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                  />
+                  <Label htmlFor="isSampleData" className="font-normal">
+                    {t("fieldIsSampleData")}
+                  </Label>
+                </div>
+              )}
+            />
           )}
 
           <div className="flex flex-col gap-3 rounded-md border p-3">

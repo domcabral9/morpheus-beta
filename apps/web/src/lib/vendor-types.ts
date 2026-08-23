@@ -74,6 +74,8 @@ export interface VendorFormValues {
   notes?: string;
   businessCriticality?: Criticality;
   isActive?: boolean;
+  /** Só relevante na criação (super-admin) - nunca editável depois. */
+  isSampleData?: boolean;
 }
 
 export interface VendorQuestionOption {

@@ -4,6 +4,7 @@ import * as React from "react";
 import { useTranslations } from "next-intl";
 
 import { useRequireAuth } from "@/lib/use-require-auth";
+import { useIsSuperAdmin } from "@/lib/use-permission";
 import { useApi } from "@/lib/use-api";
 import { useRouter } from "@/i18n/navigation";
 import { ApiError } from "@/lib/api-client";
@@ -35,6 +36,7 @@ export default function NewAssessmentPage() {
   const criticalityT = useTranslations("Criticality");
   const inventoryT = useTranslations("Inventory");
   const user = useRequireAuth();
+  const isSuperAdmin = useIsSuperAdmin();
   const api = useApi();
   const router = useRouter();
 
@@ -52,6 +54,7 @@ export default function NewAssessmentPage() {
   const [hasInfoSecClause, setHasInfoSecClause] = React.useState(false);
   const [hasSoc2Report, setHasSoc2Report] = React.useState(false);
   const [hasIso27001Certificate, setHasIso27001Certificate] = React.useState(false);
+  const [isSampleData, setIsSampleData] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [duplicateMatch, setDuplicateMatch] = React.useState<InventoryDuplicateMatch | null>(null);
@@ -128,6 +131,7 @@ export default function NewAssessmentPage() {
         hasInfoSecClause,
         hasSoc2Report,
         hasIso27001Certificate,
+        ...(isSuperAdmin ? { isSampleData } : {}),
       });
       router.push(`/assessments/${created.id}`);
     } catch (err) {
@@ -282,6 +286,19 @@ export default function NewAssessmentPage() {
                 <p className="text-xs text-muted-foreground">{t("vendorComplianceHint")}</p>
                 <p className="text-xs text-muted-foreground">{t("complianceEvidenceHint")}</p>
               </div>
+
+              {isSuperAdmin && (
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="isSampleData"
+                    checked={isSampleData}
+                    onCheckedChange={(checked) => setIsSampleData(checked === true)}
+                  />
+                  <Label htmlFor="isSampleData" className="font-normal">
+                    {t("fieldIsSampleData")}
+                  </Label>
+                </div>
+              )}
 
               <div className="flex flex-col gap-2">
                 <Label htmlFor="justification">{t("justificationLabel")}</Label>

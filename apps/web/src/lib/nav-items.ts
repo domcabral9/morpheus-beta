@@ -57,6 +57,11 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     labelKey: "nav.platformPolicy",
     permission: "platform:cross-tenant",
   },
+  {
+    href: "/admin/sample-data",
+    labelKey: "nav.sampleData",
+    permission: "platform:cross-tenant",
+  },
 ];
 
 /** Rota ativa: match exato, ou prefixo quando `exact` é false (usado por seções com sub-rotas). */
