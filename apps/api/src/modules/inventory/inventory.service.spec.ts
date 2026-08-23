@@ -385,6 +385,44 @@ describe("InventoryService", () => {
     });
   });
 
+  describe("isSampleData", () => {
+    const baseDto = {
+      name: "API X",
+      vendor: "Fornecedor X",
+      category: "Integração",
+      type: "API_INTEGRATION",
+      areaId: "area-1",
+      managerId: "user-1",
+      technicalResponsibleId: "user-1",
+      homologationDate: "2026-07-01",
+      nextReviewDate: "2027-07-01",
+      criticality: "MEDIUM",
+      dataClassification: "INTERNAL",
+      hasRiskAnalysis: false,
+      hasInfoSecClause: false,
+    };
+
+    it("rejeita isSampleData:true de usuário sem platform:cross-tenant", async () => {
+      await expect(
+        service.create(makeUser(), { ...baseDto, isSampleData: true } as never),
+      ).rejects.toThrow(ForbiddenException);
+      expect(repo.createWithApprovalRequest).not.toHaveBeenCalled();
+    });
+
+    it("aceita isSampleData:true de super-admin", async () => {
+      await service.create(makeUser({ isSuperAdmin: true }), {
+        ...baseDto,
+        isSampleData: true,
+      } as never);
+
+      expect(repo.createWithApprovalRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ isSampleData: true }),
+        "user-1",
+        undefined,
+      );
+    });
+  });
+
   describe("vendorCompliance (ART/cláusula InfoSec)", () => {
     it("create() repassa hasRiskAnalysis/hasInfoSecClause pro repository", async () => {
       await service.create(makeUser(), {

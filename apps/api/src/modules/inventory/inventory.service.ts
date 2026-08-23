@@ -287,6 +287,9 @@ export class InventoryService {
     user: AuthenticatedUser,
     dto: CreateInventoryItemDto,
   ): Promise<InventoryItemWithOpinion> {
+    if (dto.isSampleData && !user.isSuperAdmin) {
+      throw new ForbiddenException("Só super-admin pode marcar um registro como dado de amostra.");
+    }
     const item = await this.repository.createWithApprovalRequest(
       {
         tenantId: user.tenantId,
@@ -309,6 +312,7 @@ export class InventoryService {
         dataClassification: dto.dataClassification,
         hasRiskAnalysis: dto.hasRiskAnalysis,
         hasInfoSecClause: dto.hasInfoSecClause,
+        isSampleData: dto.isSampleData ?? false,
       },
       user.id,
       dto.documentationLinks,
