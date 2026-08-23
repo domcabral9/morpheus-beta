@@ -237,16 +237,6 @@ export class TechnicalOpinionService {
     return { opinion, buffer };
   }
 
-  async getLatestForAssessment(
-    user: AuthenticatedUser,
-    assessmentId: string,
-  ): Promise<TechnicalOpinion | null> {
-    const assessment = await this.repository.findAssessmentContext(assessmentId);
-    if (!assessment) throw new NotFoundException("Avaliação não encontrada.");
-    this.assertCanView(user, assessment.tenantId, assessment.requester.id);
-    return this.repository.findLatestForAssessment(assessmentId);
-  }
-
   /** Tela de gestão: reusa a mesma regra de `assertCanView`, mas como cláusula
    * de listagem em vez de checar um parecer só - sem permissão nova. */
   async findAllForTenant(user: AuthenticatedUser, query: ListTechnicalOpinionsQueryDto) {
