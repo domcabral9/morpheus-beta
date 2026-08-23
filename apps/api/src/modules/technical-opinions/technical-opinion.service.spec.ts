@@ -73,7 +73,6 @@ describe("TechnicalOpinionService", () => {
     findAuthorizationContext: jest.Mock;
     create: jest.Mock;
     findById: jest.Mock;
-    findLatestForAssessment: jest.Mock;
     findAllForTenant: jest.Mock;
   };
   let pdfGenerator: { build: jest.Mock };
@@ -95,7 +94,6 @@ describe("TechnicalOpinionService", () => {
       findAuthorizationContext: jest.fn(),
       create: jest.fn().mockImplementation((data) => Promise.resolve({ id: "opinion-1", ...data })),
       findById: jest.fn(),
-      findLatestForAssessment: jest.fn(),
       findAllForTenant: jest.fn().mockResolvedValue({ items: [], total: 0 }),
     };
     pdfGenerator = { build: jest.fn().mockResolvedValue(Buffer.from("%PDF-fake")) };
