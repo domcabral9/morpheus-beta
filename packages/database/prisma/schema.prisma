@@ -888,6 +888,11 @@ model Assessment {
   /// simples (parecer PDF, notificações, templates do RenewalScheduler).
   vendorId              String?
   linkedVendor          Vendor?          @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  /// Dado de teste efêmero (criado/removido só via o módulo restrito
+  /// sample-data, gated a platform:cross-tenant) - diferente das amostras
+  /// permanentes de portfólio governadas por docs/demo-data-checklist.md,
+  /// que nunca setam esta flag.
+  isSampleData          Boolean          @default(false)
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
 
@@ -901,6 +906,7 @@ model Assessment {
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([tenantId, areaId])
+  @@index([tenantId, isSampleData])
   @@map("assessments")
 }
 
@@ -1071,6 +1077,11 @@ model Vendor {
   /// que uma VendorAssessment é concluída para este fornecedor. Mesmo
   /// espírito do guard `status != EXPIRED` em SoftwareInventoryItem.
   reassessmentNotifiedAt DateTime?
+  /// Dado de teste efêmero (criado/removido só via o módulo restrito
+  /// sample-data, gated a platform:cross-tenant) - diferente das amostras
+  /// permanentes de portfólio governadas por docs/demo-data-checklist.md,
+  /// que nunca setam esta flag.
+  isSampleData           Boolean      @default(false)
   createdAt              DateTime     @default(now())
   updatedAt              DateTime     @updatedAt
 
@@ -1080,6 +1091,7 @@ model Vendor {
 
   @@unique([tenantId, name])
   @@index([tenantId])
+  @@index([tenantId, isSampleData])
   @@map("vendors")
 }
 
@@ -1409,6 +1421,11 @@ model SoftwareInventoryItem {
   exposureLastCheckedAt         DateTime?
   exposureCheckedIp             String?
   exposureRawData               Json?
+  /// Dado de teste efêmero (criado/removido só via o módulo restrito
+  /// sample-data, gated a platform:cross-tenant) - diferente das amostras
+  /// permanentes de portfólio governadas por docs/demo-data-checklist.md,
+  /// que nunca setam esta flag.
+  isSampleData                  Boolean                @default(false)
   createdAt                     DateTime               @default(now())
   updatedAt                     DateTime               @updatedAt
 
@@ -1420,6 +1437,7 @@ model SoftwareInventoryItem {
   @@index([tenantId, status])
   @@index([tenantId, areaId])
   @@index([tenantId, vendorId])
+  @@index([tenantId, isSampleData])
   /// Sinal derivado e autolimpante de "esta área está bloqueada por renovação
   /// vencida" (EXISTS ... status='EXPIRED') - usado tanto pela checagem de
   /// bloqueio quanto pelas queries do RenewalScheduler.

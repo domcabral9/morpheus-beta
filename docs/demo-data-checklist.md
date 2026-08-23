@@ -5,6 +5,12 @@ amostras usadas tanto para navegação manual quanto para os screenshots do port
 (`README.md`). Combinado em 2026-08-09, a ser seguido até o fim do projeto. Não é sobre código -
 é sobre como popular/curar dados de exemplo de forma consistente.
 
+**Não confundir com dado de teste efêmero.** Este checklist governa amostras **permanentes**,
+intencionais, nunca descartáveis - o campo `isSampleData` (`Vendor`/`SoftwareInventoryItem`/
+`Assessment`) é outra coisa: dado **efêmero**, criado/removido sob demanda só através do módulo
+restrito `sample-data` (super-admin, `platform:cross-tenant`), às vezes vivendo só pra um teste
+pontual. Amostra de portfólio nunca seta essa flag.
+
 ## O checklist
 
 1. **Levantar o estado real antes de propor qualquer mudança.** Nunca assumir o que já existe -

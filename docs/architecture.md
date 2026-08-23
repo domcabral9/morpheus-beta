@@ -12,6 +12,13 @@ vira ilegível. Cada diagrama mostra os campos que importam para entender a rela
 dois campos identificadores), não o schema completo - consulte o `.prisma` para a lista exata de
 colunas/constraints.
 
+`Vendor`, `SoftwareInventoryItem` e `Assessment` compartilham um campo transversal não mostrado nos
+diagramas de campo por brevidade: `isSampleData Boolean` (índice composto `[tenantId,
+isSampleData]` nos 3) - marca dado de teste efêmero, criado/removido só via o módulo restrito
+`sample-data` (super-admin, `platform:cross-tenant`). Diferente das amostras permanentes de
+portfólio no tenant `demo` (governadas por
+[`docs/demo-data-checklist.md`](./demo-data-checklist.md)), que nunca setam essa flag.
+
 ### Tenancy e RBAC
 
 ```mermaid
