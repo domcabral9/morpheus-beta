@@ -38,6 +38,7 @@ import { RenewalModule } from "./modules/renewal/renewal.module";
 import { SearchModule } from "./modules/search/search.module";
 import { VendorsModule } from "./modules/vendors/vendors.module";
 import { PlatformPolicyModule } from "./modules/platform-policy/platform-policy.module";
+import { SampleDataModule } from "./modules/sample-data/sample-data.module";
 
 const pinoHttpOptions: PinoHttpOptions = {
   genReqId: (req) => req.headers[CORRELATION_ID_HEADER] as string,
@@ -100,6 +101,7 @@ const pinoHttpOptions: PinoHttpOptions = {
     InventoryModule,
     AttachmentsModule,
     RenewalModule,
+    SampleDataModule,
     SearchModule,
     VendorsModule,
   ],

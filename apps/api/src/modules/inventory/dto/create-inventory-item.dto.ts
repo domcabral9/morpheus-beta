@@ -126,6 +126,14 @@ export class CreateInventoryItemDto {
   @ValidateNested({ each: true })
   @Type(() => DocumentationLinkDto)
   documentationLinks?: DocumentationLinkDto[];
+
+  @ApiPropertyOptional({
+    description:
+      "Marca o registro como dado de teste efêmero. Exige platform:cross-tenant - rejeitado (403) para qualquer outro usuário.",
+  })
+  @IsOptional()
+  @IsBoolean()
+  isSampleData?: boolean;
 }
 
 export { SOFTWARE_TYPES, DATA_CLASSIFICATIONS, CRITICALITY_VALUES, MAX_DOCUMENTATION_LINKS };

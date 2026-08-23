@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEmail, IsIn, IsOptional, IsString, MinLength } from "class-validator";
+import { IsBoolean, IsEmail, IsIn, IsOptional, IsString, MinLength } from "class-validator";
 
 const CRITICALITY_VALUES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
 
@@ -46,6 +46,14 @@ export class CreateVendorDto {
   @IsOptional()
   @IsIn(CRITICALITY_VALUES)
   businessCriticality?: (typeof CRITICALITY_VALUES)[number];
+
+  @ApiPropertyOptional({
+    description:
+      "Marca o registro como dado de teste efêmero. Exige platform:cross-tenant - rejeitado (403) para qualquer outro usuário.",
+  })
+  @IsOptional()
+  @IsBoolean()
+  isSampleData?: boolean;
 }
 
 export { CRITICALITY_VALUES };

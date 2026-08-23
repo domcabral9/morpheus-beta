@@ -54,6 +54,9 @@ export class AssessmentsService {
   ) {}
 
   async create(user: AuthenticatedUser, dto: CreateAssessmentDto): Promise<AssessmentDetail> {
+    if (dto.isSampleData && !user.isSuperAdmin) {
+      throw new ForbiddenException("Só super-admin pode marcar um registro como dado de amostra.");
+    }
     await this.assertAreaInTenant(user.tenantId, dto.areaId);
     await this.assertUserInTenant(user.tenantId, dto.responsibleId);
     await this.assertAreaNotBlocked(user.tenantId, dto.areaId);
@@ -78,6 +81,7 @@ export class AssessmentsService {
       hasInfoSecClause: dto.hasInfoSecClause,
       hasSoc2Report: dto.hasSoc2Report,
       hasIso27001Certificate: dto.hasIso27001Certificate,
+      isSampleData: dto.isSampleData ?? false,
       requesterId: user.id,
       status: "DRAFT",
     });

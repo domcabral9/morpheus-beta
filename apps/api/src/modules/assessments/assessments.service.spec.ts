@@ -205,6 +205,41 @@ describe("AssessmentsService", () => {
       ).rejects.toThrow("Fornecedor (Vendor) não encontrado.");
       expect(repo.create).not.toHaveBeenCalled();
     });
+
+    it("rejeita isSampleData:true de usuário sem platform:cross-tenant", async () => {
+      await expect(
+        service.create(makeUser(), {
+          softwareName: "Sistema X",
+          vendor: "Fornecedor X",
+          responsibleId: "user-requester",
+          areaId: "area-1",
+          criticality: "MEDIUM",
+          justification: "Justificativa",
+          hasRiskAnalysis: false,
+          hasInfoSecClause: false,
+          isSampleData: true,
+        } as never),
+      ).rejects.toThrow(ForbiddenException);
+      expect(repo.create).not.toHaveBeenCalled();
+    });
+
+    it("aceita isSampleData:true de super-admin", async () => {
+      repo.create.mockResolvedValue(makeAssessment());
+
+      await service.create(makeUser({ isSuperAdmin: true }), {
+        softwareName: "Sistema X",
+        vendor: "Fornecedor X",
+        responsibleId: "user-requester",
+        areaId: "area-1",
+        criticality: "MEDIUM",
+        justification: "Justificativa",
+        hasRiskAnalysis: false,
+        hasInfoSecClause: false,
+        isSampleData: true,
+      } as never);
+
+      expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ isSampleData: true }));
+    });
   });
 
   describe("create (bloqueio de área por renovação vencida)", () => {

@@ -90,6 +90,14 @@ export class CreateAssessmentDto {
   })
   @IsBoolean()
   hasIso27001Certificate!: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      "Marca o registro como dado de teste efêmero. Exige platform:cross-tenant - rejeitado (403) para qualquer outro usuário.",
+  })
+  @IsOptional()
+  @IsBoolean()
+  isSampleData?: boolean;
 }
 
 export { CRITICALITY_VALUES };
