@@ -16,3 +16,10 @@ export interface VendorTierConfig {
   isActive: boolean;
   thresholds: VendorTierThreshold[];
 }
+
+export interface VendorTierConfigSummary {
+  id: string;
+  name: string;
+  version: number;
+  isActive: boolean;
+}

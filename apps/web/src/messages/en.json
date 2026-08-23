@@ -267,6 +267,8 @@
       "questionnaireDescription": "Categories, questions, options, and links to compliance controls.",
       "riskMatrix": "Risk matrix",
       "riskMatrixDescription": "Probability and impact levels, classifications, and the risk grid.",
+      "vendorTierConfig": "Vendor tiering",
+      "vendorTierConfigDescription": "Score ranges that classify a vendor's Tier, versioned with history and activation.",
       "workflow": "Workflow",
       "workflowDescription": "Approval workflow definitions and their steps.",
       "auditLogs": "Audit log",
@@ -738,6 +740,48 @@
       "needsLevelsAndClassifications": "Add at least one probability level, one impact level, and one classification to build the grid."
     }
   },
+  "AdminVendorTierConfig": {
+    "title": "Vendor tiering",
+    "subtitle": "Score ranges that classify a vendor's Tier (Tier 1 = best case, least monitoring) and the base reassessment cadence for each one.",
+    "loadError": "Could not load the tier configurations.",
+    "back": "Back",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "save": "Save",
+    "config": {
+      "newButton": "New version",
+      "empty": "No configuration registered.",
+      "columnName": "Name",
+      "columnVersion": "Version",
+      "columnStatus": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "createTitle": "New tier configuration version",
+      "fieldName": "Name",
+      "createHint": "The active configuration's tiers (if any) are automatically cloned for you to adjust.",
+      "createSuccess": "Configuration created.",
+      "saveError": "Could not save the configuration.",
+      "detailLoadError": "Could not load this configuration.",
+      "notFound": "Configuration not found.",
+      "activateButton": "Activate",
+      "activateConfirmTitle": "Activate this configuration?",
+      "activateConfirmDescription": "Activating this configuration deactivates any other one for the tenant. New vendor assessments will use this version's tiers.",
+      "activateConfirmAction": "Activate",
+      "activateSuccess": "Configuration activated.",
+      "activateError": "Could not activate the configuration."
+    },
+    "threshold": {
+      "empty": "This version has no tiers defined yet.",
+      "tierLabel": "Tier {tier}",
+      "fieldLabel": "Label",
+      "fieldColor": "Color",
+      "fieldMinScore": "Minimum score",
+      "fieldMaxScore": "Maximum score",
+      "fieldBaseReassessmentMonths": "Base cadence (months)",
+      "saveSuccess": "Tiers updated.",
+      "saveError": "Could not save the tiers."
+    }
+  },
   "AdminWorkflow": {
     "title": "Workflow",
     "subtitle": "Approval workflow definitions and their steps.",
@@ -924,17 +968,8 @@
       "smtp": "SMTP",
       "sso": "SSO",
       "ai": "AI",
-      "comingSoonDescription": "This setting is still being built. It lands in a future step of the plan.",
-      "vendorTier": "Vendor tiering"
-    },
-    "vendorTierDescription": "Score ranges that classify a vendor's Tier (Tier 1 = best case, least monitoring) and the base reassessment cadence for each. Only the 4 bands already in the active configuration can be edited.",
-    "vendorTierLoadError": "Could not load the tier configuration.",
-    "vendorTierTierLabel": "Tier {tier}",
-    "vendorTierFieldLabel": "Label",
-    "vendorTierFieldColor": "Color",
-    "vendorTierFieldMinScore": "Minimum score",
-    "vendorTierFieldMaxScore": "Maximum score",
-    "vendorTierFieldBaseReassessmentMonths": "Base cadence (months)"
+      "comingSoonDescription": "This setting is still being built. It lands in a future step of the plan."
+    }
   },
   "AdminPlatformPolicy": {
     "title": "Platform policies",

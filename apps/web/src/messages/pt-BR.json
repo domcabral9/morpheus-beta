@@ -267,6 +267,8 @@
       "questionnaireDescription": "Categorias, perguntas, opções e vínculo com controles de compliance.",
       "riskMatrix": "Matriz de risco",
       "riskMatrixDescription": "Níveis de probabilidade e impacto, classificações e a grade de risco.",
+      "vendorTierConfig": "Tierização de fornecedores",
+      "vendorTierConfigDescription": "Faixas de score que classificam o Tier de um fornecedor, versionadas com histórico e ativação.",
       "workflow": "Workflow",
       "workflowDescription": "Definições de fluxo de aprovação e suas etapas.",
       "auditLogs": "Auditoria",
@@ -738,6 +740,48 @@
       "needsLevelsAndClassifications": "Cadastre ao menos uma faixa de probabilidade, uma de impacto e uma classificação para montar a grade."
     }
   },
+  "AdminVendorTierConfig": {
+    "title": "Tierização de fornecedores",
+    "subtitle": "Faixas de score que classificam o Tier de um fornecedor (Tier 1 = melhor cenário, menos acompanhamento) e a cadência base de reavaliação de cada uma.",
+    "loadError": "Não foi possível carregar as configurações de tier.",
+    "back": "Voltar",
+    "cancel": "Cancelar",
+    "saving": "Salvando...",
+    "save": "Salvar",
+    "config": {
+      "newButton": "Nova versão",
+      "empty": "Nenhuma configuração cadastrada.",
+      "columnName": "Nome",
+      "columnVersion": "Versão",
+      "columnStatus": "Status",
+      "active": "Ativa",
+      "inactive": "Inativa",
+      "createTitle": "Nova versão da configuração de tier",
+      "fieldName": "Nome",
+      "createHint": "Os tiers da configuração ativa (se houver) são clonados automaticamente para você ajustar.",
+      "createSuccess": "Configuração criada.",
+      "saveError": "Não foi possível salvar a configuração.",
+      "detailLoadError": "Não foi possível carregar esta configuração.",
+      "notFound": "Configuração não encontrada.",
+      "activateButton": "Ativar",
+      "activateConfirmTitle": "Ativar esta configuração?",
+      "activateConfirmDescription": "Ativar esta configuração desativa qualquer outra do tenant. Novas avaliações de fornecedor passam a usar os tiers desta versão.",
+      "activateConfirmAction": "Ativar",
+      "activateSuccess": "Configuração ativada.",
+      "activateError": "Não foi possível ativar a configuração."
+    },
+    "threshold": {
+      "empty": "Esta versão ainda não tem nenhum tier definido.",
+      "tierLabel": "Tier {tier}",
+      "fieldLabel": "Rótulo",
+      "fieldColor": "Cor",
+      "fieldMinScore": "Score mínimo",
+      "fieldMaxScore": "Score máximo",
+      "fieldBaseReassessmentMonths": "Cadência base (meses)",
+      "saveSuccess": "Tiers atualizados.",
+      "saveError": "Não foi possível salvar os tiers."
+    }
+  },
   "AdminWorkflow": {
     "title": "Workflow",
     "subtitle": "Definições de fluxo de aprovação e suas etapas.",
@@ -924,17 +968,8 @@
       "smtp": "SMTP",
       "sso": "SSO",
       "ai": "IA",
-      "comingSoonDescription": "Esta configuração ainda está em construção. Chega em uma etapa futura do plano.",
-      "vendorTier": "Tierização de fornecedores"
-    },
-    "vendorTierDescription": "Faixas de score que classificam o Tier de um fornecedor (Tier 1 = melhor cenário, menos acompanhamento) e a cadência base de reavaliação de cada uma. Editável só pelas 4 faixas já existentes na configuração ativa.",
-    "vendorTierLoadError": "Não foi possível carregar a configuração de tier.",
-    "vendorTierTierLabel": "Tier {tier}",
-    "vendorTierFieldLabel": "Rótulo",
-    "vendorTierFieldColor": "Cor",
-    "vendorTierFieldMinScore": "Score mínimo",
-    "vendorTierFieldMaxScore": "Score máximo",
-    "vendorTierFieldBaseReassessmentMonths": "Cadência base (meses)"
+      "comingSoonDescription": "Esta configuração ainda está em construção. Chega em uma etapa futura do plano."
+    }
   },
   "AdminPlatformPolicy": {
     "title": "Políticas de plataforma",
