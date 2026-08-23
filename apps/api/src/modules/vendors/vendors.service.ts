@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -280,17 +281,56 @@ export class VendorsService {
     return config;
   }
 
-  createTierConfig(user: AuthenticatedUser, dto: CreateVendorTierConfigDto) {
-    return this.repository.createTierConfig({
+  async getTierConfig(user: AuthenticatedUser, id: string) {
+    const config = await this.repository.findTierConfigById(user.tenantId, id);
+    if (!config) throw new NotFoundException("Configuração de tier não encontrada.");
+    return config;
+  }
+
+  /** Clona os thresholds da config ativa (se houver) para a versão nova -
+   * desvio deliberado do precedente de RiskMatrixConfig.createConfig (que
+   * nasce vazio): lá o admin recompõe faixas/classificações/células do zero
+   * a cada versão porque são estruturas cruzadas; aqui é só uma lista plana
+   * de N tiers, então clonar poupa retrabalho sem risco de inconsistência -
+   * a versão nova nasce inativa, o admin ajusta e ativa quando pronto. */
+  async createTierConfig(user: AuthenticatedUser, dto: CreateVendorTierConfigDto) {
+    const existing = await this.repository.listTierConfigs(user.tenantId);
+    const nextVersion = existing.length === 0 ? 1 : Math.max(...existing.map((c) => c.version)) + 1;
+    const activeConfig = existing.find((c) => c.isActive);
+
+    const config = await this.repository.createTierConfig({
       tenantId: user.tenantId,
       name: dto.name,
+      version: nextVersion,
       isActive: false,
     });
+
+    if (activeConfig) {
+      for (const threshold of activeConfig.thresholds) {
+        await this.repository.upsertThreshold(config.id, threshold.tier, {
+          label: threshold.label,
+          color: threshold.color,
+          minScore: threshold.minScore,
+          maxScore: threshold.maxScore,
+          baseReassessmentMonths: threshold.baseReassessmentMonths,
+        });
+      }
+    }
+
+    if (dto.activate) {
+      return this.repository.activateTierConfig(user.tenantId, config.id);
+    }
+    return this.getTierConfig(user, config.id);
   }
 
   async activateTierConfig(user: AuthenticatedUser, id: string) {
     const config = await this.repository.findTierConfigById(user.tenantId, id);
     if (!config) throw new NotFoundException("Configuração de tier não encontrada.");
+    if (config.thresholds.length === 0) {
+      throw new BadRequestException(
+        "A configuração precisa de ao menos um tier definido antes de ser ativada.",
+      );
+    }
     return this.repository.activateTierConfig(user.tenantId, id);
   }
 
