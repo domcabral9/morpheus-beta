@@ -233,6 +233,12 @@ export class VendorsController {
   }
 
   @RequirePermissions(PERMISSIONS.VENDORS_MANAGE)
+  @Get("admin/tier-configs/:id")
+  getTierConfig(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.vendorsService.getTierConfig(user, id);
+  }
+
+  @RequirePermissions(PERMISSIONS.VENDORS_MANAGE)
   @Audit("CREATE", "VendorTierConfig")
   @Post("admin/tier-configs")
   createTierConfig(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateVendorTierConfigDto) {
