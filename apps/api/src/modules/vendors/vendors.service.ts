@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -78,6 +79,9 @@ export class VendorsService {
   }
 
   createVendor(user: AuthenticatedUser, dto: CreateVendorDto) {
+    if (dto.isSampleData && !user.isSuperAdmin) {
+      throw new ForbiddenException("Só super-admin pode marcar um registro como dado de amostra.");
+    }
     return this.repository.create({
       tenantId: user.tenantId,
       name: dto.name,
@@ -89,6 +93,7 @@ export class VendorsService {
       notes: dto.notes,
       businessCriticality: dto.businessCriticality,
       createdById: user.id,
+      isSampleData: dto.isSampleData ?? false,
     });
   }
 

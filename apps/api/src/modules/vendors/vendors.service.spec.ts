@@ -1,5 +1,10 @@
 import { Test } from "@nestjs/testing";
-import { ConflictException, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+  UnprocessableEntityException,
+} from "@nestjs/common";
 import { VendorsService } from "./vendors.service";
 import { VendorsRepository } from "./vendors.repository";
 import { RiskEngineService } from "../risk-engine/risk-engine.service";
@@ -156,6 +161,28 @@ describe("VendorsService", () => {
     }).compile();
 
     service = moduleRef.get(VendorsService);
+  });
+
+  describe("createVendor", () => {
+    it("rejeita isSampleData:true de usuário sem platform:cross-tenant", () => {
+      expect(() =>
+        service.createVendor(makeUser(), { name: "Sample Co", isSampleData: true }),
+      ).toThrow(ForbiddenException);
+      expect(repo.create).not.toHaveBeenCalled();
+    });
+
+    it("aceita isSampleData:true de super-admin", async () => {
+      await service.createVendor(makeUser({ isSuperAdmin: true }), {
+        name: "Sample Co",
+        isSampleData: true,
+      });
+      expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ isSampleData: true }));
+    });
+
+    it("cria com isSampleData:false por padrão quando omitido", async () => {
+      await service.createVendor(makeUser(), { name: "Real Co" });
+      expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ isSampleData: false }));
+    });
   });
 
   describe("getVendor", () => {

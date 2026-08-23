@@ -349,4 +349,14 @@ export class InventoryRepository {
       include: itemDetailInclude,
     });
   }
+
+  /** Primeiro hard-delete real desta entidade - consumido exclusivamente
+   * pelo módulo restrito `sample-data` (super-admin, `platform:cross-tenant`).
+   * Nunca exposto via `InventoryController` genérico: um item de inventário
+   * comum não tem nenhum caminho de exclusão hoje, de propósito (ver
+   * `InventoryApprovalStatus`/fluxo de reprovação) - esta rota é deliberada
+   * pra dado marcado `isSampleData: true`, não uma capacidade geral nova. */
+  async remove(id: string): Promise<void> {
+    await this.prisma.softwareInventoryItem.delete({ where: { id } });
+  }
 }
