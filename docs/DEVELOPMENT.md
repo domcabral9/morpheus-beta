@@ -154,10 +154,23 @@ pnpm --filter @morpheus/api test:e2e
 
 Sintoma: a porta 3001 para de responder, ou o processo node desaparece do sistema sem nenhum erro
 no terminal - às vezes some entre uma pausa e a retomada do trabalho, sem nenhum comando explícito
-de shutdown. Causa raiz ainda não confirmada (hipóteses: processo em segundo plano encerrado quando
-a máquina suspende, Docker Desktop reiniciando, o watch mode travando depois de muitos ciclos de
-recompilação numa sessão longa) - o que segue é o procedimento de detecção/recuperação, não uma
-correção da causa.
+de shutdown. Causa raiz ainda não confirmada (hipóteses: Docker Desktop reiniciando, falta de
+memória, o watch mode travando depois de muitos ciclos de recompilação numa sessão longa) - o que
+segue é o procedimento de detecção/recuperação, não uma correção da causa.
+
+**Hipótese líder (escopada 2026-08-23, ainda não confirmada por falta de reprodução)**: neste
+projeto o dev server da API costuma ser iniciado pelo Claude Code via sua própria ferramenta de shell
+em segundo plano, não por um terminal independente do desenvolvedor - o processo `nest start --watch`
+nasce como descendente da sessão do agente. A hipótese é que, quando essa sessão termina, reinicia
+(ex.: `/compact`, restart da extensão do VSCode) ou é reciclada de outra forma, a árvore de processos
+filha é encerrada junto - sem nenhum sinal tratável em nível de aplicação, o que bate exatamente com o
+sintoma observado (nenhum erro no terminal, processo simplesmente sumiu). Se essa hipótese estiver
+certa, nenhuma instrumentação dentro do próprio processo Node vai capturar o motivo (a árvore inteira
+é encerrada de fora, sem chance de um handler de saída rodar) - mitigação prática adotada: ao iniciar
+esses processos de longa duração, redirecionar stdout/stderr para um arquivo de log persistente com
+timestamp em vez de confiar só na saída capturada pela ferramenta do agente (que também some se a
+sessão que a capturou for reciclada) - na próxima queda, ao menos sobra um rastro pra inspecionar em
+vez de um silêncio já conhecido.
 
 **Detecção**: antes de confiar em qualquer teste via curl/Playwright contra a API, confirmar que ela
 está respondendo:
