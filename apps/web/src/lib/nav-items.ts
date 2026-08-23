@@ -47,6 +47,11 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     permission: "vendors:manage",
   },
   { href: "/admin/risk-matrix", labelKey: "nav.riskMatrix", permission: "risk-matrix:manage" },
+  {
+    href: "/admin/vendor-tier-config",
+    labelKey: "nav.vendorTierConfig",
+    permission: "vendors:manage",
+  },
   { href: "/admin/workflow", labelKey: "nav.workflow", permission: "workflows:manage" },
   { href: "/admin/audit-logs", labelKey: "nav.auditLogs", permission: "audit:view" },
   { href: "/admin/users", labelKey: "nav.users", permission: "users:manage" },
