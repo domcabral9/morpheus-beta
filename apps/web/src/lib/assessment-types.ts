@@ -2,12 +2,10 @@ export type Criticality = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
 export type AssessmentStatus =
   | "DRAFT"
-  | "SUBMITTED"
   | "IN_REVIEW"
   | "PENDING_ADJUSTMENT"
   | "APPROVED"
   | "REJECTED"
-  | "REOPENED"
   | "PENDING_RENEWAL";
 
 export interface Area {
