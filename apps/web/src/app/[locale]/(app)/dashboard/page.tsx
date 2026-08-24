@@ -22,12 +22,10 @@ import type { AssessmentStatus, PaginatedAssessments } from "@/lib/assessment-ty
 const ALL_VALUE = "__all__";
 const STATUS_VALUES: AssessmentStatus[] = [
   "DRAFT",
-  "SUBMITTED",
   "IN_REVIEW",
   "PENDING_ADJUSTMENT",
   "APPROVED",
   "REJECTED",
-  "REOPENED",
   "PENDING_RENEWAL",
 ];
 

@@ -7,12 +7,10 @@ const VARIANT_BY_STATUS: Record<
   "secondary" | "outline" | "success" | "destructive" | "warning"
 > = {
   DRAFT: "outline",
-  SUBMITTED: "secondary",
   IN_REVIEW: "secondary",
   PENDING_ADJUSTMENT: "destructive",
   APPROVED: "success",
   REJECTED: "destructive",
-  REOPENED: "outline",
   PENDING_RENEWAL: "warning",
 };
 

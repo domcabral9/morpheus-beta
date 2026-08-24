@@ -4,12 +4,10 @@ import { IsIn, IsInt, IsOptional, Max, Min } from "class-validator";
 
 const STATUS_VALUES = [
   "DRAFT",
-  "SUBMITTED",
   "IN_REVIEW",
   "PENDING_ADJUSTMENT",
   "APPROVED",
   "REJECTED",
-  "REOPENED",
   "PENDING_RENEWAL",
 ] as const;
 

@@ -809,12 +809,10 @@ enum Criticality {
 
 enum AssessmentStatus {
   DRAFT
-  SUBMITTED
   IN_REVIEW
   PENDING_ADJUSTMENT
   APPROVED
   REJECTED
-  REOPENED
   /// Validade de 1 ano da homologação venceu (ou antecipou por causa da janela
   /// de fechamento anual - ver RenewalScheduler) e o ciclo de renovação foi
   /// aberto: reabre a MESMA AssessmentWorkflowInstance (não cria uma

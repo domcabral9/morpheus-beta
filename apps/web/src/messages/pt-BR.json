@@ -1151,12 +1151,10 @@
   },
   "Status": {
     "DRAFT": "Rascunho",
-    "SUBMITTED": "Enviada",
     "IN_REVIEW": "Em análise",
     "PENDING_ADJUSTMENT": "Aguardando ajustes",
     "APPROVED": "Aprovada",
     "REJECTED": "Reprovada",
-    "REOPENED": "Reaberta",
     "PENDING_RENEWAL": "Pendente renovação"
   },
   "Criticality": {
