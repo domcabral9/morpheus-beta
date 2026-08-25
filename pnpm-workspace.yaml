@@ -15,6 +15,9 @@ overrides:
   brace-expansion@5: ^5.0.9 # GHSA-rgw5-rvv9-x895
   postcss@8: ^8.5.23 # GHSA-fxqj-rqcc-2cmp, GHSA-r28c-9q8g-f849, GHSA-6g55-p6wh-862q, GHSA-qx2v-qp2m-jg93
   fast-uri@3: ^3.1.5 # GHSA-7p8r-x3mc-p8w7, GHSA-v2hh-gcrm-f6hx
+  # Adicionado 2026-08-25 (alerta #38) - transitiva de prisma (CLI, devDependency)
+  # -> @prisma/config, sem manifesto próprio pro Dependabot propor um PR.
+  deepmerge-ts@7: ^8.0.0 # GHSA-ggr8-5vv4-36mx
 allowBuilds:
   '@parcel/watcher': true
   '@prisma/engines': true
