@@ -63,6 +63,25 @@ está fazendo trabalho de verdade.
 corrigir quando encontrado durante trabalho normal (como o exemplo do `README.md` acima), não é uma
 varredura obrigatória do histórico existente.
 
+## Nunca nomear um empregador real
+
+Nenhum texto do Morpheus nomeia um empregador real (passado, presente, ou de qualquer projeto irmão
+que descreva um processo corporativo real) - sempre "a empresa"/"ambiente corporativo", nunca o nome
+próprio, mesmo quando o contexto deixa claro que existe um empregador real por trás da inspiração.
+
+**Por quê**: documentação técnica de portfólio serve pra demonstrar engenharia, não pra divulgar ou
+associar publicamente um processo interno a uma empresa identificável - mesmo quando o conteúdo em si
+é genérico o bastante pra não revelar nada sensível de fato.
+
+**Escopo**: mesmo escopo das regras acima - comentário de código, commit, PR, README, esta própria
+documentação, texto de CV/LinkedIn.
+
+**Como aplicar**: antes de finalizar qualquer texto, escanear por menções ao nome real de um
+empregador e substituir por "a empresa" ou equivalente genérico. Motivado por um erro real encontrado
+no projeto irmão [`n8n-secops-automation`](https://github.com/domcabral9/n8n-secops-automation) (nome
+da empresa escrito num doc público antes de ser corrigido) - a convenção já existia de forma implícita
+no próprio README do Morpheus, só nunca tinha virado regra escrita.
+
 ## Nenhuma assinatura de ferramenta de IA nos artefatos do projeto
 
 O Morpheus é construído com apoio de ferramentas de IA, mas os artefatos que o projeto produz -
