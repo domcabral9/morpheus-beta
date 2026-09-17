@@ -18,6 +18,11 @@ overrides:
   # Adicionado 2026-08-25 (alerta #38) - transitiva de prisma (CLI, devDependency)
   # -> @prisma/config, sem manifesto próprio pro Dependabot propor um PR.
   deepmerge-ts@7: ^8.0.0 # GHSA-ggr8-5vv4-36mx
+  # Adicionado 2026-09-17 (alertas #43, #52-#60) - transitiva de
+  # @node-saml/node-saml (xml-crypto, xml-encryption), todos pinados em
+  # ^0.8.x - 0.8.15 satisfaz as 3 faixas sem exigir bump de major em nenhum
+  # consumidor, sem manifesto próprio pro Dependabot propor um PR.
+  "@xmldom/xmldom@0.8": ^0.8.15 # GHSA-6gmq-8vp8-gcm6, GHSA-965w-775f-mr7g, GHSA-4w3w-2rp5-g8jm, GHSA-8344-3jmq-59r6, GHSA-x4fp-j954-r2f4, GHSA-6h8r-xr42-gp59, GHSA-27p8-2357-5qqv, GHSA-w2rr-34g9-rvrj, GHSA-93r5-fhx6-vmg9, GHSA-c7q8-3ch8-vqpv
 allowBuilds:
   '@parcel/watcher': true
   '@prisma/engines': true
