@@ -23,6 +23,17 @@ overrides:
   # ^0.8.x - 0.8.15 satisfaz as 3 faixas sem exigir bump de major em nenhum
   # consumidor, sem manifesto próprio pro Dependabot propor um PR.
   "@xmldom/xmldom@0.8": ^0.8.15 # GHSA-6gmq-8vp8-gcm6, GHSA-965w-775f-mr7g, GHSA-4w3w-2rp5-g8jm, GHSA-8344-3jmq-59r6, GHSA-x4fp-j954-r2f4, GHSA-6h8r-xr42-gp59, GHSA-27p8-2357-5qqv, GHSA-w2rr-34g9-rvrj, GHSA-93r5-fhx6-vmg9, GHSA-c7q8-3ch8-vqpv
+  # Adicionado 2026-09-17 (alertas #49, #64-#66) - @nestjs/platform-express
+  # pina multer em "2.2.0" exato (sem caret), sem manifesto próprio pro
+  # Dependabot propor um PR. 2.3.0 tem o mesmo footprint de dependências/
+  # engine que 2.2.0 (confirmado via npm view) - bump seguro. Único caminho
+  # transitivo genuinamente alcançável em produção desta janela (upload de
+  # avatar/logo/anexo via multer real).
+  multer@2: ^2.3.0 # GHSA-qfvm-cv95-jqjf, GHSA-535w-7cp7-47q4, GHSA-wc9g-mqfw-jrwm, GHSA-qvfw-j98x-7q72
+  # Adicionado 2026-09-17 (alertas #44, #50) - transitiva de body-parser/
+  # express (@nestjs/platform-express) e supertest, todas pinadas em
+  # ^6.14.x/^6.15.x - 6.16.0 satisfaz as 3 faixas sem exigir bump de major.
+  qs@6: ^6.16.0 # GHSA-x5fp-wj9c-mxmx, GHSA-4mjr-xmp4-gh2g
 allowBuilds:
   '@parcel/watcher': true
   '@prisma/engines': true
