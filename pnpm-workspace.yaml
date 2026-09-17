@@ -7,14 +7,17 @@ overrides:
   # eslint, @nestjs/cli, prisma dev), sem caminho de update automático do
   # Dependabot. Seletor por major evita forçar uma major-line que o pai não
   # pediu.
-  js-yaml@3: ^3.15.1 # GHSA-5p4m-2wfm-xmqj
-  js-yaml@4: ^4.3.1 # GHSA-5p4m-2wfm-xmqj (faixa 4.x adicionada ao advisory em 2026-08-11)
+  # 2026-09-17: js-yaml@3/@4 e fast-uri@3 elevados de novo (GHSA-2883-xcg3-v3hh
+  # e o cluster SSRF/host-confusion de 2026-09-17) - overrides anteriores
+  # ficaram desatualizados frente a alertas novos sobre o mesmo pacote.
+  js-yaml@3: ^3.15.2 # GHSA-5p4m-2wfm-xmqj, GHSA-2883-xcg3-v3hh
+  js-yaml@4: ^4.3.2 # GHSA-5p4m-2wfm-xmqj (faixa 4.x adicionada ao advisory em 2026-08-11), GHSA-2883-xcg3-v3hh
   js-yaml@5: ^5.2.2 # GHSA-pm4m-ph32-ghv5
   brace-expansion@1: ^1.1.17 # GHSA-mh99-v99m-4gvg
   brace-expansion@2: ^2.1.3 # GHSA-mh99-v99m-4gvg
   brace-expansion@5: ^5.0.9 # GHSA-rgw5-rvv9-x895
   postcss@8: ^8.5.23 # GHSA-fxqj-rqcc-2cmp, GHSA-r28c-9q8g-f849, GHSA-6g55-p6wh-862q, GHSA-qx2v-qp2m-jg93
-  fast-uri@3: ^3.1.5 # GHSA-7p8r-x3mc-p8w7, GHSA-v2hh-gcrm-f6hx
+  fast-uri@3: ^3.1.6 # GHSA-7p8r-x3mc-p8w7, GHSA-v2hh-gcrm-f6hx, GHSA-5jgf-p345-68v8, GHSA-fph4-wmhf-6fwf, GHSA-f65p-4m7j-42xc, GHSA-jqff-g426-hqxp
   # Adicionado 2026-08-25 (alerta #38) - transitiva de prisma (CLI, devDependency)
   # -> @prisma/config, sem manifesto próprio pro Dependabot propor um PR.
   deepmerge-ts@7: ^8.0.0 # GHSA-ggr8-5vv4-36mx
@@ -34,6 +37,15 @@ overrides:
   # express (@nestjs/platform-express) e supertest, todas pinadas em
   # ^6.14.x/^6.15.x - 6.16.0 satisfaz as 3 faixas sem exigir bump de major.
   qs@6: ^6.16.0 # GHSA-x5fp-wj9c-mxmx, GHSA-4mjr-xmp4-gh2g
+  # Adicionado 2026-09-17 (alertas #39, #42) - transitiva de prisma (CLI,
+  # devDependency), que pina mysql2 em "3.15.3" exato. Projeto é só Postgres
+  # (@prisma/adapter-pg) - driver mysql2 nunca carrega em runtime, mas
+  # corrigido mesmo assim pra fechar o alerta.
+  mysql2@3: ^3.23.1 # GHSA-3f6p-5ww8-9rcr, GHSA-rgwj-5xj2-c3m3
+  # Adicionado 2026-09-17 (alertas #47, #48) - transitiva de ferramental de
+  # build (babel/jest) e da cadeia styled-jsx do next (transformação de
+  # build, nunca executada no bundle publicado em runtime).
+  browserslist@4: ^4.28.7 # GHSA-c83g-rgw3-j3cx, GHSA-73wf-gq98-2v4g
 allowBuilds:
   '@parcel/watcher': true
   '@prisma/engines': true
