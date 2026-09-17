@@ -14,6 +14,7 @@ overrides:
   postcss@8: ^8.5.23
   fast-uri@3: ^3.1.5
   deepmerge-ts@7: ^8.0.0
+  '@xmldom/xmldom@0.8': ^0.8.15
 
 patchedDependencies:
   eslint-plugin-react@7.37.5: ed781ccfecf393e7693d12649639a9d941c059ecb9ecc5042aa96619c6069d7b
@@ -3965,10 +3966,9 @@ packages:
     resolution: {integrity: sha512-CJDxIgE5I0FH+ttq/Fxy6nRpxP70+e2O048EPe85J2use3XKdatVM7dDVvFNjQudd9B49NPoZ+8PG49zj4Er8Q==}
     engines: {node: '>= 16'}
 
-  '@xmldom/xmldom@0.8.13':
-    resolution: {integrity: sha512-KRYzxepc14G/CEpEGc3Yn+JKaAeT63smlDr+vjB8jRfgTBBI9wRj/nkQEO+ucV8p8I9bfKLWp37uHgFrbntPvw==}
+  '@xmldom/xmldom@0.8.15':
+    resolution: {integrity: sha512-/5NV/vDALVFDXgLmfsy9TRCBlKwO2LNBFzpzvb9iIj+jR+eSc6DLYYvVOdivT/jm7MtU6TebYuRmzEOI7w40UA==}
     engines: {node: '>=10.0.0'}
-    deprecated: this version has critical issues, please update to the latest version
 
   '@xtuc/ieee754@1.2.0':
     resolution: {integrity: sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==}
@@ -8795,7 +8795,7 @@ snapshots:
       '@types/xml-encryption': 1.2.4
       '@types/xml2js': 0.4.14
       '@xmldom/is-dom-node': 1.0.1
-      '@xmldom/xmldom': 0.8.13
+      '@xmldom/xmldom': 0.8.15
       debug: 4.4.3(supports-color@8.1.1)
       xml-crypto: 6.1.2
       xml-encryption: 3.1.0
@@ -11394,7 +11394,7 @@ snapshots:
 
   '@xmldom/is-dom-node@1.0.1': {}
 
-  '@xmldom/xmldom@0.8.13': {}
+  '@xmldom/xmldom@0.8.15': {}
 
   '@xtuc/ieee754@1.2.0': {}
 
@@ -15530,12 +15530,12 @@ snapshots:
   xml-crypto@6.1.2:
     dependencies:
       '@xmldom/is-dom-node': 1.0.1
-      '@xmldom/xmldom': 0.8.13
+      '@xmldom/xmldom': 0.8.15
       xpath: 0.0.33
 
   xml-encryption@3.1.0:
     dependencies:
-      '@xmldom/xmldom': 0.8.13
+      '@xmldom/xmldom': 0.8.15
       escape-html: 1.0.3
       xpath: 0.0.32
 
