@@ -5,7 +5,7 @@
   "license": "MIT",
   "description": "Morpheus - plataforma de homologação e avaliação de risco de software",
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=24.9.0",
     "pnpm": ">=9.0.0"
   },
   "packageManager": "pnpm@11.15.1",
