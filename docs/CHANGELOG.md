@@ -12,6 +12,11 @@ uma linha do que aconteceu.
 
 ## 2026
 
+- [**Setembro**](./changelog/2026-09.md): janela de Dependabot retomada após 3 semanas (35 alertas
+  acumulados, 2 críticos corrigidos fora do ciclo - Next.js RCE não autenticado -, restante triado e
+  fechado no mesmo dia, zero alertas abertos ao final), e correção de enumeração de tenant em
+  `POST /auth/login` (CWE-203, achado real de um engajamento de teste de segurança conduzido pelo
+  próprio projeto `empires-erased` contra o ambiente de desenvolvimento).
 - [**Agosto**](./changelog/2026-08.md): "Perfumaria" de PR, tela de perfil de autoatendimento, 2FA
   via TOTP (RFC 6238, com um bypass de SSO real encontrado e corrigido na revisão de segurança), fluxo
   de aprovação para itens de inventário manuais (Fases 1-5, item mais antigo do backlog), login

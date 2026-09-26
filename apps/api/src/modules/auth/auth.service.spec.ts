@@ -44,6 +44,9 @@ describe("AuthService", () => {
   let authService: AuthService;
   let usersService: { findByEmail: jest.Mock; findById: jest.Mock; touchLastLogin: jest.Mock };
   let prisma: {
+    tenant: {
+      findUnique: jest.Mock;
+    };
     refreshToken: {
       create: jest.Mock;
       findUnique: jest.Mock;
@@ -60,6 +63,9 @@ describe("AuthService", () => {
       touchLastLogin: jest.fn().mockResolvedValue(undefined),
     };
     prisma = {
+      tenant: {
+        findUnique: jest.fn(),
+      },
       refreshToken: {
         create: jest.fn().mockResolvedValue({ id: "rt-1" }),
         findUnique: jest.fn(),
@@ -116,6 +122,55 @@ describe("AuthService", () => {
         "senha-correta",
       );
       expect(result.id).toBe("user-1");
+    });
+  });
+
+  describe("validateLocalLogin", () => {
+    // Achado 2026-09-11 (CWE-203): tenant inexistente, email inexistente e
+    // senha errada precisam devolver a MESMA mensagem - senão a mensagem
+    // distinta de tenant vira um oráculo de enumeração sem autenticação.
+    it("devolve a mesma mensagem genérica pra tenant inexistente, email inexistente e senha errada", async () => {
+      prisma.tenant.findUnique.mockResolvedValue(null);
+      const tenantNotFound = authService
+        .validateLocalLogin("tenant-fantasma", "ana@example.com", "qualquer")
+        .catch((error: unknown) => error);
+
+      prisma.tenant.findUnique.mockResolvedValue({ id: "tenant-1" });
+      usersService.findByEmail.mockResolvedValue(null);
+      const emailNotFound = authService
+        .validateLocalLogin("tenant-1", "fantasma@example.com", "qualquer")
+        .catch((error: unknown) => error);
+
+      const hash = await bcrypt.hash("senha-correta", 4);
+      usersService.findByEmail.mockResolvedValue({ ...baseUser, passwordHash: hash });
+      const wrongPassword = authService
+        .validateLocalLogin("tenant-1", "ana@example.com", "senha-errada")
+        .catch((error: unknown) => error);
+
+      const [errorTenant, errorEmail, errorPassword] = await Promise.all([
+        tenantNotFound,
+        emailNotFound,
+        wrongPassword,
+      ]);
+
+      for (const error of [errorTenant, errorEmail, errorPassword]) {
+        expect(error).toBeInstanceOf(UnauthorizedException);
+        expect((error as UnauthorizedException).message).toBe("Credenciais inválidas.");
+      }
+    });
+
+    it("resolve o tenant e aceita a credencial correta", async () => {
+      prisma.tenant.findUnique.mockResolvedValue({ id: "tenant-1" });
+      const hash = await bcrypt.hash("senha-correta", 4);
+      usersService.findByEmail.mockResolvedValue({ ...baseUser, passwordHash: hash });
+
+      const result = await authService.validateLocalLogin(
+        "tenant-1",
+        "ana@example.com",
+        "senha-correta",
+      );
+      expect(result.id).toBe("user-1");
+      expect(prisma.tenant.findUnique).toHaveBeenCalledWith({ where: { slug: "tenant-1" } });
     });
   });
 
