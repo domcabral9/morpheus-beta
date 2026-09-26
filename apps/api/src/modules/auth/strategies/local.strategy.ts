@@ -17,7 +17,6 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException("tenantSlug é obrigatório.");
     }
 
-    const tenantId = await this.authService.resolveTenantIdBySlug(tenantSlug);
-    return this.authService.validateLocalUser(tenantId, email, password);
+    return this.authService.validateLocalLogin(tenantSlug, email, password);
   }
 }

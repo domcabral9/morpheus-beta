@@ -94,6 +94,28 @@ export class AuthService {
     return user;
   }
 
+  /**
+   * Ponto de entrada único do login local (POST /auth/login) - resolve o
+   * tenant e valida a credencial numa única chamada, sempre com a mesma
+   * mensagem genérica pros 3 casos (tenant inexistente, email inexistente,
+   * senha errada). Nunca usar resolveTenantIdBySlug + validateLocalUser
+   * separados aqui: a mensagem distinta de tenant inexistente vira um
+   * oráculo de enumeração de tenant (achado 2026-09-11, CWE-203 - Observable
+   * Discrepancy). resolveTenantIdBySlug continua existindo tal como está
+   * para o fluxo SAML, que tem contexto/risco diferente.
+   */
+  async validateLocalLogin(
+    tenantSlug: string,
+    email: string,
+    password: string,
+  ): Promise<UserWithPermissions> {
+    const tenant = await this.prisma.tenant.findUnique({ where: { slug: tenantSlug } });
+    if (!tenant) {
+      throw new UnauthorizedException("Credenciais inválidas.");
+    }
+    return this.validateLocalUser(tenant.id, email, password);
+  }
+
   async login(user: UserWithPermissions, meta: RequestMeta): Promise<TokenPair> {
     await this.usersService.touchLastLogin(user.id);
     const tokens = await this.issueTokenPair(user, randomUUID(), meta);
