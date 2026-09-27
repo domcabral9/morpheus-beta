@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh pr *)",
+      "Bash(git checkout *)",
+      "Bash(git pull *)",
+      "Bash(git fetch *)",
+      "Bash(pnpm dlx *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(xargs grep -l \"playwright\" -i)",
+      "Bash(pnpm --filter @morpheus/database exec prisma generate)",
+      "Bash(pnpm --filter @morpheus/api typecheck)",
+      "Bash(docker compose *)",
+      "Bash(docker info *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/check-style.mjs --hook",
+            "timeout": 15,
+            "statusMessage": "Checando style-guide.md (em-dash, assinatura de IA, contraste negativo)..."
+          }
+        ]
+      }
+    ]
+  }
+}
