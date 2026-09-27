@@ -23,8 +23,11 @@ vazios, qualquer string visível), README, esta própria documentação, texto d
 **Única exceção**: arquivos de memória do assistente e `docs/changelog/*.md` (notas internas de
 engenharia, nunca lidas por um avaliador externo).
 
-**Como aplicar**: antes de finalizar qualquer texto, escanear por "—" e reescrever usando um dos
-sinais de pontuação acima.
+**Como aplicar**: bloqueado automaticamente por `scripts/check-style.mjs` - roda via hook do Claude Code
+(`.claude/settings.json`, `PostToolUse` em qualquer edição de `.md`) e via CI (`.github/workflows/
+style-check.yml`) em todo PR. Regra mecânica, sem falso positivo possível - as únicas exceções são
+`docs/style-guide.md` (precisa citar o caractere como exemplo) e `docs/changelog/*.md` (ver "Única
+exceção" acima), ambas já excluídas no script.
 
 **Auditoria retroativa**: histórico já escrito (commits antigos, comentários já existentes) não é
 reescrito retroativamente - é um item de backlog separado, avaliado depois, não uma instrução pra
@@ -62,6 +65,15 @@ está fazendo trabalho de verdade.
 **Escopo e exceções**: mesmo escopo da regra de em-dash acima. Sem auditoria retroativa automática -
 corrigir quando encontrado durante trabalho normal (como o exemplo do `README.md` acima), não é uma
 varredura obrigatória do histórico existente.
+
+**Como aplicar**: `scripts/check-style.mjs` lista candidatos (padrão "X (não/nunca Y)" ou ", não/nunca
+Y") toda vez que um `.md` é editado (hook) e em todo PR (CI), mas **nunca bloqueia** - é uma regra
+semântica, não mecânica (auditoria real: dezenas de candidatos nos docs existentes deste repo, quase
+todos contrastes legítimos). Cada candidato listado precisa passar pelo teste prático acima manualmente
+antes de considerar o texto pronto - a violação real que motivou este mecanismo apareceu no projeto
+irmão [`n8n-secops-automation`](https://github.com/domcabral9/n8n-secops-automation) (README, frase de
+abertura: "Automação real (não um exercício hipotético)"), a mesma regra copiada de lá sem nunca ganhar
+um mecanismo de verificação junto.
 
 ## Nunca nomear um empregador real
 
@@ -102,9 +114,27 @@ de IA), corpo de Pull Request (nenhum rodapé tipo "Gerado com..."), comentário
 onde o projeto vive (GitHub, Trello, etc.), e qualquer outro artefato que o projeto produza e que
 fique visível a terceiros.
 
-**Como aplicar**: antes de criar qualquer commit ou PR, confirmar que nenhuma linha do tipo acima foi
-incluída - independente de qual seja o modelo/ferramenta usado na sessão de trabalho.
+**Como aplicar**: `scripts/check-style.mjs` bloqueia automaticamente trailers `Co-Authored-By` (Claude/
+Anthropic) e rodapés "Generated with Claude Code" em qualquer `.md`, via hook e via CI - mesmo mecanismo
+das duas regras acima. Commits e PRs em si (não são arquivo `.md`) continuam sob revisão manual antes de
+criar: confirmar que nenhuma linha do tipo acima foi incluída, independente de qual seja o
+modelo/ferramenta usado na sessão de trabalho.
 
 **Auditoria retroativa**: mesmo tratamento das regras acima - corrigir quando prático (uma limpeza
 retroativa de histórico/PRs já foi feita uma vez, 2026-08-24, mas não é um compromisso de reescrever
 histórico automaticamente toda vez que a regra for adicionada a um novo lugar).
+
+## Enforcement mecânico: por que hook + CI, não só revisão manual
+
+Até 2026-09-27, as 4 regras acima existiam só como texto aqui, com a instrução "escanear antes de
+finalizar" - o único mecanismo de verificação era alguém (ou uma IA) lembrar de checar, toda vez, sem
+nenhum artefato que pegasse um esquecimento. Isso já falhou pelo menos duas vezes no projeto irmão
+[`n8n-secops-automation`](https://github.com/domcabral9/n8n-secops-automation), que reaproveita este
+mesmo guia: um em-dash real e, depois, um contraste negativo redundante na primeira frase do README -
+foi esse segundo incidente que motivou este mecanismo aqui e lá ao mesmo tempo.
+`scripts/check-style.mjs` (chamado por `.claude/settings.json` e por `.github/workflows/style-check.yml`,
+um job independente do `validate` existente em `ci.yml`) fecha essa lacuna pras duas regras 100%
+mecânicas (em-dash, assinatura de IA) - continuam bloqueadas mesmo que ninguém lembre de olhar. A regra
+de contraste negativo continua exigindo julgamento (o teste prático não é automatizável sem gerar falso
+positivo em massa - confirmado: dezenas de candidatos legítimos nos docs existentes deste repo), mas
+agora pelo menos todo candidato aparece automaticamente, em vez de depender só de memória.
