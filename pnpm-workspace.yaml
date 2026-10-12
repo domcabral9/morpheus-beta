@@ -50,6 +50,14 @@ overrides:
   # build (babel/jest) e da cadeia styled-jsx do next (transformação de
   # build, nunca executada no bundle publicado em runtime).
   browserslist@4: ^4.28.7 # GHSA-c83g-rgw3-j3cx, GHSA-73wf-gq98-2v4g
+  # Adicionado 2026-10-12 (alerta #85, crítico) - transitiva de express
+  # (@nestjs/platform-express), sem manifesto próprio pro Dependabot propor
+  # um PR. IP spoofing via subnet confiável IPv4-mapeada em IPv6 - o projeto
+  # hoje não configura "trust proxy" (confirmado por grep), então o vetor
+  # específico do advisory não é explorável no momento, mas req.ip alimenta
+  # IP de auditoria (audit.interceptor.ts, auth.controller.ts) - corrigido
+  # mesmo assim, custo zero (patch dentro da faixa que o express já aceita).
+  proxy-addr@2: ^2.0.8 # GHSA-jqcg-44mw-7w3h
 allowBuilds:
   '@parcel/watcher': true
   '@prisma/engines': true
