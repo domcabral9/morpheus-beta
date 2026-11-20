@@ -14,16 +14,16 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.10.0",
-    "@prisma/client": "^7.10.0",
-    "@prisma/client-runtime-utils": "^7.10.0",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "@prisma/client-runtime-utils": "^7.10.1",
     "bcrypt": "^6.0.0"
   },
   "devDependencies": {
     "@morpheus/config": "workspace:*",
     "@types/bcrypt": "^6.0.0",
-    "dotenv": "^18.0.4",
-    "prisma": "^7.10.0",
+    "dotenv": "^18.0.10",
+    "prisma": "^7.10.1",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }
